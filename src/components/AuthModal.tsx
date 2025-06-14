@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signInWithEmail, signUpWithEmail } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -26,6 +28,8 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setOpen(false);
       setEmail('');
       setPassword('');
+      // Redirecionar para o dashboard após login bem-sucedido
+      navigate('/');
     }
     setLoading(false);
   };
@@ -37,6 +41,8 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setOpen(false);
       setEmail('');
       setPassword('');
+      // Redirecionar para o dashboard após cadastro bem-sucedido
+      navigate('/');
     }
     setLoading(false);
   };

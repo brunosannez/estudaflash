@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -8,24 +9,43 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Verificar usuário atual
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setLoading(false);
+      
+      // Se o usuário estiver logado e na página home, redirecionar para dashboard
+      if (user && location.pathname === '/home') {
+        navigate('/', { replace: true });
+      }
     });
 
     // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
         setLoading(false);
+        
+        // Redirecionamento automático baseado no estado de autenticação
+        if (event === 'SIGNED_IN' && currentUser) {
+          // Usuário fez login - redirecionar para dashboard
+          if (location.pathname === '/home') {
+            navigate('/', { replace: true });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // Usuário fez logout - redirecionar para home
+          navigate('/home', { replace: true });
+        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate, location.pathname]);
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -53,6 +73,9 @@ export const useAuth = () => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`
+      }
     });
 
     if (error) {
