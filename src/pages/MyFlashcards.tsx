@@ -25,7 +25,7 @@ const MyFlashcards = () => {
 
   return (
     <AuthGuard>
-      <div className={`min-h-screen bg-gradient-to-br ${designColors.gradients.primary} relative overflow-hidden`}>
+      <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
         {/* Elementos decorativos flutuantes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 text-5xl animate-bounce opacity-20">🧠</div>
@@ -42,17 +42,17 @@ const MyFlashcards = () => {
             <div className={`space-y-8 ${designColors.animations.slideIn}`}>
               <div className="text-center space-y-6">
                 <div className="flex items-center justify-center gap-4 mb-6">
-                  <Sparkles className="h-12 w-12 text-purple-600 animate-pulse" />
+                  <Sparkles className="h-12 w-12 text-cyan-500 animate-pulse" />
                   <div className="flex items-center gap-3">
-                    <div className={`w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center ${designColors.animations.iconFloat}`}>
+                    <div className={`w-16 h-16 bg-gradient-to-r from-purple-400 to-cyan-500 rounded-2xl flex items-center justify-center ${designColors.animations.iconFloat}`}>
                       <Brain className="h-10 w-10 text-white" />
                     </div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
                       Meus Flashcards Mágicos
                     </h1>
                     <div className="text-5xl animate-bounce">🧠</div>
                   </div>
-                  <Sparkles className="h-12 w-12 text-pink-600 animate-pulse" />
+                  <Sparkles className="h-12 w-12 text-purple-500 animate-pulse" />
                 </div>
                 
                 <div className={`${designColors.cards.accent} p-6 max-w-4xl mx-auto`}>
@@ -76,13 +76,13 @@ const MyFlashcards = () => {
               <div className={`${designColors.cards.accent} p-6 text-center`}>
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <Brain className="h-8 w-8 text-purple-600 animate-pulse" />
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-purple-600 bg-clip-text text-transparent">
                     🎪 Estudando: {selectedResumo?.uploads?.texto_extraido?.slice(0, 50)}...
                   </h1>
                   <div className="text-3xl animate-bounce">⚡</div>
                 </div>
                 <div className="flex items-center justify-center gap-2">
-                  <Sparkles className="h-5 w-5 text-pink-500" />
+                  <Sparkles className="h-5 w-5 text-cyan-500" />
                   <p className="text-lg text-gray-600 font-medium">Modo de estudo com flashcards interativos</p>
                   <Sparkles className="h-5 w-5 text-purple-500" />
                 </div>

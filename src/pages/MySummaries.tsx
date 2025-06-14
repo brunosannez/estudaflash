@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
+import { designColors } from '@/utils/designSystem';
 
 interface Resumo {
   id: string;
@@ -90,11 +91,17 @@ const MySummaries = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className={`min-h-screen ${designColors.backgrounds.main}`}>
         <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className={`${designColors.cards.primary} p-8 text-center`}>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+              <div className="text-2xl font-bold text-gray-700 mb-2">
+                🚀 Carregando seus resumos...
+              </div>
+              <p className="text-gray-600 text-lg">Preparando seu conhecimento!</p>
+            </div>
           </div>
         </main>
       </div>
@@ -103,52 +110,69 @@ const MySummaries = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
+        {/* Elementos decorativos flutuantes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 text-4xl animate-bounce opacity-20">📚</div>
+          <div className="absolute top-40 right-20 text-3xl animate-pulse opacity-30">✨</div>
+          <div className="absolute bottom-20 left-20 text-5xl animate-float opacity-20">📖</div>
+          <div className="absolute bottom-40 right-10 text-2xl animate-bounce opacity-25">🌟</div>
+        </div>
+
         <Header />
         
-        <main className="container mx-auto px-4 py-8 space-y-8">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-white" />
+        <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
+          <div className={`text-center space-y-4 ${designColors.animations.slideIn}`}>
+            <div className="flex items-center justify-center gap-4">
+              <Sparkles className="h-10 w-10 text-cyan-500 animate-pulse" />
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-cyan-400 to-cyan-500 rounded-lg flex items-center justify-center animate-pulse">
+                  <BookOpen className="h-8 w-8 text-white" />
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 to-cyan-600 bg-clip-text text-transparent">
+                  Meus Resumos Incríveis
+                </h1>
+                <div className="text-4xl animate-bounce">📚</div>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800">Meus Resumos</h1>
+              <Sparkles className="h-10 w-10 text-purple-500 animate-pulse" />
             </div>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Acesse todos os seus resumos criados. Estude, revise e organize seu conhecimento.
-            </p>
+            <div className={`${designColors.cards.accent} p-4 max-w-2xl mx-auto`}>
+              <p className="text-gray-700 text-lg font-medium">
+                🎪 Acesse todos os seus resumos criados. Estude, revise e organize seu conhecimento de forma divertida! ✨
+              </p>
+            </div>
           </div>
 
           {/* Search bar */}
-          <div className="max-w-md mx-auto">
+          <div className={`max-w-md mx-auto ${designColors.animations.slideIn}`}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar resumos..."
+                placeholder="🔍 Buscar resumos mágicos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 border-cyan-200 rounded-xl focus:border-purple-400"
               />
             </div>
           </div>
 
           {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${designColors.animations.slideIn}`}>
+            <Card className={`bg-gradient-to-r from-cyan-400 to-cyan-500 text-white border-0 ${designColors.animations.cardHover}`}>
               <CardContent className="p-4 flex items-center gap-3">
                 <FileText className="h-8 w-8" />
                 <div>
-                  <p className="text-blue-100 text-sm">Total de Resumos</p>
+                  <p className="text-cyan-100 text-sm">📚 Total de Resumos</p>
                   <p className="text-2xl font-bold">{resumos.length}</p>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
+            <Card className={`bg-gradient-to-r from-green-400 to-green-500 text-white border-0 ${designColors.animations.cardHover}`}>
               <CardContent className="p-4 flex items-center gap-3">
                 <Clock className="h-8 w-8" />
                 <div>
-                  <p className="text-green-100 text-sm">Tempo Total de Leitura</p>
+                  <p className="text-green-100 text-sm">⏱️ Tempo de Leitura</p>
                   <p className="text-2xl font-bold">
                     {resumos.reduce((total, resumo) => total + getReadingTime(resumo.resumo_gerado), 0)} min
                   </p>
@@ -156,11 +180,11 @@ const MySummaries = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+            <Card className={`bg-gradient-to-r from-purple-400 to-purple-500 text-white border-0 ${designColors.animations.cardHover}`}>
               <CardContent className="p-4 flex items-center gap-3">
                 <Brain className="h-8 w-8" />
                 <div>
-                  <p className="text-purple-100 text-sm">Conteúdo Processado</p>
+                  <p className="text-purple-100 text-sm">🧠 Conteúdo Processado</p>
                   <p className="text-2xl font-bold">
                     {(resumos.reduce((total, resumo) => total + resumo.resumo_gerado.length, 0) / 1000).toFixed(0)}k chars
                   </p>
@@ -171,71 +195,79 @@ const MySummaries = () => {
 
           {/* Resumos list */}
           {filteredResumos.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  {searchTerm ? 'Nenhum resumo encontrado' : 'Nenhum resumo criado'}
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  {searchTerm 
-                    ? 'Tente buscar por outros termos.' 
-                    : 'Faça upload de uma imagem para criar seu primeiro resumo!'
-                  }
-                </p>
-                {!searchTerm && (
-                  <Button 
-                    onClick={() => navigate('/')}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    Criar Primeiro Resumo
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            <div className={designColors.animations.slideIn}>
+              <Card className={designColors.cards.primary}>
+                <CardContent className="text-center py-12">
+                  <div className="text-6xl mb-4">📚</div>
+                  <h3 className="text-2xl font-bold text-gray-700 mb-2">
+                    {searchTerm ? '🔍 Nenhum resumo encontrado' : '📖 Nenhum resumo criado ainda'}
+                  </h3>
+                  <p className="text-gray-600 mb-6 text-lg">
+                    {searchTerm 
+                      ? '🎯 Tente buscar por outros termos mágicos!' 
+                      : '🎪 Faça upload de uma imagem para criar seu primeiro resumo incrível!'
+                    }
+                  </p>
+                  {!searchTerm && (
+                    <Button 
+                      onClick={() => navigate('/')}
+                      className={`${designColors.buttons.primary} text-white font-bold py-3 px-6 rounded-xl shadow-lg ${designColors.animations.buttonHover}`}
+                    >
+                      ✨ Criar Primeiro Resumo
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredResumos.map((resumo) => (
-                <Card key={resumo.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg line-clamp-2">
-                        {resumo.uploads.texto_extraido?.slice(0, 50) || 'Resumo'}...
-                      </CardTitle>
-                      <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(resumo.data_criacao)}
-                    </p>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-700 line-clamp-3">
-                      {resumo.resumo_gerado.slice(0, 150)}...
-                    </p>
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${designColors.animations.slideIn}`}>
+              {filteredResumos.map((resumo, index) => (
+                <div 
+                  key={resumo.id}
+                  className={designColors.animations.cardHover}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <Card className={`${designColors.cards.primary} h-full`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg line-clamp-2 text-gray-700">
+                          📝 {resumo.uploads.texto_extraido?.slice(0, 50) || 'Resumo'}...
+                        </CardTitle>
+                        <Calendar className="h-4 w-4 text-cyan-500 flex-shrink-0 ml-2" />
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        🗓️ {formatDate(resumo.data_criacao)}
+                      </p>
+                    </CardHeader>
                     
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {getReadingTime(resumo.resumo_gerado)} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <FileText className="h-3 w-3" />
-                        {resumo.resumo_gerado.length} chars
-                      </span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => handleOpenResumo(resumo.uploads.id)}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        size="sm"
-                      >
-                        Estudar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-gray-700 line-clamp-3">
+                        {resumo.resumo_gerado.slice(0, 150)}...
+                      </p>
+                      
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          ⏱️ {getReadingTime(resumo.resumo_gerado)} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          📊 {resumo.resumo_gerado.length} chars
+                        </span>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => handleOpenResumo(resumo.uploads.id)}
+                          className={`flex-1 ${designColors.buttons.primary} text-white font-bold rounded-xl shadow-lg ${designColors.animations.buttonHover}`}
+                          size="sm"
+                        >
+                          🎯 Estudar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
           )}
