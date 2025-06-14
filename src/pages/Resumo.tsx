@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Sparkles, ArrowLeft, Brain, Loader2, Wand2, BookOpen, Clock, Target } from 'lucide-react';
+import { FileText, Sparkles, ArrowLeft, Brain, Loader2, Wand2, BookOpen, Clock, Target, Home, TestTube } from 'lucide-react';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
+import { useQuiz } from '@/hooks/useQuiz';
 import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
 import FlashcardList from '@/components/FlashcardList';
@@ -21,6 +22,9 @@ const Resumo = () => {
   const [loading, setLoading] = useState(true);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  
+  // Hook do quiz
+  const { generateQuiz, loading: quizLoading } = useQuiz(resumo?.id || '');
 
   useEffect(() => {
     if (uploadId) {
@@ -56,6 +60,18 @@ const Resumo = () => {
       // Opcional: atualizar a lista de flashcards se estiver aberta
     } catch (error) {
       console.error('Erro ao gerar flashcards automáticos:', error);
+    }
+  };
+
+  const handleGenerateQuiz = async () => {
+    try {
+      const success = await generateQuiz(resumo.resumo_gerado);
+      if (success) {
+        // Navegar para a página de quiz
+        navigate(`/quiz/${resumo.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao gerar quiz:', error);
     }
   };
 
@@ -179,7 +195,7 @@ const Resumo = () => {
                     ) : (
                       <>
                         <Wand2 className="h-5 w-5 mr-2" />
-                        Gerar Flashcards Automaticamente
+                        Gerar Flashcards IA
                       </>
                     )}
                   </Button>
@@ -195,13 +211,58 @@ const Resumo = () => {
                   </Button>
                   
                   <Button
-                    variant="outline"
-                    className="border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700"
-                    onClick={() => setShowQuiz(true)}
+                    onClick={handleGenerateQuiz}
+                    disabled={quizLoading}
+                    className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700"
                     size="lg"
                   >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    Gerar/Responder Quiz
+                    {quizLoading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Gerando Quiz...
+                      </>
+                    ) : (
+                      <>
+                        <TestTube className="h-5 w-5 mr-2" />
+                        Gerar Quiz IA
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 pt-4 border-t">
+                  <Button 
+                    onClick={() => navigate('/')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Home className="h-4 w-4 mr-2" />
+                    Início
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/meus-flashcards')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    Meus Flashcards
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/meus-resumos')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Meus Resumos
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/progresso')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Progresso
                   </Button>
                 </div>
               </div>
@@ -210,23 +271,6 @@ const Resumo = () => {
         </main>
 
         <FlashcardList resumoId={resumo.id} open={showFlashcards} onClose={() => setShowFlashcards(false)} />
-        
-        {showQuiz && (
-          <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center">
-            <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl relative">
-              <button
-                aria-label="Fechar"
-                className="absolute top-3 right-3 text-2xl font-bold hover:text-red-500 transition-colors"
-                onClick={() => setShowQuiz(false)}
-              >×</button>
-              <iframe
-                title="Quiz"
-                src={`/quiz/${resumo.id}`}
-                className="w-full h-[80vh] border-none rounded-b-xl"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </AuthGuard>
   );

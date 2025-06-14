@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Check, X, Brain } from 'lucide-react';
+import { RotateCcw, Check, X, Brain, Star } from 'lucide-react';
 
 interface AnkiFlashcardProps {
   pergunta: string;
@@ -10,6 +10,8 @@ interface AnkiFlashcardProps {
   exemplo?: string | null;
   onNext: () => void;
   onMarkReviewed: () => void;
+  onCorrectAnswer?: () => void;
+  onIncorrectAnswer?: () => void;
   currentIndex: number;
   totalCards: number;
 }
@@ -20,25 +22,50 @@ const AnkiFlashcard = ({
   exemplo, 
   onNext, 
   onMarkReviewed,
+  onCorrectAnswer,
+  onIncorrectAnswer,
   currentIndex,
   totalCards
 }: AnkiFlashcardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [answered, setAnswered] = useState(false);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
 
-  const handleNext = () => {
-    setIsFlipped(false);
+  const handleCorrect = () => {
+    setAnswered(true);
+    onCorrectAnswer?.();
     onMarkReviewed();
-    onNext();
+    setTimeout(() => {
+      setIsFlipped(false);
+      setAnswered(false);
+      onNext();
+    }, 1500);
+  };
+
+  const handleIncorrect = () => {
+    setAnswered(true);
+    onIncorrectAnswer?.();
+    onMarkReviewed();
+    setTimeout(() => {
+      setIsFlipped(false);
+      setAnswered(false);
+      onNext();
+    }, 1500);
   };
 
   return (
     <div className="max-w-md mx-auto">
       <div className="mb-4 text-center text-sm text-gray-600">
         Cartão {currentIndex + 1} de {totalCards}
+        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div 
+            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
+          ></div>
+        </div>
       </div>
       
       <div className="perspective-1000">
@@ -46,7 +73,7 @@ const AnkiFlashcard = ({
           className={`relative w-full h-80 transition-transform duration-700 preserve-3d cursor-pointer ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
-          onClick={handleFlip}
+          onClick={!isFlipped ? handleFlip : undefined}
         >
           {/* Frente do cartão */}
           <Card className={`absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-xl ${
@@ -77,32 +104,67 @@ const AnkiFlashcard = ({
                   </p>
                 </div>
               )}
-              <div className="mt-4 text-sm opacity-80">
-                Clique para voltar à pergunta
-              </div>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Controles */}
-      {isFlipped && (
-        <div className="mt-6 flex justify-center gap-4">
+      {/* Controles de gamificação */}
+      {isFlipped && !answered && (
+        <div className="mt-6 space-y-4">
+          <div className="text-center text-white text-sm mb-4">
+            Você lembrou da resposta?
+          </div>
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={handleIncorrect}
+              variant="outline"
+              size="lg"
+              className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 flex items-center gap-2"
+            >
+              <X className="h-5 w-5" />
+              Não Lembrei
+            </Button>
+            <Button
+              onClick={handleCorrect}
+              size="lg"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center gap-2"
+            >
+              <Star className="h-5 w-5" />
+              Lembrei (+5 XP)
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback visual após resposta */}
+      {answered && (
+        <div className="mt-6 text-center">
+          <div className="animate-bounce">
+            {onCorrectAnswer ? (
+              <div className="text-green-500 font-bold text-lg">
+                🎉 +5 XP! Muito bem!
+              </div>
+            ) : (
+              <div className="text-blue-500 font-bold text-lg">
+                📚 Continue estudando!
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Botão para voltar à pergunta */}
+      {isFlipped && !answered && (
+        <div className="mt-4 text-center">
           <Button
             onClick={() => setIsFlipped(false)}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex items-center gap-2"
+            className="text-gray-500 hover:text-gray-700"
           >
-            <RotateCcw className="h-4 w-4" />
-            Ver Pergunta
-          </Button>
-          <Button
-            onClick={handleNext}
-            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 flex items-center gap-2"
-          >
-            <Check className="h-4 w-4" />
-            Próximo Cartão
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Ver Pergunta Novamente
           </Button>
         </div>
       )}
