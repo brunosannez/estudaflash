@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -77,10 +78,15 @@ export function useQuiz(resumoId: string) {
   const enviarResposta = async (quizId: string, resposta_selecionada: number) => {
     const quiz = quizzes.find((q) => q.id === quizId);
     if (!quiz) return;
+    
     const acertou = resposta_selecionada === quiz.correta;
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
-      toast({ title: "Você precisa estar autenticado para responder o quiz.", variant: "destructive" });
+      toast({ 
+        title: "Você precisa estar autenticado para responder o quiz.", 
+        variant: "destructive" 
+      });
       return { acertou: false, explicacao: quiz.explicacao };
     }
     
@@ -98,29 +104,40 @@ export function useQuiz(resumoId: string) {
     if (!error && data) {
       setRespostas((prev) => [...prev, data]);
       
-      // Adicionar XP baseado na resposta
+      // Adicionar XP baseado na resposta com feedback mais detalhado
       try {
         if (acertou) {
           await addXP(10, 'quiz_correct');
           toast({
             title: "🎉 Correto! +10 XP",
-            description: "Excelente resposta!",
+            description: "Excelente resposta! Continue assim!",
             duration: 3000,
           });
         } else {
           await addXP(2, 'quiz_incorrect');
           toast({
-            title: "👍 +2 XP",
-            description: "Continue tentando! Você está aprendendo.",
+            title: "👍 +2 XP pela tentativa",
+            description: "Não desista! Cada erro é um aprendizado.",
             duration: 3000,
           });
         }
       } catch (error) {
         console.error("Erro ao adicionar XP:", error);
+        // Não bloquear o fluxo se houver erro na gamificação
       }
       
       return { acertou, explicacao: quiz.explicacao };
     }
+    
+    if (error) {
+      console.error("Erro ao salvar resposta:", error);
+      toast({
+        title: "Erro ao salvar resposta",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+    
     return { acertou: false, explicacao: quiz.explicacao };
   };
 

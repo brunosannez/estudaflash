@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useGameification } from "@/hooks/useGameification";
+import { useEffect } from "react";
 
 interface QuizResultProps {
   acertos: number;
@@ -11,7 +13,29 @@ interface QuizResultProps {
 
 const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
   const navigate = useNavigate();
+  const { addXP } = useGameification();
   const pct = Math.round((acertos / total) * 100);
+  
+  // Adicionar XP de bônus baseado na performance
+  useEffect(() => {
+    const addBonusXP = async () => {
+      try {
+        if (pct >= 90) {
+          await addXP(50, 'quiz_perfect');
+        } else if (pct >= 80) {
+          await addXP(30, 'quiz_excellent');
+        } else if (pct >= 70) {
+          await addXP(20, 'quiz_good');
+        } else if (pct >= 50) {
+          await addXP(10, 'quiz_complete');
+        }
+      } catch (error) {
+        console.error("Erro ao adicionar XP de bônus:", error);
+      }
+    };
+
+    addBonusXP();
+  }, [pct, addXP]);
   
   const getPerformanceData = () => {
     if (pct >= 90) return {
@@ -20,7 +44,8 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
       message: "Você é um verdadeiro gênio!",
       badge: "🥇 Medalha de Ouro",
       color: "from-yellow-400 to-orange-500",
-      bgColor: "from-yellow-50 to-orange-50"
+      bgColor: "from-yellow-50 to-orange-50",
+      bonusXP: "+50 XP de bônus!"
     };
     if (pct >= 80) return {
       emoji: "🎉", 
@@ -28,7 +53,8 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
       message: "Você mandou muito bem!",
       badge: "🥈 Medalha de Prata", 
       color: "from-blue-400 to-purple-500",
-      bgColor: "from-blue-50 to-purple-50"
+      bgColor: "from-blue-50 to-purple-50",
+      bonusXP: "+30 XP de bônus!"
     };
     if (pct >= 70) return {
       emoji: "👏",
@@ -36,7 +62,8 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
       message: "Você está no caminho certo!",
       badge: "🥉 Medalha de Bronze",
       color: "from-green-400 to-emerald-500", 
-      bgColor: "from-green-50 to-emerald-50"
+      bgColor: "from-green-50 to-emerald-50",
+      bonusXP: "+20 XP de bônus!"
     };
     if (pct >= 50) return {
       emoji: "💪",
@@ -44,7 +71,8 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
       message: "Continue estudando, você vai conseguir!",
       badge: "🌟 Estrela do Esforço",
       color: "from-pink-400 to-rose-500",
-      bgColor: "from-pink-50 to-rose-50"
+      bgColor: "from-pink-50 to-rose-50",
+      bonusXP: "+10 XP de bônus!"
     };
     return {
       emoji: "📚",
@@ -52,7 +80,8 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
       message: "Não desista! Cada erro é um aprendizado!",
       badge: "🎯 Foco no Aprendizado",
       color: "from-indigo-400 to-blue-500",
-      bgColor: "from-indigo-50 to-blue-50"
+      bgColor: "from-indigo-50 to-blue-50",
+      bonusXP: "Continue tentando!"
     };
   };
 
@@ -94,8 +123,15 @@ const QuizResult = ({ acertos, total, onRestart }: QuizResultProps) => {
                 {pct}% de acerto
               </div>
               
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${performance.color} text-white font-bold shadow-lg`}>
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${performance.color} text-white font-bold shadow-lg mb-3`}>
                 {performance.badge}
+              </div>
+
+              {/* XP de bônus */}
+              <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-3 border-2 border-purple-200">
+                <div className="text-purple-700 font-bold text-lg">
+                  ⭐ {performance.bonusXP}
+                </div>
               </div>
             </div>
           </div>

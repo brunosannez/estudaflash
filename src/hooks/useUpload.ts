@@ -96,13 +96,14 @@ export const useUpload = () => {
 
       setIsExtracting(false);
 
-      // Salvar no banco de dados
+      // Salvar no banco de dados com nome original do arquivo
       const { data: uploadRecord, error: dbError } = await supabase
         .from('uploads')
         .insert({
           user_id: user.id,
           imagem_url: publicUrl,
-          texto_extraido: extractData.extractedText || ''
+          texto_extraido: extractData.extractedText || '',
+          arquivo_original_nome: file.name
         })
         .select()
         .single();

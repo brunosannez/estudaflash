@@ -53,7 +53,10 @@ const QuizHistory = () => {
             resumo_id,
             resumos!inner(
               id,
-              arquivo_original_nome
+              upload_id,
+              uploads!inner(
+                arquivo_original_nome
+              )
             )
           )
         `)
@@ -70,7 +73,7 @@ const QuizHistory = () => {
       
       quizData?.forEach((response: any) => {
         const resumoId = response.quizzes.resumo_id;
-        const resumoTitulo = response.quizzes.resumos.arquivo_original_nome;
+        const resumoTitulo = response.quizzes.resumos.uploads.arquivo_original_nome;
         
         if (!groupedQuizzes.has(resumoId)) {
           groupedQuizzes.set(resumoId, {

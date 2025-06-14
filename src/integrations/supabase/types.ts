@@ -216,6 +216,7 @@ export type Database = {
       }
       uploads: {
         Row: {
+          arquivo_original_nome: string
           data_upload: string
           id: string
           imagem_url: string
@@ -223,6 +224,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          arquivo_original_nome: string
           data_upload?: string
           id?: string
           imagem_url: string
@@ -230,6 +232,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          arquivo_original_nome?: string
           data_upload?: string
           id?: string
           imagem_url?: string
