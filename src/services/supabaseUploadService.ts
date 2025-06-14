@@ -171,13 +171,19 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
       throw new Error('Nenhum texto foi extraído das imagens');
     }
     
+    // Get the original file name from the first file
+    const arquivoOriginalNome = successfulResults.length > 1 
+      ? `${successfulResults.length} arquivos processados`
+      : successfulResults[0].file.name;
+    
     console.log('💾 Saving to database...');
     const { data: uploadRecord, error: dbError } = await supabase
       .from('uploads')
       .insert({
         user_id: userId,
         imagem_url: successfulResults[0].imageUrl,
-        texto_extraido: combinedText
+        texto_extraido: combinedText,
+        arquivo_original_nome: arquivoOriginalNome
       })
       .select()
       .single();

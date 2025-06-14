@@ -19,7 +19,14 @@ export interface DailyActivity {
   xp_earned: number;
 }
 
-export type ActivityType = 'flashcard' | 'quiz_correct' | 'quiz_incorrect';
+export type ActivityType = 
+  | 'flashcard' 
+  | 'quiz_correct' 
+  | 'quiz_incorrect'
+  | 'quiz_perfect'
+  | 'quiz_excellent'
+  | 'quiz_good'
+  | 'quiz_complete';
 
 export interface GameStats {
   currentLevel: number;
