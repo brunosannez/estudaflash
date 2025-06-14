@@ -20,17 +20,15 @@ const QuizPage = () => {
   const [resumo, setResumo] = useState<any>(null);
   const {
     quizzes,
-    respostas,
     fetchQuizzes,
     generateQuiz,
-    enviarResposta,
     resetRespostas,
     loading: quizLoading
   } = useQuiz(resumoId!);
   const [status, setStatus] = useState<"idle" | "playing" | "done">("idle");
   const [ready, setReady] = useState(false);
-  const [acertos, setAcertos] = useState(0);
   const [error, setError] = useState<string>("");
+  const [sessionResult, setSessionResult] = useState<any>(null);
 
   useEffect(() => {
     if (resumoId) {
@@ -108,19 +106,15 @@ const QuizPage = () => {
     }
   };
 
-  const handleResponder = async (quizId: string, alt: number) => {
-    const resp = await enviarResposta(quizId, alt);
-    return resp;
-  };
-
-  const handleFinish = () => {
-    // Calcular acertos a partir do array de respostas
-    const count = respostas.reduce((acc, resp) => acc + (resp.acertou ? 1 : 0), 0);
-    setAcertos(count);
+  const handleFinish = (result: any) => {
+    console.log('🏆 Quiz finalizado com resultado:', result);
+    setSessionResult(result);
     setStatus("done");
   };
 
   const handleRestart = async () => {
+    console.log('🔄 Reiniciando quiz...');
+    setSessionResult(null);
     resetRespostas();
     setStatus("playing");
     await fetchQuizzes();
@@ -267,9 +261,9 @@ const QuizPage = () => {
               </div>
               <QuizSession quizzes={quizzes} onComplete={handleFinish} />
             </div>
-          ) : (
-            <QuizResult acertos={acertos} total={quizzes.length} onRestart={handleRestart} />
-          )}
+          ) : sessionResult ? (
+            <QuizResult sessionResult={sessionResult} onRestart={handleRestart} />
+          ) : null}
         </div>
       </div>
     </AuthGuard>

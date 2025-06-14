@@ -4,7 +4,7 @@ import QuizPlay from './QuizPlay';
 
 interface QuizSessionProps {
   quizzes: any[];
-  onComplete: () => void;
+  onComplete: (sessionResult: any) => void;
 }
 
 const QuizSession = ({ quizzes, onComplete }: QuizSessionProps) => {
@@ -25,10 +25,15 @@ const QuizSession = ({ quizzes, onComplete }: QuizSessionProps) => {
     return null;
   }
 
+  const handleComplete = (sessionResult: any) => {
+    console.log('📊 Sessão completa, passando resultado:', sessionResult);
+    onComplete(sessionResult);
+  };
+
   return (
     <QuizPlay 
       quiz={combinedQuiz} 
-      onComplete={onComplete} 
+      onComplete={handleComplete} 
     />
   );
 };
