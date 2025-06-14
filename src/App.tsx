@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Resumo from "./pages/Resumo";
 import NotFound from "./pages/NotFound";
 import QuizPage from "@/pages/Quiz";
+import QuizHistory from "@/pages/QuizHistory";
 import MyProgress from "@/pages/MyProgress";
 import MySummaries from "@/pages/MySummaries";
 import MyFlashcards from "@/pages/MyFlashcards";
@@ -47,6 +48,11 @@ const AppRoutes = () => {
       <Route path="/quiz/:resumoId" element={
         <ProtectedRoute>
           <QuizPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-history" element={
+        <ProtectedRoute>
+          <QuizHistory />
         </ProtectedRoute>
       } />
       <Route path="/progresso" element={

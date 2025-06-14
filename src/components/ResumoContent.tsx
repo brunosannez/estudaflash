@@ -9,8 +9,13 @@ interface ResumoContentProps {
 const ResumoContent = ({ content }: ResumoContentProps) => {
   // Função para processar e formatar o conteúdo do resumo
   const formatContent = (text: string) => {
-    // Dividir o texto em linhas
-    const lines = text.split('\n');
+    // Limpar o texto removendo símbolos # e formatando para crianças
+    let cleanText = text
+      .replace(/#{1,6}\s*/g, '') // Remove # símbolos
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+      .replace(/\*(.*?)\*/g, '$1'); // Remove markdown italic
+
+    const lines = cleanText.split('\n');
     const formattedLines: JSX.Element[] = [];
 
     lines.forEach((line, index) => {
@@ -21,55 +26,42 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
         return;
       }
 
-      // Títulos principais (linhas que começam com # ou são todas maiúsculas e curtas)
-      if (trimmedLine.startsWith('#') || 
-          (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 50 && !trimmedLine.includes('.'))) {
+      // Títulos principais (linhas curtas e em maiúsculas ou que terminam com :)
+      if (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 50 && !trimmedLine.includes('.') ||
+          trimmedLine.endsWith(':')) {
         formattedLines.push(
-          <div key={index} className="bg-gradient-to-r from-pink-400 via-purple-500 to-indigo-500 rounded-2xl p-6 my-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
-            <h2 className="text-3xl font-bold text-white text-center flex items-center justify-center gap-4">
-              <span className="text-4xl animate-bounce">🌟</span>
-              {trimmedLine.replace(/^#+\s*/, '')}
-              <span className="text-4xl animate-bounce">🌟</span>
+          <div key={index} className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 rounded-xl p-6 my-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+            <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-3">
+              <span className="text-3xl">🌟</span>
+              {trimmedLine.replace(/:$/, '')}
+              <span className="text-3xl">🌟</span>
             </h2>
           </div>
         );
         return;
       }
 
-      // Subtítulos (linhas que começam com ## ou terminam com :)
-      if (trimmedLine.startsWith('##') || trimmedLine.endsWith(':')) {
+      // Pontos de lista ou itens numerados
+      if (/^[-*•]\s+/.test(trimmedLine) || /^\d+[\.)]\s+/.test(trimmedLine)) {
         formattedLines.push(
-          <div key={index} className="bg-gradient-to-r from-orange-300 via-yellow-400 to-pink-400 rounded-xl p-5 my-5 shadow-xl border-4 border-yellow-200">
-            <h3 className="text-2xl font-bold text-orange-800 flex items-center gap-3">
-              <span className="text-3xl">🎯</span>
-              {trimmedLine.replace(/^#+\s*/, '').replace(/:$/, '')}
-            </h3>
-          </div>
-        );
-        return;
-      }
-
-      // Pontos de lista (linhas que começam com -, *, •, ou números)
-      if (/^[-*•]\s+/.test(trimmedLine) || /^\d+\.\s+/.test(trimmedLine)) {
-        formattedLines.push(
-          <div key={index} className="flex items-start gap-4 my-4 ml-6 p-5 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl border-l-8 border-green-400 shadow-lg hover:shadow-xl transition-shadow">
-            <span className="text-3xl flex-shrink-0 animate-pulse">⭐</span>
-            <p className="text-gray-800 leading-relaxed text-xl font-semibold">
-              {trimmedLine.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '')}
+          <div key={index} className="flex items-start gap-4 my-4 p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg border-l-4 border-blue-400 shadow-md hover:shadow-lg transition-shadow">
+            <span className="text-2xl flex-shrink-0">✨</span>
+            <p className="text-gray-800 leading-relaxed text-lg font-medium">
+              {trimmedLine.replace(/^[-*•]\s+/, '').replace(/^\d+[\.)]\s+/, '')}
             </p>
           </div>
         );
         return;
       }
 
-      // Texto destacado (entre aspas ou parênteses)
+      // Texto em aspas ou parênteses (citações importantes)
       if ((trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) ||
           (trimmedLine.startsWith('(') && trimmedLine.endsWith(')'))) {
         formattedLines.push(
-          <div key={index} className="bg-gradient-to-r from-cyan-100 via-blue-100 to-purple-100 border-4 border-cyan-300 rounded-2xl p-6 my-5 shadow-xl">
-            <div className="flex items-center gap-4">
-              <span className="text-4xl">💡</span>
-              <p className="text-blue-800 italic text-xl font-bold">
+          <div key={index} className="bg-gradient-to-r from-yellow-100 to-orange-100 border-l-4 border-yellow-400 rounded-lg p-5 my-4 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">💡</span>
+              <p className="text-orange-800 italic text-lg font-semibold">
                 {trimmedLine.replace(/^["(]/, '').replace(/[")]$/, '')}
               </p>
             </div>
@@ -80,10 +72,10 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
 
       // Parágrafos normais
       formattedLines.push(
-        <div key={index} className="bg-white rounded-2xl p-6 my-4 shadow-lg border-2 border-gray-100 hover:border-purple-200 transition-colors">
-          <p className="text-gray-800 leading-relaxed text-lg flex items-start gap-4">
-            <span className="text-2xl flex-shrink-0">📚</span>
-            <span className="font-medium">{trimmedLine}</span>
+        <div key={index} className="bg-white rounded-lg p-5 my-3 shadow-sm border border-gray-100 hover:border-purple-200 transition-colors">
+          <p className="text-gray-800 leading-relaxed text-lg flex items-start gap-3">
+            <span className="text-xl flex-shrink-0 mt-1">📚</span>
+            <span>{trimmedLine}</span>
           </p>
         </div>
       );
@@ -93,17 +85,17 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
   };
 
   return (
-    <Card className="p-8 bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50 border-0 shadow-2xl rounded-3xl">
+    <Card className="p-6 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-0 shadow-xl rounded-2xl">
       <div className="max-w-none">
         <div className="space-y-3">
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent flex items-center justify-center gap-4">
-              <span className="text-6xl animate-spin">🎪</span>
-              Vamos Aprender Juntos!
-              <span className="text-6xl animate-bounce">🎈</span>
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
+              <span className="text-5xl">🎓</span>
+              Vamos Aprender!
+              <span className="text-5xl">📖</span>
             </h1>
-            <p className="text-2xl font-semibold text-purple-600 mt-4">
-              ✨ Prepare-se para uma aventura incrível! ✨
+            <p className="text-xl font-semibold text-purple-600 mt-3">
+              Leia com atenção e prepare-se para o quiz! 🚀
             </p>
           </div>
           
@@ -111,16 +103,16 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
             {formatContent(content)}
           </div>
           
-          <div className="text-center mt-10 p-8 bg-gradient-to-r from-green-200 via-blue-200 to-purple-200 rounded-3xl shadow-xl border-4 border-rainbow-300">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <span className="text-5xl animate-bounce">🏆</span>
-              <h2 className="text-3xl font-bold text-purple-700">
-                Parabéns, Campeão!
+          <div className="text-center mt-8 p-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl shadow-lg border-2 border-green-300">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-4xl">🏆</span>
+              <h2 className="text-2xl font-bold text-green-700">
+                Parabéns! Você terminou de ler!
               </h2>
-              <span className="text-5xl animate-bounce">🎉</span>
+              <span className="text-4xl">🎉</span>
             </div>
-            <p className="text-xl font-bold text-purple-600">
-              Você leu tudo! Agora está pronto para os desafios! 🚀
+            <p className="text-lg font-semibold text-green-600">
+              Agora você está pronto para o desafio do quiz! 💪
             </p>
           </div>
         </div>

@@ -1,74 +1,168 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { BookOpen, User, LogOut, Brain, FileText, Sparkles } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate, useLocation } from 'react-router-dom';
-import AuthModal from './AuthModal';
+import { Button } from '@/components/ui/button';
+import { 
+  LogOut, 
+  User, 
+  BookOpen, 
+  Brain, 
+  Trophy,
+  History,
+  Home,
+  ChevronDown
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navigationItems = [
-    { path: '/', label: 'Início', icon: BookOpen },
-    { path: '/meus-resumos', label: 'Meus Resumos', icon: FileText },
-    { path: '/meus-flashcards', label: 'Flashcards', icon: Brain },
-    { path: '/progresso', label: 'Progresso', icon: Sparkles },
-  ];
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/home');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-800">EstudoFácil AI</h1>
-          </div>
+          <Link 
+            to={user ? "/" : "/home"} 
+            className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent hover:scale-105 transition-transform"
+          >
+            🎓 StudyAI
+          </Link>
           
           {user && (
-            <nav className="hidden md:flex items-center space-x-1">
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Button
-                    key={item.path}
-                    variant={isActive ? "default" : "ghost"}
-                    onClick={() => navigate(item.path)}
-                    className={`flex items-center space-x-2 ${
-                      isActive ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : ''
-                    }`}
-                    size="sm"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                );
-              })}
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link 
+                to="/" 
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/') 
+                    ? 'bg-purple-100 text-purple-700 font-semibold' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                <Home className="h-4 w-4" />
+                Início
+              </Link>
+              
+              <Link 
+                to="/meus-resumos" 
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/meus-resumos') 
+                    ? 'bg-purple-100 text-purple-700 font-semibold' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                Resumos
+              </Link>
+              
+              <Link 
+                to="/meus-flashcards" 
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/meus-flashcards') 
+                    ? 'bg-purple-100 text-purple-700 font-semibold' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                <Brain className="h-4 w-4" />
+                Flashcards
+              </Link>
+              
+              <Link 
+                to="/quiz-history" 
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/quiz-history') 
+                    ? 'bg-purple-100 text-purple-700 font-semibold' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                <History className="h-4 w-4" />
+                Histórico de Quizzes
+              </Link>
+              
+              <Link 
+                to="/progresso" 
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/progresso') 
+                    ? 'bg-purple-100 text-purple-700 font-semibold' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                <Trophy className="h-4 w-4" />
+                Progresso
+              </Link>
             </nav>
           )}
-          
+
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-600">{user.email}</span>
-                </div>
-                <Button variant="outline" onClick={signOut} size="sm">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {user.email?.split('@')[0]}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm font-medium">
+                    {user.email}
+                  </div>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Menu mobile */}
+                  <div className="md:hidden">
+                    <DropdownMenuItem onClick={() => navigate('/')}>
+                      <Home className="h-4 w-4 mr-2" />
+                      Início
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/meus-resumos')}>
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Resumos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/meus-flashcards')}>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Flashcards
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/quiz-history')}>
+                      <History className="h-4 w-4 mr-2" />
+                      Histórico de Quizzes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/progresso')}>
+                      <Trophy className="h-4 w-4 mr-2" />
+                      Progresso
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </div>
+                  
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <AuthModal>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <User className="h-4 w-4 mr-2" />
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" onClick={() => navigate('/home')}>
                   Entrar
                 </Button>
-              </AuthModal>
+              </div>
             )}
           </div>
         </div>
