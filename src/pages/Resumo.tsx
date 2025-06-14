@@ -7,6 +7,7 @@ import { FileText, Sparkles, ArrowLeft, Brain, Loader2 } from 'lucide-react';
 import { useSummary } from '@/hooks/useSummary';
 import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
+import FlashcardList from '@/components/FlashcardList';
 
 const Resumo = () => {
   const { uploadId } = useParams();
@@ -14,11 +15,13 @@ const Resumo = () => {
   const { getResumo } = useSummary();
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showFlashcards, setShowFlashcards] = useState(false);
 
   useEffect(() => {
     if (uploadId) {
       loadResumo();
     }
+    // eslint-disable-next-line
   }, [uploadId]);
 
   const loadResumo = async () => {
@@ -39,8 +42,7 @@ const Resumo = () => {
   };
 
   const handleGerarFlashcards = () => {
-    // TODO: Implementar funcionalidade de flashcards
-    console.log('Gerar flashcards para resumo:', resumo.id);
+    setShowFlashcards(true);
   };
 
   if (loading) {
@@ -101,20 +103,22 @@ const Resumo = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-center mt-8 pt-6 border-t">
+                <div className="flex flex-col md:flex-row gap-3 justify-center mt-8 pt-6 border-t">
                   <Button 
                     onClick={handleGerarFlashcards}
                     className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     size="lg"
                   >
                     <Brain className="h-5 w-5 mr-2" />
-                    Gerar Flashcards
+                    Gerenciar Flashcards
                   </Button>
+                  {/* Futuramente: adicionar botão "Revisar" flashcards */}
                 </div>
               </CardContent>
             </Card>
           </div>
         </main>
+        <FlashcardList resumoId={resumo.id} open={showFlashcards} onClose={() => setShowFlashcards(false)} />
       </div>
     </AuthGuard>
   );

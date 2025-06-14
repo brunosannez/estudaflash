@@ -9,6 +9,73 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      flashcard_reviews: {
+        Row: {
+          data_review: string
+          flashcard_id: string
+          id: string
+          lembrou: boolean
+          user_id: string
+        }
+        Insert: {
+          data_review?: string
+          flashcard_id: string
+          id?: string
+          lembrou: boolean
+          user_id: string
+        }
+        Update: {
+          data_review?: string
+          flashcard_id?: string
+          id?: string
+          lembrou?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_reviews_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcards: {
+        Row: {
+          data_criacao: string
+          exemplo: string | null
+          id: string
+          pergunta: string
+          resposta: string
+          resumo_id: string
+        }
+        Insert: {
+          data_criacao?: string
+          exemplo?: string | null
+          id?: string
+          pergunta: string
+          resposta: string
+          resumo_id: string
+        }
+        Update: {
+          data_criacao?: string
+          exemplo?: string | null
+          id?: string
+          pergunta?: string
+          resposta?: string
+          resumo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_resumo_id_fkey"
+            columns: ["resumo_id"]
+            isOneToOne: false
+            referencedRelation: "resumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumos: {
         Row: {
           data_criacao: string
