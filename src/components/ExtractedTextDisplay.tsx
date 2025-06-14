@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Sparkles } from 'lucide-react';
+import { FileText, Sparkles, Loader2 } from 'lucide-react';
+import { useSummary } from '@/hooks/useSummary';
+import { useNavigate } from 'react-router-dom';
 
 interface ExtractedTextDisplayProps {
   uploadData: {
@@ -14,6 +16,20 @@ interface ExtractedTextDisplayProps {
 }
 
 const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDisplayProps) => {
+  const { generateSummary, isGenerating } = useSummary();
+  const navigate = useNavigate();
+
+  const handleGenerateSummary = async () => {
+    try {
+      const resumo = await generateSummary(uploadData.id, uploadData.texto_extraido);
+      if (resumo) {
+        navigate(`/resumo/${uploadData.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao gerar resumo:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -52,12 +68,22 @@ const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDi
           {uploadData.texto_extraido && (
             <div className="flex justify-center pt-4">
               <Button 
-                onClick={onGenerateSummary}
+                onClick={handleGenerateSummary}
                 className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                 size="lg"
+                disabled={isGenerating}
               >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Gerar Resumo com IA
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Gerando Resumo...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Gerar Resumo com IA
+                  </>
+                )}
               </Button>
             </div>
           )}
