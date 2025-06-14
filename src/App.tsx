@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import Index from "./pages/Index";
 import Resumo from "./pages/Resumo";
 import NotFound from "./pages/NotFound";
 import QuizPage from "@/pages/Quiz";
+import MyProgress from "@/pages/MyProgress";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/resumo/:uploadId" element={<Resumo />} />
           <Route path="/quiz/:resumoId" element={<QuizPage />} />
+          <Route path="/progresso" element={<MyProgress />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

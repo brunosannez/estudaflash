@@ -1,34 +1,53 @@
 
+import { useEffect } from 'react';
 import { Flame, Trophy, Target, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import StatsCard from './StatsCard';
+import { useGameification } from '@/hooks/useGameification';
+import { Loader2 } from 'lucide-react';
 
 const ProgressOverview = () => {
+  const { loading, getStats, fetchUserProgress } = useGameification();
+
+  useEffect(() => {
+    fetchUserProgress();
+  }, []);
+
+  const stats = getStats();
+
+  if (loading || !stats) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="XP Total"
-          value="1,250"
+          value={stats.currentXp.toString()}
           icon={Trophy}
           gradient="bg-gradient-to-br from-yellow-500 to-orange-600"
         />
         <StatsCard
           title="Streak"
-          value="7 dias"
+          value={`${stats.currentStreak} dias`}
           icon={Flame}
           gradient="bg-gradient-to-br from-red-500 to-pink-600"
         />
         <StatsCard
-          title="Flashcards"
-          value="45"
+          title="Flashcards Hoje"
+          value={stats.todayFlashcards.toString()}
           icon={Target}
           gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
         />
         <StatsCard
-          title="Tempo Hoje"
-          value="25min"
+          title="XP Hoje"
+          value={`${stats.todayXp} XP`}
           icon={Clock}
           gradient="bg-gradient-to-br from-green-500 to-teal-600"
         />
@@ -44,12 +63,12 @@ const ProgressOverview = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Nível 5</span>
-              <span className="text-sm text-gray-500">1,250 / 1,500 XP</span>
+              <span className="text-sm font-medium">Nível {stats.currentLevel}</span>
+              <span className="text-sm text-gray-500">{stats.currentXp} / {stats.nextLevelXp} XP</span>
             </div>
-            <Progress value={83} className="h-3" />
+            <Progress value={stats.xpProgress} className="h-3" />
             <p className="text-sm text-gray-600">
-              Faltam apenas 250 XP para o próximo nível!
+              Faltam apenas {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!
             </p>
           </CardContent>
         </Card>
@@ -63,11 +82,11 @@ const ProgressOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-              <span className="text-2xl font-bold">7 dias</span>
-              <span className="text-sm text-gray-500">Recorde: 12 dias</span>
+              <span className="text-2xl font-bold">{stats.currentStreak} dias 🔥</span>
+              <span className="text-sm text-gray-500">Recorde: {stats.longestStreak} dias</span>
             </div>
             <div className="flex space-x-1">
-              {Array.from({length: 7}).map((_, i) => (
+              {Array.from({length: Math.min(stats.currentStreak, 7)}).map((_, i) => (
                 <div 
                   key={i} 
                   className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
@@ -75,9 +94,11 @@ const ProgressOverview = () => {
                   ✓
                 </div>
               ))}
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
-                ?
-              </div>
+              {stats.currentStreak < 7 && (
+                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
+                  ?
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

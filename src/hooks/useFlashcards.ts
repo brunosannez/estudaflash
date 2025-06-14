@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useGameification } from "@/hooks/useGameification";
 
 export interface Flashcard {
   id: string;
@@ -15,6 +16,7 @@ export const useFlashcards = (resumoId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const { toast } = useToast();
+  const { addXP } = useGameification();
 
   // Busca flashcards desse resumo
   const fetchFlashcards = async () => {
@@ -79,12 +81,29 @@ export const useFlashcards = (resumoId: string | undefined) => {
     return true;
   };
 
+  // Marcar flashcard como revisado (nova função para gamificação)
+  const reviewFlashcard = async (flashcardId: string) => {
+    try {
+      await addXP(5, 'flashcard');
+      toast({
+        title: "🎉 +5 XP",
+        description: "Flashcard revisado com sucesso!",
+        duration: 3000,
+      });
+      return true;
+    } catch (error) {
+      console.error("Erro ao registrar revisão:", error);
+      return false;
+    }
+  };
+
   return {
     loading,
     cards,
     fetchFlashcards,
     createFlashcard,
     deleteFlashcard,
+    reviewFlashcard,
     setCards, // para usos avançados
   };
 };

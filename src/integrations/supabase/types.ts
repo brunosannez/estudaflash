@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_activities: {
+        Row: {
+          activity_date: string
+          created_at: string
+          flashcards_reviewed: number
+          id: string
+          quiz_correct_answers: number
+          quizzes_completed: number
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          activity_date?: string
+          created_at?: string
+          flashcards_reviewed?: number
+          id?: string
+          quiz_correct_answers?: number
+          quizzes_completed?: number
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          flashcards_reviewed?: number
+          id?: string
+          quiz_correct_answers?: number
+          quizzes_completed?: number
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       flashcard_reviews: {
         Row: {
           data_review: string
@@ -198,6 +234,42 @@ export type Database = {
           id?: string
           imagem_url?: string
           texto_extraido?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          created_at: string
+          current_level: number
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_level?: number
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_level?: number
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          total_xp?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
