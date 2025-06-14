@@ -19,7 +19,7 @@ const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDi
 
   const handleGenerateSummary = async () => {
     try {
-      const result = await generateSummary(uploadData.id);
+      const result = await generateSummary(uploadData.id, uploadData.texto_extraido || '');
       if (result) {
         setSummaryGenerated(true);
         // Navegar para a página do resumo após 2 segundos
