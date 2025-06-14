@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { useSummary } from '@/hooks/useSummary';
 import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
 import FlashcardList from '@/components/FlashcardList';
+import QuizGeneratorButton from "@/components/QuizGeneratorButton";
 
 const Resumo = () => {
   const { uploadId } = useParams();
@@ -16,6 +16,7 @@ const Resumo = () => {
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
 
   useEffect(() => {
     if (uploadId) {
@@ -112,13 +113,36 @@ const Resumo = () => {
                     <Brain className="h-5 w-5 mr-2" />
                     Gerenciar Flashcards
                   </Button>
-                  {/* Futuramente: adicionar botão "Revisar" flashcards */}
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={() => setShowQuiz(true)}
+                  >
+                    <Sparkles className="h-5 w-5" />
+                    Gerar/Responder Quiz
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
         </main>
         <FlashcardList resumoId={resumo.id} open={showFlashcards} onClose={() => setShowFlashcards(false)} />
+        {showQuiz && (
+          <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center">
+            <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl relative">
+              <button
+                aria-label="Fechar"
+                className="absolute top-3 right-3 text-2xl font-bold"
+                onClick={() => setShowQuiz(false)}
+              >×</button>
+              <iframe
+                title="Quiz"
+                src={`/quiz/${resumo.id}`}
+                className="w-full h-[80vh] border-none rounded-b-xl"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );

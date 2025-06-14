@@ -76,6 +76,79 @@ export type Database = {
           },
         ]
       }
+      quiz_respostas: {
+        Row: {
+          acertou: boolean
+          data_resposta: string
+          id: string
+          quiz_id: string
+          resposta_selecionada: number
+          user_id: string
+        }
+        Insert: {
+          acertou: boolean
+          data_resposta?: string
+          id?: string
+          quiz_id: string
+          resposta_selecionada: number
+          user_id: string
+        }
+        Update: {
+          acertou?: boolean
+          data_resposta?: string
+          id?: string
+          quiz_id?: string
+          resposta_selecionada?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_respostas_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          alternativas: Json
+          correta: number
+          data_criacao: string
+          explicacao: string
+          id: string
+          pergunta: string
+          resumo_id: string
+        }
+        Insert: {
+          alternativas: Json
+          correta: number
+          data_criacao?: string
+          explicacao: string
+          id?: string
+          pergunta: string
+          resumo_id: string
+        }
+        Update: {
+          alternativas?: Json
+          correta?: number
+          data_criacao?: string
+          explicacao?: string
+          id?: string
+          pergunta?: string
+          resumo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_resumo_id_fkey"
+            columns: ["resumo_id"]
+            isOneToOne: false
+            referencedRelation: "resumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumos: {
         Row: {
           data_criacao: string
