@@ -25,10 +25,12 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
       if (trimmedLine.startsWith('#') || 
           (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 50 && !trimmedLine.includes('.'))) {
         formattedLines.push(
-          <h2 key={index} className="text-xl font-bold text-blue-800 mt-6 mb-3 flex items-center gap-2">
-            <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-            {trimmedLine.replace(/^#+\s*/, '')}
-          </h2>
+          <div key={index} className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl p-4 my-6 shadow-lg">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="text-3xl">🎯</span>
+              {trimmedLine.replace(/^#+\s*/, '')}
+            </h2>
+          </div>
         );
         return;
       }
@@ -36,10 +38,12 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
       // Subtítulos (linhas que começam com ## ou terminam com :)
       if (trimmedLine.startsWith('##') || trimmedLine.endsWith(':')) {
         formattedLines.push(
-          <h3 key={index} className="text-lg font-semibold text-green-700 mt-4 mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            {trimmedLine.replace(/^#+\s*/, '').replace(/:$/, '')}
-          </h3>
+          <div key={index} className="bg-gradient-to-r from-blue-300 to-cyan-300 rounded-lg p-3 my-4 shadow-md">
+            <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+              <span className="text-xl">⭐</span>
+              {trimmedLine.replace(/^#+\s*/, '').replace(/:$/, '')}
+            </h3>
+          </div>
         );
         return;
       }
@@ -47,9 +51,9 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
       // Pontos de lista (linhas que começam com -, *, •, ou números)
       if (/^[-*•]\s+/.test(trimmedLine) || /^\d+\.\s+/.test(trimmedLine)) {
         formattedLines.push(
-          <div key={index} className="flex items-start gap-3 my-2 ml-4">
-            <span className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></span>
-            <p className="text-gray-700 leading-relaxed">
+          <div key={index} className="flex items-start gap-3 my-3 ml-4 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+            <span className="text-2xl mt-1">🌟</span>
+            <p className="text-gray-800 leading-relaxed text-lg font-medium">
               {trimmedLine.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '')}
             </p>
           </div>
@@ -61,10 +65,13 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
       if ((trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) ||
           (trimmedLine.startsWith('(') && trimmedLine.endsWith(')'))) {
         formattedLines.push(
-          <div key={index} className="bg-yellow-50 border-l-4 border-yellow-400 p-3 my-3 rounded-r-lg">
-            <p className="text-gray-700 italic">
-              {trimmedLine.replace(/^["(]/, '').replace(/[")]$/, '')}
-            </p>
+          <div key={index} className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-xl p-4 my-4 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">💡</span>
+              <p className="text-green-800 italic text-lg font-medium">
+                {trimmedLine.replace(/^["(]/, '').replace(/[")]$/, '')}
+              </p>
+            </div>
           </div>
         );
         return;
@@ -72,9 +79,12 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
 
       // Parágrafos normais
       formattedLines.push(
-        <p key={index} className="text-gray-700 leading-relaxed my-2">
-          {trimmedLine}
-        </p>
+        <div key={index} className="bg-white rounded-lg p-4 my-3 shadow-sm border border-gray-200">
+          <p className="text-gray-800 leading-relaxed text-lg flex items-start gap-3">
+            <span className="text-xl mt-1">📚</span>
+            {trimmedLine}
+          </p>
+        </div>
       );
     });
 
@@ -82,10 +92,24 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-lg">
+    <Card className="p-6 bg-gradient-to-br from-rainbow-100 via-white to-rainbow-50 border-0 shadow-xl">
       <div className="prose prose-lg max-w-none">
-        <div className="space-y-1">
+        <div className="space-y-2">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-purple-600 flex items-center justify-center gap-3">
+              <span className="text-4xl">🎪</span>
+              Vamos Aprender Juntos!
+              <span className="text-4xl">🎈</span>
+            </h1>
+          </div>
           {formatContent(content)}
+          <div className="text-center mt-8 p-4 bg-gradient-to-r from-pink-200 to-purple-200 rounded-xl">
+            <p className="text-purple-700 font-bold text-lg flex items-center justify-center gap-2">
+              <span className="text-2xl">🏆</span>
+              Parabéns! Você leu tudo!
+              <span className="text-2xl">🎉</span>
+            </p>
+          </div>
         </div>
       </div>
     </Card>
