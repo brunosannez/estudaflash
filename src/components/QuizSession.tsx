@@ -8,36 +8,27 @@ interface QuizSessionProps {
 }
 
 const QuizSession = ({ quizzes, onComplete }: QuizSessionProps) => {
-  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
-
-  const handleQuizComplete = () => {
-    if (currentQuizIndex < quizzes.length - 1) {
-      setCurrentQuizIndex(currentQuizIndex + 1);
-    } else {
-      onComplete();
-    }
+  // Convert all individual quizzes to a single quiz with multiple questions
+  const combinedQuiz = {
+    titulo: `Quiz Completo`,
+    resumo_id: quizzes[0]?.resumo_id || '',
+    questoes: quizzes.map((quiz, index) => ({
+      id: quiz.id,
+      pergunta: quiz.pergunta,
+      alternativas: quiz.alternativas,
+      resposta_correta: quiz.correta,
+      explicacao: quiz.explicacao || ''
+    }))
   };
 
   if (quizzes.length === 0) {
     return null;
   }
 
-  // Convert individual quiz format to expected format
-  const currentQuiz = {
-    titulo: `Quiz ${currentQuizIndex + 1}`,
-    resumo_id: quizzes[currentQuizIndex].resumo_id,
-    questoes: [{
-      id: quizzes[currentQuizIndex].id,
-      pergunta: quizzes[currentQuizIndex].pergunta,
-      alternativas: quizzes[currentQuizIndex].alternativas,
-      resposta_correta: quizzes[currentQuizIndex].correta
-    }]
-  };
-
   return (
     <QuizPlay 
-      quiz={currentQuiz} 
-      onComplete={handleQuizComplete} 
+      quiz={combinedQuiz} 
+      onComplete={onComplete} 
     />
   );
 };

@@ -64,8 +64,11 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
         if (response && response.explicacao) {
           console.log('💡 Explicação recebida:', response.explicacao);
           setCurrentExplanation(response.explicacao);
+        } else if (currentQuestion.explicacao) {
+          console.log('💡 Usando explicação da pergunta:', currentQuestion.explicacao);
+          setCurrentExplanation(currentQuestion.explicacao);
         } else {
-          console.log('⚠️ Nenhuma explicação recebida');
+          console.log('⚠️ Nenhuma explicação disponível');
           setCurrentExplanation('');
         }
       }
@@ -85,7 +88,7 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
       
     } catch (error) {
       console.error("Erro ao processar resposta:", error);
-      setCurrentExplanation('');
+      setCurrentExplanation(currentQuestion.explicacao || '');
     }
   };
 

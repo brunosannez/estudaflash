@@ -30,11 +30,18 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
 
   const isLastQuestion = currentQuestionIndex === quiz.questoes.length - 1;
 
+  console.log('🎯 Quiz Debug Info:', {
+    currentQuestionIndex,
+    totalQuestions: quiz.questoes.length,
+    isLastQuestion,
+    showResult
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 relative overflow-hidden">
       <QuizCelebration show={showCelebration} />
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <QuizHeader 
           quizTitle={quiz.titulo}
           currentXP={currentXP}
