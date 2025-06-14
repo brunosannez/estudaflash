@@ -9,6 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      resumos: {
+        Row: {
+          data_criacao: string
+          id: string
+          resumo_gerado: string
+          upload_id: string
+        }
+        Insert: {
+          data_criacao?: string
+          id?: string
+          resumo_gerado: string
+          upload_id: string
+        }
+        Update: {
+          data_criacao?: string
+          id?: string
+          resumo_gerado?: string
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resumos_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploads: {
         Row: {
           data_upload: string
