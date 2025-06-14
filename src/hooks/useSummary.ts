@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -85,7 +86,7 @@ export const useSummary = () => {
         .from('resumos')
         .select('*')
         .eq('upload_id', uploadId)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erro ao buscar resumo:', error);
@@ -113,9 +114,9 @@ export const useSummary = () => {
         .from('resumos')
         .select('*')
         .eq('id', resumoId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Erro ao buscar resumo por ID:', error);
         throw error;
       }

@@ -32,7 +32,16 @@ const QuizPage = () => {
 
   useEffect(() => {
     if (resumoId) {
+      console.log('Quiz page loaded with resumoId:', resumoId);
       fetchResumoAndQuizzes();
+    } else {
+      console.error('No resumoId provided');
+      toast({
+        title: "Erro",
+        description: "ID do resumo não fornecido.",
+        variant: "destructive",
+      });
+      navigate('/');
     }
     // eslint-disable-next-line
   }, [resumoId]);
@@ -51,12 +60,16 @@ const QuizPage = () => {
           description: "Resumo não encontrado.",
           variant: "destructive",
         });
-        navigate(-1);
+        navigate('/');
         return;
       }
       
+      console.log('Resumo carregado:', r);
       setResumo(r);
+      
+      console.log('Carregando quizzes existentes...');
       await fetchQuizzes();
+      
       setReady(true);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -65,14 +78,25 @@ const QuizPage = () => {
         description: "Erro ao carregar o resumo.",
         variant: "destructive",
       });
-      navigate(-1);
+      navigate('/');
     }
   };
 
   const handleGerarQuiz = async () => {
-    if (!resumo) return;
-    await generateQuiz(resumo.resumo_gerado);
-    setStatus("playing");
+    if (!resumo) {
+      toast({
+        title: "Erro",
+        description: "Resumo não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Gerando quiz para resumo:', resumo.id);
+    const success = await generateQuiz(resumo.resumo_gerado);
+    if (success) {
+      setStatus("playing");
+    }
   };
 
   const handleResponder = async (quizId: string, alt: number) => {
@@ -96,7 +120,10 @@ const QuizPage = () => {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p>Carregando quiz...</p>
+        </div>
       </div>
     );
   }
@@ -106,9 +133,10 @@ const QuizPage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-4">Resumo não encontrado</h2>
-          <Button onClick={() => navigate(-1)}>
+          <p className="text-gray-600 mb-4">O resumo que você está tentando acessar não foi encontrado.</p>
+          <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            Voltar ao Início
           </Button>
         </div>
       </div>
@@ -123,7 +151,7 @@ const QuizPage = () => {
           <Button
             variant="outline"
             className="mb-4 flex items-center gap-2"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar
