@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuiz } from "@/hooks/useQuiz";
 import { useSummary } from "@/hooks/useSummary";
 import QuizGeneratorButton from "@/components/QuizGeneratorButton";
-import QuizPlay from "@/components/QuizPlay";
+import QuizSession from "@/components/QuizSession";
 import QuizResult from "@/components/QuizResult";
 import Header from "@/components/Header";
 import AuthGuard from "@/components/AuthGuard";
@@ -266,7 +265,7 @@ const QuizPage = () => {
                 </h2>
                 <p className="text-lg text-gray-600 mt-2">Responda com calma e boa sorte! 🍀</p>
               </div>
-              <QuizPlay quizzes={quizzes} onResponder={handleResponder} onFinish={handleFinish} />
+              <QuizSession quizzes={quizzes} onComplete={handleFinish} />
             </div>
           ) : (
             <QuizResult acertos={acertos} total={quizzes.length} onRestart={handleRestart} />

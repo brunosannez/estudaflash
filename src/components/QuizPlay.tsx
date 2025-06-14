@@ -18,7 +18,7 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const navigate = useNavigate();
-  const { addXp } = useGameification();
+  const { addXP } = useGameification();
 
   const currentQuestion = quiz.questoes[currentQuestionIndex];
 
@@ -54,7 +54,7 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
         xpAwarded = 150;
       }
 
-      addXp(xpAwarded);
+      addXP(xpAwarded, 'quiz_complete');
 
       toast({
         title: "Quiz Completo!",
