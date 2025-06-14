@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Brain, ArrowRight, Play } from 'lucide-react';
+import { BookOpen, Brain, ArrowRight, Play, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
 import ResumoSelector from '@/components/ResumoSelector';
 import FlashcardStudyMode from '@/components/FlashcardStudyMode';
+import { designColors } from '@/utils/designSystem';
 
 const MyFlashcards = () => {
   const [selectedResumo, setSelectedResumo] = useState<any>(null);
@@ -24,44 +25,75 @@ const MyFlashcards = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className={`min-h-screen bg-gradient-to-br ${designColors.gradients.primary} relative overflow-hidden`}>
+        {/* Elementos decorativos flutuantes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 text-5xl animate-bounce opacity-20">🧠</div>
+          <div className="absolute top-40 right-20 text-4xl animate-pulse opacity-30">💡</div>
+          <div className="absolute bottom-20 left-20 text-6xl animate-float opacity-20">⚡</div>
+          <div className="absolute bottom-40 right-10 text-3xl animate-bounce opacity-25">🌟</div>
+          <div className="absolute top-1/2 left-1/4 text-7xl animate-pulse opacity-10">🎪</div>
+        </div>
+
         <Header />
         
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 relative z-10">
           {!studyMode ? (
-            <div className="space-y-8">
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    <Brain className="h-8 w-8 text-white" />
+            <div className={`space-y-8 ${designColors.animations.slideIn}`}>
+              <div className="text-center space-y-6">
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <Sparkles className="h-12 w-12 text-purple-600 animate-pulse" />
+                  <div className="flex items-center gap-3">
+                    <div className={`w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center ${designColors.animations.iconFloat}`}>
+                      <Brain className="h-10 w-10 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                      Meus Flashcards Mágicos
+                    </h1>
+                    <div className="text-5xl animate-bounce">🧠</div>
                   </div>
-                  <h1 className="text-3xl font-bold text-gray-800">Meus Flashcards</h1>
+                  <Sparkles className="h-12 w-12 text-pink-600 animate-pulse" />
                 </div>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                  Estude com flashcards interativos estilo Anki. Selecione um resumo para começar sua sessão de estudos.
-                </p>
+                
+                <div className={`${designColors.cards.accent} p-6 max-w-4xl mx-auto`}>
+                  <p className="text-xl text-gray-700 font-medium leading-relaxed">
+                    🎪 Estude com flashcards interativos estilo Anki! Selecione um resumo para começar sua sessão de estudos divertida e eficaz. ✨
+                  </p>
+                </div>
               </div>
 
-              <ResumoSelector
-                onSelectResumo={handleSelectResumo}
-                title="Selecione um Resumo para Estudar"
-                description="Escolha o resumo que você quer revisar com flashcards interativos"
-                actionText="Estudar Flashcards"
-              />
+              <div className={designColors.animations.cardHover}>
+                <ResumoSelector
+                  onSelectResumo={handleSelectResumo}
+                  title="🎯 Selecione um Resumo para Estudar"
+                  description="Escolha o resumo que você quer revisar com flashcards interativos e divertidos!"
+                  actionText="🧠 Estudar Flashcards"
+                />
+              </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                  Estudando: {selectedResumo?.uploads?.texto_extraido?.slice(0, 50)}...
-                </h1>
-                <p className="text-gray-600">Modo de estudo com flashcards interativos</p>
+            <div className={`space-y-6 ${designColors.animations.slideIn}`}>
+              <div className={`${designColors.cards.accent} p-6 text-center`}>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Brain className="h-8 w-8 text-purple-600 animate-pulse" />
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    🎪 Estudando: {selectedResumo?.uploads?.texto_extraido?.slice(0, 50)}...
+                  </h1>
+                  <div className="text-3xl animate-bounce">⚡</div>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <Sparkles className="h-5 w-5 text-pink-500" />
+                  <p className="text-lg text-gray-600 font-medium">Modo de estudo com flashcards interativos</p>
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                </div>
               </div>
 
-              <FlashcardStudyMode 
-                resumoId={selectedResumo.id} 
-                onBack={handleBack}
-              />
+              <div className={designColors.animations.cardHover}>
+                <FlashcardStudyMode 
+                  resumoId={selectedResumo.id} 
+                  onBack={handleBack}
+                />
+              </div>
             </div>
           )}
         </main>
