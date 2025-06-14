@@ -12,16 +12,41 @@ export const useUpload = () => {
     try {
       setIsUploading(true);
       
+      console.log('Starting upload process for file:', file.name, file.size, file.type);
+      
       // Verificar se o usuário está autenticado
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Auth error:', userError);
+        throw new Error(`Erro de autenticação: ${userError.message}`);
+      }
+      
       if (!user) {
+        console.error('User not authenticated');
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('Starting file upload for user:', user.id);
+      console.log('User authenticated:', user.id);
+
+      // Verificar se o bucket existe
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      if (bucketsError) {
+        console.error('Error listing buckets:', bucketsError);
+        throw new Error(`Erro ao verificar storage: ${bucketsError.message}`);
+      }
+      
+      const studyImagesBucket = buckets.find(bucket => bucket.id === 'study-images');
+      if (!studyImagesBucket) {
+        console.error('study-images bucket not found');
+        throw new Error('Bucket de imagens não configurado. Contate o suporte.');
+      }
+
+      console.log('Storage bucket verified');
 
       // Upload da imagem para o Supabase Storage
       const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      console.log('Uploading to path:', fileName);
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('study-images')
         .upload(fileName, file, {
@@ -59,11 +84,15 @@ export const useUpload = () => {
         throw new Error(`Erro na extração de texto: ${extractError.message}`);
       }
 
-      if (!extractData.success) {
-        throw new Error(extractData.error || 'Erro na extração de texto');
+      console.log('OCR response:', extractData);
+
+      if (!extractData || !extractData.success) {
+        const errorMsg = extractData?.error || 'Erro desconhecido na extração de texto';
+        console.error('OCR failed:', errorMsg);
+        throw new Error(errorMsg);
       }
 
-      console.log('Text extraction completed');
+      console.log('Text extraction completed, text length:', extractData.extractedText?.length || 0);
 
       setIsExtracting(false);
 
@@ -73,7 +102,7 @@ export const useUpload = () => {
         .insert({
           user_id: user.id,
           imagem_url: publicUrl,
-          texto_extraido: extractData.extractedText
+          texto_extraido: extractData.extractedText || ''
         })
         .select()
         .single();
@@ -94,9 +123,15 @@ export const useUpload = () => {
 
     } catch (error) {
       console.error('Erro no upload:', error);
+      
+      let errorMessage = "Erro ao processar a imagem.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: error.message || "Erro ao processar a imagem.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;

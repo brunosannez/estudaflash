@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useRef } from 'react';
 import { Upload, Image, FileText, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,9 @@ import AuthGuard from './AuthGuard';
 const UploadArea = () => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadResult, setUploadResult] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { uploadImageAndExtractText, isUploading, isExtracting } = useUpload();
 
@@ -35,13 +38,26 @@ const UploadArea = () => {
   }
 
   function handleFile(file: File) {
+    console.log('File selected:', file.name, file.type, file.size);
     if (file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file);
       setSelectedImage(url);
+      setSelectedFile(file);
+      console.log('Image preview created:', url);
+    } else {
+      console.error('Invalid file type:', file.type);
+    }
+  }
+
+  function handleFileButtonClick() {
+    console.log('File button clicked');
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    console.log('File input changed');
     const files = e.target.files;
     if (files && files[0]) {
       handleFile(files[0]);
@@ -49,30 +65,43 @@ const UploadArea = () => {
   }
 
   async function handleProcessImage() {
-    if (!selectedImage) return;
+    if (!selectedFile) {
+      console.error('No file selected');
+      return;
+    }
+    
+    console.log('Processing image:', selectedFile.name);
     
     try {
-      // Converter URL object para File
-      const response = await fetch(selectedImage);
-      const blob = await response.blob();
-      const file = new File([blob], 'uploaded-image.jpg', { type: blob.type });
-      
-      const result = await uploadImageAndExtractText(file);
+      const result = await uploadImageAndExtractText(selectedFile);
+      console.log('Upload result:', result);
       setUploadResult(result);
       setSelectedImage(null);
+      setSelectedFile(null);
     } catch (error) {
       console.error('Erro ao processar imagem:', error);
     }
   }
 
   function handleGenerateSummary() {
-    // TODO: Implementar geração de resumo
     console.log('Gerar resumo para:', uploadResult);
   }
 
   function resetUpload() {
     setSelectedImage(null);
+    setSelectedFile(null);
     setUploadResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+  function handleChooseAnother() {
+    setSelectedImage(null);
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
 
   // Se já tem resultado, mostrar o texto extraído
@@ -119,22 +148,21 @@ const UploadArea = () => {
                     Arraste e solte uma imagem ou clique para selecionar
                   </p>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleFileInput}
                     className="hidden"
-                    id="file-upload"
                     disabled={isUploading || isExtracting}
                   />
-                  <label htmlFor="file-upload">
-                    <Button 
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      disabled={isUploading || isExtracting}
-                    >
-                      <Image className="h-5 w-5 mr-2" />
-                      Selecionar Imagem
-                    </Button>
-                  </label>
+                  <Button 
+                    onClick={handleFileButtonClick}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    disabled={isUploading || isExtracting}
+                  >
+                    <Image className="h-5 w-5 mr-2" />
+                    Selecionar Imagem
+                  </Button>
                 </>
               ) : (
                 <div className="space-y-4">
@@ -169,7 +197,7 @@ const UploadArea = () => {
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => setSelectedImage(null)}
+                      onClick={handleChooseAnother}
                       disabled={isUploading || isExtracting}
                     >
                       Escolher Outra

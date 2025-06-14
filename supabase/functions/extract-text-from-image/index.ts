@@ -12,30 +12,40 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json()
+    console.log('OCR function called');
+    
+    const body = await req.json()
+    const { imageUrl } = body
     
     console.log('Processing image:', imageUrl)
     
-    // Buscar a chave da API do Google Vision nos secrets
+    if (!imageUrl) {
+      console.error('No image URL provided');
+      throw new Error('URL da imagem é obrigatória');
+    }
+    
+    // Verificar se a chave da API do Google Vision existe
     const googleVisionApiKey = Deno.env.get('GOOGLE_VISION_API_KEY')
     
     if (!googleVisionApiKey) {
       console.error('Google Vision API key not configured')
-      throw new Error('Google Vision API key not configured. Please add it in Supabase secrets.')
+      throw new Error('Chave da API do Google Vision não configurada. Configure GOOGLE_VISION_API_KEY nos secrets do Supabase.')
     }
 
-    console.log('Downloading image for OCR processing...')
+    console.log('Google Vision API key found, downloading image...')
     
     // Baixar a imagem para converter para base64
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
-      throw new Error(`Failed to download image: ${imageResponse.status}`)
+      const errorText = await imageResponse.text()
+      console.error(`Failed to download image: ${imageResponse.status} - ${errorText}`)
+      throw new Error(`Falha ao baixar imagem: ${imageResponse.status}`)
     }
     
     const imageBuffer = await imageResponse.arrayBuffer()
     const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)))
 
-    console.log('Calling Google Vision API...')
+    console.log('Image downloaded and converted to base64, calling Google Vision API...')
     
     // Chamar Google Vision OCR API
     const visionResponse = await fetch(
@@ -64,17 +74,21 @@ serve(async (req) => {
     )
 
     if (!visionResponse.ok) {
-      throw new Error(`Google Vision API error: ${visionResponse.status} ${visionResponse.statusText}`)
+      const errorText = await visionResponse.text()
+      console.error(`Google Vision API error: ${visionResponse.status} - ${errorText}`)
+      throw new Error(`Erro na API do Google Vision: ${visionResponse.status}`)
     }
 
     const visionData = await visionResponse.json()
+    console.log('Google Vision API response received')
     
     if (visionData.error) {
-      throw new Error(`Google Vision API error: ${visionData.error.message}`)
+      console.error('Google Vision API returned error:', visionData.error)
+      throw new Error(`Erro da API do Google Vision: ${visionData.error.message}`)
     }
 
     // Extrair o texto detectado
-    const textAnnotations = visionData.responses[0]?.textAnnotations
+    const textAnnotations = visionData.responses?.[0]?.textAnnotations
     const extractedText = textAnnotations && textAnnotations.length > 0 
       ? textAnnotations[0].description 
       : ''
@@ -95,10 +109,10 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error extracting text:', error)
+    console.error('Error in OCR function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Erro desconhecido na extração de texto',
         success: false 
       }),
       { 
