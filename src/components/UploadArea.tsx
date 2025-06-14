@@ -32,66 +32,100 @@ const UploadArea = () => {
     e.stopPropagation();
     setDragActive(false);
     
+    console.log('Files dropped:', e.dataTransfer.files.length);
     const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    const imageFiles = files.filter(file => {
+      console.log('Checking file:', file.name, file.type);
+      return file.type.startsWith('image/');
+    });
+    
+    console.log('Image files after filter:', imageFiles.length);
     
     if (imageFiles.length > 0) {
       handleFiles(imageFiles);
+    } else {
+      console.warn('No valid image files found');
     }
   }
 
   function handleFiles(files: File[]) {
-    console.log('Files selected:', files.map(f => f.name));
+    console.log('handleFiles called with:', files.length, 'files');
+    console.log('Files details:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     
     // Filtrar apenas imagens e limitar a 5
-    const imageFiles = files.filter(file => file.type.startsWith('image/')).slice(0, MAX_IMAGES);
+    const imageFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      console.log(`File ${file.name}: type=${file.type}, isImage=${isImage}`);
+      return isImage;
+    }).slice(0, MAX_IMAGES);
+    
+    console.log('Final image files to set:', imageFiles.length);
+    
+    if (imageFiles.length === 0) {
+      console.error('No valid image files selected');
+      return;
+    }
     
     if (imageFiles.length !== files.length) {
-      console.warn('Some files were filtered out (not images or exceeded limit)');
+      console.warn(`Filtered from ${files.length} to ${imageFiles.length} files`);
     }
     
     setSelectedFiles(imageFiles);
-    console.log('Image files set:', imageFiles.length);
+    console.log('selectedFiles state updated with', imageFiles.length, 'files');
   }
 
   function handleFileButtonClick() {
     console.log('File button clicked');
     if (fileInputRef.current) {
+      console.log('Triggering file input click');
       fileInputRef.current.click();
+    } else {
+      console.error('File input ref is null');
     }
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    console.log('File input changed');
+    console.log('File input change event triggered');
     const files = e.target.files;
+    console.log('Files from input:', files?.length || 0);
+    
     if (files && files.length > 0) {
+      console.log('Files selected via input:', Array.from(files).map(f => f.name));
       handleFiles(Array.from(files));
+    } else {
+      console.warn('No files selected or files is null');
     }
   }
 
   async function handleProcessImages() {
     if (selectedFiles.length === 0) {
-      console.error('No files selected');
+      console.error('No files selected for processing');
       return;
     }
     
-    console.log('Processing images:', selectedFiles.map(f => f.name));
+    console.log('Starting to process', selectedFiles.length, 'images');
     
     try {
       const result = await uploadMultipleImages(selectedFiles);
-      console.log('Upload result:', result);
+      console.log('Upload completed successfully:', result);
       setUploadResult(result);
       setSelectedFiles([]);
+      
+      // Limpar o input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
-      console.error('Erro ao processar imagens:', error);
+      console.error('Error processing images:', error);
     }
   }
 
   function handleGenerateSummary() {
-    console.log('Gerar resumo para:', uploadResult);
+    console.log('Generate summary for:', uploadResult);
   }
 
   function resetAllUploads() {
+    console.log('Resetting all uploads');
     setSelectedFiles([]);
     setUploadResult(null);
     resetUpload();
@@ -101,10 +135,16 @@ const UploadArea = () => {
   }
 
   function removeFile(index: number) {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    console.log('Removing file at index:', index);
+    setSelectedFiles(prev => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      console.log('Files after removal:', newFiles.length);
+      return newFiles;
+    });
   }
 
   function handleChooseOther() {
+    console.log('Choose other files clicked');
     setSelectedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -136,6 +176,9 @@ const UploadArea = () => {
         </div>;
     }
   }
+
+  // Debug: log current state
+  console.log('UploadArea render - selectedFiles:', selectedFiles.length, 'uploadResults:', uploadResults.length, 'isProcessing:', isProcessing);
 
   // Se já tem resultado, mostrar o texto extraído
   if (uploadResult) {
@@ -210,14 +253,16 @@ const UploadArea = () => {
                       const result = uploadResults[index];
                       
                       return (
-                        <div key={index} className="relative">
+                        <div key={`${file.name}-${index}`} className="relative">
                           <div className="relative rounded-lg overflow-hidden border">
                             <img 
                               src={url} 
                               alt={`Preview ${index + 1}`} 
                               className="w-full h-24 object-cover"
+                              onLoad={() => console.log(`Image ${index + 1} loaded successfully`)}
+                              onError={(e) => console.error(`Error loading image ${index + 1}:`, e)}
                             />
-                            {selectedFiles.length > 0 && (
+                            {selectedFiles.length > 0 && !isProcessing && (
                               <button
                                 onClick={() => removeFile(index)}
                                 className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
@@ -267,19 +312,31 @@ const UploadArea = () => {
                     </div>
                   )}
 
-                  {selectedFiles.length < MAX_IMAGES && !isProcessing && (
+                  {selectedFiles.length < MAX_IMAGES && selectedFiles.length > 0 && !isProcessing && (
                     <div className="border-t pt-4">
                       <input
-                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         multiple
-                        onChange={handleFileInput}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const newFiles = Array.from(e.target.files);
+                            const currentCount = selectedFiles.length;
+                            const availableSlots = MAX_IMAGES - currentCount;
+                            const filesToAdd = newFiles.slice(0, availableSlots);
+                            
+                            console.log(`Adding ${filesToAdd.length} more files`);
+                            setSelectedFiles(prev => [...prev, ...filesToAdd]);
+                          }
+                          // Reset input
+                          e.target.value = '';
+                        }}
                         className="hidden"
+                        id="additional-files"
                       />
                       <Button 
                         variant="outline"
-                        onClick={handleFileButtonClick}
+                        onClick={() => document.getElementById('additional-files')?.click()}
                         className="w-full"
                       >
                         <Upload className="h-4 w-4 mr-2" />
