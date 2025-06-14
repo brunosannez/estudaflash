@@ -18,10 +18,12 @@ const QuizPage = () => {
   const [resumo, setResumo] = useState<any>(null);
   const {
     quizzes,
+    respostas,
     fetchQuizzes,
     generateQuiz,
     enviarResposta,
     resetRespostas,
+    loading: quizLoading
   } = useQuiz(resumoId!);
   const [status, setStatus] = useState<"idle" | "playing" | "done">("idle");
   const [ready, setReady] = useState(false);
@@ -54,12 +56,9 @@ const QuizPage = () => {
   };
 
   const handleFinish = () => {
-    setAcertos(
-      quizzes.reduce((acc, q, idx) => {
-        // TODO: pode-se buscar respostas para user scoring real
-        return acc + (q.correta !== undefined && q.correta === q.resposta_selecionada ? 1 : 0);
-      }, 0),
-    );
+    // Calcular acertos a partir do array de respostas
+    const count = respostas.reduce((acc, resp) => acc + (resp.acertou ? 1 : 0), 0);
+    setAcertos(count);
     setStatus("done");
   };
 
@@ -97,8 +96,8 @@ const QuizPage = () => {
               <pre className="text-gray-900 whitespace-pre-wrap mt-2">{resumo.resumo_gerado}</pre>
             </div>
           </div>
-          {quizzes.length === 0 && status !== "playing" ? (
-            <QuizGeneratorButton isGenerating={status === "playing"} onGenerate={handleGerarQuiz} />
+          {quizzes.length === 0 && status === "idle" ? (
+            <QuizGeneratorButton isGenerating={quizLoading} onGenerate={handleGerarQuiz} />
           ) : status === "playing" ? (
             <QuizPlay quizzes={quizzes} onResponder={handleResponder} onFinish={handleFinish} />
           ) : (

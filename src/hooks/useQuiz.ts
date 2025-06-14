@@ -35,8 +35,14 @@ export function useQuiz(resumoId: string) {
       .select("*")
       .eq("resumo_id", resumoId)
       .order("data_criacao", { ascending: true });
-    if (!error && data) setQuizzes(data.map((q) => ({ ...q, alternativas: Array.isArray(q.alternativas) ? q.alternativas : JSON.parse(q.alternativas) })));
-    else setQuizzes([]);
+    if (!error && data) {
+      setQuizzes(
+        data.map((q) => ({
+          ...q,
+          alternativas: Array.isArray(q.alternativas) ? q.alternativas : q.alternativas,
+        }))
+      );
+    } else setQuizzes([]);
     setLoading(false);
     return data;
   };
@@ -61,20 +67,26 @@ export function useQuiz(resumoId: string) {
   };
 
   const enviarResposta = async (quizId: string, resposta_selecionada: number) => {
-    const quiz = quizzes.find(q => q.id === quizId);
+    const quiz = quizzes.find((q) => q.id === quizId);
     if (!quiz) return;
     const acertou = resposta_selecionada === quiz.correta;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Você precisa estar autenticado para responder o quiz.", variant: "destructive" });
+      return { acertou: false, explicacao: quiz.explicacao };
+    }
     const { data, error } = await supabase
       .from("quiz_respostas")
       .insert({
         quiz_id: quizId,
         resposta_selecionada,
         acertou,
+        user_id: user.id,
       })
       .select()
       .single();
     if (!error && data) {
-      setRespostas(prev => [...prev, data]);
+      setRespostas((prev) => [...prev, data]);
       return { acertou, explicacao: quiz.explicacao };
     }
     return { acertou: false, explicacao: quiz.explicacao };
