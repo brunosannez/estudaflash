@@ -10,6 +10,8 @@ interface QuizHistoryItem {
   acertos: number;
   data_criacao: string;
   resumo_id: string;
+  quiz_titulo: string;
+  tempo_conclusao: number;
 }
 
 interface QuizStats {
@@ -37,66 +39,44 @@ export const useQuizHistory = () => {
       
       if (!user) return;
 
-      // Buscar histórico de quizzes com informações dos resumos
-      const { data: quizData, error } = await supabase
-        .from("quiz_respostas")
+      // Buscar histórico de sessões de quiz com informações dos resumos
+      const { data: sessionsData, error } = await supabase
+        .from("quiz_sessions")
         .select(`
           id,
-          quiz_id,
-          acertou,
-          data_resposta,
-          quizzes!inner(
-            resumo_id,
-            resumos!inner(
-              id,
-              upload_id,
-              uploads!inner(
-                arquivo_original_nome
-              )
+          quiz_title,
+          total_questions,
+          correct_answers,
+          completion_time_seconds,
+          created_at,
+          resumo_id,
+          resumos!inner(
+            id,
+            upload_id,
+            uploads!inner(
+              arquivo_original_nome
             )
           )
         `)
         .eq("user_id", user.id)
-        .order("data_resposta", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Erro ao buscar histórico:", error);
         return;
       }
 
-      // Agrupar por quiz/resumo
-      const groupedQuizzes = new Map();
-      
-      quizData?.forEach((response: any) => {
-        const resumoId = response.quizzes.resumo_id;
-        const resumoTitulo = response.quizzes.resumos.uploads.arquivo_original_nome;
-        
-        if (!groupedQuizzes.has(resumoId)) {
-          groupedQuizzes.set(resumoId, {
-            resumo_id: resumoId,
-            resumo_titulo: resumoTitulo,
-            respostas: [],
-            data_criacao: response.data_resposta
-          });
-        }
-        
-        groupedQuizzes.get(resumoId).respostas.push(response);
-      });
-
-      // Converter para array e calcular estatísticas
-      const historyArray: QuizHistoryItem[] = Array.from(groupedQuizzes.values()).map(quiz => {
-        const acertos = quiz.respostas.filter((r: any) => r.acertou).length;
-        const total = quiz.respostas.length;
-        
-        return {
-          id: quiz.resumo_id,
-          resumo_titulo: quiz.resumo_titulo || "Quiz sem título",
-          total_perguntas: total,
-          acertos: acertos,
-          data_criacao: quiz.data_criacao,
-          resumo_id: quiz.resumo_id
-        };
-      });
+      // Transformar dados para o formato esperado
+      const historyArray: QuizHistoryItem[] = sessionsData?.map(session => ({
+        id: session.id,
+        resumo_titulo: session.resumos.uploads.arquivo_original_nome || session.quiz_title,
+        total_perguntas: session.total_questions,
+        acertos: session.correct_answers,
+        data_criacao: session.created_at,
+        resumo_id: session.resumo_id,
+        quiz_titulo: session.quiz_title,
+        tempo_conclusao: session.completion_time_seconds || 0
+      })) || [];
 
       setHistory(historyArray);
       

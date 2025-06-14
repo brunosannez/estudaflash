@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "@/components/ui/use-toast";
 import { useGameification } from '@/hooks/useGameification';
 import { useQuiz } from '@/hooks/useQuiz';
+import { useQuizSession } from '@/hooks/useQuizSession';
 
 export const useQuizGame = (quiz: any, onComplete: () => void) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -15,19 +16,30 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
   const [streakCount, setStreakCount] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState<string>('');
+  const [sessionResult, setSessionResult] = useState<any>(null);
   
   const navigate = useNavigate();
   const { addXP, getStats } = useGameification();
   const { enviarResposta } = useQuiz(quiz.resumo_id || '');
+  const { sessionData, startSession, addResponse, completeSession } = useQuizSession();
 
   const currentQuestion = quiz.questoes[currentQuestionIndex];
   const stats = getStats();
 
+  // Iniciar sessão quando o quiz começar
   useEffect(() => {
-    if (quizCompleted) {
+    if (quiz && quiz.questoes && !sessionData) {
+      // Para pegar o conteúdo do resumo, vamos usar um placeholder por enquanto
+      // TODO: Integrar com dados reais do resumo se necessário
+      startSession(quiz.resumo_id, "Conteúdo do resumo", quiz.questoes);
+    }
+  }, [quiz, sessionData, startSession]);
+
+  useEffect(() => {
+    if (quizCompleted && sessionResult) {
       onComplete();
     }
-  }, [quizCompleted, onComplete]);
+  }, [quizCompleted, sessionResult, onComplete]);
 
   const triggerCelebration = (isCorrect: boolean) => {
     if (isCorrect) {
@@ -42,7 +54,7 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
     
     const isCorrect = index === currentQuestion.resposta_correta;
     
-    // Sistema de pontuação imediata
+    // Sistema de pontuação imediata (apenas visual, XP real será no final)
     const xpGained = isCorrect ? 10 : 2;
     setCurrentXP(prev => prev + xpGained);
     
@@ -54,12 +66,19 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
       setStreakCount(0);
     }
 
-    // Salvar resposta no banco de dados e adicionar XP
+    // Salvar resposta no banco de dados SEM adicionar XP ainda
     try {
       if (currentQuestion.id) {
         console.log('🔍 Enviando resposta para pergunta:', currentQuestion.id);
         const response = await enviarResposta(currentQuestion.id, index);
         console.log('📝 Resposta recebida:', response);
+        
+        // Adicionar resposta à sessão
+        addResponse({
+          quiz_id: currentQuestion.id,
+          resposta_selecionada: index,
+          acertou: isCorrect
+        });
         
         if (response && response.explicacao) {
           console.log('💡 Explicação recebida:', response.explicacao);
@@ -73,11 +92,9 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
         }
       }
       
-      await addXP(xpGained, isCorrect ? 'quiz_correct' : 'quiz_incorrect');
-      
-      // Toast com animação de XP
+      // Toast com feedback imediato (sem XP real ainda)
       toast({
-        title: isCorrect ? "🎉 Correto! +" + xpGained + " XP" : "💪 +" + xpGained + " XP pela tentativa",
+        title: isCorrect ? "🎉 Correto!" : "💪 Continue tentando!",
         description: isCorrect 
           ? streakCount > 0 
             ? `Sequência de ${streakCount + 1} acertos! 🔥` 
@@ -92,7 +109,7 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     // Contar acerto se necessário
     if (selectedAnswer === currentQuestion.resposta_correta) {
       setCorrectAnswersCount(correctAnswersCount + 1);
@@ -108,30 +125,47 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
       // Ir para próxima pergunta
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // Finalizar quiz
-      setQuizCompleted(true);
+      // Finalizar quiz e salvar sessão
       const finalCorrectCount = correctAnswersCount + (selectedAnswer === currentQuestion.resposta_correta ? 1 : 0);
       const correctPercentage = (finalCorrectCount / quiz.questoes.length) * 100;
-      let bonusXP = 50;
+      
+      // Completar sessão
+      const result = await completeSession();
+      if (result) {
+        setSessionResult(result);
+      }
+
+      // Calcular XP total baseado na performance final
+      let totalXP = finalCorrectCount * 10 + (quiz.questoes.length - finalCorrectCount) * 2; // XP por resposta
+      let bonusXP = 0;
 
       if (correctPercentage >= 90) {
         bonusXP = 100;
       } else if (correctPercentage >= 80) {
         bonusXP = 75;
+      } else if (correctPercentage >= 70) {
+        bonusXP = 50;
+      } else if (correctPercentage >= 50) {
+        bonusXP = 25;
       }
 
-      addXP(bonusXP, 'quiz_complete');
+      totalXP += bonusXP;
+
+      // Adicionar XP real agora
+      await addXP(totalXP, 'quiz_complete');
 
       toast({
         title: "🏆 Quiz Completo!",
-        description: `Você ganhou +${bonusXP} XP de bônus! Total: ${currentXP + bonusXP} XP!`,
+        description: `Você ganhou ${totalXP} XP total (${bonusXP} de bônus)!`,
         duration: 5000,
       });
+
+      setQuizCompleted(true);
 
       // Navegar para histórico após pequeno delay
       setTimeout(() => {
         navigate('/quiz-history');
-      }, 2000);
+      }, 3000);
     }
   };
 
@@ -144,6 +178,7 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
     streakCount,
     showCelebration,
     currentExplanation,
+    sessionResult,
     stats,
     handleAnswerSelect,
     handleNextQuestion

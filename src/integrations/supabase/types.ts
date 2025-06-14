@@ -147,6 +147,50 @@ export type Database = {
           },
         ]
       }
+      quiz_sessions: {
+        Row: {
+          completion_time_seconds: number | null
+          correct_answers: number
+          created_at: string
+          id: string
+          questions_data: Json
+          quiz_title: string
+          resumo_id: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completion_time_seconds?: number | null
+          correct_answers: number
+          created_at?: string
+          id?: string
+          questions_data: Json
+          quiz_title: string
+          resumo_id: string
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completion_time_seconds?: number | null
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          questions_data?: Json
+          quiz_title?: string
+          resumo_id?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_sessions_resumo_id_fkey"
+            columns: ["resumo_id"]
+            isOneToOne: false
+            referencedRelation: "resumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quizzes: {
         Row: {
           alternativas: Json

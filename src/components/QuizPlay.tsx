@@ -6,6 +6,7 @@ import QuizQuestion from "./quiz/QuizQuestion";
 import QuizAlternatives from "./quiz/QuizAlternatives";
 import QuizFeedback from "./quiz/QuizFeedback";
 import QuizCelebration from "./quiz/QuizCelebration";
+import QuizResult from "./QuizResult";
 import { useQuizGame } from "@/hooks/useQuizGame";
 
 interface QuizPlayProps {
@@ -23,12 +24,27 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     streakCount,
     showCelebration,
     currentExplanation,
+    sessionResult,
     stats,
     handleAnswerSelect,
     handleNextQuestion
   } = useQuizGame(quiz, onComplete);
 
   const isLastQuestion = currentQuestionIndex === quiz.questoes.length - 1;
+
+  // Se temos resultado da sessão, mostrar tela de resultado
+  if (sessionResult) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4">
+        <div className="max-w-xl mx-auto pt-8">
+          <QuizResult 
+            sessionResult={sessionResult}
+            onRestart={() => window.location.reload()}
+          />
+        </div>
+      </div>
+    );
+  }
 
   console.log('🎯 Quiz Debug Info:', {
     currentQuestionIndex,

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useGameification } from "@/hooks/useGameification";
 
 export interface Quiz {
   id: string;
@@ -28,7 +27,6 @@ export function useQuiz(resumoId: string) {
   const [respostas, setRespostas] = useState<QuizResposta[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { addXP } = useGameification();
 
   const fetchQuizzes = async () => {
     setLoading(true);
@@ -104,28 +102,8 @@ export function useQuiz(resumoId: string) {
     if (!error && data) {
       setRespostas((prev) => [...prev, data]);
       
-      // Adicionar XP baseado na resposta com feedback mais detalhado
-      try {
-        if (acertou) {
-          await addXP(10, 'quiz_correct');
-          toast({
-            title: "🎉 Correto! +10 XP",
-            description: "Excelente resposta! Continue assim!",
-            duration: 3000,
-          });
-        } else {
-          await addXP(2, 'quiz_incorrect');
-          toast({
-            title: "👍 +2 XP pela tentativa",
-            description: "Não desista! Cada erro é um aprendizado.",
-            duration: 3000,
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao adicionar XP:", error);
-        // Não bloquear o fluxo se houver erro na gamificação
-      }
-      
+      // Apenas retornar o resultado, sem adicionar XP aqui
+      // O XP será adicionado apenas no final da sessão
       return { acertou, explicacao: quiz.explicacao };
     }
     

@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Target, Trophy, Zap } from "lucide-react";
+import { Calendar, Target, Trophy, Zap, Clock } from "lucide-react";
 
 interface QuizHistoryItemProps {
   quiz: {
@@ -11,6 +11,8 @@ interface QuizHistoryItemProps {
     acertos: number;
     data_criacao: string;
     resumo_id: string;
+    quiz_titulo: string;
+    tempo_conclusao: number;
   };
   onRefazerQuiz: (resumoId: string) => void;
 }
@@ -34,6 +36,13 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
     return "📚";
   };
 
+  const formatTime = (seconds: number) => {
+    if (seconds <= 0) return "N/A";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`;
+  };
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-100 hover:border-purple-200">
       <CardContent className="p-6">
@@ -41,9 +50,14 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl">{getPerformanceEmoji(percentage)}</span>
-              <h3 className="text-xl font-bold text-gray-800">
-                {quiz.resumo_titulo}
-              </h3>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">
+                  {quiz.quiz_titulo}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Arquivo: {quiz.resumo_titulo}
+                </p>
+              </div>
             </div>
             
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
@@ -58,6 +72,10 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
               <div className="flex items-center gap-1">
                 <Trophy className="h-4 w-4" />
                 {percentage}% de aproveitamento
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {formatTime(quiz.tempo_conclusao)}
               </div>
             </div>
 
