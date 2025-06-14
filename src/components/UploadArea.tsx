@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useMultipleUpload, ImageUploadResult } from '@/hooks/useMultipleUpload';
 import ExtractedTextDisplay from './ExtractedTextDisplay';
 import AuthGuard from './AuthGuard';
+import { useToast } from '@/hooks/use-toast';
 
 const MAX_IMAGES = 5;
 
@@ -14,6 +15,7 @@ const UploadArea = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadResult, setUploadResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   const { uploadMultipleImages, uploadResults, isProcessing, resetUpload } = useMultipleUpload();
 
@@ -32,82 +34,123 @@ const UploadArea = () => {
     e.stopPropagation();
     setDragActive(false);
     
-    console.log('Files dropped:', e.dataTransfer.files.length);
+    console.log('🔄 Arquivos soltos (drag & drop):', e.dataTransfer.files.length);
     const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter(file => {
-      console.log('Checking file:', file.name, file.type);
-      return file.type.startsWith('image/');
-    });
     
-    console.log('Image files after filter:', imageFiles.length);
-    
-    if (imageFiles.length > 0) {
-      handleFiles(imageFiles);
-    } else {
-      console.warn('No valid image files found');
-    }
-  }
-
-  function handleFiles(files: File[]) {
-    console.log('handleFiles called with:', files.length, 'files');
-    console.log('Files details:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
-    
-    // Filtrar apenas imagens e limitar a 5
-    const imageFiles = files.filter(file => {
-      const isImage = file.type.startsWith('image/');
-      console.log(`File ${file.name}: type=${file.type}, isImage=${isImage}`);
-      return isImage;
-    }).slice(0, MAX_IMAGES);
-    
-    console.log('Final image files to set:', imageFiles.length);
-    
-    if (imageFiles.length === 0) {
-      console.error('No valid image files selected');
+    if (files.length === 0) {
+      console.error('❌ Nenhum arquivo foi solto');
+      toast({
+        title: "Erro",
+        description: "Nenhum arquivo foi detectado. Tente novamente.",
+        variant: "destructive",
+      });
       return;
     }
     
-    if (imageFiles.length !== files.length) {
-      console.warn(`Filtered from ${files.length} to ${imageFiles.length} files`);
+    handleFiles(files);
+  }
+
+  function handleFiles(files: File[]) {
+    console.log('🔄 Processando arquivos:', files.length);
+    console.log('📁 Detalhes dos arquivos:', files.map(f => ({ 
+      name: f.name, 
+      type: f.type, 
+      size: f.size,
+      isImage: f.type.startsWith('image/')
+    })));
+    
+    // Filtrar apenas imagens
+    const imageFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        console.warn(`⚠️ Arquivo ${file.name} não é uma imagem (tipo: ${file.type})`);
+      }
+      return isImage;
+    });
+    
+    if (imageFiles.length === 0) {
+      console.error('❌ Nenhuma imagem válida encontrada');
+      toast({
+        title: "Erro",
+        description: "Nenhuma imagem válida foi selecionada. Por favor, selecione arquivos de imagem (JPG, PNG, etc.).",
+        variant: "destructive",
+      });
+      return;
     }
     
-    setSelectedFiles(imageFiles);
-    console.log('selectedFiles state updated with', imageFiles.length, 'files');
+    // Limitar a 5 imagens
+    const limitedFiles = imageFiles.slice(0, MAX_IMAGES);
+    
+    if (limitedFiles.length !== imageFiles.length) {
+      console.warn(`⚠️ Limitando de ${imageFiles.length} para ${limitedFiles.length} imagens`);
+      toast({
+        title: "Aviso",
+        description: `Apenas as primeiras ${MAX_IMAGES} imagens foram selecionadas.`,
+      });
+    }
+    
+    console.log('✅ Imagens válidas selecionadas:', limitedFiles.length);
+    setSelectedFiles(limitedFiles);
+    
+    // Resetar upload results quando novas imagens são selecionadas
+    resetUpload();
   }
 
   function handleFileButtonClick() {
-    console.log('File button clicked');
-    if (fileInputRef.current) {
-      console.log('Triggering file input click');
+    console.log('🔄 Botão de seleção de arquivo clicado');
+    
+    if (!fileInputRef.current) {
+      console.error('❌ Referência do input de arquivo é nula');
+      toast({
+        title: "Erro",
+        description: "Erro interno. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
       fileInputRef.current.click();
-    } else {
-      console.error('File input ref is null');
+      console.log('✅ Input de arquivo acionado');
+    } catch (error) {
+      console.error('❌ Erro ao acionar input de arquivo:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao abrir seletor de arquivos.",
+        variant: "destructive",
+      });
     }
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    console.log('File input change event triggered');
+    console.log('🔄 Input de arquivo alterado');
     const files = e.target.files;
-    console.log('Files from input:', files?.length || 0);
     
-    if (files && files.length > 0) {
-      console.log('Files selected via input:', Array.from(files).map(f => f.name));
-      handleFiles(Array.from(files));
-    } else {
-      console.warn('No files selected or files is null');
+    if (!files || files.length === 0) {
+      console.warn('⚠️ Nenhum arquivo selecionado no input');
+      return;
     }
+    
+    console.log('📁 Arquivos do input:', files.length);
+    handleFiles(Array.from(files));
   }
 
   async function handleProcessImages() {
     if (selectedFiles.length === 0) {
-      console.error('No files selected for processing');
+      console.error('❌ Nenhum arquivo selecionado para processamento');
+      toast({
+        title: "Erro",
+        description: "Selecione pelo menos uma imagem antes de processar.",
+        variant: "destructive",
+      });
       return;
     }
     
-    console.log('Starting to process', selectedFiles.length, 'images');
+    console.log('🚀 Iniciando processamento de', selectedFiles.length, 'imagens');
     
     try {
       const result = await uploadMultipleImages(selectedFiles);
-      console.log('Upload completed successfully:', result);
+      console.log('✅ Upload concluído com sucesso:', result);
       setUploadResult(result);
       setSelectedFiles([]);
       
@@ -115,17 +158,27 @@ const UploadArea = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
+      toast({
+        title: "Sucesso!",
+        description: "Imagens processadas com sucesso!",
+      });
     } catch (error) {
-      console.error('Error processing images:', error);
+      console.error('❌ Erro no processamento das imagens:', error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido no processamento",
+        variant: "destructive",
+      });
     }
   }
 
   function handleGenerateSummary() {
-    console.log('Generate summary for:', uploadResult);
+    console.log('📝 Gerar resumo para:', uploadResult);
   }
 
   function resetAllUploads() {
-    console.log('Resetting all uploads');
+    console.log('🔄 Resetando todos os uploads');
     setSelectedFiles([]);
     setUploadResult(null);
     resetUpload();
@@ -135,17 +188,18 @@ const UploadArea = () => {
   }
 
   function removeFile(index: number) {
-    console.log('Removing file at index:', index);
+    console.log('🗑️ Removendo arquivo no índice:', index);
     setSelectedFiles(prev => {
       const newFiles = prev.filter((_, i) => i !== index);
-      console.log('Files after removal:', newFiles.length);
+      console.log('📁 Arquivos restantes:', newFiles.length);
       return newFiles;
     });
   }
 
   function handleChooseOther() {
-    console.log('Choose other files clicked');
+    console.log('🔄 Escolher outros arquivos');
     setSelectedFiles([]);
+    resetUpload();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -178,7 +232,7 @@ const UploadArea = () => {
   }
 
   // Debug: log current state
-  console.log('UploadArea render - selectedFiles:', selectedFiles.length, 'uploadResults:', uploadResults.length, 'isProcessing:', isProcessing);
+  console.log('🖼️ Estado atual - selectedFiles:', selectedFiles.length, 'uploadResults:', uploadResults.length, 'isProcessing:', isProcessing);
 
   // Se já tem resultado, mostrar o texto extraído
   if (uploadResult) {
@@ -249,18 +303,37 @@ const UploadArea = () => {
                   {/* Preview das imagens selecionadas ou em processamento */}
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {(selectedFiles.length > 0 ? selectedFiles : uploadResults.map(r => r.file)).map((file, index) => {
-                      const url = URL.createObjectURL(file);
                       const result = uploadResults[index];
                       
+                      // Criar URL do objeto de forma segura
+                      let imageUrl = '';
+                      try {
+                        imageUrl = URL.createObjectURL(file);
+                        console.log(`🖼️ URL criada para imagem ${index + 1}:`, file.name);
+                      } catch (error) {
+                        console.error(`❌ Erro ao criar URL para imagem ${index + 1}:`, error);
+                        return (
+                          <div key={`error-${file.name}-${index}`} className="relative">
+                            <div className="w-full h-24 bg-red-100 border border-red-300 rounded-lg flex items-center justify-center">
+                              <span className="text-red-600 text-xs">Erro ao carregar</span>
+                            </div>
+                            <p className="text-xs text-red-600 mt-1">{file.name}</p>
+                          </div>
+                        );
+                      }
+                      
                       return (
-                        <div key={`${file.name}-${index}`} className="relative">
+                        <div key={`${file.name}-${index}-${file.size}`} className="relative">
                           <div className="relative rounded-lg overflow-hidden border">
                             <img 
-                              src={url} 
+                              src={imageUrl} 
                               alt={`Preview ${index + 1}`} 
                               className="w-full h-24 object-cover"
-                              onLoad={() => console.log(`Image ${index + 1} loaded successfully`)}
-                              onError={(e) => console.error(`Error loading image ${index + 1}:`, e)}
+                              onLoad={() => console.log(`✅ Imagem ${index + 1} carregada:`, file.name)}
+                              onError={(e) => {
+                                console.error(`❌ Erro ao carregar imagem ${index + 1}:`, file.name, e);
+                                e.currentTarget.style.display = 'none';
+                              }}
                             />
                             {selectedFiles.length > 0 && !isProcessing && (
                               <button
@@ -319,13 +392,14 @@ const UploadArea = () => {
                         accept="image/*"
                         multiple
                         onChange={(e) => {
+                          console.log('🔄 Adicionando mais arquivos...');
                           if (e.target.files && e.target.files.length > 0) {
                             const newFiles = Array.from(e.target.files);
                             const currentCount = selectedFiles.length;
                             const availableSlots = MAX_IMAGES - currentCount;
                             const filesToAdd = newFiles.slice(0, availableSlots);
                             
-                            console.log(`Adding ${filesToAdd.length} more files`);
+                            console.log(`➕ Adicionando ${filesToAdd.length} arquivos (${currentCount}/${MAX_IMAGES})`);
                             setSelectedFiles(prev => [...prev, ...filesToAdd]);
                           }
                           // Reset input
@@ -336,7 +410,10 @@ const UploadArea = () => {
                       />
                       <Button 
                         variant="outline"
-                        onClick={() => document.getElementById('additional-files')?.click()}
+                        onClick={() => {
+                          console.log('🔄 Botão adicionar mais imagens clicado');
+                          document.getElementById('additional-files')?.click();
+                        }}
                         className="w-full"
                       >
                         <Upload className="h-4 w-4 mr-2" />

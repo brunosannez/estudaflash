@@ -20,39 +20,51 @@ export const useMultipleUpload = () => {
     try {
       setIsProcessing(true);
       
-      console.log('=== STARTING MULTIPLE UPLOAD PROCESS ===');
-      console.log('Files to process:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+      console.log('=== 🚀 INICIANDO PROCESSO DE UPLOAD MÚLTIPLO ===');
+      console.log('📁 Arquivos para processar:', files.map(f => ({ 
+        name: f.name, 
+        size: f.size, 
+        type: f.type,
+        sizeKB: Math.round(f.size / 1024)
+      })));
+      
+      // Validar arquivos antes de continuar
+      const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+      if (invalidFiles.length > 0) {
+        console.error('❌ Arquivos inválidos encontrados:', invalidFiles.map(f => f.name));
+        throw new Error(`Arquivos inválidos: ${invalidFiles.map(f => f.name).join(', ')}`);
+      }
       
       // Verificar se o usuário está autenticado
-      console.log('Checking user authentication...');
+      console.log('🔐 Verificando autenticação do usuário...');
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) {
-        console.error('Authentication error:', userError);
+        console.error('❌ Erro de autenticação:', userError);
         throw new Error(`Erro de autenticação: ${userError.message}`);
       }
       
       if (!user) {
-        console.error('User not authenticated');
-        throw new Error('Usuário não autenticado');
+        console.error('❌ Usuário não autenticado');
+        throw new Error('Usuário não autenticado. Faça login para continuar.');
       }
 
-      console.log('User authenticated successfully:', user.id);
+      console.log('✅ Usuário autenticado:', user.id);
 
       // Verificar se o bucket existe
-      console.log('Checking storage bucket...');
+      console.log('🗄️ Verificando bucket de storage...');
       const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
       if (bucketsError) {
-        console.error('Error listing buckets:', bucketsError);
+        console.error('❌ Erro ao listar buckets:', bucketsError);
         throw new Error(`Erro ao verificar storage: ${bucketsError.message}`);
       }
       
       const studyImagesBucket = buckets.find(bucket => bucket.id === 'study-images');
       if (!studyImagesBucket) {
-        console.error('study-images bucket not found. Available buckets:', buckets.map(b => b.id));
+        console.error('❌ Bucket study-images não encontrado. Buckets disponíveis:', buckets.map(b => b.id));
         throw new Error('Bucket de imagens não configurado. Contate o suporte.');
       }
 
-      console.log('Storage bucket verified successfully');
+      console.log('✅ Bucket de storage verificado');
 
       // Inicializar resultados
       const initialResults: ImageUploadResult[] = files.map(file => ({
@@ -66,17 +78,22 @@ export const useMultipleUpload = () => {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        console.log(`=== PROCESSING IMAGE ${i + 1}/${files.length}: ${file.name} ===`);
+        console.log(`=== 🖼️ PROCESSANDO IMAGEM ${i + 1}/${files.length}: ${file.name} ===`);
         
         try {
+          // Validar tamanho do arquivo (máximo 10MB)
+          if (file.size > 10 * 1024 * 1024) {
+            throw new Error(`Arquivo muito grande (${Math.round(file.size / 1024 / 1024)}MB). Máximo: 10MB`);
+          }
+          
           // Atualizar status para uploading
           setUploadResults(prev => prev.map((result, index) => 
             index === i ? { ...result, status: 'uploading' } : result
           ));
 
           // Upload da imagem
-          const fileName = `${user.id}/${Date.now()}-${i}-${file.name}`;
-          console.log(`Uploading to path: ${fileName}`);
+          const fileName = `${user.id}/${Date.now()}-${i}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          console.log(`📤 Fazendo upload para: ${fileName}`);
           
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('study-images')
@@ -86,25 +103,30 @@ export const useMultipleUpload = () => {
             });
 
           if (uploadError) {
-            console.error(`Upload error for image ${i + 1}:`, uploadError);
+            console.error(`❌ Erro no upload da imagem ${i + 1}:`, uploadError);
             throw new Error(`Erro no upload: ${uploadError.message}`);
           }
 
-          console.log(`Image ${i + 1} uploaded successfully:`, uploadData?.path);
+          console.log(`✅ Imagem ${i + 1} enviada com sucesso:`, uploadData?.path);
 
           // Obter URL pública
           const { data: { publicUrl } } = supabase.storage
             .from('study-images')
             .getPublicUrl(fileName);
 
-          console.log(`Public URL for image ${i + 1}:`, publicUrl);
+          console.log(`🔗 URL pública da imagem ${i + 1}:`, publicUrl);
+
+          // Verificar se a URL é válida
+          if (!publicUrl || !publicUrl.includes('study-images')) {
+            throw new Error('URL pública inválida gerada');
+          }
 
           // Atualizar status para extracting
           setUploadResults(prev => prev.map((result, index) => 
             index === i ? { ...result, status: 'extracting', imageUrl: publicUrl } : result
           ));
 
-          console.log(`Starting OCR for image ${i + 1}...`);
+          console.log(`🔍 Iniciando OCR para imagem ${i + 1}...`);
 
           // Extrair texto
           const { data: extractData, error: extractError } = await supabase.functions
@@ -112,19 +134,20 @@ export const useMultipleUpload = () => {
               body: { imageUrl: publicUrl }
             });
 
-          console.log(`OCR response for image ${i + 1}:`, extractData);
+          console.log(`📄 Resposta do OCR para imagem ${i + 1}:`, extractData);
 
           if (extractError) {
-            console.error(`OCR error for image ${i + 1}:`, extractError);
+            console.error(`❌ Erro do OCR para imagem ${i + 1}:`, extractError);
             throw new Error(`Erro na extração de texto: ${extractError.message}`);
           }
 
           if (!extractData?.success) {
-            console.error(`OCR failed for image ${i + 1}:`, extractData?.error);
+            console.error(`❌ OCR falhou para imagem ${i + 1}:`, extractData?.error);
             throw new Error(extractData?.error || 'Erro na extração de texto');
           }
 
-          console.log(`OCR completed for image ${i + 1}. Text length:`, extractData.extractedText?.length || 0);
+          const extractedTextLength = extractData.extractedText?.length || 0;
+          console.log(`✅ OCR concluído para imagem ${i + 1}. Comprimento do texto:`, extractedTextLength);
 
           // Atualizar status para completed
           const result: ImageUploadResult = {
@@ -141,7 +164,7 @@ export const useMultipleUpload = () => {
           finalResults.push(result);
 
         } catch (error) {
-          console.error(`Error processing image ${i + 1}:`, error);
+          console.error(`❌ Erro ao processar imagem ${i + 1}:`, error);
           
           const errorResult: ImageUploadResult = {
             file,
@@ -159,7 +182,7 @@ export const useMultipleUpload = () => {
 
       // Verificar se pelo menos uma imagem foi processada com sucesso
       const successfulResults = finalResults.filter(r => r.status === 'completed');
-      console.log(`Processing completed. Successful: ${successfulResults.length}/${files.length}`);
+      console.log(`📊 Processamento concluído. Sucessos: ${successfulResults.length}/${files.length}`);
 
       if (successfulResults.length === 0) {
         throw new Error('Nenhuma imagem foi processada com sucesso');
@@ -173,10 +196,10 @@ export const useMultipleUpload = () => {
         })
         .join('\n\n');
 
-      console.log('Combined text length:', combinedText.length);
+      console.log('📝 Comprimento do texto combinado:', combinedText.length);
 
       // Salvar no banco de dados como um único registro
-      console.log('Saving to database...');
+      console.log('💾 Salvando no banco de dados...');
       const { data: uploadRecord, error: dbError } = await supabase
         .from('uploads')
         .insert({
@@ -188,23 +211,23 @@ export const useMultipleUpload = () => {
         .single();
 
       if (dbError) {
-        console.error('Database error:', dbError);
+        console.error('❌ Erro no banco de dados:', dbError);
         throw new Error(`Erro ao salvar no banco: ${dbError.message}`);
       }
 
-      console.log('Upload record saved successfully:', uploadRecord.id);
+      console.log('✅ Registro de upload salvo:', uploadRecord.id);
 
       toast({
         title: "Sucesso!",
         description: `${successfulResults.length} de ${files.length} imagens processadas com sucesso.`,
       });
 
-      console.log('=== MULTIPLE UPLOAD PROCESS COMPLETED ===');
+      console.log('=== ✅ PROCESSO DE UPLOAD MÚLTIPLO CONCLUÍDO ===');
       return uploadRecord;
 
     } catch (error) {
-      console.error('=== MULTIPLE UPLOAD PROCESS FAILED ===');
-      console.error('Error details:', error);
+      console.error('=== ❌ PROCESSO DE UPLOAD MÚLTIPLO FALHOU ===');
+      console.error('Detalhes do erro:', error);
       
       let errorMessage = "Erro ao processar as imagens.";
       if (error instanceof Error) {
@@ -223,7 +246,7 @@ export const useMultipleUpload = () => {
   };
 
   const resetUpload = () => {
-    console.log('Resetting upload state');
+    console.log('🔄 Resetando estado do upload');
     setUploadResults([]);
   };
 
