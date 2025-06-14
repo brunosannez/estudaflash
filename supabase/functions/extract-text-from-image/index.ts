@@ -6,6 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper function to convert ArrayBuffer to base64 string safely
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 8192; // Process in chunks to avoid stack overflow
+  
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.slice(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  
+  return btoa(binary);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -43,9 +57,21 @@ serve(async (req) => {
     }
     
     const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)))
+    const imageSizeInMB = imageBuffer.byteLength / (1024 * 1024)
+    
+    console.log(`Image downloaded, size: ${imageSizeInMB.toFixed(2)}MB`)
+    
+    // Check if image is too large (limit to 10MB for OCR processing)
+    if (imageSizeInMB > 10) {
+      console.error(`Image too large: ${imageSizeInMB.toFixed(2)}MB`)
+      throw new Error(`Imagem muito grande (${imageSizeInMB.toFixed(2)}MB). Limite máximo: 10MB`)
+    }
+    
+    // Convert to base64 using the safe method
+    const base64Image = arrayBufferToBase64(imageBuffer)
+    console.log(`Image converted to base64, length: ${base64Image.length}`)
 
-    console.log('Image downloaded and converted to base64, calling Google Vision API...')
+    console.log('Calling Google Vision API...')
     
     // Chamar Google Vision OCR API
     const visionResponse = await fetch(

@@ -38,13 +38,13 @@ export const useMultipleUpload = () => {
         throw validationError;
       }
 
-      // Verify user authentication
+      // Verify user authentication and bucket access
       let user;
       try {
         user = await verifyUserAndBucket();
-        console.log('✅ User verification passed');
+        console.log('✅ User and bucket verification passed');
       } catch (authError) {
-        console.error('❌ User verification failed:', authError);
+        console.error('❌ User/bucket verification failed:', authError);
         throw authError;
       }
 
@@ -55,7 +55,8 @@ export const useMultipleUpload = () => {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        console.log(`=== 🖼️ PROCESSING IMAGE ${i + 1}/${files.length}: ${file.name} ===`);
+        const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        console.log(`=== 🖼️ PROCESSING IMAGE ${i + 1}/${files.length}: ${file.name} (${fileSizeInMB}MB) ===`);
         
         try {
           // Upload phase
@@ -78,7 +79,7 @@ export const useMultipleUpload = () => {
           let extractedText;
           try {
             extractedText = await invokeOcrFunction(publicUrl);
-            console.log(`✅ Text extraction successful for image ${i + 1}`);
+            console.log(`✅ Text extraction successful for image ${i + 1}, length: ${extractedText.length}`);
           } catch (ocrError) {
             console.error(`❌ OCR failed for image ${i + 1}:`, ocrError);
             throw ocrError;
@@ -98,7 +99,7 @@ export const useMultipleUpload = () => {
 
         } catch (error) {
           console.error(`❌ Error processing image ${i + 1}:`, error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
           
           const errorResult: ImageUploadResult = {
             file,
@@ -117,7 +118,7 @@ export const useMultipleUpload = () => {
       console.log(`📊 Processing finished. Successes: ${successfulResults.length}/${files.length}`);
 
       if (successfulResults.length === 0) {
-        throw new Error('No images were processed successfully. Please check your internet connection and try again.');
+        throw new Error('Nenhuma imagem foi processada com sucesso. Verifique sua conexão e tente novamente.');
       }
 
       // Save to database
@@ -129,17 +130,26 @@ export const useMultipleUpload = () => {
         console.error('❌ Database save failed:', dbError);
         // Don't throw here - the uploads succeeded, just the DB save failed
         toast({
-          title: "Partial Success",
-          description: `${successfulResults.length} images processed, but failed to save to database. Please try again.`,
+          title: "Sucesso Parcial",
+          description: `${successfulResults.length} imagens processadas, mas falha ao salvar no banco. Tente novamente.`,
           variant: "destructive",
         });
         throw dbError;
       }
 
-      toast({
-        title: "Success!",
-        description: `${successfulResults.length} of ${files.length} images processed successfully.`,
-      });
+      // Show appropriate success message
+      const failureCount = files.length - successfulResults.length;
+      if (failureCount > 0) {
+        toast({
+          title: "Processamento Concluído",
+          description: `${successfulResults.length} de ${files.length} imagens processadas com sucesso. ${failureCount} falharam.`,
+        });
+      } else {
+        toast({
+          title: "Sucesso!",
+          description: `Todas as ${successfulResults.length} imagens foram processadas com sucesso.`,
+        });
+      }
 
       console.log('=== ✅ MULTIPLE UPLOAD PROCESS COMPLETED ===');
       return uploadRecord;
@@ -148,22 +158,26 @@ export const useMultipleUpload = () => {
       console.error('=== ❌ MULTIPLE UPLOAD PROCESS FAILED ===');
       console.error('Error details:', error);
       
-      const errorMessage = error instanceof Error ? error.message : "Error processing images.";
+      const errorMessage = error instanceof Error ? error.message : "Erro ao processar imagens.";
       
       // Provide more helpful error messages based on error type
       let userFriendlyMessage = errorMessage;
-      if (errorMessage.includes('not authenticated')) {
-        userFriendlyMessage = "Please log in and try again.";
-      } else if (errorMessage.includes('bucket')) {
-        userFriendlyMessage = "Storage configuration issue. Please contact support.";
-      } else if (errorMessage.includes('permission')) {
-        userFriendlyMessage = "You don't have permission to upload files. Please log in and try again.";
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        userFriendlyMessage = "Network error. Please check your connection and try again.";
+      if (errorMessage.includes('não autenticado')) {
+        userFriendlyMessage = "Faça login e tente novamente.";
+      } else if (errorMessage.includes('bucket') || errorMessage.includes('storage')) {
+        userFriendlyMessage = "Problema na configuração de armazenamento. Contate o suporte.";
+      } else if (errorMessage.includes('permissão') || errorMessage.includes('permission')) {
+        userFriendlyMessage = "Sem permissão para fazer upload. Faça login e tente novamente.";
+      } else if (errorMessage.includes('conexão') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+      } else if (errorMessage.includes('muito grande') || errorMessage.includes('large')) {
+        userFriendlyMessage = "Uma ou mais imagens são muito grandes. Use imagens menores (máximo 10MB).";
+      } else if (errorMessage.includes('inválido') || errorMessage.includes('invalid')) {
+        userFriendlyMessage = "Formato de arquivo inválido. Use apenas imagens JPG, PNG, WebP ou GIF.";
       }
       
       toast({
-        title: "Error",
+        title: "Erro",
         description: userFriendlyMessage,
         variant: "destructive",
       });
