@@ -11,7 +11,7 @@ import { useQuizGame } from "@/hooks/useQuizGame";
 
 interface QuizPlayProps {
   quiz: any;
-  onComplete: () => void;
+  onComplete: (sessionResult: any) => void;
 }
 
 const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
@@ -28,7 +28,12 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     stats,
     handleAnswerSelect,
     handleNextQuestion
-  } = useQuizGame(quiz, onComplete);
+  } = useQuizGame(quiz, () => {
+    // When quiz is complete, pass the sessionResult to parent
+    if (sessionResult) {
+      onComplete(sessionResult);
+    }
+  });
 
   const isLastQuestion = currentQuestionIndex === quiz.questoes.length - 1;
 

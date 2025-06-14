@@ -35,11 +35,12 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
     }
   }, [quiz, sessionData, startSession]);
 
+  // Call onComplete when we have a sessionResult
   useEffect(() => {
-    if (quizCompleted && sessionResult) {
+    if (sessionResult && onComplete) {
       onComplete();
     }
-  }, [quizCompleted, sessionResult, onComplete]);
+  }, [sessionResult, onComplete]);
 
   const triggerCelebration = (isCorrect: boolean) => {
     if (isCorrect) {
