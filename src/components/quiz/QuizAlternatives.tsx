@@ -74,14 +74,14 @@ const QuizAlternatives = ({
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {alternatives.map((alt, index) => {
         const altStyle = alternativeStyles[index];
         const isSelected = selectedAnswer === index;
         const isCorrect = showResult && index === correctAnswer;
         const isWrong = showResult && isSelected && index !== correctAnswer;
         
-        let buttonClass = `w-full p-4 lg:p-5 rounded-2xl border-3 text-left transition-all duration-300 transform hover:scale-[1.01] font-nunito font-semibold text-sm lg:text-base`;
+        let buttonClass = `w-full p-3 lg:p-4 rounded-xl border-2 text-left transition-all duration-300 transform hover:scale-[1.01] font-nunito font-semibold text-xs lg:text-sm`;
         
         if (showResult) {
           if (isCorrect) {
@@ -104,24 +104,24 @@ const QuizAlternatives = ({
             disabled={showResult}
             className={buttonClass}
           >
-            <div className="flex items-center space-x-3 lg:space-x-4">
-              <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-fredoka text-lg lg:text-xl font-bold
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-fredoka text-sm lg:text-lg font-bold
                 ${isSelected || (showResult && isCorrect) ? 'bg-white shadow-md' : 
                   showResult && isCorrect ? 'bg-green-200 animate-bounce' :
                   showResult && isWrong ? 'bg-red-200' :
                   'bg-white/70'
                 }`}>
-                <span className="text-xl lg:text-2xl">{altStyle.emoji}</span>
-                <span className={`ml-1 text-sm lg:text-base ${isSelected ? altStyle.text : 'text-gray-700'}`}>
+                <span className="text-lg lg:text-xl">{altStyle.emoji}</span>
+                <span className={`ml-1 text-xs lg:text-sm ${isSelected ? altStyle.text : 'text-gray-700'}`}>
                   {altStyle.letter}
                 </span>
               </div>
               <span className="flex-1 leading-relaxed">{alt}</span>
               {showResult && isCorrect && (
-                <span className="text-xl lg:text-2xl animate-bounce">✅</span>
+                <span className="text-lg lg:text-xl animate-bounce">✅</span>
               )}
               {showResult && isWrong && (
-                <span className="text-xl lg:text-2xl">❌</span>
+                <span className="text-lg lg:text-xl">❌</span>
               )}
             </div>
           </button>

@@ -56,10 +56,17 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
 
     // Salvar resposta no banco de dados e adicionar XP
     try {
-      if (quiz.questoes[0].id) {
-        const response = await enviarResposta(quiz.questoes[0].id, index);
+      if (currentQuestion.id) {
+        console.log('🔍 Enviando resposta para pergunta:', currentQuestion.id);
+        const response = await enviarResposta(currentQuestion.id, index);
+        console.log('📝 Resposta recebida:', response);
+        
         if (response && response.explicacao) {
+          console.log('💡 Explicação recebida:', response.explicacao);
           setCurrentExplanation(response.explicacao);
+        } else {
+          console.log('⚠️ Nenhuma explicação recebida');
+          setCurrentExplanation('');
         }
       }
       
@@ -78,23 +85,30 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
       
     } catch (error) {
       console.error("Erro ao processar resposta:", error);
+      setCurrentExplanation('');
     }
   };
 
   const handleNextQuestion = () => {
+    // Contar acerto se necessário
     if (selectedAnswer === currentQuestion.resposta_correta) {
       setCorrectAnswersCount(correctAnswersCount + 1);
     }
 
+    // Reset states para próxima pergunta
     setSelectedAnswer(null);
     setShowResult(false);
     setCurrentExplanation('');
 
+    // Verificar se é a última pergunta
     if (currentQuestionIndex < quiz.questoes.length - 1) {
+      // Ir para próxima pergunta
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
+      // Finalizar quiz
       setQuizCompleted(true);
-      const correctPercentage = ((correctAnswersCount + (selectedAnswer === currentQuestion.resposta_correta ? 1 : 0)) / quiz.questoes.length) * 100;
+      const finalCorrectCount = correctAnswersCount + (selectedAnswer === currentQuestion.resposta_correta ? 1 : 0);
+      const correctPercentage = (finalCorrectCount / quiz.questoes.length) * 100;
       let bonusXP = 50;
 
       if (correctPercentage >= 90) {
@@ -111,7 +125,10 @@ export const useQuizGame = (quiz: any, onComplete: () => void) => {
         duration: 5000,
       });
 
-      navigate('/quiz-history');
+      // Navegar para histórico após pequeno delay
+      setTimeout(() => {
+        navigate('/quiz-history');
+      }, 2000);
     }
   };
 

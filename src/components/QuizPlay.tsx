@@ -28,11 +28,13 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     handleNextQuestion
   } = useQuizGame(quiz, onComplete);
 
+  const isLastQuestion = currentQuestionIndex === quiz.questoes.length - 1;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 relative overflow-hidden">
       <QuizCelebration show={showCelebration} />
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <QuizHeader 
           quizTitle={quiz.titulo}
           currentXP={currentXP}
@@ -40,8 +42,8 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
           stats={stats}
         />
 
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-3xl overflow-hidden">
-          <CardContent className="p-6 lg:p-8">
+        <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0 rounded-2xl overflow-hidden">
+          <CardContent className="p-4 lg:p-6">
             <QuizQuestion 
               question={currentQuestion.pergunta}
               currentQuestionIndex={currentQuestionIndex}
@@ -66,14 +68,14 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
               />
             )}
 
-            <div className="mt-6 lg:mt-8 flex justify-end">
+            <div className="mt-6 flex justify-end">
               <Button 
                 onClick={handleNextQuestion} 
                 disabled={!showResult}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-6 lg:px-8 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 font-fredoka text-sm lg:text-base"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-6 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 font-fredoka text-sm lg:text-base"
                 size="lg"
               >
-                {currentQuestionIndex === quiz.questoes.length - 1 ? '🏆 Concluir Quiz' : '▶️ Próxima Pergunta'}
+                {isLastQuestion ? '🏆 Concluir Quiz' : '▶️ Próxima Pergunta'}
               </Button>
             </div>
           </CardContent>
