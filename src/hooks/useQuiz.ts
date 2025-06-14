@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,12 +34,19 @@ export function useQuiz(resumoId: string) {
       .select("*")
       .eq("resumo_id", resumoId)
       .order("data_criacao", { ascending: true });
+
     if (!error && data) {
       setQuizzes(
         data.map((q) => ({
           ...q,
-          alternativas: Array.isArray(q.alternativas) ? q.alternativas : q.alternativas,
-        }))
+          alternativas: Array.isArray(q.alternativas)
+            ? q.alternativas.filter((alt) => typeof alt === "string")
+            : typeof q.alternativas === "string"
+            ? [q.alternativas]
+            : Array.isArray(q.alternativas)
+            ? q.alternativas.filter((alt) => typeof alt === "string")
+            : [], // fallback if not array/string
+        })) as Quiz[]
       );
     } else setQuizzes([]);
     setLoading(false);
