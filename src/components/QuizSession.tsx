@@ -25,7 +25,9 @@ const QuizSession = ({ quizzes, onComplete }: QuizSessionProps) => {
   // Convert individual quiz format to expected format
   const currentQuiz = {
     titulo: `Quiz ${currentQuizIndex + 1}`,
+    resumo_id: quizzes[currentQuizIndex].resumo_id,
     questoes: [{
+      id: quizzes[currentQuizIndex].id,
       pergunta: quizzes[currentQuizIndex].pergunta,
       alternativas: quizzes[currentQuizIndex].alternativas,
       resposta_correta: quizzes[currentQuizIndex].correta
