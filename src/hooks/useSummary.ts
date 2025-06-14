@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -106,9 +105,38 @@ export const useSummary = () => {
     }
   };
 
+  const getResumoById = async (resumoId: string) => {
+    try {
+      console.log('Buscando resumo por ID:', resumoId);
+      
+      const { data, error } = await supabase
+        .from('resumos')
+        .select('*')
+        .eq('id', resumoId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao buscar resumo por ID:', error);
+        throw error;
+      }
+
+      if (data) {
+        console.log('Resumo encontrado por ID:', data.id);
+      } else {
+        console.log('Nenhum resumo encontrado para este ID');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar resumo por ID:', error);
+      return null;
+    }
+  };
+
   return {
     generateSummary,
     getResumo,
+    getResumoById,
     isGenerating
   };
 };

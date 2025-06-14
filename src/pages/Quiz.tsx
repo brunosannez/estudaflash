@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuiz } from "@/hooks/useQuiz";
@@ -10,11 +9,13 @@ import Header from "@/components/Header";
 import AuthGuard from "@/components/AuthGuard";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const QuizPage = () => {
   const { resumoId } = useParams();
   const navigate = useNavigate();
-  const { getResumo } = useSummary();
+  const { getResumoById } = useSummary();
+  const { toast } = useToast();
   const [resumo, setResumo] = useState<any>(null);
   const {
     quizzes,
@@ -37,11 +38,35 @@ const QuizPage = () => {
   }, [resumoId]);
 
   const fetchResumoAndQuizzes = async () => {
-    setReady(false);
-    const r = await getResumo(resumoId!);
-    setResumo(r);
-    await fetchQuizzes();
-    setReady(true);
+    try {
+      setReady(false);
+      console.log('Carregando resumo com ID:', resumoId);
+      
+      const r = await getResumoById(resumoId!);
+      
+      if (!r) {
+        console.error('Resumo não encontrado para ID:', resumoId);
+        toast({
+          title: "Erro",
+          description: "Resumo não encontrado.",
+          variant: "destructive",
+        });
+        navigate(-1);
+        return;
+      }
+      
+      setResumo(r);
+      await fetchQuizzes();
+      setReady(true);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar o resumo.",
+        variant: "destructive",
+      });
+      navigate(-1);
+    }
   };
 
   const handleGerarQuiz = async () => {
@@ -72,6 +97,20 @@ const QuizPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!resumo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Resumo não encontrado</h2>
+          <Button onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
       </div>
     );
   }
