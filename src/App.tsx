@@ -11,6 +11,8 @@ import Resumo from "./pages/Resumo";
 import NotFound from "./pages/NotFound";
 import QuizPage from "@/pages/Quiz";
 import MyProgress from "@/pages/MyProgress";
+import MySummaries from "@/pages/MySummaries";
+import MyFlashcards from "@/pages/MyFlashcards";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,16 @@ const AppRoutes = () => {
       <Route path="/progresso" element={
         <ProtectedRoute>
           <MyProgress />
+        </ProtectedRoute>
+      } />
+      <Route path="/meus-resumos" element={
+        <ProtectedRoute>
+          <MySummaries />
+        </ProtectedRoute>
+      } />
+      <Route path="/meus-flashcards" element={
+        <ProtectedRoute>
+          <MyFlashcards />
         </ProtectedRoute>
       } />
       
