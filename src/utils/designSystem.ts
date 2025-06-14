@@ -35,6 +35,40 @@ export const designColors = {
     buttonHover: 'hover:scale-105 transition-all duration-200',
     iconFloat: 'hover:animate-bounce',
     slideIn: 'animate-fade-in'
+  },
+  // Novo: Classes responsivas para mobile
+  responsive: {
+    // Títulos principais
+    heroTitle: 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl',
+    pageTitle: 'text-xl sm:text-2xl md:text-3xl lg:text-4xl',
+    sectionTitle: 'text-lg sm:text-xl md:text-2xl lg:text-3xl',
+    cardTitle: 'text-base sm:text-lg md:text-xl',
+    
+    // Textos e descrições
+    heroText: 'text-sm sm:text-base md:text-lg lg:text-xl',
+    bodyText: 'text-xs sm:text-sm md:text-base',
+    captionText: 'text-xs sm:text-sm',
+    
+    // Ícones
+    heroIcon: 'h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-12 lg:w-12',
+    pageIcon: 'h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8',
+    cardIcon: 'h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6',
+    buttonIcon: 'h-3 w-3 sm:h-4 sm:w-4',
+    
+    // Espaçamentos
+    containerPadding: 'px-2 sm:px-4 md:px-6 lg:px-8',
+    sectionSpacing: 'space-y-4 sm:space-y-6 md:space-y-8',
+    cardPadding: 'p-3 sm:p-4 md:p-6',
+    buttonPadding: 'py-2 px-3 sm:py-3 sm:px-4 md:py-4 md:px-6',
+    
+    // Layouts de grid
+    gridCols1: 'grid-cols-1',
+    gridCols2: 'grid-cols-1 sm:grid-cols-2',
+    gridCols3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
+    gridCols4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+    
+    // Elementos flutuantes (reduzidos no mobile)
+    floatingElements: 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl opacity-10 sm:opacity-20'
   }
 };
 
