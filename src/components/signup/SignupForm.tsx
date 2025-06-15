@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { usePlans } from '@/hooks/usePlans';
+import { useActivePlans } from '@/hooks/usePlans';
 
 interface SignupFormProps {
   selectedPlanId: string;
@@ -19,7 +19,7 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { plans } = usePlans();
+  const { plans } = useActivePlans();
 
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
@@ -38,9 +38,32 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
 
       if (error) {
         console.error('Error creating user usage record:', error);
+        throw error;
       }
     } catch (err) {
       console.error('Error in createUserUsageRecord:', err);
+      throw err;
+    }
+  };
+
+  const getFreePlanId = async (): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('id')
+        .eq('name', 'Free')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error finding Free plan:', error);
+        return null;
+      }
+
+      return data?.id || null;
+    } catch (err) {
+      console.error('Error getting Free plan:', err);
+      return null;
     }
   };
 
@@ -56,25 +79,35 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
       return;
     }
 
-    if (!selectedPlanId) {
-      toast({
-        title: "Erro de validação",
-        description: "Por favor, selecione um plano.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
     
     try {
+      // Ensure we have a valid plan ID
+      let finalPlanId = selectedPlanId;
+      
+      if (!finalPlanId) {
+        console.log('No plan selected, trying to get Free plan...');
+        const freePlanId = await getFreePlanId();
+        if (!freePlanId) {
+          toast({
+            title: "Erro de configuração",
+            description: "Não foi possível encontrar um plano válido. Tente novamente.",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalPlanId = freePlanId;
+      }
+
+      console.log('Creating user with plan ID:', finalPlanId);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            plan_id: selectedPlanId
+            plan_id: finalPlanId
           }
         }
       });
@@ -88,27 +121,37 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
         return;
       }
 
-      // If user is immediately confirmed, create the usage record
-      if (data.user && !data.user.email_confirmed_at) {
+      if (!data.user) {
+        toast({
+          title: "Erro no cadastro",
+          description: "Não foi possível criar a conta.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create usage record immediately
+      await createUserUsageRecord(data.user.id, finalPlanId);
+
+      if (!data.user.email_confirmed_at) {
         // User needs email confirmation
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Verifique seu email para confirmar sua conta.",
         });
-      } else if (data.user) {
-        // User is immediately confirmed, create usage record
-        await createUserUsageRecord(data.user.id, selectedPlanId);
+      } else {
+        // User is immediately confirmed
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Bem-vindo ao EstudoFácil AI!",
         });
         navigate('/');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
       toast({
         title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes.",
+        description: error.message || "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
     } finally {
