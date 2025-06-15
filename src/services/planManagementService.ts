@@ -28,7 +28,7 @@ export class PlanManagementService {
       }
 
       // Buscar informações dos usuários
-      const { data: authData, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
 
       if (usersError) {
         console.error('Erro ao buscar usuários:', usersError);
@@ -37,7 +37,7 @@ export class PlanManagementService {
 
       // Combinar os dados
       const usersWithPlans: UserWithPlan[] = usageData?.map(usage => {
-        const user = authData.users?.find(u => u.id === usage.user_id);
+        const user = users?.find(u => u.id === usage.user_id);
         return {
           user_id: usage.user_id,
           email: user?.email || 'Email não encontrado',
