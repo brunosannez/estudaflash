@@ -207,8 +207,8 @@ export const useGameification = () => {
     fetchUserProgress();
     
     // Refresh automático a cada 30 segundos se houver usuário
-    const interval = setInterval(() => {
-      const { data: { user } } = supabase.auth.getUser();
+    const interval = setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user && !loading) {
         fetchUserProgress();
       }
@@ -219,51 +219,57 @@ export const useGameification = () => {
 
   // Escutar mudanças em tempo real
   useEffect(() => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    const setupRealtimeSubscriptions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    console.log('🔄 Setting up real-time subscriptions');
+      console.log('🔄 Setting up real-time subscriptions');
 
-    const progressChannel = supabase
-      .channel('user_progress_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'user_progress',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('🔄 Progress updated in real-time:', payload);
-          if (payload.new) {
-            setProgress(payload.new as UserProgress);
+      const progressChannel = supabase
+        .channel('user_progress_changes')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'user_progress',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('🔄 Progress updated in real-time:', payload);
+            if (payload.new) {
+              setProgress(payload.new as UserProgress);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    const activityChannel = supabase
-      .channel('daily_activities_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'daily_activities',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('🔄 Activity updated in real-time:', payload);
-          if (payload.new) {
-            setTodayActivity(payload.new as DailyActivity);
+      const activityChannel = supabase
+        .channel('daily_activities_changes')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'daily_activities',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('🔄 Activity updated in real-time:', payload);
+            if (payload.new) {
+              setTodayActivity(payload.new as DailyActivity);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    return () => {
-      progressChannel.unsubscribe();
-      activityChannel.unsubscribe();
+      return () => {
+        progressChannel.unsubscribe();
+        activityChannel.unsubscribe();
+      };
     };
+
+    if (isInitialized) {
+      setupRealtimeSubscriptions();
+    }
   }, [isInitialized]);
 
   return {
