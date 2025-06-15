@@ -321,12 +321,51 @@ export type Database = {
         }
         Relationships: []
       }
+      uso_usuarios: {
+        Row: {
+          created_at: string
+          data_ultimo_reset: string
+          flashcards_gerados: number
+          id: string
+          plano: string
+          quizzes_realizados: number
+          updated_at: string
+          uploads_realizados: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_ultimo_reset?: string
+          flashcards_gerados?: number
+          id?: string
+          plano?: string
+          quizzes_realizados?: number
+          updated_at?: string
+          uploads_realizados?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_ultimo_reset?: string
+          flashcards_gerados?: number
+          id?: string
+          plano?: string
+          quizzes_realizados?: number
+          updated_at?: string
+          uploads_realizados?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_monthly_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

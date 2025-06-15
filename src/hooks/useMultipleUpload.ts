@@ -1,6 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { useMultipleUploadState } from './useMultipleUploadState';
+import { useUsageLimit } from './useUsageLimit';
 import { validateFiles } from '@/utils/fileValidator';
 import { 
   verifyUserAndBucket, 
@@ -14,6 +15,7 @@ export { ImageUploadResult };
 
 export const useMultipleUpload = () => {
   const { toast } = useToast();
+  const { checkCanProceed, incrementUsage } = useUsageLimit();
   const {
     uploadResults,
     isProcessing,
@@ -28,6 +30,13 @@ export const useMultipleUpload = () => {
       setIsProcessing(true);
       console.log('=== 🚀 STARTING MULTIPLE UPLOAD PROCESS ===');
       console.log(`📁 Files to process: ${files.length}`);
+      
+      // Verificar limite de uso ANTES de qualquer processamento
+      const canProceed = await checkCanProceed('uploads');
+      if (!canProceed) {
+        console.log('❌ Upload bloqueado por limite de uso');
+        return;
+      }
       
       // Validate files first
       try {
@@ -126,6 +135,11 @@ export const useMultipleUpload = () => {
       try {
         uploadRecord = await saveUploadRecord(user.id, successfulResults);
         console.log('✅ Database save successful');
+        
+        // Incrementar contador de uso APENAS após sucesso completo
+        await incrementUsage('uploads');
+        console.log('✅ Usage counter incremented');
+        
       } catch (dbError) {
         console.error('❌ Database save failed:', dbError);
         // Don't throw here - the uploads succeeded, just the DB save failed

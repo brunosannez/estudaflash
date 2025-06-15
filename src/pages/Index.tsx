@@ -1,104 +1,55 @@
-
-import { useState } from 'react';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
-import UploadArea from '@/components/UploadArea';
-import ResumoSelector from '@/components/ResumoSelector';
-import FlashcardStudy from '@/components/FlashcardStudy';
+import { useAuth } from '@/hooks/useAuth';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
-import FloatingBackground from '@/components/dashboard/FloatingBackground';
-import ProgressTabContent from '@/components/dashboard/ProgressTabContent';
-import FlashcardsTabContent from '@/components/dashboard/FlashcardsTabContent';
-import QuizzesTabContent from '@/components/dashboard/QuizzesTabContent';
-import BackButton from '@/components/dashboard/BackButton';
-import { designColors } from '@/utils/designSystem';
+import FloatingBackground from '@/components/FloatingBackground';
+import RecentActivity from '@/components/dashboard/RecentActivity';
+import UsageIndicator from '@/components/usage/UsageIndicator';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('upload');
-  const [studyMode, setStudyMode] = useState<'selector' | 'flashcards' | 'quiz' | null>(null);
-  const [selectedResumoId, setSelectedResumoId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('progress');
+  const [hasUploads, setHasUploads] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const handleResumoSelect = (resumo: any) => {
-    setSelectedResumoId(resumo.id);
-    if (activeTab === 'flashcards') {
-      setStudyMode('flashcards');
-    } else if (activeTab === 'quizzes') {
-      navigate(`/quiz/${resumo.id}`);
+  useEffect(() => {
+    if (!user) {
+      navigate('/home');
     }
-  };
-
-  const handleBackToSelector = () => {
-    setStudyMode('selector');
-    setSelectedResumoId(null);
-  };
-
-  const handleBackToMain = () => {
-    setStudyMode(null);
-    setSelectedResumoId(null);
-  };
+  }, [user, navigate]);
 
   return (
-    <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
-      <FloatingBackground />
-      <Header />
-      
-      <div className={`container mx-auto ${designColors.responsive.containerPadding} py-4 sm:py-8 relative z-10`}>
-        <div className="max-w-6xl mx-auto">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <FloatingBackground />
+        
+        <div className="relative z-10">
           <DashboardHeader />
-
-          {studyMode === 'flashcards' && selectedResumoId ? (
-            <div className={`${designColors.cards.primary} p-3 sm:p-6 ${designColors.animations.slideIn}`}>
-              <FlashcardStudy 
-                resumoId={selectedResumoId} 
-                onBack={handleBackToSelector}
-              />
-            </div>
-          ) : studyMode === 'selector' ? (
-            <div className={designColors.animations.slideIn}>
-              <ResumoSelector
-                onSelectResumo={handleResumoSelect}
-                title={activeTab === 'flashcards' ? '🧠 Escolha um Resumo para Estudar' : '🎯 Escolha um Resumo para Quiz'}
-                description={activeTab === 'flashcards' ? 'Selecione um resumo para criar e estudar flashcards divertidos!' : 'Selecione um resumo para criar e responder quizzes emocionantes!'}
-                actionText={activeTab === 'flashcards' ? '🧠 Estudar Flashcards' : '🎮 Fazer Quiz'}
-              />
-            </div>
-          ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <DashboardTabs activeTab={activeTab} />
-
-              <TabsContent value="upload" className={designColors.animations.slideIn}>
-                <UploadArea />
-              </TabsContent>
-
-              <TabsContent value="progress" className={designColors.animations.slideIn}>
-                <ProgressTabContent />
-              </TabsContent>
-
-              <TabsContent value="flashcards" className={designColors.animations.slideIn}>
-                <FlashcardsTabContent 
-                  onSelectExisting={() => setStudyMode('selector')}
-                  onUploadNew={() => setActiveTab('upload')}
+          
+          <main className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              <div className="xl:col-span-3 space-y-6">
+                <DashboardTabs 
+                  activeTab={activeTab} 
+                  onTabChange={setActiveTab}
+                  hasUploads={hasUploads}
                 />
-              </TabsContent>
-
-              <TabsContent value="quizzes" className={designColors.animations.slideIn}>
-                <QuizzesTabContent 
-                  onSelectExisting={() => setStudyMode('selector')}
-                  onUploadNew={() => setActiveTab('upload')}
-                />
-              </TabsContent>
-            </Tabs>
-          )}
-
-          {studyMode && (
-            <BackButton onClick={handleBackToMain} />
-          )}
+              </div>
+              
+              <div className="xl:col-span-1 space-y-6">
+                <UsageIndicator />
+                
+                <div className="space-y-4">
+                  <RecentActivity setHasUploads={setHasUploads} />
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

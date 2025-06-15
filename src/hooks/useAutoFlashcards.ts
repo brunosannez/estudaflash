@@ -2,16 +2,25 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUsageLimit } from '@/hooks/useUsageLimit';
 
 export const useAutoFlashcards = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const generateAutoFlashcards = async (resumoId: string, textoResumo: string) => {
     try {
       setIsGenerating(true);
       
       console.log('Iniciando geração automática de flashcards para:', resumoId);
+
+      // Verificar limite de uso ANTES de gerar flashcards
+      const canProceed = await checkCanProceed('flashcards');
+      if (!canProceed) {
+        console.log('❌ Geração de flashcards bloqueada por limite de uso');
+        return null;
+      }
 
       const { data, error } = await supabase.functions
         .invoke('generate-flashcards', {
@@ -36,6 +45,10 @@ export const useAutoFlashcards = () => {
       }
 
       console.log('Flashcards gerados com sucesso:', data.stats);
+
+      // Incrementar contador de uso APENAS após sucesso
+      await incrementUsage('flashcards');
+      console.log('✅ Usage counter incremented for flashcards');
 
       toast({
         title: "🎉 Sucesso!",

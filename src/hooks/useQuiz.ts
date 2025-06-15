@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 export interface Quiz {
   id: string;
@@ -27,6 +28,7 @@ export function useQuiz(resumoId: string) {
   const [respostas, setRespostas] = useState<QuizResposta[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const fetchQuizzes = async () => {
     setLoading(true);
@@ -56,10 +58,20 @@ export function useQuiz(resumoId: string) {
 
   const generateQuiz = async (texto_resumo: string) => {
     setLoading(true);
+    
+    // Verificar limite de uso ANTES de gerar quiz
+    const canProceed = await checkCanProceed('quizzes');
+    if (!canProceed) {
+      console.log('❌ Geração de quiz bloqueada por limite de uso');
+      setLoading(false);
+      return false;
+    }
+
     const { data, error } = await supabase.functions.invoke("generate-quiz", {
       body: { resumo_id: resumoId, texto_resumo },
     });
     setLoading(false);
+    
     if (error || !data.success) {
       toast({
         title: "Erro ao gerar quiz",
@@ -68,6 +80,11 @@ export function useQuiz(resumoId: string) {
       });
       return false;
     }
+    
+    // Incrementar contador de uso APENAS após sucesso
+    await incrementUsage('quizzes');
+    console.log('✅ Usage counter incremented for quizzes');
+    
     toast({ title: "Quiz gerado com sucesso!" });
     setQuizzes(data.quizzes);
     return true;
