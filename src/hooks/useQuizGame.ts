@@ -37,8 +37,10 @@ export const useQuizGame = (resumoId: string | undefined) => {
     startTime: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [sessionResult, setSessionResult] = useState<any>(null);
   const { toast } = useToast();
-  const { addXP } = useGameification();
+  const { addXP, getStats } = useGameification();
 
   // Carregar perguntas do quiz
   const loadQuestions = async () => {
@@ -118,6 +120,8 @@ export const useQuizGame = (resumoId: string | undefined) => {
         // Adicionar XP baseado na resposta
         if (isCorrect) {
           await addXP(10, 'quiz_correct');
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 1000);
         } else {
           await addXP(2, 'quiz_incorrect'); // XP menor por tentar
         }
@@ -177,18 +181,28 @@ export const useQuizGame = (resumoId: string | undefined) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('quiz_sessions').insert({
+        const questionsData = {
+          questions: gameState.questions.map(q => ({
+            id: q.id,
+            pergunta: q.pergunta,
+            alternativas: q.alternativas,
+            correta: q.correta,
+            explicacao: q.explicacao
+          })),
+          userAnswers: gameState.userAnswers,
+        };
+
+        const { data: sessionData, error } = await supabase.from('quiz_sessions').insert({
           user_id: user.id,
           resumo_id: resumoId!,
           quiz_title: `Quiz - ${gameState.questions.length} perguntas`,
           total_questions: gameState.questions.length,
           correct_answers: gameState.score,
           completion_time_seconds: completionTime,
-          questions_data: {
-            questions: gameState.questions,
-            userAnswers: gameState.userAnswers,
-          },
-        });
+          questions_data: questionsData,
+        }).select().single();
+
+        if (error) throw error;
 
         // XP de bônus baseado na performance
         const accuracy = (gameState.score / gameState.questions.length) * 100;
@@ -216,6 +230,21 @@ export const useQuizGame = (resumoId: string | undefined) => {
             duration: 4000,
           });
         }
+
+        // Criar resultado da sessão
+        const result = {
+          id: sessionData.id,
+          totalQuestions: gameState.questions.length,
+          correctAnswers: gameState.score,
+          accuracy: Math.round(accuracy),
+          completionTime,
+          bonusXP,
+          totalXP: (gameState.score * 10) + (gameState.questions.length - gameState.score) * 2 + bonusXP,
+          questions: gameState.questions,
+          userAnswers: gameState.userAnswers,
+        };
+
+        setSessionResult(result);
       }
     } catch (error) {
       console.error('Erro ao salvar sessão do quiz:', error);
@@ -229,6 +258,7 @@ export const useQuizGame = (resumoId: string | undefined) => {
 
   // Reiniciar quiz
   const restartQuiz = () => {
+    setSessionResult(null);
     loadQuestions();
   };
 
@@ -248,6 +278,12 @@ export const useQuizGame = (resumoId: string | undefined) => {
     }
   }, [gameState.timeRemaining, gameState.isFinished, gameState.showExplanation]);
 
+  // Propriedades derivadas para compatibilidade com QuizPlay
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+  const stats = getStats();
+  const currentXP = stats?.currentXp || 0;
+  const streakCount = stats?.currentStreak || 0;
+
   return {
     gameState,
     loading,
@@ -257,5 +293,19 @@ export const useQuizGame = (resumoId: string | undefined) => {
     nextQuestion,
     finishQuiz,
     restartQuiz,
+    
+    // Propriedades compatíveis com QuizPlay
+    currentQuestion,
+    currentQuestionIndex: gameState.currentQuestionIndex,
+    selectedAnswer: gameState.selectedAnswer,
+    showResult: gameState.showExplanation,
+    currentXP,
+    streakCount,
+    showCelebration,
+    currentExplanation: currentQuestion?.explicacao || '',
+    sessionResult,
+    stats,
+    handleAnswerSelect: selectAnswer,
+    handleNextQuestion: gameState.showExplanation ? nextQuestion : confirmAnswer,
   };
 };
