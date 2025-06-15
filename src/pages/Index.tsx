@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
-import FloatingBackground from '@/components/FloatingBackground';
-import RecentActivity from '@/components/dashboard/RecentActivity';
+import FloatingBackground from '@/components/dashboard/FloatingBackground';
+import RecentActivity from '@/components/RecentActivity';
 import UsageIndicator from '@/components/usage/UsageIndicator';
 
 const Index = () => {
@@ -31,18 +32,14 @@ const Index = () => {
           <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
               <div className="xl:col-span-3 space-y-6">
-                <DashboardTabs 
-                  activeTab={activeTab} 
-                  onTabChange={setActiveTab}
-                  hasUploads={hasUploads}
-                />
+                <DashboardTabs activeTab={activeTab} />
               </div>
               
               <div className="xl:col-span-1 space-y-6">
                 <UsageIndicator />
                 
                 <div className="space-y-4">
-                  <RecentActivity setHasUploads={setHasUploads} />
+                  <RecentActivity />
                 </div>
               </div>
             </div>

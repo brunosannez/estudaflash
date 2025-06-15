@@ -133,26 +133,24 @@ export class UsageLimitService {
 
       const field = fieldMap[actionType];
       
-      const { error } = await supabase.rpc('increment_usage_counter', {
-        p_user_id: userId,
-        p_field: field,
-      });
+      // Buscar uso atual
+      const currentUsage = await this.getUserUsage(userId);
+      if (!currentUsage) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Incrementar usando update manual
+      const { error } = await supabase
+        .from('uso_usuarios')
+        .update({
+          [field]: currentUsage[field as keyof UsageData] as number + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
 
       if (error) {
         console.error('❌ Erro ao incrementar uso:', error);
-        // Fallback para update manual se a função RPC não existir
-        const { error: updateError } = await supabase
-          .from('uso_usuarios')
-          .update({
-            [field]: supabase.sql`${field} + 1`,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', userId);
-
-        if (updateError) {
-          console.error('❌ Erro no fallback de incremento:', updateError);
-          throw updateError;
-        }
+        throw error;
       }
 
       console.log(`✅ Uso incrementado com sucesso - ${actionType}`);
