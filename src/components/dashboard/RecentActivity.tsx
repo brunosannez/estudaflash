@@ -1,8 +1,9 @@
 
-import { FileText, Brain, Target, Award, Loader2 } from 'lucide-react';
+import { FileText, Brain, Target, Award, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const iconMap = {
   FileText,
@@ -12,7 +13,7 @@ const iconMap = {
 };
 
 const RecentActivity = () => {
-  const { activities, loading } = useRecentActivity();
+  const { activities, loading, refreshActivity } = useRecentActivity();
   const navigate = useNavigate();
 
   const handleActivityClick = (activity: any) => {
@@ -29,13 +30,19 @@ const RecentActivity = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Award className="h-5 w-5 text-purple-500" />
-          Atividade Recente
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-purple-500" />
+            Atividade Recente
+          </CardTitle>
+          <Button variant="ghost" size="icon" onClick={() => refreshActivity()} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Atualizar atividades</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {loading && activities.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           </div>
