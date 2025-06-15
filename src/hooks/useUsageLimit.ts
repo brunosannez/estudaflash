@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { UsageLimitService, type ActionType, type UsageData } from '@/services/usageLimitService';
 import { PlanType } from '@/types/plans';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useUsageLimit = () => {
   const { user } = useAuth();
@@ -35,7 +36,33 @@ export const useUsageLimit = () => {
   };
 
   useEffect(() => {
+    if (!user) {
+      setUsageData(null);
+      return;
+    }
+
     fetchUsageData();
+
+    const channel = supabase
+      .channel(`usage-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'uso_usuarios',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔄 Usage data changed, refetching...', payload);
+          fetchUsageData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const checkCanProceed = async (actionType: ActionType): Promise<boolean> => {

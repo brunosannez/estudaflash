@@ -147,10 +147,9 @@ export const useRecentActivity = () => {
   useEffect(() => {
     fetchRecentActivity();
     
-    // Configurar realtime para atualizações automáticas
     if (user) {
       const channel = supabase
-        .channel('recent_activity_updates')
+        .channel(`recent_activity_updates-${user.id}`)
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'uploads', filter: `user_id=eq.${user.id}` },
           () => {
@@ -169,6 +168,13 @@ export const useRecentActivity = () => {
           { event: '*', schema: 'public', table: 'quiz_respostas', filter: `user_id=eq.${user.id}` },
           () => {
             console.log('🔄 Quiz answer change detected, refreshing activity...');
+            setTimeout(fetchRecentActivity, 1000);
+          }
+        )
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'quiz_sessions', filter: `user_id=eq.${user.id}` },
+          () => {
+            console.log('🔄 Quiz session change detected, refreshing activity...');
             setTimeout(fetchRecentActivity, 1000);
           }
         )
