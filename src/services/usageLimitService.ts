@@ -1,5 +1,9 @@
 
 import { PlanType } from '@/types/plans';
+import { UsageDataService } from './usageDataService';
+import { UsageValidationService } from './usageValidationService';
+import { UsageIncrementService } from './usageIncrementService';
+import { UsageLimitsConfig } from './usageLimitsConfig';
 
 // Re-export types and constants for backwards compatibility
 export type { UsageData } from './usageDataService';
