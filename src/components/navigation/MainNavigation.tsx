@@ -46,6 +46,9 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
   console.log('🔐 MainNavigation: isAdmin:', isAdmin);
   console.log('⏳ MainNavigation: adminLoading:', adminLoading);
 
+  // Log quando o menu admin deve aparecer
+  console.log('🎨 MainNavigation: Deve mostrar menu admin?', isAdmin && !adminLoading);
+
   const mainMenuItems = [
     { icon: Home, label: 'Dashboard', path: '/', emoji: '🏠' },
     { icon: Upload, label: 'Upload', path: '/upload', emoji: '📤' },
@@ -80,9 +83,6 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
     }
     return location.pathname.startsWith(path);
   };
-
-  // Log quando o menu admin deve aparecer
-  console.log('🎨 MainNavigation: Deve mostrar menu admin?', isAdmin && !adminLoading);
 
   return (
     <SidebarProvider>
@@ -119,10 +119,9 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               ))}
             </SidebarMenu>
 
-            {/* Menu de Administração - com logs de debug */}
+            {/* Menu de Administração */}
             {isAdmin && !adminLoading && (
               <>
-                {console.log('🎯 MainNavigation: Renderizando menu admin!')}
                 <SidebarSeparator className="my-4" />
                 <div className="px-3 py-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Administração</p>
@@ -147,7 +146,6 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
             {/* Debug de loading do admin */}
             {adminLoading && (
               <div className="px-3 py-2 text-xs text-gray-500">
-                {console.log('⏳ MainNavigation: Carregando status admin...')}
                 Verificando permissões...
               </div>
             )}
