@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserWithPlan } from './planManagementService';
+import { PlanType } from '@/types/plans';
 
 export class AdminUserService {
   static async getAllUsersWithPlans(): Promise<UserWithPlan[]> {
@@ -25,7 +26,7 @@ export class AdminUserService {
       return usersData.map(user => ({
         user_id: user.user_id,
         email: user.email || 'Email não disponível',
-        plano: user.plano,
+        plano: this.validatePlanType(user.plano),
         uploads_realizados: user.uploads_realizados || 0,
         flashcards_gerados: user.flashcards_gerados || 0,
         quizzes_realizados: user.quizzes_realizados || 0,
@@ -84,7 +85,7 @@ export class AdminUserService {
             return {
               user_id: user.user_id,
               email: `user-${user.user_id.slice(0, 8)}@domain.com`, // Email placeholder
-              plano: user.plano,
+              plano: this.validatePlanType(user.plano),
               uploads_realizados: user.uploads_realizados || 0,
               flashcards_gerados: user.flashcards_gerados || 0,
               quizzes_realizados: user.quizzes_realizados || 0,
@@ -98,7 +99,7 @@ export class AdminUserService {
             return {
               user_id: user.user_id,
               email: `user-${user.user_id.slice(0, 8)}@domain.com`,
-              plano: user.plano,
+              plano: this.validatePlanType(user.plano),
               uploads_realizados: user.uploads_realizados || 0,
               flashcards_gerados: user.flashcards_gerados || 0,
               quizzes_realizados: user.quizzes_realizados || 0,
@@ -116,5 +117,15 @@ export class AdminUserService {
       console.error('💥 Erro no fallback de usuários:', error);
       throw error;
     }
+  }
+
+  private static validatePlanType(plano: string): PlanType {
+    // Validar se o plano é um dos valores permitidos
+    if (plano === 'free' || plano === 'pro' || plano === 'edu') {
+      return plano as PlanType;
+    }
+    // Fallback para 'free' se o valor não for válido
+    console.warn(`⚠️ Plano inválido encontrado: ${plano}, usando 'free' como fallback`);
+    return 'free';
   }
 }
