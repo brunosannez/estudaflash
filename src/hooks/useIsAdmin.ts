@@ -11,41 +11,34 @@ export const useIsAdmin = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
-        console.log('🔍 Nenhum usuário logado, definindo isAdmin como false');
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
       try {
-        console.log('🔍 Verificando status admin para usuário:', user.email);
-        
-        const { data, error } = await supabase.rpc('is_admin', {
-          user_uuid: user.id
-        });
+        // Verificar diretamente na tabela admin_users
+        const { data, error } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-        if (error) {
-          console.error('❌ Erro ao verificar status de admin:', error);
+        if (error && error.code !== 'PGRST116') {
+          console.error('Erro ao verificar status de admin:', error);
           setIsAdmin(false);
         } else {
-          console.log('✅ Status admin verificado:', data);
-          setIsAdmin(data || false);
+          setIsAdmin(!!data);
         }
       } catch (error) {
-        console.error('❌ Erro na verificação de admin:', error);
+        console.error('Erro na verificação de admin:', error);
         setIsAdmin(false);
       } finally {
         setLoading(false);
       }
     };
 
-    // Só verificar se temos um usuário válido
-    if (user) {
-      checkAdminStatus();
-    } else {
-      setIsAdmin(false);
-      setLoading(false);
-    }
+    checkAdminStatus();
   }, [user]);
 
   return { isAdmin, loading };
