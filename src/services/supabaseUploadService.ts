@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { SuccessfulUploadResult } from '@/types/upload';
 import type { User } from '@supabase/supabase-js';
+import { StorageService } from './storageService';
 
 export const verifyUserAndBucket = async (): Promise<User> => {
   console.log('🔐 Verifying user authentication...');
@@ -47,53 +48,8 @@ export const verifyUserAndBucket = async (): Promise<User> => {
 
 export const uploadImageToStorage = async (file: File, userId: string, index: number): Promise<string> => {
   try {
-    const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-    const fileName = `${userId}/${Date.now()}-${index}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    console.log(`📤 Uploading ${file.name} (${fileSizeInMB}MB) to: ${fileName}`);
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('study-images')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (uploadError) {
-      console.error('❌ Upload error details:', uploadError);
-      
-      // Handle specific error cases with more user-friendly messages
-      if (uploadError.message.includes('bucket')) {
-        throw new Error('Bucket de armazenamento não encontrado. Contate o suporte.');
-      }
-      if (uploadError.message.includes('permission') || uploadError.message.includes('unauthorized')) {
-        throw new Error('Sem permissão para fazer upload. Verifique se está logado.');
-      }
-      if (uploadError.message.includes('size') || uploadError.message.includes('large')) {
-        throw new Error(`Arquivo muito grande (${fileSizeInMB}MB). Escolha uma imagem menor.`);
-      }
-      if (uploadError.message.includes('duplicate') || uploadError.message.includes('exists')) {
-        throw new Error('Arquivo com esse nome já existe. Tente novamente.');
-      }
-      
-      throw new Error(`Erro no upload: ${uploadError.message}`);
-    }
-
-    if (!uploadData?.path) {
-      throw new Error('Upload concluído mas nenhum caminho foi retornado');
-    }
-
-    console.log(`✅ Image ${index + 1} uploaded successfully:`, uploadData.path);
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('study-images')
-      .getPublicUrl(fileName);
-
-    if (!publicUrl || !publicUrl.includes('study-images')) {
-      throw new Error('URL pública inválida gerada');
-    }
-
-    console.log(`🔗 Public URL for image ${index + 1}:`, publicUrl);
-    return publicUrl;
+    const result = await StorageService.uploadImage(file, userId, index);
+    return result.publicUrl;
   } catch (error) {
     console.error(`❌ Error uploading image ${index + 1}:`, error);
     throw error;
@@ -157,9 +113,6 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
     const combinedText = successfulResults
       .map((result, index) => {
         const originalIndex = index + 1;
-        const textPreview = result.extractedText.length > 100 
-          ? result.extractedText.substring(0, 100) + '...' 
-          : result.extractedText;
         return `--- Imagem ${originalIndex} (${result.file.name}) ---\n${result.extractedText}`;
       })
       .join('\n\n');
@@ -170,6 +123,9 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
     if (!combinedText.trim()) {
       throw new Error('Nenhum texto foi extraído das imagens');
     }
+    
+    // Calculate total file size
+    const totalFileSize = successfulResults.reduce((total, result) => total + result.file.size, 0);
     
     // Get the original file name from the first file
     const arquivoOriginalNome = successfulResults.length > 1 
@@ -183,7 +139,8 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
         user_id: userId,
         imagem_url: successfulResults[0].imageUrl,
         texto_extraido: combinedText,
-        arquivo_original_nome: arquivoOriginalNome
+        arquivo_original_nome: arquivoOriginalNome,
+        file_size: totalFileSize
       })
       .select()
       .single();

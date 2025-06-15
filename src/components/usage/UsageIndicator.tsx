@@ -6,24 +6,38 @@ import { Upload, Brain, TestTube } from 'lucide-react';
 import { useUsageLimit } from '@/hooks/useUsageLimit';
 import { PLAN_CONFIGS } from '@/types/plans';
 import UpgradeModal from '@/components/usage/UpgradeModal';
+import StorageIndicator from './StorageIndicator';
 
 const UsageIndicator = () => {
   const { usageData, loading, upgradeModalData } = useUsageLimit();
 
   if (loading || !usageData) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-sm">Uso do Plano</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-2">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-sm">Uso do Plano</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-sm">Armazenamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-2 bg-gray-200 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -58,7 +72,7 @@ const UsageIndicator = () => {
   ];
 
   return (
-    <>
+    <div className="space-y-4">
       <Card className="w-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -104,13 +118,15 @@ const UsageIndicator = () => {
         </CardContent>
       </Card>
       
+      <StorageIndicator />
+      
       <UpgradeModal
         isOpen={upgradeModalData.isOpen}
         onClose={upgradeModalData.onClose}
         currentPlan={upgradeModalData.currentPlan}
         actionType={upgradeModalData.actionType}
       />
-    </>
+    </div>
   );
 };
 
