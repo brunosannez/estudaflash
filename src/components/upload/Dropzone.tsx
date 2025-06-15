@@ -44,7 +44,6 @@ const Dropzone = ({ onFileButtonClick, isProcessing }: DropzoneProps) => {
           shadow-2xl
           border-4 border-white/30
           transform hover:scale-105 transition-all duration-300
-          animate-pulse
           relative overflow-hidden
         "
         disabled={isProcessing}
@@ -55,8 +54,8 @@ const Dropzone = ({ onFileButtonClick, isProcessing }: DropzoneProps) => {
           <span className="text-2xl sm:text-3xl md:text-4xl">✨</span>
         </div>
         
-        {/* Efeito shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer"></div>
+        {/* Efeito brilho diagonal */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 w-24 h-full animate-diagonal-shine"></div>
       </Button>
 
       {/* Informação sobre limite */}

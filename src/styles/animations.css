@@ -42,15 +42,47 @@
 
 @keyframes shimmer {
   0% {
-    left: -100%;
+    left: -150%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
   }
   100% {
-    left: 100%;
+    left: 150%;
+    opacity: 0;
   }
 }
 
 .animate-shimmer {
-  animation: shimmer 2s infinite;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes diagonal-shine {
+  0% {
+    transform: translateX(-150%) translateY(-150%) rotate(45deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(150%) translateY(150%) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+.animate-diagonal-shine {
+  animation: diagonal-shine 4s ease-in-out infinite;
 }
 
 @keyframes pulse-primary {
