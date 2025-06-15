@@ -119,11 +119,13 @@ export const useRecentActivity = () => {
       // Ordenar por data e pegar os 8 mais recentes
       activityList.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       
-      console.log('✅ Recent activity loaded:', activityList.length, 'items');
-      setActivities(activityList.slice(0, 8));
+      const finalActivities = activityList.slice(0, 8);
+      console.log('✅ Recent activity loaded:', finalActivities.length, 'items');
+      setActivities(finalActivities);
 
     } catch (error) {
       console.error('❌ Error fetching recent activity:', error);
+      // Em caso de erro, mantém o array vazio em vez de undefined
       setActivities([]);
     } finally {
       setLoading(false);

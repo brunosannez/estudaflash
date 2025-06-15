@@ -11,11 +11,7 @@ export const useDataSync = () => {
 
   const syncHistoricalData = async () => {
     if (!user) {
-      toast({
-        title: "Erro",
-        description: "Usuário não autenticado",
-        variant: "destructive",
-      });
+      console.log('❌ User not authenticated, skipping sync');
       return false;
     }
 
@@ -46,14 +42,20 @@ export const useDataSync = () => {
         .select('*', { count: 'exact' })
         .eq('user_id', user.id);
 
+      const realCounts = {
+        uploads: uploadCount || 0,
+        flashcards: flashcardCount || 0,
+        quizzes: quizCount || 0
+      };
+
       // Atualizar ou inserir dados corretos
       const { error } = await supabase
         .from('uso_usuarios')
         .upsert({
           user_id: user.id,
-          uploads_realizados: uploadCount || 0,
-          flashcards_gerados: flashcardCount || 0,
-          quizzes_realizados: quizCount || 0,
+          uploads_realizados: realCounts.uploads,
+          flashcards_gerados: realCounts.flashcards,
+          quizzes_realizados: realCounts.quizzes,
           updated_at: new Date().toISOString()
         });
 
@@ -67,12 +69,19 @@ export const useDataSync = () => {
         return false;
       }
 
-      console.log('✅ Historical data synced successfully');
-      toast({
-        title: "✅ Dados sincronizados!",
-        description: "Seus dados foram atualizados com base no histórico real.",
-        duration: 3000,
-      });
+      console.log('✅ Historical data synced successfully:', realCounts);
+      
+      // Só mostrar toast de sucesso se há dados para sincronizar
+      const hasData = realCounts.uploads > 0 || realCounts.flashcards > 0 || realCounts.quizzes > 0;
+      if (hasData) {
+        toast({
+          title: "✅ Dados sincronizados!",
+          description: "Seus dados foram atualizados com base no histórico real.",
+          duration: 3000,
+        });
+      } else {
+        console.log('ℹ️ No historical data to sync - user is new');
+      }
       
       return true;
     } catch (error) {
@@ -99,6 +108,16 @@ export const useDataSync = () => {
         .eq('user_id', user.id)
         .single();
 
+      // Se não há dados de uso, o usuário é novo
+      if (!usageData) {
+        console.log('ℹ️ No usage data found - new user');
+        return {
+          realCounts: { uploads: 0, flashcards: 0, quizzes: 0 },
+          storedCounts: { uploads: 0, flashcards: 0, quizzes: 0 },
+          isInconsistent: false
+        };
+      }
+
       // Contar dados reais
       const [uploadsResult, flashcardsResult, quizzesResult] = await Promise.all([
         supabase.from('uploads').select('id', { count: 'exact' }).eq('user_id', user.id),
@@ -115,20 +134,28 @@ export const useDataSync = () => {
       };
 
       const storedCounts = {
-        uploads: usageData?.uploads_realizados || 0,
-        flashcards: usageData?.flashcards_gerados || 0,
-        quizzes: usageData?.quizzes_realizados || 0
+        uploads: usageData.uploads_realizados || 0,
+        flashcards: usageData.flashcards_gerados || 0,
+        quizzes: usageData.quizzes_realizados || 0
       };
 
-      const isInconsistent = 
+      // Só considera inconsistente se há diferença significativa
+      // (não apenas diferenças de zero para zero)
+      const hasRealData = realCounts.uploads > 0 || realCounts.flashcards > 0 || realCounts.quizzes > 0;
+      const hasStoredData = storedCounts.uploads > 0 || storedCounts.flashcards > 0 || storedCounts.quizzes > 0;
+      
+      const isInconsistent = hasRealData && hasStoredData && (
         realCounts.uploads !== storedCounts.uploads ||
         realCounts.flashcards !== storedCounts.flashcards ||
-        realCounts.quizzes !== storedCounts.quizzes;
+        realCounts.quizzes !== storedCounts.quizzes
+      );
 
       console.log('📊 Data consistency check:', {
         realCounts,
         storedCounts,
-        isInconsistent
+        isInconsistent,
+        hasRealData,
+        hasStoredData
       });
 
       return {

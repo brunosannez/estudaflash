@@ -46,8 +46,8 @@ const QuickStats = () => {
             <div className="mb-4">
               <Trophy className="h-12 w-12 mx-auto text-gray-300" />
             </div>
-            <p className="text-sm font-medium">Dados não encontrados</p>
-            <p className="text-xs mt-2">Faça seu primeiro upload para começar!</p>
+            <p className="text-sm font-medium">Bem-vindo!</p>
+            <p className="text-xs mt-2">Faça seu primeiro upload para começar a estudar!</p>
             <Button 
               onClick={async () => {
                 await syncHistoricalData();
@@ -61,12 +61,12 @@ const QuickStats = () => {
               {syncing ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Sincronizando...
+                  Preparando...
                 </>
               ) : (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Sincronizar Dados
+                  Preparar Conta
                 </>
               )}
             </Button>
