@@ -127,13 +127,14 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
     // Calculate total file size properly
     const totalFileSize = successfulResults.reduce((total, result) => total + result.file.size, 0);
     console.log('📏 Total file size calculated:', totalFileSize, 'bytes');
+    console.log('📋 File details:', successfulResults.map(r => ({ name: r.file.name, size: r.file.size })));
     
     // Get the original file name from the first file
     const arquivoOriginalNome = successfulResults.length > 1 
       ? `${successfulResults.length} arquivos processados`
       : successfulResults[0].file.name;
     
-    console.log('💾 Saving to database...');
+    console.log('💾 Saving to database with file_size:', totalFileSize);
     const { data: uploadRecord, error: dbError } = await supabase
       .from('uploads')
       .insert({
@@ -165,6 +166,12 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
     }
 
     console.log('✅ Upload record saved with file_size:', uploadRecord.file_size);
+    console.log('✅ Upload record created:', {
+      id: uploadRecord.id,
+      file_size: uploadRecord.file_size,
+      arquivo_original_nome: uploadRecord.arquivo_original_nome
+    });
+    
     return uploadRecord;
   } catch (error) {
     console.error('❌ Error saving upload record:', error);

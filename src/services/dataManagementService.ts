@@ -1,5 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { AdminDiagnosticsService } from './adminDiagnosticsService';
 
 export interface DataManagementStats {
   totalFiles: number;
@@ -42,10 +42,20 @@ export class DataManagementService {
     try {
       console.log('📊 DataManagement: Carregando estatísticas via RPC...');
       
+      // Primeiro, verificar se usuário é admin com diagnósticos
+      const diagnostics = await AdminDiagnosticsService.runDiagnostics();
+      console.log('🔍 DataManagement: Diagnósticos:', diagnostics);
+
+      if (!diagnostics.isAdmin) {
+        console.warn('⚠️ DataManagement: Usuário não é admin, usando fallback limitado');
+        return await this.getManagementStatsFallbackLimited();
+      }
+
       const { data: statsData, error } = await supabase.rpc('get_data_management_stats');
 
       if (error) {
         console.error('❌ DataManagement: Erro na RPC:', error);
+        console.log('🔄 DataManagement: Tentando fallback completo...');
         return await this.getManagementStatsFallback();
       }
 
@@ -75,6 +85,18 @@ export class DataManagementService {
         storageByPlan: storageByPlan
       };
 
+      // Verificar se os dados fazem sentido
+      if (managementStats.totalFiles === 0 && managementStats.totalUsers > 0) {
+        console.warn('⚠️ DataManagement: Dados inconsistentes detectados, verificando...');
+        const realStats = await this.getManagementStatsFallback();
+        
+        // Se o fallback tem dados reais, usar eles
+        if (realStats.totalFiles > 0) {
+          console.log('🔄 DataManagement: Usando dados do fallback que são mais precisos');
+          return realStats;
+        }
+      }
+
       // Atualizar cache
       this.cache = {
         stats: managementStats,
@@ -90,7 +112,7 @@ export class DataManagementService {
 
   static async getManagementStatsFallback(): Promise<DataManagementStats> {
     try {
-      console.log('🔄 DataManagement: Executando fallback...');
+      console.log('🔄 DataManagement: Executando fallback completo...');
 
       const [uploadsResult, usersResult] = await Promise.all([
         supabase.from('uploads').select('file_size, data_upload, user_id'),
@@ -100,11 +122,16 @@ export class DataManagementService {
       const uploads = uploadsResult.data || [];
       const users = usersResult.data || [];
       
+      console.log('📊 DataManagement Fallback: Uploads encontrados:', uploads.length);
+      console.log('📊 DataManagement Fallback: Usuários encontrados:', users.length);
+
       const totalFiles = uploads.length;
       const totalStorageBytes = uploads.reduce((acc, upload) => acc + (upload.file_size || 0), 0);
       const totalStorageMB = totalStorageBytes / (1024 * 1024);
       const totalUsers = users.length;
       const averageStoragePerUser = totalUsers > 0 ? totalStorageMB / totalUsers : 0;
+
+      console.log('💾 DataManagement Fallback: Storage total:', totalStorageMB, 'MB');
 
       // Calcular arquivos antigos
       const thirtyDaysAgo = new Date();
@@ -133,20 +160,33 @@ export class DataManagementService {
         return sizeMB > max ? sizeMB : max;
       }, 0);
 
-      // Storage por plano (simplificado no fallback)
+      // Storage por plano
       const storageByPlan: Record<string, any> = {};
-      ['free', 'pro', 'edu'].forEach(plan => {
-        const planUsers = users.filter(u => u.plano === plan);
+      
+      // Agrupar usuários por plano
+      const usersByPlan = users.reduce((acc, user) => {
+        const plan = user.plano || 'free';
+        if (!acc[plan]) acc[plan] = [];
+        acc[plan].push(user.user_id);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      // Calcular storage por plano
+      Object.entries(usersByPlan).forEach(([plan, userIds]) => {
+        const planUploads = uploads.filter(upload => userIds.includes(upload.user_id));
+        const planStorageBytes = planUploads.reduce((acc, upload) => acc + (upload.file_size || 0), 0);
+        
         storageByPlan[plan] = {
-          storage_mb: 0, // Seria necessário join para calcular exato
-          user_count: planUsers.length,
-          file_count: 0
+          storage_mb: planStorageBytes / (1024 * 1024),
+          user_count: userIds.length,
+          file_count: planUploads.length
         };
       });
 
-      console.log('✅ DataManagement: Estatísticas carregadas via fallback');
+      console.log('📊 DataManagement Fallback: Storage por plano:', storageByPlan);
+      console.log('✅ DataManagement: Estatísticas carregadas via fallback completo');
 
-      return {
+      const stats = {
         totalFiles,
         totalStorageMB,
         averageStoragePerUser,
@@ -157,20 +197,36 @@ export class DataManagementService {
         largestFileSizeMB,
         storageByPlan
       };
+
+      // Verificar se precisamos corrigir file_size
+      if (totalStorageMB === 0 && totalFiles > 0) {
+        console.warn('⚠️ DataManagement: Storage zerado detectado, pode precisar corrigir file_size');
+      }
+
+      return stats;
     } catch (error) {
-      console.error('💥 DataManagement: Erro no fallback:', error);
-      return {
-        totalFiles: 0,
-        totalStorageMB: 0,
-        averageStoragePerUser: 0,
-        totalUsers: 0,
-        filesOlderThan30Days: 0,
-        filesOlderThan7Days: 0,
-        activeUsers30Days: 0,
-        largestFileSizeMB: 0,
-        storageByPlan: {}
-      };
+      console.error('💥 DataManagement: Erro no fallback completo:', error);
+      return this.getManagementStatsFallbackBasic();
     }
+  }
+
+  static async getManagementStatsFallbackLimited(): Promise<DataManagementStats> {
+    console.log('🔄 DataManagement: Fallback limitado (usuário não admin)');
+    return this.getManagementStatsFallbackBasic();
+  }
+
+  static async getManagementStatsFallbackBasic(): Promise<DataManagementStats> {
+    return {
+      totalFiles: 0,
+      totalStorageMB: 0,
+      averageStoragePerUser: 0,
+      totalUsers: 0,
+      filesOlderThan30Days: 0,
+      filesOlderThan7Days: 0,
+      activeUsers30Days: 0,
+      largestFileSizeMB: 0,
+      storageByPlan: {}
+    };
   }
 
   static async cleanupOldFiles(daysThreshold = 30): Promise<CleanupResult> {

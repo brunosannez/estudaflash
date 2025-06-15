@@ -2,17 +2,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminDiagnosticsService } from '@/services/adminDiagnosticsService';
 
 export const useIsAdmin = () => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [diagnostics, setDiagnostics] = useState<any>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      console.log('🔍 useIsAdmin: Iniciando verificação de admin');
-      console.log('👤 useIsAdmin: User atual:', user?.id, user?.email);
-
+      console.log('🔍 useIsAdmin: Iniciando verificação detalhada de admin');
+      
       if (!user) {
         console.log('❌ useIsAdmin: Usuário não autenticado');
         setIsAdmin(false);
@@ -21,42 +22,29 @@ export const useIsAdmin = () => {
       }
 
       try {
-        console.log('🔄 useIsAdmin: Verificando status admin usando tabela uso_usuarios');
+        console.log('🔄 useIsAdmin: Executando diagnósticos completos...');
         
-        // Verificar usando a função is_current_user_admin
-        const { data: isAdminResult, error: rpcError } = await supabase
-          .rpc('is_current_user_admin');
+        // Executar diagnósticos completos
+        const diagnosticsResult = await AdminDiagnosticsService.runDiagnostics();
+        setDiagnostics(diagnosticsResult);
 
-        console.log('📊 useIsAdmin: Resultado da RPC is_current_user_admin:', isAdminResult);
-        console.log('⚠️ useIsAdmin: Erro da RPC:', rpcError);
+        console.log('📊 useIsAdmin: Resultado dos diagnósticos:', diagnosticsResult);
 
-        if (rpcError) {
-          console.error('❌ useIsAdmin: Erro na função RPC:', rpcError);
-          
-          // Fallback: verificar diretamente na tabela uso_usuarios
-          console.log('🔄 useIsAdmin: Tentando fallback direto na tabela uso_usuarios');
-          const { data: adminData, error: directError } = await supabase
-            .from('uso_usuarios')
-            .select('is_admin')
-            .eq('user_id', user.id)
-            .single();
-
-          console.log('📊 useIsAdmin: Resultado do fallback:', adminData);
-          console.log('⚠️ useIsAdmin: Erro do fallback:', directError);
-
-          if (directError && directError.code !== 'PGRST116') {
-            console.error('❌ useIsAdmin: Erro no fallback:', directError);
-            setIsAdmin(false);
-          } else {
-            const adminStatus = adminData?.is_admin || false;
-            console.log('✅ useIsAdmin: Status admin (fallback):', adminStatus);
-            setIsAdmin(adminStatus);
-          }
+        if (diagnosticsResult.isAdmin) {
+          console.log('✅ useIsAdmin: Usuário confirmado como admin via', diagnosticsResult.adminCheckMethod);
+          setIsAdmin(true);
         } else {
-          const adminStatus = !!isAdminResult;
-          console.log('✅ useIsAdmin: Status admin (RPC):', adminStatus);
-          setIsAdmin(adminStatus);
+          console.log('❌ useIsAdmin: Usuário não é admin');
+          console.log('🔍 useIsAdmin: Detalhes do usuário:', diagnosticsResult.userRecord);
+          
+          // Se os diagnósticos indicam problemas, tentar corrigi-los
+          if (diagnosticsResult.errors.length > 0) {
+            console.log('⚠️ useIsAdmin: Erros encontrados:', diagnosticsResult.errors);
+          }
+          
+          setIsAdmin(false);
         }
+
       } catch (error) {
         console.error('💥 useIsAdmin: Erro geral na verificação:', error);
         setIsAdmin(false);
@@ -69,10 +57,26 @@ export const useIsAdmin = () => {
     checkAdminStatus();
   }, [user]);
 
-  // Log do estado atual sempre que mudar
-  useEffect(() => {
-    console.log('🎯 useIsAdmin: Estado atual - isAdmin:', isAdmin, 'loading:', loading);
-  }, [isAdmin, loading]);
+  const makeCurrentUserAdmin = async () => {
+    if (!user) return false;
+    
+    console.log('🔧 useIsAdmin: Promovendo usuário atual a admin...');
+    const success = await AdminDiagnosticsService.ensureUserIsAdmin(user.id);
+    
+    if (success) {
+      setIsAdmin(true);
+      // Re-executar diagnósticos
+      const newDiagnostics = await AdminDiagnosticsService.runDiagnostics();
+      setDiagnostics(newDiagnostics);
+    }
+    
+    return success;
+  };
 
-  return { isAdmin, loading };
+  return { 
+    isAdmin, 
+    loading, 
+    diagnostics,
+    makeCurrentUserAdmin
+  };
 };

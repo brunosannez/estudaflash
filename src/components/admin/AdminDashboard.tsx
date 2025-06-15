@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStatsService } from '@/services/adminStatsService';
+import AdminDiagnostics from './AdminDiagnostics';
 import { 
   Users, 
   Upload, 
@@ -17,7 +18,8 @@ import {
   Database,
   Loader2,
   AlertCircle,
-  HardDrive
+  HardDrive,
+  Bug
 } from 'lucide-react';
 
 interface AdminStats {
@@ -31,6 +33,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const { toast } = useToast();
 
   const loadStats = async () => {
@@ -102,15 +105,29 @@ const AdminDashboard = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
         <p className="text-gray-600 mb-4">Erro ao carregar dashboard.</p>
-        <Button onClick={loadStats}>
-          Tentar Novamente
-        </Button>
+        <div className="space-x-2">
+          <Button onClick={loadStats}>
+            Tentar Novamente
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowDiagnostics(true)}
+          >
+            <Bug className="h-4 w-4 mr-2" />
+            Executar Diagnóstico
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Diagnósticos do Sistema */}
+      {showDiagnostics && (
+        <AdminDiagnostics />
+      )}
+
       {/* Status do Sistema */}
       <Card>
         <CardHeader>
@@ -128,8 +145,17 @@ const AdminDashboard = () => {
               </div>
               {getHealthBadge()}
             </div>
-            <div className="text-sm text-gray-600">
-              Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-600">
+                Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDiagnostics(!showDiagnostics)}
+              >
+                <Bug className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -160,6 +186,11 @@ const AdminDashboard = () => {
             <p className="text-xs text-muted-foreground">
               Espaço utilizado
             </p>
+            {stats.totalStorageMB === 0 && stats.totalUsers > 0 && (
+              <Badge variant="destructive" className="mt-1 text-xs">
+                Dados podem estar zerados
+              </Badge>
+            )}
           </CardContent>
         </Card>
 
@@ -186,10 +217,19 @@ const AdminDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button variant="outline" onClick={loadStats} className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Atualizar Dados
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              className="flex items-center gap-2"
+            >
+              <Bug className="h-4 w-4" />
+              {showDiagnostics ? 'Ocultar' : 'Mostrar'} Diagnóstico
             </Button>
             
             <Button 
@@ -225,7 +265,7 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-2 text-orange-700">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm font-medium">
-                Sistema operando em modo fallback. Algumas funcionalidades podem estar limitadas.
+                Sistema operando em modo fallback. Execute o diagnóstico para mais informações.
               </span>
             </div>
           </CardContent>
