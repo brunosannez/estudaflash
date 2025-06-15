@@ -2,16 +2,27 @@
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Brain, TestTube } from 'lucide-react';
+import { Upload, Brain, TestTube, RefreshCw, AlertCircle } from 'lucide-react';
 import { useUsageLimit } from '@/hooks/useUsageLimit';
 import { PLAN_CONFIGS } from '@/types/plans';
 import UpgradeModal from '@/components/usage/UpgradeModal';
 import StorageIndicator from './StorageIndicator';
+import { Button } from '@/components/ui/button';
+import { useDataSync } from '@/hooks/useDataSync';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const UsageIndicator = () => {
-  const { usageData, loading, upgradeModalData } = useUsageLimit();
+  const { usageData, loading, upgradeModalData, refreshUsage } = useUsageLimit();
+  const { forceSyncUserData, syncing, hasInitialized } = useDataSync();
 
-  if (loading || !usageData) {
+  const handleManualSync = async () => {
+    await forceSyncUserData();
+    await refreshUsage();
+  };
+
+  const hasNoData = !usageData || (!usageData.uploads_realizados && !usageData.flashcards_gerados && !usageData.quizzes_realizados);
+
+  if (loading && !hasInitialized) {
     return (
       <div className="space-y-4">
         <Card className="w-full">
@@ -37,6 +48,83 @@ const UsageIndicator = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (hasNoData && hasInitialized) {
+    return (
+      <div className="space-y-4">
+        <Card className="w-full">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Uso do Plano</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Dados não sincronizados. Clique para atualizar.
+              </AlertDescription>
+            </Alert>
+            
+            <Button 
+              onClick={handleManualSync}
+              disabled={syncing}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              {syncing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Sincronizando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sincronizar Dados
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+        <StorageIndicator />
+      </div>
+    );
+  }
+
+  if (!usageData) {
+    return (
+      <div className="space-y-4">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-sm">Uso do Plano</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-500 mb-4">Carregando dados...</p>
+              <Button 
+                onClick={handleManualSync}
+                disabled={syncing}
+                variant="outline"
+                size="sm"
+              >
+                {syncing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Tentar Novamente
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <StorageIndicator />
       </div>
     );
   }
@@ -110,11 +198,26 @@ const UsageIndicator = () => {
             );
           })}
           
-          {!isUnlimited && (
-            <div className="pt-2 text-xs text-muted-foreground">
-              Resetado a cada 30 dias
-            </div>
-          )}
+          <div className="pt-2 border-t flex items-center justify-between">
+            {!isUnlimited && (
+              <div className="text-xs text-muted-foreground">
+                Resetado a cada 30 dias
+              </div>
+            )}
+            <Button 
+              onClick={handleManualSync}
+              disabled={syncing}
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+            >
+              {syncing ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
       

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +10,7 @@ import { useDataSync } from '@/hooks/useDataSync';
 export const useUsageLimit = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { forceSyncIfNeeded, syncing: syncingData } = useDataSync();
+  const { forceSyncUserData, syncing: syncingData, hasInitialized } = useDataSync();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgradeModal, setUpgradeModal] = useState<{
@@ -22,7 +23,7 @@ export const useUsageLimit = () => {
     plan: 'free',
   });
 
-  const fetchUsageData = async () => {
+  const fetchUsageData = async (skipSync = false) => {
     if (!user) {
       setUsageData(null);
       setLoading(false);
@@ -31,54 +32,66 @@ export const useUsageLimit = () => {
     
     try {
       setLoading(true);
-      console.log('🔍 Fetching usage data for user:', user.id);
+      console.log('🔍 Buscando dados de uso para usuário:', user.id);
       
-      // Primeiro, forçar sincronização se necessário
-      await forceSyncIfNeeded();
+      // Sempre sincronizar primeiro, a menos que seja explicitamente pulado
+      if (!skipSync && hasInitialized) {
+        console.log('🔄 Forçando sincronização antes de buscar dados...');
+        await forceSyncUserData();
+      }
       
       // Buscar dados atualizados
       const data = await UsageLimitService.getUserUsage(user.id);
-      console.log('📊 Usage data loaded:', data);
+      console.log('📊 Dados de uso carregados:', data);
       setUsageData(data);
     } catch (error) {
       console.error('❌ Erro ao buscar dados de uso:', error);
-      // Em caso de erro, tentar criar registro inicial
+      // Em caso de erro, tentar forçar sincronização
       try {
-        const initialData = await UsageLimitService.initializeUserUsage(user.id);
-        setUsageData(initialData);
-      } catch (initError) {
-        console.error('❌ Erro ao inicializar dados:', initError);
+        console.log('🔄 Tentando sincronização de emergência...');
+        await forceSyncUserData();
+        const data = await UsageLimitService.getUserUsage(user.id);
+        setUsageData(data);
+      } catch (syncError) {
+        console.error('❌ Erro na sincronização de emergência:', syncError);
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // Carregar dados quando o usuário está disponível ou quando a sincronização for concluída
   useEffect(() => {
-    fetchUsageData();
-
-    if (user) {
-      const channel = supabase
-        .channel(`usage-updates-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'uso_usuarios',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log('🔄 Usage data changed, refetching...', payload);
-            setTimeout(fetchUsageData, 1000);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    if (user && hasInitialized) {
+      fetchUsageData();
     }
+  }, [user, hasInitialized]);
+
+  // Listener para mudanças na tabela uso_usuarios
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`usage-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'uso_usuarios',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔄 Dados de uso alterados, atualizando...', payload);
+          // Usar skipSync para evitar loop infinito
+          setTimeout(() => fetchUsageData(true), 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const checkCanProceed = async (actionType: ActionType): Promise<boolean> => {
@@ -129,7 +142,7 @@ export const useUsageLimit = () => {
 
     try {
       await UsageLimitService.incrementUsage(user.id, actionType);
-      await fetchUsageData();
+      // Não precisa chamar fetchUsageData aqui, o listener vai capturar a mudança
     } catch (error) {
       console.error('Erro ao incrementar uso:', error);
       toast({
@@ -169,13 +182,19 @@ export const useUsageLimit = () => {
     });
   };
 
+  const manualRefresh = async () => {
+    console.log('🔄 Atualização manual solicitada...');
+    await forceSyncUserData();
+    await fetchUsageData(true);
+  };
+
   return {
     usageData,
     loading: loading || syncingData,
     checkCanProceed,
     incrementUsage,
     getUsagePercentage,
-    refreshUsage: fetchUsageData,
+    refreshUsage: manualRefresh,
     upgradeModalData: {
       isOpen: upgradeModal.isOpen,
       onClose: closeUpgradeModal,
