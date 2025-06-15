@@ -23,10 +23,39 @@ export const useDataSync = () => {
     try {
       console.log('🔄 Starting historical data sync...');
       
-      // Chamar a função do banco para sincronizar dados históricos
-      const { data, error } = await supabase.rpc('sync_historical_usage_data', {
-        target_user_id: user.id
-      });
+      // Contar uploads reais
+      const { count: uploadCount } = await supabase
+        .from('uploads')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      // Contar flashcards gerados
+      const { count: flashcardCount } = await supabase
+        .from('flashcards')
+        .select(`
+          id,
+          resumo_id!inner(
+            upload_id!inner(user_id)
+          )
+        `, { count: 'exact' })
+        .eq('resumo_id.upload_id.user_id', user.id);
+
+      // Contar quizzes respondidos
+      const { count: quizCount } = await supabase
+        .from('quiz_respostas')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
+
+      // Atualizar ou inserir dados corretos
+      const { error } = await supabase
+        .from('uso_usuarios')
+        .upsert({
+          user_id: user.id,
+          uploads_realizados: uploadCount || 0,
+          flashcards_gerados: flashcardCount || 0,
+          quizzes_realizados: quizCount || 0,
+          updated_at: new Date().toISOString()
+        });
 
       if (error) {
         console.error('❌ Error syncing historical data:', error);
