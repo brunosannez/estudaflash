@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Flame, Trophy, Target, TrendingUp, Award, RefreshCw, Sync } from 'lucide-react';
+import { Flame, Trophy, Target, TrendingUp, Award, RefreshCw, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ const ProgressOverview = () => {
               variant="outline"
               className="flex items-center gap-2"
             >
-              <Sync className="h-4 w-4" />
+              <RotateCcw className="h-4 w-4" />
               Sincronizar
             </Button>
             <Button 
@@ -88,7 +88,7 @@ const ProgressOverview = () => {
             size="sm"
             className="flex items-center gap-2 text-green-700 border-green-300 hover:bg-green-100"
           >
-            <Sync className="h-3 w-3" />
+            <RotateCcw className="h-3 w-3" />
             Atualizar
           </Button>
         </div>
