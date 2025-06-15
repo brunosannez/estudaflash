@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSyncManager } from './useSyncManager';
 import { useConsistencyChecker } from './useConsistencyChecker';
@@ -10,10 +10,42 @@ export const useDataSync = () => {
   const { syncing, hasInitialized, setHasInitialized, forceSyncUserData: baseForceSyncUserData } = useSyncManager();
   const { checkDataConsistency } = useConsistencyChecker();
   const { getRealUserCounts } = useRealUserCounts();
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
-  const forceSyncUserData = async () => {
-    if (!user) return false;
-    return await baseForceSyncUserData(user.id);
+  const forceSyncUserData = async (): Promise<boolean> => {
+    if (!user) {
+      console.log('❌ Usuário não autenticado para sincronização');
+      return false;
+    }
+
+    try {
+      console.log('🔄 Iniciando sincronização de dados...');
+      const success = await baseForceSyncUserData(user.id);
+      
+      if (success) {
+        console.log('✅ Sincronização bem-sucedida');
+        setRetryCount(0);
+        return true;
+      } else if (retryCount < maxRetries) {
+        console.log(`⚠️ Sincronização falhou, tentativa ${retryCount + 1}/${maxRetries}`);
+        setRetryCount(prev => prev + 1);
+        
+        // Retry after a delay
+        setTimeout(() => {
+          forceSyncUserData();
+        }, 1000 * (retryCount + 1)); // Exponential backoff
+        
+        return false;
+      } else {
+        console.error('❌ Falha na sincronização após múltiplas tentativas');
+        setRetryCount(0);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erro durante sincronização:', error);
+      return false;
+    }
   };
 
   const checkDataConsistencyForCurrentUser = async () => {
@@ -26,12 +58,30 @@ export const useDataSync = () => {
     return await getRealUserCounts(user.id);
   };
 
-  // Sincronização automática na inicialização
+  // Enhanced automatic synchronization on initialization
   useEffect(() => {
-    if (user && !hasInitialized) {
-      console.log('🚀 Iniciando sincronização automática...');
-      forceSyncUserData();
-    }
+    let isMounted = true;
+    
+    const initializeData = async () => {
+      if (user && !hasInitialized && isMounted) {
+        console.log('🚀 Iniciando sincronização automática inicial...');
+        
+        try {
+          const success = await forceSyncUserData();
+          if (success && isMounted) {
+            setHasInitialized(true);
+          }
+        } catch (error) {
+          console.error('❌ Erro na sincronização inicial:', error);
+        }
+      }
+    };
+
+    initializeData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, hasInitialized]);
 
   return {

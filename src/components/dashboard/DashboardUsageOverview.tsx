@@ -18,19 +18,41 @@ const DashboardUsageOverview = () => {
   const { forceSyncUserData, syncing, hasInitialized } = useDataSync();
 
   const handleRefresh = async () => {
-    console.log('🔄 Sincronização manual solicitada...');
-    await forceSyncUserData();
-    await refreshUsage();
+    console.log('🔄 Sincronização manual solicitada no dashboard...');
+    try {
+      await forceSyncUserData();
+      await refreshUsage();
+      console.log('✅ Sincronização manual completa');
+    } catch (error) {
+      console.error('❌ Erro na sincronização manual:', error);
+    }
   };
 
   const isLoading = usageLoading || storageLoading || progressLoading || syncing;
-  const hasNoData = !usageData || (!usageData.uploads_realizados && !usageData.flashcards_gerados && !usageData.quizzes_realizados);
+  
+  // More specific check for no data
+  const hasUsageData = usageData && (
+    usageData.uploads_realizados > 0 || 
+    usageData.flashcards_gerados > 0 || 
+    usageData.quizzes_realizados > 0 ||
+    usageData.plan_name // At least has plan info
+  );
 
+  console.log('📊 DashboardUsageOverview state:', {
+    isLoading,
+    hasInitialized,
+    hasUsageData,
+    usageData,
+    storageUsage
+  });
+
+  // Show loading state only during initial load
   if (isLoading && !hasInitialized) {
     return <DashboardUsageLoading />;
   }
 
-  if (hasNoData && hasInitialized) {
+  // Show empty state if no usage data and initialized
+  if (!hasUsageData && hasInitialized) {
     return (
       <DashboardUsageEmpty 
         onRefresh={handleRefresh}
@@ -40,6 +62,7 @@ const DashboardUsageOverview = () => {
     );
   }
 
+  // Show empty state if critical data is missing
   if (!usageData || !storageUsage) {
     return (
       <DashboardUsageEmpty 
@@ -50,7 +73,7 @@ const DashboardUsageOverview = () => {
     );
   }
 
-  // Safely convert plano string to PlanType
+  // Safely convert plano string to PlanType with fallback
   const planType = (usageData.plano as PlanType) || 'free';
 
   return (
