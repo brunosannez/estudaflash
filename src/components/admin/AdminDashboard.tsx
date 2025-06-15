@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { AdminStatsService } from '@/services/adminStatsService';
 import { 
   Users, 
   Upload, 
@@ -16,97 +16,50 @@ import {
   Server,
   Database,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  HardDrive
 } from 'lucide-react';
 
-interface QuickStats {
+interface AdminStats {
   totalUsers: number;
-  newUsersToday: number;
-  totalUploads: number;
-  uploadsToday: number;
-  totalFlashcards: number;
-  flashcardsToday: number;
-  totalQuizzes: number;
-  quizzesToday: number;
+  totalStorageMB: number;
+  activeUsers7Days: number;
   systemHealth: 'healthy' | 'warning' | 'error';
 }
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<QuickStats | null>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const { toast } = useToast();
 
-  const loadQuickStats = async () => {
+  const loadStats = async () => {
     try {
       setLoading(true);
-      console.log('📊 Carregando estatísticas rápidas...');
+      console.log('📊 AdminDashboard: Carregando estatísticas...');
 
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Buscar dados básicos
-      const [usersResult, uploadsResult, flashcardsResult, quizzesResult] = await Promise.all([
-        supabase.from('uso_usuarios').select('created_at'),
-        supabase.from('uploads').select('data_upload'),
-        supabase.from('flashcards').select('data_criacao'),
-        supabase.from('quiz_sessions').select('created_at')
-      ]);
-
-      // Calcular estatísticas
-      const totalUsers = usersResult.data?.length || 0;
-      const newUsersToday = usersResult.data?.filter(user => 
-        user.created_at?.startsWith(today)
-      ).length || 0;
-
-      const totalUploads = uploadsResult.data?.length || 0;
-      const uploadsToday = uploadsResult.data?.filter(upload => 
-        upload.data_upload?.startsWith(today)
-      ).length || 0;
-
-      const totalFlashcards = flashcardsResult.data?.length || 0;
-      const flashcardsToday = flashcardsResult.data?.filter(flashcard => 
-        flashcard.data_criacao?.startsWith(today)
-      ).length || 0;
-
-      const totalQuizzes = quizzesResult.data?.length || 0;
-      const quizzesToday = quizzesResult.data?.filter(quiz => 
-        quiz.created_at?.startsWith(today)
-      ).length || 0;
-
-      // Determinar saúde do sistema
-      let systemHealth: 'healthy' | 'warning' | 'error' = 'healthy';
-      if (usersResult.error || uploadsResult.error || flashcardsResult.error || quizzesResult.error) {
-        systemHealth = 'warning';
-      }
+      const dashboardStats = await AdminStatsService.getDashboardStats();
 
       setStats({
-        totalUsers,
-        newUsersToday,
-        totalUploads,
-        uploadsToday,
-        totalFlashcards,
-        flashcardsToday,
-        totalQuizzes,
-        quizzesToday,
-        systemHealth
+        ...dashboardStats,
+        systemHealth: 'healthy'
       });
 
-      console.log('✅ Estatísticas carregadas');
+      setLastUpdated(new Date());
+      console.log('✅ AdminDashboard: Estatísticas carregadas com sucesso');
     } catch (error) {
-      console.error('❌ Erro ao carregar estatísticas:', error);
+      console.error('❌ AdminDashboard: Erro ao carregar estatísticas:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar as estatísticas.",
+        title: "Aviso",
+        description: "Algumas estatísticas podem estar indisponíveis temporariamente.",
         variant: "destructive",
       });
+      
+      // Definir estatísticas padrão em caso de erro
       setStats({
         totalUsers: 0,
-        newUsersToday: 0,
-        totalUploads: 0,
-        uploadsToday: 0,
-        totalFlashcards: 0,
-        flashcardsToday: 0,
-        totalQuizzes: 0,
-        quizzesToday: 0,
+        totalStorageMB: 0,
+        activeUsers7Days: 0,
         systemHealth: 'error'
       });
     } finally {
@@ -115,8 +68,21 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    loadQuickStats();
+    loadStats();
   }, []);
+
+  const getHealthBadge = () => {
+    if (!stats) return null;
+    
+    switch (stats.systemHealth) {
+      case 'healthy':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Sistema Saudável</Badge>;
+      case 'warning':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Atenção</Badge>;
+      case 'error':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Modo Fallback</Badge>;
+    }
+  };
 
   if (loading) {
     return (
@@ -124,7 +90,7 @@ const AdminDashboard = () => {
         <Card className="w-96">
           <CardContent className="py-8 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p>Carregando dashboard...</p>
+            <p>Carregando dashboard administrativo...</p>
           </CardContent>
         </Card>
       </div>
@@ -136,23 +102,12 @@ const AdminDashboard = () => {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
         <p className="text-gray-600 mb-4">Erro ao carregar dashboard.</p>
-        <Button onClick={loadQuickStats}>
+        <Button onClick={loadStats}>
           Tentar Novamente
         </Button>
       </div>
     );
   }
-
-  const getHealthBadge = () => {
-    switch (stats.systemHealth) {
-      case 'healthy':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Sistema Saudável</Badge>;
-      case 'warning':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Atenção</Badge>;
-      case 'error':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Problemas</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -174,62 +129,49 @@ const AdminDashboard = () => {
               {getHealthBadge()}
             </div>
             <div className="text-sm text-gray-600">
-              Última verificação: {new Date().toLocaleTimeString('pt-BR')}
+              Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuários</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalUsers}</div>
             <p className="text-xs text-muted-foreground">
-              +{stats.newUsersToday} hoje
+              Usuários registrados
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uploads</CardTitle>
-            <Upload className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Armazenamento Total</CardTitle>
+            <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUploads}</div>
+            <div className="text-2xl font-bold">{stats.totalStorageMB.toFixed(1)} MB</div>
             <p className="text-xs text-muted-foreground">
-              +{stats.uploadsToday} hoje
+              Espaço utilizado
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Flashcards</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Usuários Ativos (7 dias)</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalFlashcards}</div>
+            <div className="text-2xl font-bold">{stats.activeUsers7Days}</div>
             <p className="text-xs text-muted-foreground">
-              +{stats.flashcardsToday} hoje
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quizzes</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalQuizzes}</div>
-            <p className="text-xs text-muted-foreground">
-              +{stats.quizzesToday} hoje
+              Usuários com atividade recente
             </p>
           </CardContent>
         </Card>
@@ -245,7 +187,7 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" onClick={loadQuickStats} className="flex items-center gap-2">
+            <Button variant="outline" onClick={loadStats} className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Atualizar Dados
             </Button>
@@ -256,15 +198,15 @@ const AdminDashboard = () => {
               className="flex items-center gap-2"
             >
               <Calendar className="h-4 w-4" />
-              Ver Relatórios
+              Ver Analytics
             </Button>
             
             <Button 
               variant="outline" 
               onClick={() => {
                 toast({
-                  title: "Manutenção",
-                  description: "Funcionalidade de limpeza em desenvolvimento.",
+                  title: "Info",
+                  description: "Funcionalidade em desenvolvimento.",
                 });
               }}
               className="flex items-center gap-2"
@@ -276,35 +218,19 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Resumo de Atividade Recente */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Resumo de Hoje
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Novos usuários:</span>
-              <Badge variant="secondary">{stats.newUsersToday}</Badge>
+      {/* Informações do Sistema */}
+      {stats.systemHealth === 'error' && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-orange-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Sistema operando em modo fallback. Algumas funcionalidades podem estar limitadas.
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Uploads realizados:</span>
-              <Badge variant="secondary">{stats.uploadsToday}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Flashcards criados:</span>
-              <Badge variant="secondary">{stats.flashcardsToday}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Quizzes realizados:</span>
-              <Badge variant="secondary">{stats.quizzesToday}</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

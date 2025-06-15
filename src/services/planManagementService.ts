@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { PlanType } from '@/types/plans';
-import type { User } from '@supabase/supabase-js';
+import { AdminUserService } from './adminUserService';
 
 export interface UserWithPlan {
   user_id: string;
@@ -19,39 +18,7 @@ export interface UserWithPlan {
 
 export class PlanManagementService {
   static async getAllUsersWithPlans(): Promise<UserWithPlan[]> {
-    try {
-      // Usar a função RPC que retorna dados completos dos usuários
-      const { data: usersData, error } = await supabase.rpc('get_all_users_admin');
-
-      if (error) {
-        console.error('Erro ao buscar usuários via RPC:', error);
-        throw error;
-      }
-
-      if (!usersData || !Array.isArray(usersData)) {
-        console.error('Dados de usuários inválidos');
-        return [];
-      }
-
-      // Mapear os dados para o formato esperado
-      const usersWithPlans: UserWithPlan[] = usersData.map(user => ({
-        user_id: user.user_id,
-        email: user.email || 'Email não encontrado',
-        plano: user.plano as PlanType,
-        uploads_realizados: user.uploads_realizados || 0,
-        flashcards_gerados: user.flashcards_gerados || 0,
-        quizzes_realizados: user.quizzes_realizados || 0,
-        data_ultimo_reset: user.created_at,
-        created_at: user.created_at,
-        storage_mb: user.storage_mb || 0,
-        is_admin: user.is_admin || false
-      }));
-
-      return usersWithPlans;
-    } catch (error) {
-      console.error('Erro ao buscar usuários com planos:', error);
-      throw error;
-    }
+    return await AdminUserService.getAllUsersWithPlans();
   }
 
   static async changeuserPlan(userId: string, newPlan: PlanType): Promise<boolean> {
