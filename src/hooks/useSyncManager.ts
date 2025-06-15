@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -94,10 +93,51 @@ export const useSyncManager = () => {
     }
   };
 
+  const ensureUserUsageExists = async (userId: string): Promise<void> => {
+    try {
+      const { data: existingUsage } = await supabase
+        .from('uso_usuarios')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!existingUsage) {
+        console.log('🔄 Criando registro de uso para usuário:', userId);
+        
+        // Get Free plan ID
+        const { data: freePlan } = await supabase
+          .from('plans')
+          .select('id')
+          .eq('name', 'Free')
+          .single();
+
+        const { error } = await supabase
+          .from('uso_usuarios')
+          .insert({
+            user_id: userId,
+            plan_id: freePlan?.id,
+            uploads_realizados: 0,
+            flashcards_gerados: 0,
+            quizzes_realizados: 0,
+            plano: 'free',
+          });
+
+        if (error) {
+          console.error('❌ Erro ao criar uso_usuarios:', error);
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro no ensureUserUsageExists:', error);
+      throw error;
+    }
+  };
+
   return {
     syncing,
     hasInitialized,
     setHasInitialized,
     forceSyncUserData,
+    ensureUserUsageExists,
   };
 };

@@ -1,140 +1,151 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { useToast } from '@/hooks/use-toast';
-import { PlanType } from '@/types/plans';
+
+interface AuthState {
+  user: User | null;
+  session: any | null;
+  loading: boolean;
+  error: any;
+}
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    session: null,
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    // Verificar usuário atual
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setLoading(false);
-    });
+    const getSession = async () => {
+      try {
+        setAuthState(prev => ({ ...prev, loading: true }));
+        
+        const { data: { session } } = await supabase.auth.getSession();
 
-    // Escutar mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        setLoading(false);
+        setAuthState({
+          user: session?.user || null,
+          session: session || null,
+          loading: false,
+          error: null,
+        });
+      } catch (error: any) {
+        setAuthState({
+          user: null,
+          session: null,
+          loading: false,
+          error: error.message,
+        });
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    getSession();
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      setAuthState({
+        user: session?.user || null,
+        session: session || null,
+        loading: false,
+        error: null,
+      });
+    });
   }, []);
 
-  const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      toast({
-        title: "Erro no login",
-        description: error.message,
-        variant: "destructive",
+  const signIn = async (email: string, password: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true }));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      return false;
-    }
 
-    toast({
-      title: "Sucesso!",
-      description: "Login realizado com sucesso.",
-    });
-    return true;
+      if (error) throw error;
+
+      setAuthState({
+        user: data.user,
+        session: data.session,
+        loading: false,
+        error: null,
+      });
+
+      return data;
+    } catch (error: any) {
+      setAuthState(prev => ({ ...prev, loading: false, error: error.message }));
+      throw error;
+    }
   };
 
-  const signUpWithEmail = async (email: string, password: string, selectedPlan: PlanType = 'free') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          plan: selectedPlan
+  const signUp = async (email: string, password: string, selectedPlanId?: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Get Free plan ID if no plan selected
+        let planId = selectedPlanId;
+        if (!planId) {
+          const { data: freePlan } = await supabase
+            .from('plans')
+            .select('id')
+            .eq('name', 'Free')
+            .single();
+          
+          planId = freePlan?.id;
+        }
+
+        // Initialize user usage data with selected plan
+        const { error: usageError } = await supabase
+          .from('uso_usuarios')
+          .insert({
+            user_id: data.user.id,
+            plan_id: planId,
+            plano: 'free', // Keep for backwards compatibility
+            is_admin: false,
+            uploads_realizados: 0,
+            flashcards_gerados: 0,
+            quizzes_realizados: 0,
+          });
+
+        if (usageError) {
+          console.error('Error initializing user usage:', usageError);
         }
       }
-    });
 
-    if (error) {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // If user is immediately confirmed, create the usage record
-    if (data.user && !data.user.email_confirmed_at) {
-      // User needs email confirmation
-      toast({
-        title: "Sucesso!",
-        description: "Conta criada com sucesso. Verifique seu email.",
-      });
-    } else if (data.user) {
-      // User is immediately confirmed, create usage record
-      await createUserUsageRecord(data.user.id, selectedPlan);
-      toast({
-        title: "Sucesso!",
-        description: "Conta criada com sucesso!",
-      });
-    }
-
-    return true;
-  };
-
-  const createUserUsageRecord = async (userId: string, plan: PlanType) => {
-    try {
-      const { error } = await supabase
-        .from('uso_usuarios')
-        .insert({
-          user_id: userId,
-          plano: plan,
-          is_admin: false,
-          uploads_realizados: 0,
-          flashcards_gerados: 0,
-          quizzes_realizados: 0,
-        });
-
-      if (error) {
-        console.error('Error creating user usage record:', error);
-      }
-    } catch (err) {
-      console.error('Error in createUserUsageRecord:', err);
+      return data;
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
+    try {
+      setAuthState(prev => ({ ...prev, loading: true }));
+      const { error } = await supabase.auth.signOut();
+
+      if (error) throw error;
+
+      setAuthState({
+        user: null,
+        session: null,
+        loading: false,
+        error: null,
       });
-    } else {
-      toast({
-        title: "Sucesso!",
-        description: "Logout realizado com sucesso.",
-      });
+    } catch (error: any) {
+      setAuthState(prev => ({ ...prev, loading: false, error: error.message }));
+      throw error;
     }
   };
 
   return {
-    user,
-    loading,
-    signInWithEmail,
-    signUpWithEmail,
+    ...authState,
+    signIn,
+    signUp,
     signOut,
   };
 };

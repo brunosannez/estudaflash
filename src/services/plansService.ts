@@ -94,7 +94,10 @@ export class PlansService {
       throw error;
     }
 
-    return data;
+    return {
+      ...data,
+      status: data.status as 'active' | 'canceled' | 'pending'
+    };
   }
 
   static async getUserSubscriptions(userId: string): Promise<Subscription[]> {
@@ -109,6 +112,9 @@ export class PlansService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as 'active' | 'canceled' | 'pending'
+    }));
   }
 }

@@ -39,3 +39,32 @@ export interface UserPlanDetails {
   summary_model: string;
   flashcard_model: string;
 }
+
+export type PlanType = 'free' | 'pro' | 'edu';
+
+export const PLAN_CONFIGS = {
+  free: {
+    displayName: 'Gratuito',
+    uploads: 10,
+    flashcards: 10,
+    quizzes: 10,
+    color: 'text-gray-600',
+    badgeVariant: 'secondary' as const,
+  },
+  pro: {
+    displayName: 'Professional',
+    uploads: 100,
+    flashcards: 100,
+    quizzes: 100,
+    color: 'text-blue-600',
+    badgeVariant: 'default' as const,
+  },
+  edu: {
+    displayName: 'Educacional',
+    uploads: Infinity,
+    flashcards: Infinity,
+    quizzes: Infinity,
+    color: 'text-green-600',
+    badgeVariant: 'default' as const,
+  },
+} as const;

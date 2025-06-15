@@ -14,7 +14,7 @@ const AdminDashboard = () => {
       </div>
 
       <Tabs defaultValue="stats" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="stats">Estatísticas</TabsTrigger>
           <TabsTrigger value="users">Usuários</TabsTrigger>
           <TabsTrigger value="plans">Planos</TabsTrigger>
@@ -22,7 +22,11 @@ const AdminDashboard = () => {
         </TabsList>
 
         <TabsContent value="stats">
-          <AdminStatsGrid />
+          <AdminStatsGrid 
+            totalUsers={0} 
+            totalStorageMB={0} 
+            activeUsers7Days={0} 
+          />
         </TabsContent>
 
         <TabsContent value="users">
