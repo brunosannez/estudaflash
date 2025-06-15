@@ -1,10 +1,10 @@
 
-import UploadManager from '@/components/upload/UploadManager';
+import UploadArea from '@/components/UploadArea';
 
 const UploadTabContent = () => {
   return (
     <div className="space-y-6">
-      <UploadManager />
+      <UploadArea />
     </div>
   );
 };

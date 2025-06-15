@@ -1,18 +1,27 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { designColors } from '@/utils/designSystem';
+import { useNavigate } from 'react-router-dom';
 import UploadTabContent from './UploadTabContent';
 import ProgressTabContent from './ProgressTabContent';
 import FlashcardsTabContent from './FlashcardsTabContent';
 import QuizzesTabContent from './QuizzesTabContent';
 
-interface DashboardTabsProps {
-  activeTab: string;
-}
+const DashboardTabs = () => {
+  const navigate = useNavigate();
 
-const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
+  const handleSelectExisting = () => {
+    navigate('/my-summaries');
+  };
+
+  const handleUploadNew = () => {
+    // Switch to upload tab when user wants to upload new content
+    const uploadTab = document.querySelector('[data-value="upload"]') as HTMLElement;
+    uploadTab?.click();
+  };
+
   return (
-    <Tabs defaultValue={activeTab} className="w-full">
+    <Tabs defaultValue="upload" className="w-full">
       <TabsList className={`${designColors.cards.primary} p-2 sm:p-3 mb-6 sm:mb-8 w-full justify-center grid grid-cols-4 gap-1 sm:gap-2 h-auto`}>
         <TabsTrigger 
           value="upload" 
@@ -112,11 +121,17 @@ const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
       </TabsContent>
 
       <TabsContent value="flashcards" className="mt-6">
-        <FlashcardsTabContent />
+        <FlashcardsTabContent 
+          onSelectExisting={handleSelectExisting}
+          onUploadNew={handleUploadNew}
+        />
       </TabsContent>
 
       <TabsContent value="quizzes" className="mt-6">
-        <QuizzesTabContent />
+        <QuizzesTabContent 
+          onSelectExisting={handleSelectExisting}
+          onUploadNew={handleUploadNew}
+        />
       </TabsContent>
     </Tabs>
   );
