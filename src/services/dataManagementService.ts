@@ -57,6 +57,12 @@ export class DataManagementService {
       const stat = statsData[0];
       console.log('✅ DataManagement: Estatísticas carregadas via RPC:', stat);
 
+      // Garantir que storage_by_plan seja um objeto válido
+      let storageByPlan: Record<string, any> = {};
+      if (stat.storage_by_plan && typeof stat.storage_by_plan === 'object') {
+        storageByPlan = stat.storage_by_plan as Record<string, any>;
+      }
+
       const managementStats: DataManagementStats = {
         totalFiles: Number(stat.total_files) || 0,
         totalStorageMB: Number(stat.total_storage_mb) || 0,
@@ -66,7 +72,7 @@ export class DataManagementService {
         filesOlderThan7Days: Number(stat.files_older_than_7_days) || 0,
         activeUsers30Days: Number(stat.active_users_30_days) || 0,
         largestFileSizeMB: Number(stat.largest_file_size_mb) || 0,
-        storageByPlan: stat.storage_by_plan || {}
+        storageByPlan: storageByPlan
       };
 
       // Atualizar cache
@@ -87,7 +93,7 @@ export class DataManagementService {
       console.log('🔄 DataManagement: Executando fallback...');
 
       const [uploadsResult, usersResult] = await Promise.all([
-        supabase.from('uploads').select('file_size, data_upload'),
+        supabase.from('uploads').select('file_size, data_upload, user_id'),
         supabase.from('uso_usuarios').select('user_id, plano')
       ]);
 
