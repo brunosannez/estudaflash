@@ -462,6 +462,7 @@ export type Database = {
           school_year: string | null
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           created_at?: string
@@ -472,6 +473,7 @@ export type Database = {
           school_year?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           created_at?: string
@@ -482,6 +484,7 @@ export type Database = {
           school_year?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -653,6 +656,10 @@ export type Database = {
       }
       check_user_is_admin: {
         Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      check_username_available: {
+        Args: { username_to_check: string }
         Returns: boolean
       }
       cleanup_old_files: {

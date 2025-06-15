@@ -9,8 +9,9 @@ interface StudentInfoSectionProps {
   email: string;
   password: string;
   confirmPassword: string;
+  username: string;
   onProfileChange: (profile: Partial<UserProfile>) => void;
-  onBasicInfoChange: (data: { email?: string; password?: string; confirmPassword?: string }) => void;
+  onBasicInfoChange: (data: { email?: string; password?: string; confirmPassword?: string; username?: string }) => void;
   step: number;
 }
 
@@ -18,7 +19,8 @@ const StudentInfoSection = ({
   profile, 
   email, 
   password, 
-  confirmPassword, 
+  confirmPassword,
+  username,
   onProfileChange, 
   onBasicInfoChange,
   step 
@@ -45,6 +47,25 @@ const StudentInfoSection = ({
               className="mt-1"
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="username" className="text-gray-700 font-medium">
+              Nome de Usuário *
+            </Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="meuusername"
+              value={username}
+              onChange={(e) => onBasicInfoChange({ username: e.target.value })}
+              className="mt-1"
+              required
+              minLength={3}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Mínimo 3 caracteres. Este será seu nome de exibição no EstudoFácil AI.
+            </p>
           </div>
 
           <div>

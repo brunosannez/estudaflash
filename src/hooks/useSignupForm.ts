@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { SignupFormData, UserProfile, Guardian } from '@/types/signup';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,7 @@ export const useSignupForm = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    username: '',
     profile: {
       full_name: '',
       date_of_birth: '',
@@ -46,15 +48,36 @@ export const useSignupForm = () => {
     }));
   };
 
-  const updateBasicInfo = (data: Partial<Pick<SignupFormData, 'email' | 'password' | 'confirmPassword' | 'selectedPlanId'>>) => {
+  const updateBasicInfo = (data: Partial<Pick<SignupFormData, 'email' | 'password' | 'confirmPassword' | 'selectedPlanId' | 'username'>>) => {
     setFormData(prev => ({ ...prev, ...data }));
+  };
+
+  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+    if (!username.trim()) return false;
+    
+    try {
+      const { data, error } = await supabase.rpc('check_username_available', {
+        username_to_check: username.trim()
+      });
+      
+      if (error) {
+        console.error('Error checking username:', error);
+        return false;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error checking username availability:', error);
+      return false;
+    }
   };
 
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
         return !!(formData.email && formData.password && formData.confirmPassword && 
-                 formData.password === formData.confirmPassword && formData.password.length >= 6);
+                 formData.username && formData.password === formData.confirmPassword && 
+                 formData.password.length >= 6 && formData.username.trim().length >= 3);
       case 2:
         return !!(formData.profile.full_name && formData.profile.date_of_birth);
       case 3:
@@ -70,7 +93,20 @@ export const useSignupForm = () => {
     }
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    if (currentStep === 1) {
+      // Validar username no primeiro passo
+      const isUsernameAvailable = await checkUsernameAvailability(formData.username);
+      if (!isUsernameAvailable) {
+        toast({
+          title: "Username não disponível",
+          description: "Este nome de usuário já está em uso. Escolha outro.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (validateStep(currentStep)) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -94,6 +130,7 @@ export const useSignupForm = () => {
       date_of_birth: formData.profile.date_of_birth,
       school_year: formData.profile.school_year || null,
       is_minor: formData.profile.is_minor,
+      username: formData.username.trim(),
       guardian: formData.profile.is_minor ? formData.guardian : undefined,
       plan_id: formData.selectedPlanId
     };
@@ -164,6 +201,7 @@ export const useSignupForm = () => {
     prevStep,
     validateStep,
     submitForm,
+    checkUsernameAvailability,
     totalSteps: formData.profile.is_minor ? 4 : 3
   };
 };

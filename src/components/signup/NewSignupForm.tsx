@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,8 @@ const NewSignupForm = () => {
     switch (currentStep) {
       case 1:
         return formData.email && formData.password && formData.confirmPassword && 
-               formData.password === formData.confirmPassword && formData.password.length >= 6;
+               formData.username && formData.password === formData.confirmPassword && 
+               formData.password.length >= 6 && formData.username.trim().length >= 3;
       case 2:
         return formData.profile.full_name && formData.profile.date_of_birth;
       case 3:
@@ -58,6 +60,7 @@ const NewSignupForm = () => {
           email={formData.email}
           password={formData.password}
           confirmPassword={formData.confirmPassword}
+          username={formData.username}
           onProfileChange={updateProfile}
           onBasicInfoChange={updateBasicInfo}
           step={currentStep}

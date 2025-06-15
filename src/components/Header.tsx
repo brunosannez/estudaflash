@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,7 +16,8 @@ import { designColors } from '@/utils/designSystem';
 import AppBreadcrumbs from '@/components/navigation/AppBreadcrumbs';
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { getDisplayName } = useUserProfile();
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
@@ -29,10 +31,10 @@ const Header = () => {
   };
 
   const quickActions = [
-    { icon: BookOpen, label: 'Resumos', path: '/meus-resumos', emoji: '📚' },
-    { icon: Brain, label: 'Flashcards', path: '/meus-flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/historico-quiz', emoji: '🎯' },
-    { icon: Trophy, label: 'Progresso', path: '/progresso', emoji: '🏆' },
+    { icon: BookOpen, label: 'Resumos', path: '/my-summaries', emoji: '📚' },
+    { icon: Brain, label: 'Flashcards', path: '/my-flashcards', emoji: '🧠' },
+    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
+    { icon: Trophy, label: 'Progresso', path: '/my-progress', emoji: '🏆' },
   ];
 
   return (
@@ -136,13 +138,13 @@ const Header = () => {
                 >
                   <User className={designColors.responsive.buttonIcon} />
                   <span className={`font-medium ${designColors.responsive.captionText} max-w-20 sm:max-w-none truncate`}>
-                    {user?.email?.split('@')[0] || 'Usuário'}
+                    {getDisplayName()}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-purple-200 shadow-xl">
                 <DropdownMenuItem 
-                  onClick={() => navigate('/progresso')}
+                  onClick={() => navigate('/my-progress')}
                   className="flex items-center space-x-2 cursor-pointer hover:bg-purple-50"
                 >
                   <Settings className="h-4 w-4" />

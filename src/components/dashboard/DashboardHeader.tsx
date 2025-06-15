@@ -1,10 +1,10 @@
 
 import { Sparkles } from 'lucide-react';
 import { designColors } from '@/utils/designSystem';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 const DashboardHeader = () => {
-  const { user } = useAuth();
+  const { getDisplayName } = useUserProfile();
 
   return (
     <div className="pt-8 mb-4 sm:mb-8">
@@ -13,7 +13,7 @@ const DashboardHeader = () => {
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-4">
             <Sparkles className={`${designColors.responsive.pageIcon} text-cyan-500 animate-pulse`} />
             <h1 className={`${designColors.responsive.pageTitle} font-bold bg-gradient-to-r from-gray-700 via-purple-600 to-cyan-600 bg-clip-text text-transparent`}>
-              Olá, {user?.email?.split('@')[0]}!
+              Olá, {getDisplayName()}!
             </h1>
             <Sparkles className={`${designColors.responsive.pageIcon} text-purple-500 animate-pulse`} />
           </div>

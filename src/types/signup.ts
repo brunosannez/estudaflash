@@ -4,6 +4,7 @@ export interface UserProfile {
   date_of_birth: string;
   school_year?: string;
   is_minor: boolean;
+  username?: string;
 }
 
 export interface Guardian {
@@ -19,6 +20,7 @@ export interface SignupFormData {
   email: string;
   password: string;
   confirmPassword: string;
+  username: string;
   
   // Profile info
   profile: UserProfile;
