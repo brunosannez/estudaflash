@@ -1,6 +1,6 @@
 
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Header from '@/components/Header';
+import MainNavigation from '@/components/navigation/MainNavigation';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
@@ -12,15 +12,14 @@ const Index = () => {
 
   return (
     <ProtectedRoute>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <FloatingBackground />
-        
-        <div className="relative z-10">
-          <DashboardHeader />
+      <MainNavigation>
+        <div className="relative">
+          <FloatingBackground />
           
-          <main className="container mx-auto px-4 pb-8">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="relative z-10">
+            <DashboardHeader />
+            
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mt-6">
               <div className="xl:col-span-3 space-y-6">
                 <DashboardTabs />
               </div>
@@ -30,9 +29,9 @@ const Index = () => {
                 <RecentActivity />
               </div>
             </div>
-          </main>
+          </div>
         </div>
-      </div>
+      </MainNavigation>
     </ProtectedRoute>
   );
 };

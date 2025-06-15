@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { designColors } from '@/utils/designSystem';
+import AppBreadcrumbs from '@/components/navigation/AppBreadcrumbs';
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -27,7 +28,7 @@ const Header = () => {
     }
   };
 
-  const navigationItems = [
+  const quickActions = [
     { icon: BookOpen, label: 'Resumos', path: '/meus-resumos', emoji: '📚' },
     { icon: Brain, label: 'Flashcards', path: '/meus-flashcards', emoji: '🧠' },
     { icon: Target, label: 'Quiz', path: '/historico-quiz', emoji: '🎯' },
@@ -56,9 +57,14 @@ const Header = () => {
             </div>
           </div>
 
+          {/* Breadcrumbs - Hidden on mobile */}
+          <div className="hidden lg:flex flex-1 justify-center px-8">
+            <AppBreadcrumbs />
+          </div>
+
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center space-x-1">
-            {navigationItems.map((item) => (
+            {quickActions.map((item) => (
               <Button
                 key={item.path}
                 variant="ghost"
@@ -95,7 +101,7 @@ const Header = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-cyan-200 shadow-xl">
-                  {navigationItems.map((item) => (
+                  {quickActions.map((item) => (
                     <DropdownMenuItem
                       key={item.path}
                       onClick={() => navigate(item.path)}
@@ -162,6 +168,11 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+
+        {/* Mobile Breadcrumbs */}
+        <div className="lg:hidden mt-3 pt-3 border-t border-purple-200/50">
+          <AppBreadcrumbs />
         </div>
       </div>
     </header>
