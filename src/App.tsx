@@ -28,6 +28,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
+            <Route path="/upload" element={<Upload />} />
             <Route path="/meus-resumos" element={<MySummaries />} />
             <Route path="/resumo/:id" element={<Resumo />} />
             <Route path="/meus-flashcards" element={<MyFlashcards />} />

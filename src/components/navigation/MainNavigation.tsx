@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import AppBreadcrumbs from '@/components/navigation/AppBreadcrumbs';
 import {
   Sidebar,
   SidebarContent,
@@ -155,7 +156,7 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               <SidebarTrigger className="hover:bg-purple-50" />
               <div className="h-6 w-px bg-purple-200" />
               <div className="flex-1">
-                {/* Breadcrumbs will be added here */}
+                <AppBreadcrumbs />
               </div>
             </div>
           </header>
