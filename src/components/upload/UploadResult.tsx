@@ -6,9 +6,10 @@ interface UploadResultProps {
   uploadResult: any;
   onResetUploads: () => void;
   onGenerateSummary: () => void;
+  onGenerateQuiz: () => void;
 }
 
-const UploadResult = ({ uploadResult, onResetUploads, onGenerateSummary }: UploadResultProps) => {
+const UploadResult = ({ uploadResult, onResetUploads, onGenerateSummary, onGenerateQuiz }: UploadResultProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -20,6 +21,7 @@ const UploadResult = ({ uploadResult, onResetUploads, onGenerateSummary }: Uploa
       <ExtractedTextDisplay 
         uploadData={uploadResult} 
         onGenerateSummary={onGenerateSummary}
+        onGenerateQuiz={onGenerateQuiz}
       />
     </div>
   );
