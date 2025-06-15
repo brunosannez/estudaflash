@@ -14,6 +14,7 @@ export class StorageService {
       const fileName = `${userId}/${Date.now()}-${index}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
       console.log(`📤 Uploading ${file.name} (${(fileSizeInBytes / (1024 * 1024)).toFixed(2)}MB) to: ${fileName}`);
+      console.log(`📏 File size in bytes: ${fileSizeInBytes}`);
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('study-images')
@@ -40,11 +41,12 @@ export class StorageService {
       }
 
       console.log(`✅ Image uploaded successfully:`, uploadData.path);
+      console.log(`📏 Returning file size: ${fileSizeInBytes} bytes`);
       
       return {
         publicUrl,
         filePath: uploadData.path,
-        fileSize: fileSizeInBytes,
+        fileSize: fileSizeInBytes, // Garantir que o tamanho correto seja retornado
       };
     } catch (error) {
       console.error(`❌ Error uploading image:`, error);

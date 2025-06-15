@@ -63,6 +63,12 @@ export const useUploadManager = () => {
         description: `Apenas as primeiras ${MAX_IMAGES} imagens foram selecionadas.`,
       });
     }
+
+    // Log dos tamanhos dos arquivos selecionados
+    console.log('📁 Arquivos selecionados:');
+    limitedFiles.forEach((file, index) => {
+      console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
+    });
     
     setSelectedFiles(limitedFiles);
     resetUpload();
@@ -91,6 +97,11 @@ export const useUploadManager = () => {
       });
       return;
     }
+    
+    console.log('🚀 Iniciando processamento de imagens:');
+    selectedFiles.forEach((file, index) => {
+      console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
+    });
     
     try {
       const result = await uploadMultipleImages(selectedFiles);

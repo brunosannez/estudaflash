@@ -49,6 +49,7 @@ export const verifyUserAndBucket = async (): Promise<User> => {
 export const uploadImageToStorage = async (file: File, userId: string, index: number): Promise<string> => {
   try {
     const result = await StorageService.uploadImage(file, userId, index);
+    console.log(`📤 Upload result for image ${index + 1}: size=${result.fileSize} bytes`);
     return result.publicUrl;
   } catch (error) {
     console.error(`❌ Error uploading image ${index + 1}:`, error);
@@ -124,17 +125,25 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
       throw new Error('Nenhum texto foi extraído das imagens');
     }
     
-    // Calculate total file size properly
-    const totalFileSize = successfulResults.reduce((total, result) => total + result.file.size, 0);
+    // Calculate total file size properly and log each file
+    const totalFileSize = successfulResults.reduce((total, result) => {
+      console.log(`📏 File ${result.file.name}: ${result.file.size} bytes`);
+      return total + result.file.size;
+    }, 0);
+    
     console.log('📏 Total file size calculated:', totalFileSize, 'bytes');
-    console.log('📋 File details:', successfulResults.map(r => ({ name: r.file.name, size: r.file.size })));
+    console.log('📋 File details:', successfulResults.map(r => ({ 
+      name: r.file.name, 
+      size: r.file.size,
+      sizeInMB: (r.file.size / (1024 * 1024)).toFixed(2)
+    })));
     
     // Get the original file name from the first file
     const arquivoOriginalNome = successfulResults.length > 1 
       ? `${successfulResults.length} arquivos processados`
       : successfulResults[0].file.name;
     
-    console.log('💾 Saving to database with file_size:', totalFileSize);
+    console.log('💾 Saving to database with file_size:', totalFileSize, 'bytes');
     const { data: uploadRecord, error: dbError } = await supabase
       .from('uploads')
       .insert({
@@ -142,7 +151,7 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
         imagem_url: successfulResults[0].imageUrl,
         texto_extraido: combinedText,
         arquivo_original_nome: arquivoOriginalNome,
-        file_size: totalFileSize // Garantir que o file_size seja registrado corretamente
+        file_size: totalFileSize // Garantir que o file_size seja salvo corretamente
       })
       .select()
       .single();
@@ -165,10 +174,11 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
       throw new Error('Registro de upload não foi criado');
     }
 
-    console.log('✅ Upload record saved with file_size:', uploadRecord.file_size);
+    console.log('✅ Upload record saved with file_size:', uploadRecord.file_size, 'bytes');
     console.log('✅ Upload record created:', {
       id: uploadRecord.id,
       file_size: uploadRecord.file_size,
+      file_size_mb: uploadRecord.file_size ? (uploadRecord.file_size / (1024 * 1024)).toFixed(2) : '0',
       arquivo_original_nome: uploadRecord.arquivo_original_nome
     });
     
