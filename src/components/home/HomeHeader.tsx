@@ -18,19 +18,19 @@ const HomeHeader = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 sm:space-x-4 relative z-10">
-            <Link to="/login" className="relative z-20">
+          <div className="flex items-center space-x-2 sm:space-x-4 relative z-50">
+            <Link to="/login" className="relative z-50">
               <Button 
                 variant="outline" 
-                className="bg-white/90 border-2 border-cyan-300 text-gray-700 font-nunito font-bold hover:bg-cyan-50 shadow-lg text-xs sm:text-sm px-2 py-1 sm:px-4 sm:py-2 touch-target-44 cursor-pointer"
+                className="bg-white/90 border-2 border-cyan-300 text-gray-700 font-nunito font-bold hover:bg-cyan-50 shadow-lg text-xs sm:text-sm px-2 py-1 sm:px-4 sm:py-2 relative z-50"
                 style={{ pointerEvents: 'auto' }}
               >
                 <span className="hidden sm:inline">🔑 </span>Entrar
               </Button>
             </Link>
-            <Link to="/signup" className="relative z-20">
+            <Link to="/signup" className="relative z-50">
               <Button 
-                className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white font-fredoka shadow-lg border-2 border-white/50 text-xs sm:text-sm px-2 py-1 sm:px-4 sm:py-2 touch-target-44 cursor-pointer"
+                className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white font-fredoka shadow-lg border-2 border-white/50 text-xs sm:text-sm px-2 py-1 sm:px-4 sm:py-2 relative z-50"
                 style={{ pointerEvents: 'auto' }}
               >
                 <span className="hidden sm:inline">🌟 </span>Criar Conta

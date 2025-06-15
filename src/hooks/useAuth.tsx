@@ -10,19 +10,12 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     // Verificar usuário atual
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setLoading(false);
-      
-      // Se o usuário estiver logado e na página home, redirecionar para dashboard
-      if (user && location.pathname === '/home') {
-        navigate('/', { replace: true });
-      }
     });
 
     // Escutar mudanças de autenticação
@@ -31,22 +24,11 @@ export const useAuth = () => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         setLoading(false);
-        
-        // Redirecionamento automático baseado no estado de autenticação
-        if (event === 'SIGNED_IN' && currentUser) {
-          // Usuário fez login - redirecionar para dashboard
-          if (location.pathname === '/home' || location.pathname === '/login' || location.pathname === '/signup') {
-            navigate('/', { replace: true });
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // Usuário fez logout - redirecionar para home
-          navigate('/home', { replace: true });
-        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, []);
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({

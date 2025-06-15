@@ -6,24 +6,60 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, LogIn } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { designColors } from '@/utils/designSystem';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    const success = await signInWithEmail(email, password);
-    if (success) {
-      navigate('/');
+    
+    if (!email || !password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha email e senha.",
+        variant: "destructive",
+      });
+      return;
     }
-    setLoading(false);
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sucesso!",
+          description: "Login realizado com sucesso.",
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,7 +77,8 @@ const Login = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/home')}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 relative z-20"
+            style={{ pointerEvents: 'auto' }}
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Voltar</span>
@@ -65,7 +102,7 @@ const Login = () => {
             </p>
           </div>
 
-          <Card className="shadow-xl border-2 border-purple-200">
+          <Card className="shadow-xl border-2 border-purple-200 relative z-20">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-gray-800">Fazer Login</CardTitle>
               <CardDescription>
@@ -107,8 +144,9 @@ const Login = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-2.5"
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-2.5 relative z-20"
                   disabled={loading || !email || !password}
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   {loading ? 'Entrando...' : 'Entrar'}
@@ -120,7 +158,8 @@ const Login = () => {
                   Não tem uma conta?{' '}
                   <Link
                     to="/signup"
-                    className="text-purple-600 hover:text-purple-700 font-medium"
+                    className="text-purple-600 hover:text-purple-700 font-medium relative z-20"
+                    style={{ pointerEvents: 'auto' }}
                   >
                     Criar conta grátis
                   </Link>

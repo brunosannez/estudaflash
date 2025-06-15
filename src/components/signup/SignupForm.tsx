@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlanType } from '@/types/plans';
 
@@ -17,7 +17,6 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUpWithEmail } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -32,8 +31,30 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
     }
   ];
 
+  const createUserUsageRecord = async (userId: string, plan: PlanType) => {
+    try {
+      const { error } = await supabase
+        .from('uso_usuarios')
+        .insert({
+          user_id: userId,
+          plano: plan,
+          is_admin: false,
+          uploads_realizados: 0,
+          flashcards_gerados: 0,
+          quizzes_realizados: 0,
+        });
+
+      if (error) {
+        console.error('Error creating user usage record:', error);
+      }
+    } catch (err) {
+      console.error('Error in createUserUsageRecord:', err);
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!email || password.length < 6) {
       toast({
         title: "Erro de validação",
@@ -44,17 +65,51 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
     }
 
     setLoading(true);
+    
     try {
-      const success = await signUpWithEmail(email, password, selectedPlan);
-      if (success) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            plan: selectedPlan
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Erro no cadastro",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If user is immediately confirmed, create the usage record
+      if (data.user && !data.user.email_confirmed_at) {
+        // User needs email confirmation
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Verifique seu email para confirmar sua conta.",
+        });
+      } else if (data.user) {
+        // User is immediately confirmed, create usage record
+        await createUserUsageRecord(data.user.id, selectedPlan);
+        toast({
+          title: "Conta criada com sucesso! 🎉",
+          description: "Bem-vindo ao EstudoFácil AI!",
         });
         navigate('/');
       }
     } catch (error) {
       console.error('Signup error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -62,7 +117,7 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
 
   return (
     <div className="lg:col-span-1">
-      <Card className="sticky top-8 shadow-xl border-2 border-purple-200">
+      <Card className="sticky top-8 shadow-xl border-2 border-purple-200 relative z-20">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-gray-800">Criar Conta</CardTitle>
           <CardDescription>
@@ -114,8 +169,9 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-2.5"
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-2.5 relative z-20"
               disabled={loading}
+              style={{ pointerEvents: 'auto' }}
             >
               {loading ? 'Criando conta...' : 'Criar Conta Grátis 🎉'}
             </Button>
@@ -126,7 +182,8 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
               Já tem uma conta?{' '}
               <Link
                 to="/login"
-                className="text-purple-600 hover:text-purple-700 font-medium"
+                className="text-purple-600 hover:text-purple-700 font-medium relative z-20"
+                style={{ pointerEvents: 'auto' }}
               >
                 Fazer login aqui
               </Link>
