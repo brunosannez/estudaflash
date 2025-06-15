@@ -76,7 +76,7 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, selectedPlanId?: string) => {
+  const signUp = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -87,38 +87,10 @@ export const useAuth = () => {
       });
 
       if (error) throw error;
-
-      if (data.user) {
-        // Get Free plan ID if no plan selected
-        let planId = selectedPlanId;
-        if (!planId) {
-          const { data: freePlan } = await supabase
-            .from('plans')
-            .select('id')
-            .eq('name', 'Free')
-            .single();
-          
-          planId = freePlan?.id;
-        }
-
-        // Initialize user usage data with selected plan
-        const { error: usageError } = await supabase
-          .from('uso_usuarios')
-          .insert({
-            user_id: data.user.id,
-            plan_id: planId,
-            plano: 'free', // Keep for backwards compatibility
-            is_admin: false,
-            uploads_realizados: 0,
-            flashcards_gerados: 0,
-            quizzes_realizados: 0,
-          });
-
-        if (usageError) {
-          console.error('Error initializing user usage:', usageError);
-        }
-      }
-
+      
+      // The trigger 'on_auth_user_created_setup' will handle creating the usage record.
+      // No need to manually insert into 'uso_usuarios' here.
+      
       return data;
     } catch (error) {
       console.error('Error signing up:', error);

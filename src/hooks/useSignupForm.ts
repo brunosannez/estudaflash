@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { SignupFormData, UserProfile, Guardian } from '@/types/signup';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,94 +89,62 @@ export const useSignupForm = () => {
   const submitForm = async (): Promise<boolean> => {
     setLoading(true);
     
+    const userMetaData = {
+      full_name: formData.profile.full_name,
+      date_of_birth: formData.profile.date_of_birth,
+      school_year: formData.profile.school_year || null,
+      is_minor: formData.profile.is_minor,
+      guardian: formData.profile.is_minor ? formData.guardian : undefined,
+      plan_id: formData.selectedPlanId
+    };
+
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      console.log('Attempting signup with metadata:', userMetaData);
+      
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
+          data: userMetaData
         }
       });
 
-      if (authError) {
+      if (error) {
         toast({
           title: "Erro no cadastro",
-          description: authError.message,
+          description: error.message,
+          variant: "destructive",
+        });
+        console.error('Signup error:', error);
+        return false;
+      }
+
+      if (!data.user) {
+        toast({
+          title: "Erro no cadastro",
+          description: "Não foi possível criar a conta. Tente novamente.",
           variant: "destructive",
         });
         return false;
       }
-
-      if (!authData.user) {
-        toast({
-          title: "Erro no cadastro",
-          description: "Não foi possível criar a conta.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: authData.user.id,
-          full_name: formData.profile.full_name,
-          date_of_birth: formData.profile.date_of_birth,
-          school_year: formData.profile.school_year || null,
-          is_minor: formData.profile.is_minor
-        });
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-      }
-
-      // Create guardian record if user is minor
-      if (formData.profile.is_minor && formData.guardian) {
-        const { error: guardianError } = await supabase
-          .from('guardians')
-          .insert({
-            user_id: authData.user.id,
-            full_name: formData.guardian.full_name,
-            email: formData.guardian.email,
-            phone: formData.guardian.phone,
-            cpf: formData.guardian.cpf || null,
-            relation_to_student: formData.guardian.relation_to_student
-          });
-
-        if (guardianError) {
-          console.error('Error creating guardian:', guardianError);
-        }
-      }
-
-      // Create usage record
-      const { error: usageError } = await supabase
-        .from('uso_usuarios')
-        .insert({
-          user_id: authData.user.id,
-          plan_id: formData.selectedPlanId,
-          is_admin: false,
-          uploads_realizados: 0,
-          flashcards_gerados: 0,
-          quizzes_realizados: 0,
-        });
-
-      if (usageError) {
-        console.error('Error creating usage record:', usageError);
-      }
-
+      
+      console.log('User creation request sent. Awaiting confirmation/login.');
+      
       toast({
         title: "Conta criada com sucesso! 🎉",
-        description: "Bem-vindo ao EstudoFácil AI!",
+        description: data.user.email_confirmed_at 
+          ? "Bem-vindo ao EstudoFácil AI!" 
+          : "Verifique seu email para confirmar sua conta.",
       });
 
       return true;
-    } catch (error) {
-      console.error('Signup error:', error);
+
+    } catch (error: any) {
+      console.error('Unexpected signup error:', error);
       toast({
         title: "Erro inesperado",
-        description: "Tente novamente em alguns instantes.",
+        description: error.message || "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
       return false;
