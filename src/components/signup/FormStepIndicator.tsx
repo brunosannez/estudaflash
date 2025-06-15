@@ -16,30 +16,30 @@ const FormStepIndicator = ({ currentStep, totalSteps, isMinor }: FormStepIndicat
   ];
 
   return (
-    <div className="flex justify-center mb-8">
-      <div className="flex items-center space-x-4">
+    <div className="flex justify-center mb-6">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         {steps.map((step, index) => (
           <div key={step.number} className="flex items-center">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
                 currentStep >= step.number
                   ? 'bg-purple-500 border-purple-500 text-white'
                   : 'bg-white border-gray-300 text-gray-400'
               }`}>
                 {currentStep > step.number ? (
-                  <CheckCircle className="w-6 h-6" />
+                  <CheckCircle className="w-5 h-5" />
                 ) : (
-                  <span className="text-lg">{step.emoji}</span>
+                  <span className="text-sm">{step.emoji}</span>
                 )}
               </div>
-              <span className={`text-xs mt-2 font-medium ${
+              <span className={`text-xs mt-1 font-medium text-center max-w-16 sm:max-w-none ${
                 currentStep >= step.number ? 'text-purple-600' : 'text-gray-400'
               }`}>
                 {step.title}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <div className={`w-16 h-0.5 mx-4 ${
+              <div className={`w-8 sm:w-12 h-0.5 mx-2 ${
                 currentStep > step.number ? 'bg-purple-500' : 'bg-gray-300'
               }`} />
             )}

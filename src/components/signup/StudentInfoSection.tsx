@@ -27,15 +27,15 @@ const StudentInfoSection = ({
 }: StudentInfoSectionProps) => {
   if (step === 1) {
     return (
-      <div className="space-y-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">📧 Dados Básicos</h2>
-          <p className="text-gray-600">Vamos começar com suas informações de login</p>
+      <div className="space-y-4">
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">📧 Dados Básicos</h2>
+          <p className="text-sm text-gray-600">Vamos começar com suas informações de login</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <Label htmlFor="email" className="text-gray-700 font-medium">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
               Email *
             </Label>
             <Input
@@ -44,13 +44,13 @@ const StudentInfoSection = ({
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => onBasicInfoChange({ email: e.target.value })}
-              className="mt-1"
+              className="mt-1 h-10"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="username" className="text-gray-700 font-medium">
+            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
               Nome de Usuário *
             </Label>
             <Input
@@ -59,7 +59,7 @@ const StudentInfoSection = ({
               placeholder="meuusername"
               value={username}
               onChange={(e) => onBasicInfoChange({ username: e.target.value })}
-              className="mt-1"
+              className="mt-1 h-10"
               required
               minLength={3}
             />
@@ -68,39 +68,42 @@ const StudentInfoSection = ({
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="password" className="text-gray-700 font-medium">
-              Senha *
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Mínimo 6 caracteres"
-              value={password}
-              onChange={(e) => onBasicInfoChange({ password: e.target.value })}
-              className="mt-1"
-              required
-              minLength={6}
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Senha *
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Min. 6 caracteres"
+                value={password}
+                onChange={(e) => onBasicInfoChange({ password: e.target.value })}
+                className="mt-1 h-10"
+                required
+                minLength={6}
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">
-              Confirmar Senha *
-            </Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Digite a senha novamente"
-              value={confirmPassword}
-              onChange={(e) => onBasicInfoChange({ confirmPassword: e.target.value })}
-              className="mt-1"
-              required
-            />
-            {confirmPassword && password !== confirmPassword && (
-              <p className="text-sm text-red-500 mt-1">As senhas não coincidem</p>
-            )}
+            <div>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                Confirmar Senha *
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Digite novamente"
+                value={confirmPassword}
+                onChange={(e) => onBasicInfoChange({ confirmPassword: e.target.value })}
+                className="mt-1 h-10"
+                required
+              />
+            </div>
           </div>
+          
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-sm text-red-500">As senhas não coincidem</p>
+          )}
         </div>
       </div>
     );
@@ -108,15 +111,15 @@ const StudentInfoSection = ({
 
   if (step === 2) {
     return (
-      <div className="space-y-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">👤 Suas Informações</h2>
-          <p className="text-gray-600">Conte-nos um pouco sobre você</p>
+      <div className="space-y-4">
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">👤 Suas Informações</h2>
+          <p className="text-sm text-gray-600">Conte-nos um pouco sobre você</p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="fullName" className="text-gray-700 font-medium">
+            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
               Nome Completo *
             </Label>
             <Input
@@ -125,13 +128,13 @@ const StudentInfoSection = ({
               placeholder="Digite seu nome completo"
               value={profile.full_name}
               onChange={(e) => onProfileChange({ full_name: e.target.value })}
-              className="mt-1"
+              className="mt-1 h-10"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="dateOfBirth" className="text-gray-700 font-medium">
+            <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">
               Data de Nascimento *
             </Label>
             <Input
@@ -139,22 +142,24 @@ const StudentInfoSection = ({
               type="date"
               value={profile.date_of_birth}
               onChange={(e) => onProfileChange({ date_of_birth: e.target.value })}
-              className="mt-1"
+              className="mt-1 h-10"
               required
             />
             {profile.is_minor && (
-              <p className="text-sm text-blue-600 mt-1">
-                🔒 Como você é menor de 18 anos, precisaremos das informações do seu responsável
-              </p>
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 flex items-center">
+                  🔒 <span className="ml-1">Como você é menor de 18 anos, precisaremos das informações do seu responsável no próximo passo</span>
+                </p>
+              </div>
             )}
           </div>
 
           <div>
-            <Label htmlFor="schoolYear" className="text-gray-700 font-medium">
+            <Label htmlFor="schoolYear" className="text-sm font-medium text-gray-700">
               Série/Ano Escolar
             </Label>
             <Select value={profile.school_year} onValueChange={(value) => onProfileChange({ school_year: value })}>
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 h-10">
                 <SelectValue placeholder="Selecione sua série (opcional)" />
               </SelectTrigger>
               <SelectContent>

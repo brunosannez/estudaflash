@@ -108,7 +108,14 @@ export const useSignupForm = () => {
     }
 
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => prev + 1);
+      // Para menores de idade, garantir que passe pelo passo do responsável
+      if (currentStep === 2 && formData.profile.is_minor) {
+        setCurrentStep(3); // Força ir para o passo do responsável
+      } else if (currentStep === 2 && !formData.profile.is_minor) {
+        setCurrentStep(3); // Para maiores, vai direto para seleção de plano
+      } else {
+        setCurrentStep(prev => prev + 1);
+      }
     } else {
       toast({
         title: "Campos obrigatórios",
@@ -124,6 +131,17 @@ export const useSignupForm = () => {
 
   const submitForm = async (): Promise<boolean> => {
     setLoading(true);
+    
+    // Validação final para menores de idade
+    if (formData.profile.is_minor && !formData.guardian) {
+      toast({
+        title: "Dados do responsável obrigatórios",
+        description: "Como você é menor de idade, é necessário preencher os dados do responsável.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return false;
+    }
     
     const userMetaData = {
       full_name: formData.profile.full_name,

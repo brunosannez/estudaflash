@@ -22,15 +22,15 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">👨‍👩‍👧 Informações do Responsável</h2>
-        <p className="text-gray-600">Como você é menor de 18 anos, precisamos dos dados do seu responsável</p>
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800 mb-1">👨‍👩‍👧 Informações do Responsável</h2>
+        <p className="text-sm text-gray-600">Como você é menor de 18 anos, precisamos dos dados do seu responsável</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="guardianName" className="text-gray-700 font-medium">
+          <Label htmlFor="guardianName" className="text-sm font-medium text-gray-700">
             Nome Completo do Responsável *
           </Label>
           <Input
@@ -39,77 +39,81 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
             placeholder="Nome do responsável"
             value={guardian?.full_name || ''}
             onChange={(e) => onGuardianChange({ full_name: e.target.value })}
-            className="mt-1"
+            className="mt-1 h-10"
             required
           />
         </div>
 
-        <div>
-          <Label htmlFor="guardianEmail" className="text-gray-700 font-medium">
-            Email do Responsável *
-          </Label>
-          <Input
-            id="guardianEmail"
-            type="email"
-            placeholder="email@responsavel.com"
-            value={guardian?.email || ''}
-            onChange={(e) => onGuardianChange({ email: e.target.value })}
-            className="mt-1"
-            required
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="guardianEmail" className="text-sm font-medium text-gray-700">
+              Email do Responsável *
+            </Label>
+            <Input
+              id="guardianEmail"
+              type="email"
+              placeholder="email@responsavel.com"
+              value={guardian?.email || ''}
+              onChange={(e) => onGuardianChange({ email: e.target.value })}
+              className="mt-1 h-10"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="guardianPhone" className="text-sm font-medium text-gray-700">
+              Telefone *
+            </Label>
+            <Input
+              id="guardianPhone"
+              type="tel"
+              placeholder="(11) 99999-9999"
+              value={guardian?.phone || ''}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              className="mt-1 h-10"
+              required
+            />
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="guardianPhone" className="text-gray-700 font-medium">
-            Telefone do Responsável *
-          </Label>
-          <Input
-            id="guardianPhone"
-            type="tel"
-            placeholder="(11) 99999-9999"
-            value={guardian?.phone || ''}
-            onChange={(e) => handlePhoneChange(e.target.value)}
-            className="mt-1"
-            required
-          />
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="guardianCPF" className="text-sm font-medium text-gray-700">
+              CPF do Responsável
+            </Label>
+            <Input
+              id="guardianCPF"
+              type="text"
+              placeholder="000.000.000-00"
+              value={guardian?.cpf || ''}
+              onChange={(e) => handleCPFChange(e.target.value)}
+              className="mt-1 h-10"
+            />
+            {guardian?.cpf && guardian.cpf.length >= 14 && !validateCPF(guardian.cpf) && (
+              <p className="text-sm text-red-500 mt-1">CPF inválido</p>
+            )}
+          </div>
 
-        <div>
-          <Label htmlFor="guardianCPF" className="text-gray-700 font-medium">
-            CPF do Responsável
-          </Label>
-          <Input
-            id="guardianCPF"
-            type="text"
-            placeholder="000.000.000-00"
-            value={guardian?.cpf || ''}
-            onChange={(e) => handleCPFChange(e.target.value)}
-            className="mt-1"
-          />
-          {guardian?.cpf && guardian.cpf.length >= 14 && !validateCPF(guardian.cpf) && (
-            <p className="text-sm text-red-500 mt-1">CPF inválido</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="relation" className="text-gray-700 font-medium">
-            Parentesco *
-          </Label>
-          <Select 
-            value={guardian?.relation_to_student || ''} 
-            onValueChange={(value) => onGuardianChange({ relation_to_student: value })}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Selecione o parentesco" />
-            </SelectTrigger>
-            <SelectContent>
-              {GUARDIAN_RELATIONS.map((relation) => (
-                <SelectItem key={relation} value={relation}>
-                  {relation}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div>
+            <Label htmlFor="relation" className="text-sm font-medium text-gray-700">
+              Parentesco *
+            </Label>
+            <Select 
+              value={guardian?.relation_to_student || ''} 
+              onValueChange={(value) => onGuardianChange({ relation_to_student: value })}
+            >
+              <SelectTrigger className="mt-1 h-10">
+                <SelectValue placeholder="Selecione o parentesco" />
+              </SelectTrigger>
+              <SelectContent>
+                {GUARDIAN_RELATIONS.map((relation) => (
+                  <SelectItem key={relation} value={relation}>
+                    {relation}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     </div>
