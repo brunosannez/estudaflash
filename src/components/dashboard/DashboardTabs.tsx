@@ -1,5 +1,4 @@
 
-import { Upload, TrendingUp, Brain, Target } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { designColors } from '@/utils/designSystem';
 
@@ -9,53 +8,77 @@ interface DashboardTabsProps {
 
 const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
   return (
-    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-8 bg-white/80 backdrop-blur-sm p-1 sm:p-2 rounded-xl sm:rounded-2xl shadow-lg border border-cyan-200">
+    <TabsList className={`${designColors.cards.primary} p-2 sm:p-3 mb-6 sm:mb-8 w-full justify-center grid grid-cols-4 gap-1 sm:gap-2 h-auto`}>
       <TabsTrigger 
         value="upload" 
-        className={`flex items-center space-x-1 sm:space-x-2 rounded-lg sm:rounded-xl transition-all duration-300 text-xs sm:text-sm ${
-          activeTab === 'upload' 
-            ? 'bg-gradient-to-r from-purple-400 to-purple-500 text-white shadow-lg transform scale-105' 
-            : 'hover:bg-purple-50 hover:scale-102 text-gray-700'
-        }`}
+        className={`
+          ${designColors.responsive.tabButton} 
+          ${designColors.animations.buttonHover}
+          data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-400 data-[state=active]:to-purple-500 
+          data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
+          hover:bg-purple-100 transition-all duration-300
+          flex flex-col items-center justify-center
+          h-16 sm:h-20 md:h-12
+          text-center leading-tight
+          font-bold
+        `}
       >
-        <Upload className={designColors.responsive.buttonIcon} />
-        <span className="font-semibold">📤 Upload</span>
+        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">📤</span>
+        <span className="hidden md:inline text-xs sm:text-sm">Upload</span>
       </TabsTrigger>
+      
       <TabsTrigger 
         value="progress" 
-        className={`flex items-center space-x-1 sm:space-x-2 rounded-lg sm:rounded-xl transition-all duration-300 text-xs sm:text-sm ${
-          activeTab === 'progress' 
-            ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 text-white shadow-lg transform scale-105' 
-            : 'hover:bg-cyan-50 hover:scale-102 text-gray-700'
-        }`}
+        className={`
+          ${designColors.responsive.tabButton}
+          ${designColors.animations.buttonHover}
+          data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-green-500 
+          data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
+          hover:bg-green-100 transition-all duration-300
+          flex flex-col items-center justify-center
+          h-16 sm:h-20 md:h-12
+          text-center leading-tight
+          font-bold
+        `}
       >
-        <TrendingUp className={designColors.responsive.buttonIcon} />
-        <span className="font-semibold hidden sm:inline">📈 Progresso</span>
-        <span className="font-semibold sm:hidden">📈</span>
+        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">📊</span>
+        <span className="hidden md:inline text-xs sm:text-sm">Progresso</span>
       </TabsTrigger>
+      
       <TabsTrigger 
         value="flashcards" 
-        className={`flex items-center space-x-1 sm:space-x-2 rounded-lg sm:rounded-xl transition-all duration-300 text-xs sm:text-sm ${
-          activeTab === 'flashcards' 
-            ? 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-lg transform scale-105' 
-            : 'hover:bg-green-50 hover:scale-102 text-gray-700'
-        }`}
+        className={`
+          ${designColors.responsive.tabButton}
+          ${designColors.animations.buttonHover}
+          data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-400 data-[state=active]:to-cyan-500 
+          data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
+          hover:bg-cyan-100 transition-all duration-300
+          flex flex-col items-center justify-center
+          h-16 sm:h-20 md:h-12
+          text-center leading-tight
+          font-bold
+        `}
       >
-        <Brain className={designColors.responsive.buttonIcon} />
-        <span className="font-semibold hidden sm:inline">🧠 Flashcards</span>
-        <span className="font-semibold sm:hidden">🧠</span>
+        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">🧠</span>
+        <span className="hidden md:inline text-xs sm:text-sm">Cartões</span>
       </TabsTrigger>
+      
       <TabsTrigger 
         value="quizzes" 
-        className={`flex items-center space-x-1 sm:space-x-2 rounded-lg sm:rounded-xl transition-all duration-300 text-xs sm:text-sm ${
-          activeTab === 'quizzes' 
-            ? 'bg-gradient-to-r from-purple-400 to-cyan-500 text-white shadow-lg transform scale-105' 
-            : 'hover:bg-purple-50 hover:scale-102 text-gray-700'
-        }`}
+        className={`
+          ${designColors.responsive.tabButton}
+          ${designColors.animations.buttonHover}
+          data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-orange-500 
+          data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
+          hover:bg-orange-100 transition-all duration-300
+          flex flex-col items-center justify-center
+          h-16 sm:h-20 md:h-12
+          text-center leading-tight
+          font-bold
+        `}
       >
-        <Target className={designColors.responsive.buttonIcon} />
-        <span className="font-semibold hidden sm:inline">🎯 Quizzes</span>
-        <span className="font-semibold sm:hidden">🎯</span>
+        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">🎯</span>
+        <span className="hidden md:inline text-xs sm:text-sm">Quizzes</span>
       </TabsTrigger>
     </TabsList>
   );

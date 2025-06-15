@@ -68,7 +68,10 @@ export const designColors = {
     gridCols4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
     
     // Elementos flutuantes (reduzidos no mobile)
-    floatingElements: 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl opacity-10 sm:opacity-20'
+    floatingElements: 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl opacity-10 sm:opacity-20',
+    
+    // Novos: Botões das abas otimizados para mobile
+    tabButton: 'min-h-[64px] sm:min-h-[80px] md:min-h-[48px] px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-2 min-w-[80px] sm:min-w-[100px] md:min-w-[120px] touch-target-44'
   }
 };
 

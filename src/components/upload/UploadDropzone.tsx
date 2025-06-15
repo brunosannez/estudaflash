@@ -39,14 +39,18 @@ const UploadDropzone = ({
   const showDropzone = selectedFiles.length === 0 && uploadResults.length === 0;
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-8">
+    <Card className="overflow-hidden shadow-2xl border-4 border-cyan-200">
+      <CardContent className="p-4 sm:p-6 md:p-8">
         <div
-          className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
-            dragActive 
-              ? 'border-blue-500 bg-blue-50' 
-              : 'border-gray-300 hover:border-blue-400'
-          }`}
+          className={`
+            border-4 border-dashed rounded-2xl sm:rounded-3xl 
+            p-6 sm:p-8 md:p-12 
+            text-center transition-all duration-500
+            ${dragActive 
+              ? 'border-purple-500 bg-gradient-to-br from-purple-100 via-pink-100 to-cyan-100 scale-105' 
+              : 'border-cyan-400 bg-gradient-to-br from-cyan-50 via-purple-50 to-pink-50 hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:via-pink-50 hover:to-cyan-50'
+            }
+          `}
           onDragEnter={onDrag}
           onDragLeave={onDrag}
           onDragOver={onDrag}
@@ -67,7 +71,7 @@ const UploadDropzone = ({
               isProcessing={isProcessing}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6 sm:space-y-8">
               <FileList
                 files={selectedFiles}
                 uploadResults={uploadResults}
