@@ -1,27 +1,51 @@
 
 import { useEffect } from 'react';
-import { Flame, Trophy, Target, Clock, TrendingUp, Award } from 'lucide-react';
+import { Flame, Trophy, Target, TrendingUp, Award, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import StatsCard from './StatsCard';
 import { useGameification } from '@/hooks/useGameification';
 import { Loader2 } from 'lucide-react';
 
 const ProgressOverview = () => {
-  const { loading, getStats, fetchUserProgress } = useGameification();
+  const { loading, getStats, fetchUserProgress, isInitialized } = useGameification();
 
   useEffect(() => {
-    fetchUserProgress();
-  }, []);
+    if (!isInitialized) {
+      fetchUserProgress();
+    }
+  }, [isInitialized]);
 
   const stats = getStats();
 
-  if (loading || !stats) {
+  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats });
+
+  if (loading || !isInitialized) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto" />
-          <p className="text-lg font-semibold text-gray-600">Carregando seu progresso incrível...</p>
+          <p className="text-lg font-semibold text-gray-600">Carregando progresso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-center space-y-4">
+          <div className="text-6xl">🎮</div>
+          <p className="text-lg font-semibold text-gray-600">Comece a estudar para ver seu progresso!</p>
+          <Button 
+            onClick={fetchUserProgress}
+            variant="outline"
+            className="mt-4"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
         </div>
       </div>
     );
@@ -29,6 +53,7 @@ const ProgressOverview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="XP Total"
@@ -56,13 +81,22 @@ const ProgressOverview = () => {
         />
       </div>
 
+      {/* Cards de detalhes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Progresso do Nível */}
         <Card className="transform hover:scale-105 transition-all duration-300">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center">
               <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
               Progresso do Nível {stats.currentLevel}
             </CardTitle>
+            <Button 
+              onClick={fetchUserProgress}
+              variant="ghost"
+              size="sm"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
@@ -85,6 +119,7 @@ const ProgressOverview = () => {
           </CardContent>
         </Card>
 
+        {/* Streak & Performance */}
         <Card className="transform hover:scale-105 transition-all duration-300">
           <CardHeader>
             <CardTitle className="flex items-center">
