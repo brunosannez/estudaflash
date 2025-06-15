@@ -1,7 +1,5 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
@@ -10,16 +8,6 @@ import RecentActivity from '@/components/RecentActivity';
 import UsageIndicator from '@/components/usage/UsageIndicator';
 
 const Index = () => {
-  const [hasUploads, setHasUploads] = useState(false);
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/home');
-    }
-  }, [user, navigate]);
-
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
