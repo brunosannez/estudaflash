@@ -1,139 +1,195 @@
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { designColors } from '@/utils/designSystem';
+import { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, RefreshCw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import UploadTabContent from './UploadTabContent';
-import ProgressTabContent from './ProgressTabContent';
-import FlashcardsTabContent from './FlashcardsTabContent';
-import QuizzesTabContent from './QuizzesTabContent';
+import { useDataSync } from '@/hooks/useDataSync';
+import ProgressOverview from '@/components/ProgressOverview';
 
 const DashboardTabs = () => {
   const navigate = useNavigate();
+  const { syncHistoricalData, checkDataConsistency, syncing } = useDataSync();
+  const [dataInconsistent, setDataInconsistent] = useState(false);
 
-  const handleSelectExisting = () => {
-    navigate('/my-summaries');
-  };
+  useEffect(() => {
+    // Verificar consistência dos dados ao carregar
+    checkDataConsistency().then(result => {
+      if (result?.isInconsistent) {
+        setDataInconsistent(true);
+      }
+    });
+  }, []);
 
-  const handleUploadNew = () => {
-    // Switch to upload tab when user wants to upload new content
-    const uploadTab = document.querySelector('[data-value="upload"]') as HTMLElement;
-    uploadTab?.click();
+  const handleSyncData = async () => {
+    const success = await syncHistoricalData();
+    if (success) {
+      setDataInconsistent(false);
+      // Recarregar a página após 2 segundos para garantir que os dados sejam atualizados
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
   };
 
   return (
-    <Tabs defaultValue="upload" className="w-full">
-      <TabsList className={`${designColors.cards.primary} p-2 sm:p-3 mb-6 sm:mb-8 w-full justify-center grid grid-cols-4 gap-1 sm:gap-2 h-auto`}>
-        <TabsTrigger 
-          value="upload" 
-          className={`
-            ${designColors.responsive.tabButton} 
-            ${designColors.animations.buttonHover}
-            data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-400 data-[state=active]:to-purple-500 
-            data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
-            hover:bg-purple-100 transition-all duration-300
-            flex flex-col items-center justify-center
-            h-16 sm:h-20 md:h-16
-            text-center leading-tight
-            font-bold
-            px-1 sm:px-2
-          `}
-        >
-          <span className="text-lg sm:text-2xl md:text-xl mb-1">📤</span>
-          <span className="text-xs sm:text-sm font-bold leading-none">
-            Enviar<br className="sm:hidden" />
-            <span className="hidden sm:inline"> </span>Fotos
-          </span>
-        </TabsTrigger>
+    <div className="w-full">
+      {dataInconsistent && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                <div>
+                  <p className="font-medium text-orange-800">Dados inconsistentes detectados</p>
+                  <p className="text-sm text-orange-600">Seus contadores podem estar desatualizados. Clique em sincronizar para corrigir.</p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleSyncData}
+                disabled={syncing}
+                variant="outline"
+                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                {syncing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Sincronizando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sincronizar Dados
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4">
+          <TabsTrigger value="overview">📊 Visão Geral</TabsTrigger>
+          <TabsTrigger value="upload">📤 Upload</TabsTrigger>
+          <TabsTrigger value="progress">🏆 Progresso</TabsTrigger>
+          <TabsTrigger value="sync" className="hidden lg:flex">🔄 Sincronizar</TabsTrigger>
+        </TabsList>
         
-        <TabsTrigger 
-          value="progress" 
-          className={`
-            ${designColors.responsive.tabButton}
-            ${designColors.animations.buttonHover}
-            data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-green-500 
-            data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
-            hover:bg-green-100 transition-all duration-300
-            flex flex-col items-center justify-center
-            h-16 sm:h-20 md:h-16
-            text-center leading-tight
-            font-bold
-            px-1 sm:px-2
-          `}
-        >
-          <span className="text-lg sm:text-2xl md:text-xl mb-1">📊</span>
-          <span className="text-xs sm:text-sm font-bold leading-none">
-            Meu<br className="sm:hidden" />
-            <span className="hidden sm:inline"> </span>Progresso
-          </span>
-        </TabsTrigger>
+        <TabsContent value="overview" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-2xl">🎯</span>
+                Bem-vindo ao seu painel de estudos!
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  onClick={() => navigate('/upload')}
+                  className="h-24 flex flex-col gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                >
+                  <Upload className="h-8 w-8" />
+                  <span className="font-semibold">Fazer Upload</span>
+                  <span className="text-xs opacity-90">Envie suas imagens de estudo</span>
+                </Button>
+                
+                <Button 
+                  onClick={() => navigate('/summaries')}
+                  variant="outline"
+                  className="h-24 flex flex-col gap-2 border-2 border-purple-300 hover:bg-purple-50"
+                >
+                  <span className="text-2xl">📚</span>
+                  <span className="font-semibold">Ver Resumos</span>
+                  <span className="text-xs text-gray-600">Acesse seus resumos gerados</span>
+                </Button>
+                
+                <Button 
+                  onClick={() => navigate('/flashcards')}
+                  variant="outline"
+                  className="h-24 flex flex-col gap-2 border-2 border-green-300 hover:bg-green-50"
+                >
+                  <span className="text-2xl">🧠</span>
+                  <span className="font-semibold">Flashcards</span>
+                  <span className="text-xs text-gray-600">Pratique com flashcards</span>
+                </Button>
+                
+                <Button 
+                  onClick={() => navigate('/quiz-history')}
+                  variant="outline"
+                  className="h-24 flex flex-col gap-2 border-2 border-orange-300 hover:bg-orange-50"
+                >
+                  <span className="text-2xl">🎯</span>
+                  <span className="font-semibold">Quizzes</span>
+                  <span className="text-xs text-gray-600">Teste seus conhecimentos</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
         
-        <TabsTrigger 
-          value="flashcards" 
-          className={`
-            ${designColors.responsive.tabButton}
-            ${designColors.animations.buttonHover}
-            data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-400 data-[state=active]:to-cyan-500 
-            data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
-            hover:bg-cyan-100 transition-all duration-300
-            flex flex-col items-center justify-center
-            h-16 sm:h-20 md:h-16
-            text-center leading-tight
-            font-bold
-            px-1 sm:px-2
-          `}
-        >
-          <span className="text-lg sm:text-2xl md:text-xl mb-1">🧠</span>
-          <span className="text-xs sm:text-sm font-bold leading-none">
-            Cartões<br className="sm:hidden" />
-            <span className="hidden sm:inline"> </span>Estudo
-          </span>
-        </TabsTrigger>
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader>
+              <CardTitle>📤 Fazer Upload de Imagens</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                Faça upload de suas imagens de estudo para gerar resumos e flashcards automaticamente.
+              </p>
+              <Button 
+                onClick={() => navigate('/upload')}
+                size="lg"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                Ir para Upload
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
         
-        <TabsTrigger 
-          value="quizzes" 
-          className={`
-            ${designColors.responsive.tabButton}
-            ${designColors.animations.buttonHover}
-            data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-orange-500 
-            data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
-            hover:bg-orange-100 transition-all duration-300
-            flex flex-col items-center justify-center
-            h-16 sm:h-20 md:h-16
-            text-center leading-tight
-            font-bold
-            px-1 sm:px-2
-          `}
-        >
-          <span className="text-lg sm:text-2xl md:text-xl mb-1">🎯</span>
-          <span className="text-xs sm:text-sm font-bold leading-none">
-            Jogos<br className="sm:hidden" />
-            <span className="hidden sm:inline"> </span>Quiz
-          </span>
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="upload" className="mt-6">
-        <UploadTabContent />
-      </TabsContent>
-
-      <TabsContent value="progress" className="mt-6">
-        <ProgressTabContent />
-      </TabsContent>
-
-      <TabsContent value="flashcards" className="mt-6">
-        <FlashcardsTabContent 
-          onSelectExisting={handleSelectExisting}
-          onUploadNew={handleUploadNew}
-        />
-      </TabsContent>
-
-      <TabsContent value="quizzes" className="mt-6">
-        <QuizzesTabContent 
-          onSelectExisting={handleSelectExisting}
-          onUploadNew={handleUploadNew}
-        />
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="progress">
+          <ProgressOverview />
+        </TabsContent>
+        
+        <TabsContent value="sync">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5" />
+                Sincronização de Dados
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                Se você notar inconsistências nos seus dados ou contadores, use a sincronização para corrigir baseado no seu histórico real.
+              </p>
+              <Button 
+                onClick={handleSyncData}
+                disabled={syncing}
+                size="lg"
+                className="w-full"
+              >
+                {syncing ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                    Sincronizando dados históricos...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-5 w-5 mr-2" />
+                    Sincronizar Dados Históricos
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

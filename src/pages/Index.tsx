@@ -8,6 +8,8 @@ import UsageIndicator from '@/components/usage/UsageIndicator';
 import QuickStats from '@/components/dashboard/QuickStats';
 
 const Index = () => {
+  console.log('🏠 Index page rendering...');
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
