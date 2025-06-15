@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import ProgressOverview from '@/components/ProgressOverview';
 
 const DashboardTabs = () => {
   const navigate = useNavigate();
-  const { syncHistoricalData, checkDataConsistency, syncing } = useDataSync();
+  const { forceSyncUserData, checkDataConsistency, syncing } = useDataSync();
   const [dataInconsistent, setDataInconsistent] = useState(false);
 
   useEffect(() => {
@@ -23,7 +22,7 @@ const DashboardTabs = () => {
   }, []);
 
   const handleSyncData = async () => {
-    const success = await syncHistoricalData();
+    const success = await forceSyncUserData();
     if (success) {
       setDataInconsistent(false);
       // Recarregar a página após 2 segundos para garantir que os dados sejam atualizados
