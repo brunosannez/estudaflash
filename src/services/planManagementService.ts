@@ -12,46 +12,40 @@ export interface UserWithPlan {
   quizzes_realizados: number;
   data_ultimo_reset: string;
   created_at: string;
+  last_login?: string;
+  storage_mb?: number;
+  is_admin?: boolean;
 }
 
 export class PlanManagementService {
   static async getAllUsersWithPlans(): Promise<UserWithPlan[]> {
     try {
-      // Primeiro buscar os dados de uso
-      const { data: usageData, error: usageError } = await supabase
-        .from('uso_usuarios')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Usar a função RPC que retorna dados completos dos usuários
+      const { data: usersData, error } = await supabase.rpc('get_all_users_admin');
 
-      if (usageError) {
-        console.error('Erro ao buscar dados de uso:', usageError);
-        throw usageError;
+      if (error) {
+        console.error('Erro ao buscar usuários via RPC:', error);
+        throw error;
       }
 
-      // Buscar informações dos usuários
-      const { data: authResponse, error: usersError } = await supabase.auth.admin.listUsers();
-
-      if (usersError) {
-        console.error('Erro ao buscar usuários:', usersError);
-        throw usersError;
+      if (!usersData || !Array.isArray(usersData)) {
+        console.error('Dados de usuários inválidos');
+        return [];
       }
 
-      const users: User[] = authResponse.users || [];
-
-      // Combinar os dados
-      const usersWithPlans: UserWithPlan[] = usageData?.map(usage => {
-        const user = users.find(u => u.id === usage.user_id);
-        return {
-          user_id: usage.user_id,
-          email: user?.email || 'Email não encontrado',
-          plano: usage.plano as PlanType,
-          uploads_realizados: usage.uploads_realizados,
-          flashcards_gerados: usage.flashcards_gerados,
-          quizzes_realizados: usage.quizzes_realizados,
-          data_ultimo_reset: usage.data_ultimo_reset,
-          created_at: usage.created_at,
-        };
-      }) || [];
+      // Mapear os dados para o formato esperado
+      const usersWithPlans: UserWithPlan[] = usersData.map(user => ({
+        user_id: user.user_id,
+        email: user.email || 'Email não encontrado',
+        plano: user.plano as PlanType,
+        uploads_realizados: user.uploads_realizados || 0,
+        flashcards_gerados: user.flashcards_gerados || 0,
+        quizzes_realizados: user.quizzes_realizados || 0,
+        data_ultimo_reset: user.created_at,
+        created_at: user.created_at,
+        storage_mb: user.storage_mb || 0,
+        is_admin: user.is_admin || false
+      }));
 
       return usersWithPlans;
     } catch (error) {
@@ -78,6 +72,69 @@ export class PlanManagementService {
       return true;
     } catch (error) {
       console.error('Erro no changeuserPlan:', error);
+      throw error;
+    }
+  }
+
+  static async promoteUserToAdmin(userEmail: string): Promise<boolean> {
+    try {
+      console.log(`Promovendo usuário ${userEmail} a administrador`);
+
+      const { data, error } = await supabase.rpc('admin_promote_user', {
+        target_email: userEmail
+      });
+
+      if (error) {
+        console.error('Erro ao promover usuário:', error);
+        throw error;
+      }
+
+      console.log('Usuário promovido com sucesso:', data);
+      return true;
+    } catch (error) {
+      console.error('Erro no promoteUserToAdmin:', error);
+      throw error;
+    }
+  }
+
+  static async resetUserUsage(userId: string): Promise<boolean> {
+    try {
+      console.log(`Resetando uso do usuário ${userId}`);
+
+      const { data, error } = await supabase.rpc('admin_reset_user_usage', {
+        target_user_id: userId
+      });
+
+      if (error) {
+        console.error('Erro ao resetar uso:', error);
+        throw error;
+      }
+
+      console.log('Uso resetado com sucesso:', data);
+      return true;
+    } catch (error) {
+      console.error('Erro no resetUserUsage:', error);
+      throw error;
+    }
+  }
+
+  static async deleteUserData(userId: string): Promise<boolean> {
+    try {
+      console.log(`Deletando dados do usuário ${userId}`);
+
+      const { data, error } = await supabase.rpc('admin_delete_user_data', {
+        target_user_id: userId
+      });
+
+      if (error) {
+        console.error('Erro ao deletar dados do usuário:', error);
+        throw error;
+      }
+
+      console.log('Dados do usuário deletados com sucesso:', data);
+      return true;
+    } catch (error) {
+      console.error('Erro no deleteUserData:', error);
       throw error;
     }
   }

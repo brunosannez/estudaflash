@@ -3,6 +3,8 @@ import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useNavigate } from 'react-router-dom';
 import UserManagement from '@/components/admin/UserManagement';
 import AdminDashboard from '@/components/admin/AdminDashboard';
+import PlanManagement from '@/components/admin/PlanManagement';
+import DataManagement from '@/components/admin/DataManagement';
 import PageLayout from '@/components/navigation/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,7 +61,7 @@ const AdminPanel = () => {
             <Shield className="h-8 w-8 text-blue-600" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-              <p className="text-gray-600">Gerencie usuários, planos e monitore o sistema</p>
+              <p className="text-gray-600">Gerencie usuários, planos e monitore o sistema completo</p>
             </div>
           </div>
           
@@ -68,14 +70,16 @@ const AdminPanel = () => {
             className="flex items-center gap-2"
           >
             <BarChart3 className="h-4 w-4" />
-            Ver Analytics
+            Ver Analytics Avançados
           </Button>
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="plans">Planos</TabsTrigger>
+            <TabsTrigger value="data">Dados</TabsTrigger>
           </TabsList>
           
           <TabsContent value="dashboard" className="space-y-6">
@@ -84,6 +88,14 @@ const AdminPanel = () => {
           
           <TabsContent value="users" className="space-y-6">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="plans" className="space-y-6">
+            <PlanManagement />
+          </TabsContent>
+
+          <TabsContent value="data" className="space-y-6">
+            <DataManagement />
           </TabsContent>
         </Tabs>
       </div>
