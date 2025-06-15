@@ -10,7 +10,6 @@ import RecentActivity from '@/components/RecentActivity';
 import UsageIndicator from '@/components/usage/UsageIndicator';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('progress');
   const [hasUploads, setHasUploads] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -32,7 +31,7 @@ const Index = () => {
           <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
               <div className="xl:col-span-3 space-y-6">
-                <DashboardTabs activeTab={activeTab} />
+                <DashboardTabs activeTab="progress" />
               </div>
               
               <div className="xl:col-span-1 space-y-6">
