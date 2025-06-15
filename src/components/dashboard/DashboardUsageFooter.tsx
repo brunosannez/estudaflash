@@ -20,7 +20,8 @@ const DashboardUsageFooter = ({
   onRefresh, 
   syncing 
 }: DashboardUsageFooterProps) => {
-  const planConfig = PLAN_CONFIGS[planType];
+  // Add fallback to 'free' if planType is not found in PLAN_CONFIGS
+  const planConfig = PLAN_CONFIGS[planType] || PLAN_CONFIGS.free;
 
   return (
     <div className="pt-4 border-t space-y-3">
