@@ -1,7 +1,7 @@
 
 import { Progress } from '@/components/ui/progress';
 import { Upload, Brain, TestTube, HardDrive, Trophy, AlertTriangle } from 'lucide-react';
-import { PLAN_CONFIGS } from '@/types/plans';
+import { PLAN_CONFIGS, PlanType } from '@/types/plans';
 import { UsageData } from '@/services/usageLimitService';
 import { StorageUsage } from '@/hooks/useStorageManagement';
 
@@ -20,8 +20,10 @@ const DashboardUsageItems = ({
   getStoragePercentage,
   progressXP 
 }: DashboardUsageItemsProps) => {
-  const planConfig = PLAN_CONFIGS[usageData.plano];
-  const isUnlimited = usageData.plano === 'edu';
+  // Convert plan name to lowercase and ensure it's a valid PlanType
+  const normalizedPlan = usageData.plano.toLowerCase() as PlanType;
+  const planConfig = PLAN_CONFIGS[normalizedPlan] || PLAN_CONFIGS.free;
+  const isUnlimited = normalizedPlan === 'edu';
 
   // Storage calculations
   const limitMB = getStorageLimitForPlan(usageData.plano);
