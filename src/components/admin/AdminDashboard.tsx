@@ -1,26 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStatsService } from '@/services/adminStatsService';
 import AdminDiagnostics from './AdminDiagnostics';
-import { 
-  Users, 
-  Upload, 
-  Brain, 
-  Target, 
-  TrendingUp, 
-  Activity,
-  Calendar,
-  Server,
-  Database,
-  Loader2,
-  AlertCircle,
-  HardDrive,
-  Bug
-} from 'lucide-react';
+import AdminSystemStatus from './AdminSystemStatus';
+import AdminStatsGrid from './AdminStatsGrid';
+import AdminQuickActions from './AdminQuickActions';
+import AdminSystemAlert from './AdminSystemAlert';
+import { Loader2, AlertCircle, Bug } from 'lucide-react';
 
 interface AdminStats {
   totalUsers: number;
@@ -74,17 +63,8 @@ const AdminDashboard = () => {
     loadStats();
   }, []);
 
-  const getHealthBadge = () => {
-    if (!stats) return null;
-    
-    switch (stats.systemHealth) {
-      case 'healthy':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Sistema Saudável</Badge>;
-      case 'warning':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Atenção</Badge>;
-      case 'error':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Modo Fallback</Badge>;
-    }
+  const handleToggleDiagnostics = () => {
+    setShowDiagnostics(!showDiagnostics);
   };
 
   if (loading) {
@@ -123,154 +103,27 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Diagnósticos do Sistema */}
-      {showDiagnostics && (
-        <AdminDiagnostics />
-      )}
+      {showDiagnostics && <AdminDiagnostics />}
 
-      {/* Status do Sistema */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Server className="h-5 w-5" />
-            Status do Sistema
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-blue-600" />
-                <span className="text-sm">Database</span>
-              </div>
-              {getHealthBadge()}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-gray-600">
-                Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDiagnostics(!showDiagnostics)}
-              >
-                <Bug className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <AdminSystemStatus 
+        systemHealth={stats.systemHealth}
+        lastUpdated={lastUpdated}
+        onToggleDiagnostics={handleToggleDiagnostics}
+      />
 
-      {/* Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              Usuários registrados
-            </p>
-          </CardContent>
-        </Card>
+      <AdminStatsGrid 
+        totalUsers={stats.totalUsers}
+        totalStorageMB={stats.totalStorageMB}
+        activeUsers7Days={stats.activeUsers7Days}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Armazenamento Total</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStorageMB.toFixed(1)} MB</div>
-            <p className="text-xs text-muted-foreground">
-              Espaço utilizado
-            </p>
-            {stats.totalStorageMB === 0 && stats.totalUsers > 0 && (
-              <Badge variant="destructive" className="mt-1 text-xs">
-                Dados podem estar zerados
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
+      <AdminQuickActions 
+        onRefreshStats={loadStats}
+        onToggleDiagnostics={handleToggleDiagnostics}
+        showDiagnostics={showDiagnostics}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuários Ativos (7 dias)</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeUsers7Days}</div>
-            <p className="text-xs text-muted-foreground">
-              Usuários com atividade recente
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Ações Rápidas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Ações Rápidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button variant="outline" onClick={loadStats} className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Atualizar Dados
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => setShowDiagnostics(!showDiagnostics)}
-              className="flex items-center gap-2"
-            >
-              <Bug className="h-4 w-4" />
-              {showDiagnostics ? 'Ocultar' : 'Mostrar'} Diagnóstico
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => window.open('/admin/analytics', '_blank')}
-              className="flex items-center gap-2"
-            >
-              <Calendar className="h-4 w-4" />
-              Ver Analytics
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                toast({
-                  title: "Info",
-                  description: "Funcionalidade em desenvolvimento.",
-                });
-              }}
-              className="flex items-center gap-2"
-            >
-              <Database className="h-4 w-4" />
-              Limpeza DB
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Informações do Sistema */}
-      {stats.systemHealth === 'error' && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-orange-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Sistema operando em modo fallback. Execute o diagnóstico para mais informações.
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <AdminSystemAlert systemHealth={stats.systemHealth} />
     </div>
   );
 };
