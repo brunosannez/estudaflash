@@ -10,7 +10,7 @@ const SignupHeader = () => {
     <div className="flex items-center justify-between mb-8">
       <Button
         variant="ghost"
-        onClick={() => navigate('/home')}
+        onClick={() => navigate('/')}
         className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
       >
         <ArrowLeft className="h-4 w-4" />

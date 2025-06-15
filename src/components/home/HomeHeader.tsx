@@ -28,7 +28,7 @@ const HomeHeader = () => {
                 <span className="hidden sm:inline">🔑 </span>Entrar
               </Button>
             </Link>
-            <Link to="/signup" className="relative z-50">
+            <Link to="/new-signup" className="relative z-50">
               <Button 
                 className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white font-fredoka shadow-lg border-2 border-white/50 text-xs sm:text-sm px-2 py-1 sm:px-4 sm:py-2 relative z-50"
                 style={{ pointerEvents: 'auto' }}
