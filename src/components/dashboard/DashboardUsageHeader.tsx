@@ -11,7 +11,8 @@ interface DashboardUsageHeaderProps {
 }
 
 const DashboardUsageHeader = ({ planType, syncing }: DashboardUsageHeaderProps) => {
-  const planConfig = PLAN_CONFIGS[planType];
+  // Add fallback to 'free' if planType is not found in PLAN_CONFIGS
+  const planConfig = PLAN_CONFIGS[planType] || PLAN_CONFIGS.free;
 
   return (
     <CardHeader className="pb-3">

@@ -11,7 +11,8 @@ interface QuickStatsHeaderProps {
 }
 
 const QuickStatsHeader = ({ usageData, syncing }: QuickStatsHeaderProps) => {
-  const planConfig = PLAN_CONFIGS[usageData.plano];
+  // Add fallback to 'free' if plano is not found in PLAN_CONFIGS
+  const planConfig = PLAN_CONFIGS[usageData.plano as keyof typeof PLAN_CONFIGS] || PLAN_CONFIGS.free;
 
   return (
     <div className="flex items-center justify-between">
