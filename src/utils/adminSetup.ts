@@ -3,22 +3,28 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const ensureAdminUser = async (email: string) => {
   try {
-    // Primeiro, buscar o usuário pelo email na tabela auth.users através da nossa função
-    const { data: userData, error: userError } = await supabase.rpc('get_user_by_email', { 
-      email_param: email 
-    });
+    // Buscar todos os usuários e filtrar pelo email
+    const { data: usersData, error: usersError } = await supabase.rpc('get_all_users_admin');
 
-    if (userError) {
-      console.error('Erro ao buscar usuário:', userError);
+    if (usersError) {
+      console.error('Erro ao buscar usuários:', usersError);
       return false;
     }
 
-    if (!userData || userData.length === 0) {
+    if (!usersData || !Array.isArray(usersData)) {
+      console.error('Dados de usuários inválidos');
+      return false;
+    }
+
+    // Procurar o usuário pelo email
+    const userData = usersData.find(user => user.email === email);
+
+    if (!userData) {
       console.error('Usuário não encontrado:', email);
       return false;
     }
 
-    const userId = userData[0].id;
+    const userId = userData.user_id;
 
     // Verificar se já é admin
     const { data: adminData, error: adminError } = await supabase
