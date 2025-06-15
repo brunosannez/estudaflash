@@ -2,6 +2,7 @@
 import { FileText, Brain, Target, Award, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
+import { useNavigate } from 'react-router-dom';
 
 const iconMap = {
   FileText,
@@ -10,17 +11,28 @@ const iconMap = {
   Award
 };
 
-interface RecentActivityProps {
-  setHasUploads?: (hasUploads: boolean) => void;
-}
-
-const RecentActivity = ({ setHasUploads }: RecentActivityProps) => {
+const RecentActivity = () => {
   const { activities, loading } = useRecentActivity();
+  const navigate = useNavigate();
+
+  const handleActivityClick = (activity: any) => {
+    // Navigate based on activity type
+    if (activity.type === 'upload' && activity.resumoId) {
+      navigate(`/resumo/${activity.resumoId}`);
+    } else if (activity.type === 'flashcard' && activity.resumoId) {
+      navigate(`/flashcards`);
+    } else if (activity.type === 'quiz' && activity.resumoId) {
+      navigate(`/quiz-history`);
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Atividade Recente</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Award className="h-5 w-5 text-purple-500" />
+          Atividade Recente
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -29,15 +41,22 @@ const RecentActivity = ({ setHasUploads }: RecentActivityProps) => {
           </div>
         ) : activities.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">Nenhuma atividade recente encontrada.</p>
+            <div className="mb-4">
+              <FileText className="h-12 w-12 mx-auto text-gray-300" />
+            </div>
+            <p className="text-sm font-medium">Nenhuma atividade ainda</p>
             <p className="text-xs mt-2">Comece fazendo upload de uma imagem!</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {activities.map((activity) => {
+          <div className="space-y-3">
+            {activities.slice(0, 5).map((activity) => {
               const IconComponent = iconMap[activity.icon as keyof typeof iconMap] || FileText;
               return (
-                <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div 
+                  key={activity.id} 
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleActivityClick(activity)}
+                >
                   <div className={`p-2 rounded-full ${activity.bg}`}>
                     <IconComponent className={`h-4 w-4 ${activity.color}`} />
                   </div>
@@ -50,6 +69,17 @@ const RecentActivity = ({ setHasUploads }: RecentActivityProps) => {
                 </div>
               );
             })}
+            
+            {activities.length > 5 && (
+              <div className="text-center pt-2">
+                <button 
+                  onClick={() => navigate('/progress')}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Ver mais atividades
+                </button>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

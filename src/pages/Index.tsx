@@ -1,11 +1,11 @@
 
-import { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
-import RecentActivity from '@/components/RecentActivity';
+import RecentActivity from '@/components/dashboard/RecentActivity';
 import UsageIndicator from '@/components/usage/UsageIndicator';
+import QuickStats from '@/components/dashboard/QuickStats';
 
 const Index = () => {
   return (
@@ -24,10 +24,8 @@ const Index = () => {
               
               <div className="xl:col-span-1 space-y-6">
                 <UsageIndicator />
-                
-                <div className="space-y-4">
-                  <RecentActivity />
-                </div>
+                <QuickStats />
+                <RecentActivity />
               </div>
             </div>
           </main>

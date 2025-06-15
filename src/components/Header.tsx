@@ -19,8 +19,12 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/home');
+    try {
+      await signOut();
+      navigate('/home');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   const navigationItems = [
@@ -132,11 +136,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-purple-200 shadow-xl">
                 <DropdownMenuItem 
-                  onClick={() => navigate('/perfil')}
+                  onClick={() => navigate('/progress')}
                   className="flex items-center space-x-2 cursor-pointer hover:bg-purple-50"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>⚙️ Configurações</span>
+                  <span>📊 Meu Progresso</span>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem 
