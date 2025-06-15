@@ -21,23 +21,23 @@ export const useIsAdmin = () => {
       }
 
       try {
-        console.log('🔄 useIsAdmin: Chamando função check_user_is_admin');
+        console.log('🔄 useIsAdmin: Verificando status admin usando tabela uso_usuarios');
         
-        // Usar a nova função RPC mais confiável
+        // Verificar usando a função is_current_user_admin
         const { data: isAdminResult, error: rpcError } = await supabase
-          .rpc('check_user_is_admin', { user_uuid: user.id });
+          .rpc('is_current_user_admin');
 
-        console.log('📊 useIsAdmin: Resultado da RPC:', isAdminResult);
+        console.log('📊 useIsAdmin: Resultado da RPC is_current_user_admin:', isAdminResult);
         console.log('⚠️ useIsAdmin: Erro da RPC:', rpcError);
 
         if (rpcError) {
           console.error('❌ useIsAdmin: Erro na função RPC:', rpcError);
           
-          // Fallback: verificar diretamente na tabela admin_users
-          console.log('🔄 useIsAdmin: Tentando fallback direto na tabela');
+          // Fallback: verificar diretamente na tabela uso_usuarios
+          console.log('🔄 useIsAdmin: Tentando fallback direto na tabela uso_usuarios');
           const { data: adminData, error: directError } = await supabase
-            .from('admin_users')
-            .select('id')
+            .from('uso_usuarios')
+            .select('is_admin')
             .eq('user_id', user.id)
             .single();
 
@@ -48,7 +48,7 @@ export const useIsAdmin = () => {
             console.error('❌ useIsAdmin: Erro no fallback:', directError);
             setIsAdmin(false);
           } else {
-            const adminStatus = !!adminData;
+            const adminStatus = adminData?.is_admin || false;
             console.log('✅ useIsAdmin: Status admin (fallback):', adminStatus);
             setIsAdmin(adminStatus);
           }

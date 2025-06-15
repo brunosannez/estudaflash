@@ -249,7 +249,7 @@ const DataManagement = () => {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <Trash2 className="h-4 w-4 text-orange-600" />
-                  <span className="text-sm font-medium">Arquivos > 30 dias</span>
+                  <span className="text-sm font-medium">Arquivos &gt; 30 dias</span>
                 </div>
                 <div className="text-2xl font-bold mt-2">{stats?.filesOlderThan30Days || 0}</div>
               </CardContent>
