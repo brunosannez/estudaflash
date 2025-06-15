@@ -57,7 +57,7 @@ const MyFlashcards = () => {
                 
                 <div className={`${designColors.cards.accent} p-6 max-w-4xl mx-auto`}>
                   <p className="text-xl text-gray-700 font-medium leading-relaxed">
-                    🎪 Estude com flashcards interativos estilo Anki! Selecione um resumo para começar sua sessão de estudos divertida e eficaz. ✨
+                    🎪 Estude com flashcards mágicos e interativos! Selecione um resumo para começar sua aventura de aprendizado divertida e eficaz. ✨
                   </p>
                 </div>
               </div>
