@@ -13,9 +13,9 @@ import ResumoStats from '@/components/resumo/ResumoStats';
 import ResumoMainContent from '@/components/resumo/ResumoMainContent';
 
 const Resumo = () => {
-  const { uploadId } = useParams();
+  const { id } = useParams(); // Mudança: usar 'id' genérico em vez de 'uploadId'
   const navigate = useNavigate();
-  const { getResumo } = useSummary();
+  const { getResumo, getResumoById } = useSummary();
   const { generateAutoFlashcards, isGenerating } = useAutoFlashcards();
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -25,19 +25,28 @@ const Resumo = () => {
   const { generateQuiz, loading: quizLoading } = useQuiz(resumo?.id || '');
 
   useEffect(() => {
-    if (uploadId) {
+    if (id) {
       loadResumo();
     }
     // eslint-disable-next-line
-  }, [uploadId]);
+  }, [id]);
 
   const loadResumo = async () => {
     try {
       setLoading(true);
-      const resumoData = await getResumo(uploadId!);
+      
+      // Primeiro tenta buscar por ID do resumo
+      let resumoData = await getResumoById(id!);
+      
+      // Se não encontrou, tenta buscar por upload ID (compatibilidade)
+      if (!resumoData) {
+        resumoData = await getResumo(id!);
+      }
+      
       if (resumoData) {
         setResumo(resumoData);
       } else {
+        console.error('Resumo não encontrado com ID:', id);
         navigate('/', { replace: true });
       }
     } catch (error) {

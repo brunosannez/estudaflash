@@ -25,16 +25,11 @@ const UploadArea = () => {
     handleAddMoreFiles,
   } = useUploadManager();
 
-  function handleGenerateSummary() {
-    console.log('📝 Gerar resumo para:', uploadResult);
-  }
-
   if (uploadResult) {
     return (
       <UploadResult
         uploadResult={uploadResult}
         onResetUploads={resetAllUploads}
-        onGenerateSummary={handleGenerateSummary}
       />
     );
   }

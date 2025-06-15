@@ -9,12 +9,12 @@ import ImageGallery from './ImageGallery';
 
 interface ExtractedTextDisplayProps {
   uploadData: any;
-  onGenerateSummary: () => void;
 }
 
-const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDisplayProps) => {
+const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
   const { generateSummary, isGenerating: isSummaryGenerating } = useSummary();
   const [summaryGenerated, setSummaryGenerated] = useState(false);
+  const [generatedResumoId, setGeneratedResumoId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleGenerateSummary = async () => {
@@ -22,9 +22,10 @@ const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDi
       const result = await generateSummary(uploadData.id, uploadData.texto_extraido || '');
       if (result) {
         setSummaryGenerated(true);
-        // Navegar para a página do resumo após 2 segundos
+        setGeneratedResumoId(result.id);
+        // Navegar para a página do resumo usando o ID do resumo gerado
         setTimeout(() => {
-          navigate(`/resumo/${uploadData.id}`);
+          navigate(`/resumo/${result.id}`);
         }, 2000);
       }
     } catch (error) {
@@ -103,13 +104,15 @@ const ExtractedTextDisplay = ({ uploadData, onGenerateSummary }: ExtractedTextDi
                   <p className="text-gray-600 text-sm">
                     Redirecionando para o resumo onde você poderá gerar flashcards e quiz...
                   </p>
-                  <Button
-                    onClick={() => navigate(`/resumo/${uploadData.id}`)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Ver Resumo
-                  </Button>
+                  {generatedResumoId && (
+                    <Button
+                      onClick={() => navigate(`/resumo/${generatedResumoId}`)}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Ver Resumo
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

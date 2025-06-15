@@ -5,10 +5,9 @@ import ExtractedTextDisplay from '../ExtractedTextDisplay';
 interface UploadResultProps {
   uploadResult: any;
   onResetUploads: () => void;
-  onGenerateSummary: () => void;
 }
 
-const UploadResult = ({ uploadResult, onResetUploads, onGenerateSummary }: UploadResultProps) => {
+const UploadResult = ({ uploadResult, onResetUploads }: UploadResultProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -17,10 +16,7 @@ const UploadResult = ({ uploadResult, onResetUploads, onGenerateSummary }: Uploa
           Novo Upload
         </Button>
       </div>
-      <ExtractedTextDisplay 
-        uploadData={uploadResult} 
-        onGenerateSummary={onGenerateSummary}
-      />
+      <ExtractedTextDisplay uploadData={uploadResult} />
     </div>
   );
 };
