@@ -3,28 +3,22 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useAuth } from '@/hooks/useAuth';
-import UserManagement from '@/components/admin/UserManagement';
-import AdminDashboard from '@/components/admin/AdminDashboard';
 import PageLayout from '@/components/navigation/PageLayout';
+import AdminAnalyticsDashboard from '@/components/admin/AdminAnalyticsDashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Loader2, BarChart3 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, BarChart3, Loader2, Shield } from 'lucide-react';
 
-const AdminPanel = () => {
+const AdminAnalytics = () => {
   const { user } = useAuth();
   const { isAdmin, loading } = useIsAdmin();
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('🔍 AdminPanel - Verificando acesso:', { user: user?.email, isAdmin, loading });
-    
     if (!loading && !user) {
-      console.log('❌ Usuário não logado, redirecionando para /home');
       navigate('/home');
     }
     if (!loading && user && !isAdmin) {
-      console.log('❌ Usuário não é admin, redirecionando para /');
       navigate('/');
     }
   }, [user, isAdmin, loading, navigate]);
@@ -67,41 +61,28 @@ const AdminPanel = () => {
   return (
     <PageLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-              <p className="text-gray-600">Gerencie usuários, planos e monitore o sistema</p>
-            </div>
-          </div>
-          
+        <div className="flex items-center gap-3">
           <Button
-            onClick={() => navigate('/admin/analytics')}
+            variant="outline"
+            onClick={() => navigate('/admin')}
             className="flex items-center gap-2"
           >
-            <BarChart3 className="h-4 w-4" />
-            Ver Analytics
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Admin
           </Button>
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+              <p className="text-gray-600">Métricas e estatísticas do sistema</p>
+            </div>
+          </div>
         </div>
 
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="space-y-6">
-            <AdminDashboard />
-          </TabsContent>
-          
-          <TabsContent value="users" className="space-y-6">
-            <UserManagement />
-          </TabsContent>
-        </Tabs>
+        <AdminAnalyticsDashboard />
       </div>
     </PageLayout>
   );
 };
 
-export default AdminPanel;
+export default AdminAnalytics;

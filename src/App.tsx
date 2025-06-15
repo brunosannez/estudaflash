@@ -12,6 +12,7 @@ import Quiz from "./pages/Quiz";
 import QuizHistory from "./pages/QuizHistory";
 import MyProgress from "./pages/MyProgress";
 import AdminPanel from "./pages/AdminPanel";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ function App() {
             <Route path="/historico-quiz" element={<QuizHistory />} />
             <Route path="/progresso" element={<MyProgress />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
             
             {/* Redirecionamentos para manter compatibilidade */}
             <Route path="/summaries" element={<MySummaries />} />

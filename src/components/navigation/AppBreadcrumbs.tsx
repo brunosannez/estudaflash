@@ -27,6 +27,7 @@ const AppBreadcrumbs = () => {
       'historico-quiz': { label: 'Quiz', emoji: '🎯' },
       'progresso': { label: 'Progresso', emoji: '🏆' },
       'admin': { label: 'Admin Panel', emoji: '⚡' },
+      'analytics': { label: 'Analytics', emoji: '📊' },
       'resumo': { label: 'Resumo', emoji: '📄' },
       'quiz': { label: 'Quiz', emoji: '🎯' },
     };
