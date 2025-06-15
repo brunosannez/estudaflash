@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { PlanType } from '@/types/plans';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,7 +35,7 @@ export const useAuth = () => {
         // Redirecionamento automático baseado no estado de autenticação
         if (event === 'SIGNED_IN' && currentUser) {
           // Usuário fez login - redirecionar para dashboard
-          if (location.pathname === '/home') {
+          if (location.pathname === '/home' || location.pathname === '/login' || location.pathname === '/signup') {
             navigate('/', { replace: true });
           }
         } else if (event === 'SIGNED_OUT') {
@@ -69,12 +70,15 @@ export const useAuth = () => {
     return true;
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUpWithEmail = async (email: string, password: string, selectedPlan: PlanType = 'free') => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          plan: selectedPlan
+        }
       }
     });
 
@@ -87,11 +91,44 @@ export const useAuth = () => {
       return false;
     }
 
-    toast({
-      title: "Sucesso!",
-      description: "Conta criada com sucesso. Verifique seu email.",
-    });
+    // If user is immediately confirmed, create the usage record
+    if (data.user && !data.user.email_confirmed_at) {
+      // User needs email confirmation
+      toast({
+        title: "Sucesso!",
+        description: "Conta criada com sucesso. Verifique seu email.",
+      });
+    } else if (data.user) {
+      // User is immediately confirmed, create usage record
+      await createUserUsageRecord(data.user.id, selectedPlan);
+      toast({
+        title: "Sucesso!",
+        description: "Conta criada com sucesso!",
+      });
+    }
+
     return true;
+  };
+
+  const createUserUsageRecord = async (userId: string, plan: PlanType) => {
+    try {
+      const { error } = await supabase
+        .from('uso_usuarios')
+        .insert({
+          user_id: userId,
+          plano: plan,
+          is_admin: false,
+          uploads_realizados: 0,
+          flashcards_gerados: 0,
+          quizzes_realizados: 0,
+        });
+
+      if (error) {
+        console.error('Error creating user usage record:', error);
+      }
+    } catch (err) {
+      console.error('Error in createUserUsageRecord:', err);
+    }
   };
 
   const signOut = async () => {

@@ -11,6 +11,8 @@ import Quiz from "./pages/Quiz";
 import QuizHistory from "./pages/QuizHistory";
 import MyProgress from "./pages/MyProgress";
 import AdminPanel from "./pages/AdminPanel";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ function App() {
         <div className="min-h-screen">
           <Routes>
             <Route path="/home" element={<Home />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
             <Route path="/summaries" element={<MySummaries />} />
             <Route path="/resumo/:id" element={<Resumo />} />

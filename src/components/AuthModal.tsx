@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,6 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setOpen(false);
       setEmail('');
       setPassword('');
-      // Redirecionar para o dashboard após login bem-sucedido
       navigate('/');
     }
     setLoading(false);
@@ -41,7 +40,6 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setOpen(false);
       setEmail('');
       setPassword('');
-      // Redirecionar para o dashboard após cadastro bem-sucedido
       navigate('/');
     }
     setLoading(false);
@@ -56,6 +54,26 @@ const AuthModal = ({ children }: AuthModalProps) => {
         <DialogHeader>
           <DialogTitle>Entrar ou Criar Conta</DialogTitle>
         </DialogHeader>
+        
+        <div className="text-center py-4">
+          <p className="text-gray-600 mb-4">
+            Para uma melhor experiência, use nossas páginas dedicadas:
+          </p>
+          <div className="space-y-2">
+            <Link to="/signup" className="block">
+              <Button className="w-full" onClick={() => setOpen(false)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Criar Conta
+              </Button>
+            </Link>
+            <Link to="/login" className="block">
+              <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+                <LogIn className="h-4 w-4 mr-2" />
+                Fazer Login
+              </Button>
+            </Link>
+          </div>
+        </div>
         
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

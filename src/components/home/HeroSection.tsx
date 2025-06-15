@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import AuthModal from '@/components/AuthModal';
+import { Link } from 'react-router-dom';
 import { designColors } from '@/utils/designSystem';
 
 const HeroSection = () => {
@@ -26,16 +26,16 @@ const HeroSection = () => {
           </p>
           
           <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6 justify-center">
-            <AuthModal>
+            <Link to="/signup">
               <Button size="lg" className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white text-sm sm:text-lg md:text-2xl font-fredoka px-6 py-3 sm:px-12 sm:py-6 rounded-full shadow-2xl border-4 border-white/50 transform hover:scale-105 transition-all">
                 🚀 Começar a Diversão - GRÁTIS!
               </Button>
-            </AuthModal>
-            <AuthModal>
+            </Link>
+            <Link to="/login">
               <Button size="lg" variant="outline" className="text-sm sm:text-lg md:text-2xl font-fredoka px-6 py-3 sm:px-12 sm:py-6 rounded-full bg-white/90 border-4 border-cyan-300 text-gray-700 hover:bg-cyan-50 shadow-xl transform hover:scale-105 transition-all">
                 🎯 Já tenho conta!
               </Button>
-            </AuthModal>
+            </Link>
           </div>
         </div>
       </div>
