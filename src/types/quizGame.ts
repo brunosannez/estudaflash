@@ -21,6 +21,7 @@ export interface QuizGameState {
 
 export interface QuizSessionResult {
   id: string;
+  quizTitle: string;
   totalQuestions: number;
   correctAnswers: number;
   accuracy: number;
@@ -29,4 +30,10 @@ export interface QuizSessionResult {
   totalXP: number;
   questions: QuizQuestion[];
   userAnswers: (number | null)[];
+  performance: {
+    wrongAnswers: any[];
+    suggestions: string[];
+    weakTopics: any[];
+  };
+  questionsData: any[];
 }
