@@ -29,17 +29,12 @@ const UploadArea = () => {
     console.log('📝 Gerar resumo para:', uploadResult);
   }
 
-  function handleGenerateQuiz() {
-    console.log('🎮 Gerar quiz para:', uploadResult);
-  }
-
   if (uploadResult) {
     return (
       <UploadResult
         uploadResult={uploadResult}
         onResetUploads={resetAllUploads}
         onGenerateSummary={handleGenerateSummary}
-        onGenerateQuiz={handleGenerateQuiz}
       />
     );
   }
