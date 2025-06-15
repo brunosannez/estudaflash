@@ -4,8 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useActivePlans } from '@/hooks/usePlans';
-import PlanCard from '@/components/plans/PlanCard';
-import { ActivePlan } from '@/types/plans';
+import PlanCard from '@/components/signup/PlanCard';
 
 interface PlanSelectionProps {
   selectedPlanId: string;

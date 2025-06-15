@@ -1,10 +1,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
-import { Plan } from '@/types/plans';
+import { ActivePlan } from '@/types/plans';
 
 interface PlanCardProps {
-  plan: Plan;
+  plan: ActivePlan;
   isSelected: boolean;
   onSelect: (planId: string) => void;
   showYearlyPrice: boolean;
@@ -20,6 +20,7 @@ const PlanCard = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCardProps
     `${plan.flashcards_limit} flashcards${period === '/mês' ? ' por mês' : ' por ano'}`,
     `${plan.quizzes_limit} quizzes${period === '/mês' ? ' por mês' : ' por ano'}`,
     `IA: ${plan.quiz_model}`,
+    ...plan.features
   ];
 
   return (
@@ -44,6 +45,9 @@ const PlanCard = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCardProps
         <CardDescription className="text-2xl font-bold text-purple-600">
           R$ {price.toFixed(2)}{period}
         </CardDescription>
+        {plan.description && (
+          <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+        )}
       </CardHeader>
       
       <CardContent>
