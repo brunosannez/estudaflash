@@ -18,13 +18,17 @@ const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
           data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
           hover:bg-purple-100 transition-all duration-300
           flex flex-col items-center justify-center
-          h-16 sm:h-20 md:h-12
+          h-16 sm:h-20 md:h-16
           text-center leading-tight
           font-bold
+          px-1 sm:px-2
         `}
       >
-        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">📤</span>
-        <span className="hidden md:inline text-xs sm:text-sm">Upload</span>
+        <span className="text-lg sm:text-2xl md:text-xl mb-1">📤</span>
+        <span className="text-xs sm:text-sm font-bold leading-none">
+          Enviar<br className="sm:hidden" />
+          <span className="hidden sm:inline"> </span>Fotos
+        </span>
       </TabsTrigger>
       
       <TabsTrigger 
@@ -36,13 +40,17 @@ const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
           data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
           hover:bg-green-100 transition-all duration-300
           flex flex-col items-center justify-center
-          h-16 sm:h-20 md:h-12
+          h-16 sm:h-20 md:h-16
           text-center leading-tight
           font-bold
+          px-1 sm:px-2
         `}
       >
-        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">📊</span>
-        <span className="hidden md:inline text-xs sm:text-sm">Progresso</span>
+        <span className="text-lg sm:text-2xl md:text-xl mb-1">📊</span>
+        <span className="text-xs sm:text-sm font-bold leading-none">
+          Meu<br className="sm:hidden" />
+          <span className="hidden sm:inline"> </span>Progresso
+        </span>
       </TabsTrigger>
       
       <TabsTrigger 
@@ -54,13 +62,17 @@ const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
           data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
           hover:bg-cyan-100 transition-all duration-300
           flex flex-col items-center justify-center
-          h-16 sm:h-20 md:h-12
+          h-16 sm:h-20 md:h-16
           text-center leading-tight
           font-bold
+          px-1 sm:px-2
         `}
       >
-        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">🧠</span>
-        <span className="hidden md:inline text-xs sm:text-sm">Cartões</span>
+        <span className="text-lg sm:text-2xl md:text-xl mb-1">🧠</span>
+        <span className="text-xs sm:text-sm font-bold leading-none">
+          Cartões<br className="sm:hidden" />
+          <span className="hidden sm:inline"> </span>Estudo
+        </span>
       </TabsTrigger>
       
       <TabsTrigger 
@@ -72,13 +84,17 @@ const DashboardTabs = ({ activeTab }: DashboardTabsProps) => {
           data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105
           hover:bg-orange-100 transition-all duration-300
           flex flex-col items-center justify-center
-          h-16 sm:h-20 md:h-12
+          h-16 sm:h-20 md:h-16
           text-center leading-tight
           font-bold
+          px-1 sm:px-2
         `}
       >
-        <span className="text-2xl sm:text-3xl md:text-xl mb-1 sm:mb-2 md:mb-1">🎯</span>
-        <span className="hidden md:inline text-xs sm:text-sm">Quizzes</span>
+        <span className="text-lg sm:text-2xl md:text-xl mb-1">🎯</span>
+        <span className="text-xs sm:text-sm font-bold leading-none">
+          Jogos<br className="sm:hidden" />
+          <span className="hidden sm:inline"> </span>Quiz
+        </span>
       </TabsTrigger>
     </TabsList>
   );
