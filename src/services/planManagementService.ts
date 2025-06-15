@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { PlanType } from '@/types/plans';
+import type { User } from '@supabase/supabase-js';
 
 export interface UserWithPlan {
   user_id: string;
@@ -28,16 +29,18 @@ export class PlanManagementService {
       }
 
       // Buscar informações dos usuários
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data: authResponse, error: usersError } = await supabase.auth.admin.listUsers();
 
       if (usersError) {
         console.error('Erro ao buscar usuários:', usersError);
         throw usersError;
       }
 
+      const users: User[] = authResponse.users || [];
+
       // Combinar os dados
       const usersWithPlans: UserWithPlan[] = usageData?.map(usage => {
-        const user = users?.find(u => u.id === usage.user_id);
+        const user = users.find(u => u.id === usage.user_id);
         return {
           user_id: usage.user_id,
           email: user?.email || 'Email não encontrado',
