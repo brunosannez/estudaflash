@@ -2,6 +2,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { DataManagementStats } from '@/types/dataManagement';
 
+interface UploadRecord {
+  file_size: number | null;
+  data_upload: string;
+  user_id: string;
+  arquivo_original_nome: string | null;
+}
+
+interface UserRecord {
+  user_id: string;
+  plano: string | null;
+}
+
 export class StatsCalculatorService {
   static async calculateFromRPC(): Promise<DataManagementStats | null> {
     try {
@@ -52,8 +64,8 @@ export class StatsCalculatorService {
         supabase.from('uso_usuarios').select('user_id, plano')
       ]);
 
-      const uploads = uploadsResult.data || [];
-      const users = usersResult.data || [];
+      const uploads = (uploadsResult.data || []) as UploadRecord[];
+      const users = (usersResult.data || []) as UserRecord[];
       
       console.log('📊 StatsCalculator Fallback: Uploads encontrados:', uploads.length);
       console.log('📊 StatsCalculator Fallback: Usuários encontrados:', users.length);
@@ -116,7 +128,7 @@ export class StatsCalculatorService {
     }
   }
 
-  private static calculateStorageByPlan(uploads: any[], users: any[]): Record<string, any> {
+  private static calculateStorageByPlan(uploads: UploadRecord[], users: UserRecord[]): Record<string, any> {
     const storageByPlan: Record<string, any> = {};
     
     // Agrupar usuários por plano
