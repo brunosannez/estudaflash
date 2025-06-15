@@ -413,6 +413,13 @@ export type Database = {
         Args: { user_uuid?: string }
         Returns: boolean
       }
+      cleanup_old_files: {
+        Args: { days_threshold?: number }
+        Returns: {
+          deleted_files: number
+          freed_storage_mb: number
+        }[]
+      }
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -433,6 +440,20 @@ export type Database = {
           quizzes_realizados: number
           is_admin: boolean
           storage_mb: number
+        }[]
+      }
+      get_data_management_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_files: number
+          total_storage_mb: number
+          average_storage_per_user: number
+          total_users: number
+          files_older_than_30_days: number
+          files_older_than_7_days: number
+          active_users_30_days: number
+          largest_file_size_mb: number
+          storage_by_plan: Json
         }[]
       }
       get_user_storage_usage: {
