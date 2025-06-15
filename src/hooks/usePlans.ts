@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { PlansService } from '@/services/plansService';
-import { Plan, UserPlanDetails } from '@/types/plans';
+import { Plan, UserPlanDetails, ActivePlan } from '@/types/plans';
 
 export const usePlans = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -78,7 +78,7 @@ export const usePlans = () => {
 };
 
 export const useActivePlans = () => {
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<ActivePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 

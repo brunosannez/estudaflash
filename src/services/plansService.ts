@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Plan, Subscription, UserPlanDetails } from '@/types/plans';
+import { Plan, Subscription, UserPlanDetails, ActivePlan } from '@/types/plans';
 
 export class PlansService {
   static async getAllPlans(): Promise<Plan[]> {
@@ -17,7 +17,7 @@ export class PlansService {
     return data || [];
   }
 
-  static async getActivePlans(): Promise<Plan[]> {
+  static async getActivePlans(): Promise<ActivePlan[]> {
     const { data, error } = await supabase.rpc('get_active_plans');
 
     if (error) {

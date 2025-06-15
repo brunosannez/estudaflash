@@ -7,7 +7,7 @@ export interface Plan {
   price_brl_yearly: number;
   uploads_limit: number;
   summaries_limit: number;
-  flashcards_limit: integer;
+  flashcards_limit: number;
   quizzes_limit: number;
   quiz_model: string;
   summary_model: string;
@@ -41,6 +41,23 @@ export interface UserPlanDetails {
   quiz_model: string;
   summary_model: string;
   flashcard_model: string;
+}
+
+// Create a separate interface for active plans (public signup)
+export interface ActivePlan {
+  id: string;
+  name: string;
+  description: string;
+  price_brl: number;
+  price_brl_yearly: number;
+  uploads_limit: number;
+  summaries_limit: number;
+  flashcards_limit: number;
+  quizzes_limit: number;
+  quiz_model: string;
+  summary_model: string;
+  flashcard_model: string;
+  features: string[];
 }
 
 export type PlanType = 'free' | 'pro' | 'edu';
