@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { UsageLimitService, type ActionType, type UsageData } from '@/services/usageLimitService';
-import UpgradeModal from '@/components/usage/UpgradeModal';
 import { PlanType } from '@/types/plans';
 
 export const useUsageLimit = () => {
@@ -134,13 +133,11 @@ export const useUsageLimit = () => {
     incrementUsage,
     getUsagePercentage,
     refreshUsage: fetchUsageData,
-    UpgradeModalComponent: () => (
-      <UpgradeModal
-        isOpen={upgradeModal.isOpen}
-        onClose={closeUpgradeModal}
-        currentPlan={upgradeModal.plan}
-        actionType={upgradeModal.actionType || ''}
-      />
-    ),
+    upgradeModalData: {
+      isOpen: upgradeModal.isOpen,
+      onClose: closeUpgradeModal,
+      currentPlan: upgradeModal.plan,
+      actionType: upgradeModal.actionType || '',
+    },
   };
 };

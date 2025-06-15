@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Brain, TestTube } from 'lucide-react';
 import { useUsageLimit } from '@/hooks/useUsageLimit';
 import { PLAN_CONFIGS } from '@/types/plans';
+import UpgradeModal from '@/components/usage/UpgradeModal';
 
 const UsageIndicator = () => {
-  const { usageData, loading, UpgradeModalComponent } = useUsageLimit();
+  const { usageData, loading, upgradeModalData } = useUsageLimit();
 
   if (loading || !usageData) {
     return (
@@ -103,7 +104,12 @@ const UsageIndicator = () => {
         </CardContent>
       </Card>
       
-      <UpgradeModalComponent />
+      <UpgradeModal
+        isOpen={upgradeModalData.isOpen}
+        onClose={upgradeModalData.onClose}
+        currentPlan={upgradeModalData.currentPlan}
+        actionType={upgradeModalData.actionType}
+      />
     </>
   );
 };
