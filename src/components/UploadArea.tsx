@@ -3,7 +3,7 @@ import AuthGuard from './AuthGuard';
 import HowItWorks from './upload/HowItWorks';
 import UploadDropzone from './upload/UploadDropzone';
 import UploadResult from './upload/UploadResult';
-import UsageIndicator from './usage/UsageIndicator';
+import DashboardUsageOverview from './dashboard/DashboardUsageOverview';
 import { useUploadManager } from './upload/UploadManager';
 
 const UploadArea = () => {
@@ -61,7 +61,7 @@ const UploadArea = () => {
             />
           </div>
           <div className="lg:col-span-1">
-            <UsageIndicator />
+            <DashboardUsageOverview />
           </div>
         </div>
         <HowItWorks />

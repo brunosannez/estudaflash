@@ -10,20 +10,24 @@ export const useDataSync = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Função para contar dados reais do usuário
+  // Função para contar dados reais do usuário com mais detalhes
   const getRealUserCounts = async (userId: string) => {
     console.log('📊 Contando dados reais para usuário:', userId);
 
-    // Contar uploads
-    const { count: uploadCount, error: uploadError } = await supabase
+    // Contar uploads com informações de tamanho
+    const { data: uploadsData, count: uploadCount, error: uploadError } = await supabase
       .from('uploads')
-      .select('*', { count: 'exact' })
+      .select('id, file_size', { count: 'exact' })
       .eq('user_id', userId);
 
     if (uploadError) {
       console.error('❌ Erro ao contar uploads:', uploadError);
       throw uploadError;
     }
+
+    // Calcular tamanho total dos arquivos
+    const totalStorageBytes = uploadsData?.reduce((total, upload) => total + (upload.file_size || 0), 0) || 0;
+    console.log('💾 Total storage calculado:', totalStorageBytes, 'bytes');
 
     // Contar flashcards gerados
     const { count: flashcardCount, error: flashcardError } = await supabase
@@ -55,7 +59,8 @@ export const useDataSync = () => {
     const counts = {
       uploads: uploadCount || 0,
       flashcards: flashcardCount || 0,
-      quizzes: quizCount || 0
+      quizzes: quizCount || 0,
+      totalStorageBytes
     };
 
     console.log('✅ Contagens reais obtidas:', counts);

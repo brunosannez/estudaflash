@@ -124,8 +124,9 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
       throw new Error('Nenhum texto foi extraído das imagens');
     }
     
-    // Calculate total file size
+    // Calculate total file size properly
     const totalFileSize = successfulResults.reduce((total, result) => total + result.file.size, 0);
+    console.log('📏 Total file size calculated:', totalFileSize, 'bytes');
     
     // Get the original file name from the first file
     const arquivoOriginalNome = successfulResults.length > 1 
@@ -140,7 +141,7 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
         imagem_url: successfulResults[0].imageUrl,
         texto_extraido: combinedText,
         arquivo_original_nome: arquivoOriginalNome,
-        file_size: totalFileSize
+        file_size: totalFileSize // Garantir que o file_size seja registrado corretamente
       })
       .select()
       .single();
@@ -163,7 +164,7 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
       throw new Error('Registro de upload não foi criado');
     }
 
-    console.log('✅ Upload record saved:', uploadRecord.id);
+    console.log('✅ Upload record saved with file_size:', uploadRecord.file_size);
     return uploadRecord;
   } catch (error) {
     console.error('❌ Error saving upload record:', error);

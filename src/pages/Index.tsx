@@ -5,8 +5,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
 import RecentActivity from '@/components/dashboard/RecentActivity';
-import UsageIndicator from '@/components/usage/UsageIndicator';
-import QuickStats from '@/components/dashboard/QuickStats';
+import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 
 const Index = () => {
   console.log('🏠 Index page rendering...');
@@ -27,8 +26,7 @@ const Index = () => {
               </div>
               
               <div className="xl:col-span-1 space-y-6">
-                <UsageIndicator />
-                <QuickStats />
+                <DashboardUsageOverview />
                 <RecentActivity />
               </div>
             </div>
