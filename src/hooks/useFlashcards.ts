@@ -81,15 +81,34 @@ export const useFlashcards = (resumoId: string | undefined) => {
     return true;
   };
 
-  // Marcar flashcard como revisado (nova função para gamificação)
-  const reviewFlashcard = async (flashcardId: string) => {
+  // Marcar flashcard como revisado e dar XP
+  const reviewFlashcard = async (flashcardId: string, lembrou: boolean = true) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // Registrar a revisão na nova tabela
+      const { error: reviewError } = await supabase
+        .from("flashcard_reviews")
+        .insert({
+          user_id: user.id,
+          flashcard_id: flashcardId,
+          lembrou
+        });
+
+      if (reviewError) {
+        console.error("Erro ao registrar revisão:", reviewError);
+      }
+
+      // Adicionar XP através do sistema de gamificação
       await addXP(5, 'flashcard');
+      
       toast({
         title: "🎉 +5 XP",
         description: "Flashcard revisado com sucesso!",
         duration: 3000,
       });
+      
       return true;
     } catch (error) {
       console.error("Erro ao registrar revisão:", error);
@@ -104,6 +123,6 @@ export const useFlashcards = (resumoId: string | undefined) => {
     createFlashcard,
     deleteFlashcard,
     reviewFlashcard,
-    setCards, // para usos avançados
+    setCards,
   };
 };

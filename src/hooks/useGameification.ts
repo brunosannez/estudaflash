@@ -22,13 +22,22 @@ export const useGameification = () => {
     }
 
     try {
+      console.log('Fetching gamification data for user:', user.id);
       const progressData = await GamificationService.fetchOrCreateUserProgress(user.id);
       const activityData = await GamificationService.fetchOrCreateDailyActivity(user.id);
+      
+      console.log('Progress data:', progressData);
+      console.log('Activity data:', activityData);
       
       setProgress(progressData);
       setTodayActivity(activityData);
     } catch (error) {
       console.error("Erro ao buscar dados de gamificação:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar seus dados de progresso.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -37,9 +46,14 @@ export const useGameification = () => {
   // Adicionar XP e atualizar progresso
   const addXP = async (xpAmount: number, activityType: ActivityType) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !progress || !todayActivity) return;
+    if (!user || !progress || !todayActivity) {
+      console.log('Cannot add XP: missing user, progress, or activity data');
+      return;
+    }
 
     try {
+      console.log(`Adding ${xpAmount} XP for activity: ${activityType}`);
+      
       const updatedProgress = await GamificationService.updateUserProgress(
         user.id,
         progress,
@@ -53,25 +67,40 @@ export const useGameification = () => {
         activityType
       );
 
-      if (updatedProgress) setProgress(updatedProgress);
-      if (updatedActivity) setTodayActivity(updatedActivity);
-
-      // Mostrar notificação se subiu de nível
-      if (updatedProgress && updatedProgress.current_level > progress.current_level) {
-        toast({
-          title: "🎉 Nível Aumentado!",
-          description: `Parabéns! Você chegou ao nível ${updatedProgress.current_level}!`,
-          duration: 5000,
-        });
+      if (updatedProgress) {
+        console.log('Updated progress:', updatedProgress);
+        setProgress(updatedProgress);
+        
+        // Mostrar notificação se subiu de nível
+        if (updatedProgress.current_level > progress.current_level) {
+          toast({
+            title: "🎉 Nível Aumentado!",
+            description: `Parabéns! Você chegou ao nível ${updatedProgress.current_level}!`,
+            duration: 5000,
+          });
+        }
+      }
+      
+      if (updatedActivity) {
+        console.log('Updated activity:', updatedActivity);
+        setTodayActivity(updatedActivity);
       }
     } catch (error) {
       console.error("Erro ao adicionar XP:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar seu progresso.",
+        variant: "destructive",
+      });
     }
   };
 
   // Buscar estatísticas gerais
   const getStats = (): GameStats | null => {
-    if (!progress || !todayActivity) return null;
+    if (!progress || !todayActivity) {
+      console.log('Cannot get stats: missing progress or activity data');
+      return null;
+    }
 
     const currentXp = progress.total_xp;
     const nextLevelXp = getXpForNextLevel(progress.current_level);
@@ -80,12 +109,14 @@ export const useGameification = () => {
       progress.current_level === 3 ? 150 : 
       300 + (progress.current_level - 4) * 200;
 
-    return {
+    const xpProgress = calculateXpProgress(currentXp, progress.current_level);
+
+    const stats = {
       currentLevel: progress.current_level,
       currentXp,
       nextLevelXp,
       currentLevelMinXp,
-      xpProgress: calculateXpProgress(currentXp, progress.current_level),
+      xpProgress: Math.min(100, Math.max(0, xpProgress)), // Garantir que seja entre 0-100
       currentStreak: progress.current_streak,
       longestStreak: progress.longest_streak,
       todayFlashcards: todayActivity.flashcards_reviewed,
@@ -93,6 +124,9 @@ export const useGameification = () => {
       todayCorrectAnswers: todayActivity.quiz_correct_answers,
       todayXp: todayActivity.xp_earned
     };
+
+    console.log('Generated stats:', stats);
+    return stats;
   };
 
   useEffect(() => {

@@ -1,187 +1,261 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from "@/components/ui/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useGameification } from '@/hooks/useGameification';
-import { useQuiz } from '@/hooks/useQuiz';
-import { useQuizSession } from '@/hooks/useQuizSession';
 
-export const useQuizGame = (quiz: any, onComplete: () => void) => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showResult, setShowResult] = useState(false);
-  const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const [currentXP, setCurrentXP] = useState(0);
-  const [streakCount, setStreakCount] = useState(0);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [currentExplanation, setCurrentExplanation] = useState<string>('');
-  const [sessionResult, setSessionResult] = useState<any>(null);
-  
-  const navigate = useNavigate();
-  const { addXP, getStats } = useGameification();
-  const { enviarResposta } = useQuiz(quiz.resumo_id || '');
-  const { sessionData, startSession, addResponse, completeSession } = useQuizSession();
+export interface QuizQuestion {
+  id: string;
+  pergunta: string;
+  alternativas: string[];
+  correta: number;
+  explicacao: string;
+}
 
-  const currentQuestion = quiz.questoes[currentQuestionIndex];
-  const stats = getStats();
+export interface QuizGameState {
+  questions: QuizQuestion[];
+  currentQuestionIndex: number;
+  selectedAnswer: number | null;
+  userAnswers: (number | null)[];
+  score: number;
+  isFinished: boolean;
+  showExplanation: boolean;
+  timeRemaining: number;
+  startTime: number;
+}
 
-  // Iniciar sessão quando o quiz começar
-  useEffect(() => {
-    if (quiz && quiz.questoes && !sessionData) {
-      // Para pegar o conteúdo do resumo, vamos usar um placeholder por enquanto
-      // TODO: Integrar com dados reais do resumo se necessário
-      startSession(quiz.resumo_id, "Conteúdo do resumo", quiz.questoes);
-    }
-  }, [quiz, sessionData, startSession]);
+export const useQuizGame = (resumoId: string | undefined) => {
+  const [gameState, setGameState] = useState<QuizGameState>({
+    questions: [],
+    currentQuestionIndex: 0,
+    selectedAnswer: null,
+    userAnswers: [],
+    score: 0,
+    isFinished: false,
+    showExplanation: false,
+    timeRemaining: 0,
+    startTime: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { addXP } = useGameification();
 
-  // Call onComplete when we have a sessionResult
-  useEffect(() => {
-    if (sessionResult && onComplete) {
-      onComplete();
-    }
-  }, [sessionResult, onComplete]);
+  // Carregar perguntas do quiz
+  const loadQuestions = async () => {
+    if (!resumoId) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('*')
+        .eq('resumo_id', resumoId)
+        .order('data_criacao', { ascending: true });
 
-  const triggerCelebration = (isCorrect: boolean) => {
-    if (isCorrect) {
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 2000);
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const questions: QuizQuestion[] = data.map(quiz => ({
+          id: quiz.id,
+          pergunta: quiz.pergunta,
+          alternativas: quiz.alternativas as string[],
+          correta: quiz.correta,
+          explicacao: quiz.explicacao,
+        }));
+
+        setGameState({
+          questions,
+          currentQuestionIndex: 0,
+          selectedAnswer: null,
+          userAnswers: new Array(questions.length).fill(null),
+          score: 0,
+          isFinished: false,
+          showExplanation: false,
+          timeRemaining: questions.length * 30, // 30 segundos por pergunta
+          startTime: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar quiz:', error);
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar as perguntas do quiz',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAnswerSelect = async (index: number) => {
-    setSelectedAnswer(index);
-    setShowResult(true);
-    
-    const isCorrect = index === currentQuestion.resposta_correta;
-    
-    // Sistema de pontuação imediata (apenas visual, XP real será no final)
-    const xpGained = isCorrect ? 10 : 2;
-    setCurrentXP(prev => prev + xpGained);
-    
-    // Atualizar streak
-    if (isCorrect) {
-      setStreakCount(prev => prev + 1);
-      triggerCelebration(true);
-    } else {
-      setStreakCount(0);
-    }
+  // Selecionar resposta
+  const selectAnswer = (answerIndex: number) => {
+    if (gameState.showExplanation || gameState.isFinished) return;
 
-    // Salvar resposta no banco de dados SEM adicionar XP ainda
+    setGameState(prev => ({
+      ...prev,
+      selectedAnswer: answerIndex,
+    }));
+  };
+
+  // Confirmar resposta e registrar no banco
+  const confirmAnswer = async () => {
+    if (gameState.selectedAnswer === null) return;
+
+    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    const isCorrect = gameState.selectedAnswer === currentQuestion.correta;
+    
+    // Registrar resposta no banco de dados
     try {
-      if (currentQuestion.id) {
-        console.log('🔍 Enviando resposta para pergunta:', currentQuestion.id);
-        const response = await enviarResposta(currentQuestion.id, index);
-        console.log('📝 Resposta recebida:', response);
-        
-        // Adicionar resposta à sessão
-        addResponse({
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('quiz_respostas').insert({
+          user_id: user.id,
           quiz_id: currentQuestion.id,
-          resposta_selecionada: index,
-          acertou: isCorrect
+          resposta_selecionada: gameState.selectedAnswer,
+          acertou: isCorrect,
         });
-        
-        if (response && response.explicacao) {
-          console.log('💡 Explicação recebida:', response.explicacao);
-          setCurrentExplanation(response.explicacao);
-        } else if (currentQuestion.explicacao) {
-          console.log('💡 Usando explicação da pergunta:', currentQuestion.explicacao);
-          setCurrentExplanation(currentQuestion.explicacao);
+
+        // Adicionar XP baseado na resposta
+        if (isCorrect) {
+          await addXP(10, 'quiz_correct');
         } else {
-          console.log('⚠️ Nenhuma explicação disponível');
-          setCurrentExplanation('');
+          await addXP(2, 'quiz_incorrect'); // XP menor por tentar
         }
       }
-      
-      // Toast com feedback imediato (sem XP real ainda)
-      toast({
-        title: isCorrect ? "🎉 Correto!" : "💪 Continue tentando!",
-        description: isCorrect 
-          ? streakCount > 0 
-            ? `Sequência de ${streakCount + 1} acertos! 🔥` 
-            : "Excelente resposta! Continue assim!" 
-          : "Não desista! Cada erro é um aprendizado.",
-        duration: 3000,
-      });
-      
     } catch (error) {
-      console.error("Erro ao processar resposta:", error);
-      setCurrentExplanation(currentQuestion.explicacao || '');
-    }
-  };
-
-  const handleNextQuestion = async () => {
-    // Contar acerto se necessário
-    if (selectedAnswer === currentQuestion.resposta_correta) {
-      setCorrectAnswersCount(correctAnswersCount + 1);
+      console.error('Erro ao registrar resposta:', error);
     }
 
-    // Reset states para próxima pergunta
-    setSelectedAnswer(null);
-    setShowResult(false);
-    setCurrentExplanation('');
+    const newUserAnswers = [...gameState.userAnswers];
+    newUserAnswers[gameState.currentQuestionIndex] = gameState.selectedAnswer;
 
-    // Verificar se é a última pergunta
-    if (currentQuestionIndex < quiz.questoes.length - 1) {
-      // Ir para próxima pergunta
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      // Finalizar quiz e salvar sessão
-      const finalCorrectCount = correctAnswersCount + (selectedAnswer === currentQuestion.resposta_correta ? 1 : 0);
-      const correctPercentage = (finalCorrectCount / quiz.questoes.length) * 100;
-      
-      // Completar sessão
-      const result = await completeSession();
-      if (result) {
-        setSessionResult(result);
-      }
+    const newScore = isCorrect ? gameState.score + 1 : gameState.score;
 
-      // Calcular XP total baseado na performance final
-      let totalXP = finalCorrectCount * 10 + (quiz.questoes.length - finalCorrectCount) * 2; // XP por resposta
-      let bonusXP = 0;
+    setGameState(prev => ({
+      ...prev,
+      userAnswers: newUserAnswers,
+      score: newScore,
+      showExplanation: true,
+    }));
 
-      if (correctPercentage >= 90) {
-        bonusXP = 100;
-      } else if (correctPercentage >= 80) {
-        bonusXP = 75;
-      } else if (correctPercentage >= 70) {
-        bonusXP = 50;
-      } else if (correctPercentage >= 50) {
-        bonusXP = 25;
-      }
-
-      totalXP += bonusXP;
-
-      // Adicionar XP real agora
-      await addXP(totalXP, 'quiz_complete');
-
+    // Mostrar feedback
+    if (isCorrect) {
       toast({
-        title: "🏆 Quiz Completo!",
-        description: `Você ganhou ${totalXP} XP total (${bonusXP} de bônus)!`,
-        duration: 5000,
+        title: '🎉 Correto! +10 XP',
+        description: 'Excelente resposta!',
+        duration: 2000,
       });
-
-      setQuizCompleted(true);
-
-      // Navegar para histórico após pequeno delay
-      setTimeout(() => {
-        navigate('/quiz-history');
-      }, 3000);
+    } else {
+      toast({
+        title: '😅 Incorreto, mas +2 XP por tentar!',
+        description: 'Continue tentando!',
+        duration: 2000,
+      });
     }
   };
+
+  // Próxima pergunta
+  const nextQuestion = () => {
+    if (gameState.currentQuestionIndex < gameState.questions.length - 1) {
+      setGameState(prev => ({
+        ...prev,
+        currentQuestionIndex: prev.currentQuestionIndex + 1,
+        selectedAnswer: null,
+        showExplanation: false,
+      }));
+    } else {
+      finishQuiz();
+    }
+  };
+
+  // Finalizar quiz
+  const finishQuiz = async () => {
+    const endTime = Date.now();
+    const completionTime = Math.round((endTime - gameState.startTime) / 1000);
+    
+    // Salvar sessão do quiz
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('quiz_sessions').insert({
+          user_id: user.id,
+          resumo_id: resumoId!,
+          quiz_title: `Quiz - ${gameState.questions.length} perguntas`,
+          total_questions: gameState.questions.length,
+          correct_answers: gameState.score,
+          completion_time_seconds: completionTime,
+          questions_data: {
+            questions: gameState.questions,
+            userAnswers: gameState.userAnswers,
+          },
+        });
+
+        // XP de bônus baseado na performance
+        const accuracy = (gameState.score / gameState.questions.length) * 100;
+        let bonusXP = 0;
+        let bonusMessage = '';
+
+        if (accuracy === 100) {
+          bonusXP = 50;
+          bonusMessage = 'Perfeito! +50 XP de bônus!';
+          await addXP(bonusXP, 'quiz_perfect');
+        } else if (accuracy >= 80) {
+          bonusXP = 25;
+          bonusMessage = 'Excelente! +25 XP de bônus!';
+          await addXP(bonusXP, 'quiz_excellent');
+        } else if (accuracy >= 60) {
+          bonusXP = 10;
+          bonusMessage = 'Bom trabalho! +10 XP de bônus!';
+          await addXP(bonusXP, 'quiz_good');
+        }
+
+        if (bonusXP > 0) {
+          toast({
+            title: '🎯 Bônus de Performance!',
+            description: bonusMessage,
+            duration: 4000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar sessão do quiz:', error);
+    }
+
+    setGameState(prev => ({
+      ...prev,
+      isFinished: true,
+    }));
+  };
+
+  // Reiniciar quiz
+  const restartQuiz = () => {
+    loadQuestions();
+  };
+
+  // Timer countdown
+  useEffect(() => {
+    if (gameState.timeRemaining > 0 && !gameState.isFinished && !gameState.showExplanation) {
+      const timer = setTimeout(() => {
+        setGameState(prev => ({
+          ...prev,
+          timeRemaining: prev.timeRemaining - 1,
+        }));
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    } else if (gameState.timeRemaining === 0 && !gameState.isFinished) {
+      finishQuiz();
+    }
+  }, [gameState.timeRemaining, gameState.isFinished, gameState.showExplanation]);
 
   return {
-    currentQuestion,
-    currentQuestionIndex,
-    selectedAnswer,
-    showResult,
-    currentXP,
-    streakCount,
-    showCelebration,
-    currentExplanation,
-    sessionResult,
-    stats,
-    handleAnswerSelect,
-    handleNextQuestion
+    gameState,
+    loading,
+    loadQuestions,
+    selectAnswer,
+    confirmAnswer,
+    nextQuestion,
+    finishQuiz,
+    restartQuiz,
   };
 };

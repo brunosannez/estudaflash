@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Flame, Trophy, Target, Clock } from 'lucide-react';
+import { Flame, Trophy, Target, Clock, TrendingUp, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import StatsCard from './StatsCard';
@@ -19,7 +19,10 @@ const ProgressOverview = () => {
   if (loading || !stats) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto" />
+          <p className="text-lg font-semibold text-gray-600">Carregando seu progresso incrível...</p>
+        </div>
       </div>
     );
   }
@@ -34,7 +37,7 @@ const ProgressOverview = () => {
           gradient="bg-gradient-to-br from-yellow-500 to-orange-600"
         />
         <StatsCard
-          title="Streak"
+          title="Streak Atual"
           value={`${stats.currentStreak} dias`}
           icon={Flame}
           gradient="bg-gradient-to-br from-red-500 to-pink-600"
@@ -48,58 +51,88 @@ const ProgressOverview = () => {
         <StatsCard
           title="XP Hoje"
           value={`${stats.todayXp} XP`}
-          icon={Clock}
+          icon={TrendingUp}
           gradient="bg-gradient-to-br from-green-500 to-teal-600"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="transform hover:scale-105 transition-all duration-300">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
-              Progresso do Nível
+              Progresso do Nível {stats.currentLevel}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Nível {stats.currentLevel}</span>
-              <span className="text-sm text-gray-500">{stats.currentXp} / {stats.nextLevelXp} XP</span>
+              <span className="text-sm text-gray-500">
+                {stats.currentXp} / {stats.nextLevelXp} XP
+              </span>
             </div>
             <Progress value={stats.xpProgress} className="h-3" />
-            <p className="text-sm text-gray-600">
-              Faltam apenas {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!
-            </p>
+            <div className="bg-gradient-to-r from-purple-50 to-cyan-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Faltam {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!</strong>
+              </p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <span className="bg-blue-100 px-2 py-1 rounded">🧠 +5 XP por flashcard</span>
+                <span className="bg-green-100 px-2 py-1 rounded">✅ +10 XP por quiz correto</span>
+                <span className="bg-orange-100 px-2 py-1 rounded">🎯 +2 XP por tentativa</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transform hover:scale-105 transition-all duration-300">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Flame className="h-5 w-5 mr-2 text-red-500" />
-              Histórico de Streak
+              Streak & Performance
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-2xl font-bold">{stats.currentStreak} dias 🔥</span>
-              <span className="text-sm text-gray-500">Recorde: {stats.longestStreak} dias</span>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-500">{stats.currentStreak}</div>
+                <div className="text-xs text-gray-500">Dias Atuais</div>
+              </div>
+              <div className="text-3xl">
+                {stats.currentStreak >= 7 ? '🔥' : stats.currentStreak >= 3 ? '⚡' : '💫'}
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-gray-600">{stats.longestStreak}</div>
+                <div className="text-xs text-gray-500">Recorde</div>
+              </div>
             </div>
-            <div className="flex space-x-1">
-              {Array.from({length: Math.min(stats.currentStreak, 7)}).map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                >
-                  ✓
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Quizzes Hoje</span>
                 </div>
-              ))}
-              {stats.currentStreak < 7 && (
-                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
-                  ?
+                <span className="font-bold text-blue-600">{stats.todayQuizzes}</span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">Precisão</span>
                 </div>
-              )}
+                <span className="font-bold text-green-600">
+                  {stats.todayQuizzes > 0 ? Math.round((stats.todayCorrectAnswers / stats.todayQuizzes) * 100) : 0}%
+                </span>
+              </div>
             </div>
+
+            {stats.todayXp > 0 && (
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-3 rounded-lg text-center">
+                <div className="font-bold">🎉 {stats.todayXp} XP ganhos hoje!</div>
+                <div className="text-sm opacity-90">Continue assim!</div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

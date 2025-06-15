@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Flame, RotateCcw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight, RotateCcw, ArrowLeft, Brain, Sparkles } from 'lucide-react';
 import { useFlashcards } from '@/hooks/useFlashcards';
-import AnkiFlashcard from './AnkiFlashcard';
-import { useGameification } from '@/hooks/useGameification';
+import { designColors } from '@/utils/designSystem';
 
 interface FlashcardStudyModeProps {
   resumoId: string;
@@ -13,190 +12,231 @@ interface FlashcardStudyModeProps {
 }
 
 const FlashcardStudyMode = ({ resumoId, onBack }: FlashcardStudyModeProps) => {
-  const { cards, fetchFlashcards, loading } = useFlashcards(resumoId);
-  const { addXP } = useGameification();
+  const { cards, fetchFlashcards, reviewFlashcard, loading } = useFlashcards(resumoId);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [sessionStats, setSessionStats] = useState({
-    correct: 0,
-    incorrect: 0,
-    total: 0,
-    xpEarned: 0
-  });
-  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [studiedCards, setStudiedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchFlashcards();
   }, [resumoId]);
 
+  const currentCard = cards[currentIndex];
+
   const handleNext = () => {
     if (currentIndex < cards.length - 1) {
       setCurrentIndex(currentIndex + 1);
-    } else {
-      setSessionCompleted(true);
+      setShowAnswer(false);
     }
   };
 
-  const handleCorrectAnswer = async () => {
-    setSessionStats(prev => ({
-      ...prev,
-      correct: prev.correct + 1,
-      total: prev.total + 1,
-      xpEarned: prev.xpEarned + 5
-    }));
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setShowAnswer(false);
+    }
+  };
+
+  const handleFlip = () => {
+    setShowAnswer(!showAnswer);
+  };
+
+  const handleMarkAsStudied = async (remembered: boolean = true) => {
+    if (currentCard && !studiedCards.has(currentCard.id)) {
+      await reviewFlashcard(currentCard.id, remembered);
+      setStudiedCards(prev => new Set([...prev, currentCard.id]));
+    }
     
-    try {
-      await addXP(5, 'flashcard');
-    } catch (error) {
-      console.error('Erro ao adicionar XP:', error);
+    // Avançar para o próximo card automaticamente
+    if (currentIndex < cards.length - 1) {
+      handleNext();
     }
   };
 
-  const handleIncorrectAnswer = () => {
-    setSessionStats(prev => ({
-      ...prev,
-      incorrect: prev.incorrect + 1,
-      total: prev.total + 1
-    }));
-  };
-
-  const resetSession = () => {
+  const resetStudy = () => {
     setCurrentIndex(0);
-    setSessionCompleted(false);
-    setSessionStats({
-      correct: 0,
-      incorrect: 0,
-      total: 0,
-      xpEarned: 0
-    });
+    setShowAnswer(false);
+    setStudiedCards(new Set());
   };
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando flashcards...</p>
-        </CardContent>
-      </Card>
+      <div className={`${designColors.cards.primary} p-8 text-center`}>
+        <div className="animate-spin text-4xl mb-4">🧠</div>
+        <p className="text-lg font-semibold text-gray-600">Carregando flashcards mágicos...</p>
+      </div>
     );
   }
 
-  if (!cards || cards.length === 0) {
+  if (cards.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <p className="text-gray-600 mb-4">Nenhum flashcard encontrado para este resumo.</p>
-          <Button onClick={onBack} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </CardContent>
-      </Card>
+      <div className={`${designColors.cards.primary} p-8 text-center space-y-4`}>
+        <div className="text-6xl">😔</div>
+        <h3 className="text-xl font-bold text-gray-700">Nenhum flashcard encontrado</h3>
+        <p className="text-gray-600">Gere flashcards primeiro para poder estudar!</p>
+        <Button onClick={onBack} className={designColors.buttons.secondary}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+      </div>
     );
   }
 
-  if (sessionCompleted) {
-    const accuracy = sessionStats.total > 0 ? (sessionStats.correct / sessionStats.total) * 100 : 0;
-    
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="text-center bg-gradient-to-r from-green-50 to-blue-50">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-            <Trophy className="h-8 w-8 text-yellow-500" />
-            Sessão Concluída!
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 text-center space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{sessionStats.correct}</div>
-              <div className="text-sm text-green-700">Acertos</div>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{sessionStats.incorrect}</div>
-              <div className="text-sm text-red-700">Erros</div>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{accuracy.toFixed(0)}%</div>
-              <div className="text-sm text-blue-700">Precisão</div>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{sessionStats.xpEarned}</div>
-              <div className="text-sm text-yellow-700">XP Ganho</div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {accuracy >= 80 && (
-              <div className="text-lg text-green-600 font-semibold">
-                🎉 Excelente desempenho!
-              </div>
-            )}
-            {accuracy >= 60 && accuracy < 80 && (
-              <div className="text-lg text-blue-600 font-semibold">
-                👍 Bom trabalho!
-              </div>
-            )}
-            {accuracy < 60 && (
-              <div className="text-lg text-orange-600 font-semibold">
-                📚 Continue praticando!
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button onClick={resetSession} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Estudar Novamente
-            </Button>
-            <Button onClick={onBack} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const progressPercentage = ((currentIndex + 1) / cards.length) * 100;
+  const studiedPercentage = (studiedCards.size / cards.length) * 100;
 
   return (
     <div className="space-y-6">
-      {/* Stats da sessão atual */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <span className="text-green-600 font-semibold">
-                ✅ {sessionStats.correct}
-              </span>
-              <span className="text-red-600 font-semibold">
-                ❌ {sessionStats.incorrect}
-              </span>
-              <span className="text-yellow-600 font-semibold flex items-center gap-1">
-                <Flame className="h-4 w-4" />
-                {sessionStats.xpEarned} XP
-              </span>
+      {/* Header com controles */}
+      <div className={`${designColors.cards.primary} p-4 flex justify-between items-center`}>
+        <Button 
+          onClick={onBack} 
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-medium text-gray-600">
+            {currentIndex + 1} de {cards.length}
+          </div>
+          <Button
+            onClick={resetStudy}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reiniciar
+          </Button>
+        </div>
+      </div>
+
+      {/* Barras de progresso */}
+      <div className={`${designColors.cards.primary} p-4 space-y-3`}>
+        <div>
+          <div className="flex justify-between text-sm font-medium text-gray-600 mb-2">
+            <span>Progresso da Sessão</span>
+            <span>{Math.round(progressPercentage)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex justify-between text-sm font-medium text-gray-600 mb-2">
+            <span>Cards Estudados ({studiedCards.size} XP ganhos!)</span>
+            <span>{Math.round(studiedPercentage)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${studiedPercentage}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Card principal */}
+      <Card className={`${designColors.animations.cardHover} min-h-[400px] cursor-pointer`} onClick={handleFlip}>
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="flex items-center justify-center gap-2 text-lg">
+            <Brain className="h-5 w-5 text-purple-600" />
+            {showAnswer ? 'Resposta' : 'Pergunta'}
+            {studiedCards.has(currentCard?.id || '') && (
+              <Sparkles className="h-5 w-5 text-green-500" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col justify-center items-center min-h-[300px] p-8">
+          <div className="text-center space-y-4">
+            <div className="text-lg md:text-xl font-medium leading-relaxed">
+              {showAnswer ? currentCard?.resposta : currentCard?.pergunta}
             </div>
-            <Button onClick={onBack} variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+            
+            {showAnswer && currentCard?.exemplo && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-l-4 border-blue-400">
+                <p className="text-sm font-semibold text-blue-800 mb-2">📝 Exemplo:</p>
+                <p className="text-sm text-blue-700">{currentCard.exemplo}</p>
+              </div>
+            )}
+            
+            <div className="text-sm text-gray-500 mt-6">
+              {showAnswer ? '👆 Clique para ver a pergunta' : '👆 Clique para ver a resposta'}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Flashcard atual */}
-      <AnkiFlashcard
-        pergunta={cards[currentIndex].pergunta}
-        resposta={cards[currentIndex].resposta}
-        exemplo={cards[currentIndex].exemplo}
-        onNext={handleNext}
-        onMarkReviewed={() => {}}
-        onCorrectAnswer={handleCorrectAnswer}
-        onIncorrectAnswer={handleIncorrectAnswer}
-        currentIndex={currentIndex}
-        totalCards={cards.length}
-      />
+      {/* Controles de navegação */}
+      <div className="flex justify-between items-center">
+        <Button
+          onClick={handlePrevious}
+          disabled={currentIndex === 0}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Anterior
+        </Button>
+
+        {showAnswer && (
+          <div className="flex gap-3">
+            <Button
+              onClick={() => handleMarkAsStudied(false)}
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50"
+              disabled={studiedCards.has(currentCard?.id || '')}
+            >
+              😕 Difícil (+5 XP)
+            </Button>
+            <Button
+              onClick={() => handleMarkAsStudied(true)}
+              className={`${designColors.buttons.primary} text-white`}
+              disabled={studiedCards.has(currentCard?.id || '')}
+            >
+              😊 Fácil (+5 XP)
+            </Button>
+          </div>
+        )}
+
+        <Button
+          onClick={handleNext}
+          disabled={currentIndex === cards.length - 1}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          Próximo
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Estatísticas finais */}
+      {studiedCards.size === cards.length && (
+        <div className={`${designColors.cards.accent} p-6 text-center`}>
+          <div className="text-4xl mb-4">🎉</div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+            Parabéns! Sessão Completa!
+          </h3>
+          <p className="text-lg text-gray-600 mb-4">
+            Você ganhou {studiedCards.size * 5} XP estudando {studiedCards.size} flashcards!
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={resetStudy} className={designColors.buttons.secondary}>
+              🔄 Estudar Novamente
+            </Button>
+            <Button onClick={onBack} className={designColors.buttons.primary}>
+              ✨ Continuar Aprendendo
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
