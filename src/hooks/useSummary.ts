@@ -24,6 +24,12 @@ export const useSummary = () => {
         throw new Error('Texto muito grande para processar. Use uma imagem com menos texto.');
       }
 
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       let lastError = null;
       
       // Implementar retry logic
@@ -35,7 +41,8 @@ export const useSummary = () => {
             .invoke('generate-summary', {
               body: { 
                 uploadId,
-                textoExtraido 
+                textoExtraido,
+                userId: user.id
               }
             });
 
@@ -70,6 +77,12 @@ export const useSummary = () => {
 
           if (!data.success) {
             console.error('❌ Função retornou erro:', data.error);
+            
+            // Se há uma mensagem de fallback, exibe ela
+            if (data.fallbackMessage) {
+              throw new Error(data.fallbackMessage);
+            }
+            
             throw new Error(data.error || 'Erro ao gerar resumo');
           }
 
@@ -93,7 +106,8 @@ export const useSummary = () => {
             attemptError.message?.includes('timeout') ||
             attemptError.message?.includes('Failed to send a request') ||
             attemptError.message?.includes('503') ||
-            attemptError.message?.includes('temporarily')
+            attemptError.message?.includes('temporarily') ||
+            attemptError.message?.includes('temporariamente')
           )) {
             console.log(`⏳ Aguardando ${attempt * 2} segundos antes da próxima tentativa...`);
             await new Promise(resolve => setTimeout(resolve, attempt * 2000));
@@ -115,7 +129,11 @@ export const useSummary = () => {
       let userMessage = "Erro ao gerar resumo.";
       
       if (error.message) {
-        if (error.message.includes('ANTHROPIC_API_KEY')) {
+        // Se já há uma mensagem de fallback da API, usa ela
+        if (error.message.includes('temporariamente indisponível') || 
+            error.message.includes('Tente novamente')) {
+          userMessage = error.message;
+        } else if (error.message.includes('ANTHROPIC_API_KEY')) {
           userMessage = "Configuração da API Anthropic necessária. Contate o administrador.";
         } else if (error.message.includes('rate') || error.message.includes('limit')) {
           userMessage = "Limite de uso excedido. Aguarde alguns minutos e tente novamente.";

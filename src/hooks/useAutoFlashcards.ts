@@ -22,11 +22,18 @@ export const useAutoFlashcards = () => {
         return null;
       }
 
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase.functions
         .invoke('generate-flashcards', {
           body: { 
             resumoId,
-            textoResumo 
+            textoResumo,
+            userId: user.id
           }
         });
 
@@ -41,6 +48,12 @@ export const useAutoFlashcards = () => {
 
       if (!data.success) {
         console.error('Função retornou erro:', data.error);
+        
+        // Se há uma mensagem de fallback, exibe ela
+        if (data.fallbackMessage) {
+          throw new Error(data.fallbackMessage);
+        }
+        
         throw new Error(data.error || 'Erro ao gerar flashcards');
       }
 
@@ -63,12 +76,16 @@ export const useAutoFlashcards = () => {
       let userMessage = "Erro ao gerar flashcards automaticamente.";
       
       if (error.message) {
-        if (error.message.includes('ANTHROPIC_API_KEY')) {
+        // Se já há uma mensagem de fallback da API, usa ela
+        if (error.message.includes('temporariamente indisponível') || 
+            error.message.includes('Tente novamente')) {
+          userMessage = error.message;
+        } else if (error.message.includes('ANTHROPIC_API_KEY') || error.message.includes('HUGGINGFACE_API_KEY')) {
           userMessage = "Configuração da API necessária. Contate o administrador.";
         } else if (error.message.includes('rate')) {
           userMessage = "Muitas tentativas. Aguarde alguns minutos.";
-        } else if (error.message.includes('API Anthropic')) {
-          userMessage = "Serviço de IA temporariamente indisponível.";
+        } else if (error.message.includes('API') && error.message.includes('indisponível')) {
+          userMessage = "Serviços de IA temporariamente indisponíveis.";
         } else {
           userMessage = error.message;
         }

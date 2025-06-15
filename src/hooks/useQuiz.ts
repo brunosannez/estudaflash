@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -67,27 +66,55 @@ export function useQuiz(resumoId: string) {
       return false;
     }
 
-    const { data, error } = await supabase.functions.invoke("generate-quiz", {
-      body: { resumo_id: resumoId, texto_resumo },
-    });
-    setLoading(false);
-    
-    if (error || !data.success) {
+    try {
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-quiz", {
+        body: { 
+          resumo_id: resumoId, 
+          texto_resumo,
+          userId: user.id
+        },
+      });
+      
+      if (error || !data.success) {
+        let errorMessage = data?.error || error?.message || 'Erro desconhecido';
+        
+        // Se há uma mensagem de fallback, usa ela
+        if (data?.fallbackMessage) {
+          errorMessage = data.fallbackMessage;
+        }
+        
+        toast({
+          title: "Erro ao gerar quiz",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      // Incrementar contador de uso APENAS após sucesso
+      await incrementUsage('quizzes');
+      console.log('✅ Usage counter incremented for quizzes');
+      
+      toast({ title: "Quiz gerado com sucesso!" });
+      setQuizzes(data.quizzes);
+      return true;
+    } catch (error) {
+      console.error('Erro ao gerar quiz:', error);
       toast({
         title: "Erro ao gerar quiz",
-        description: data?.error || error?.message,
+        description: error.message || "Erro inesperado",
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
-    
-    // Incrementar contador de uso APENAS após sucesso
-    await incrementUsage('quizzes');
-    console.log('✅ Usage counter incremented for quizzes');
-    
-    toast({ title: "Quiz gerado com sucesso!" });
-    setQuizzes(data.quizzes);
-    return true;
   };
 
   const enviarResposta = async (quizId: string, resposta_selecionada: number) => {

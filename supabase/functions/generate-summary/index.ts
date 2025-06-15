@@ -8,6 +8,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Função para obter configuração do modelo baseada no plano
+function getModelConfigForPlan(plan: string) {
+  switch (plan) {
+    case 'free':
+    case 'pro':
+    case 'edu':
+      return {
+        provider: 'anthropic',
+        model: 'claude-3-5-sonnet-20241022'
+      };
+    default:
+      return {
+        provider: 'anthropic',
+        model: 'claude-3-5-sonnet-20241022'
+      };
+  }
+}
+
+async function getUserPlan(supabase: any, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('uso_usuarios')
+      .select('plano')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Erro ao buscar plano do usuário:', error);
+      return 'free'; // Fallback para plano free
+    }
+    
+    return data?.plano || 'free';
+  } catch (error) {
+    console.error('Erro ao buscar plano:', error);
+    return 'free';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -62,7 +100,8 @@ serve(async (req) => {
       requestBody = await req.json();
       console.log('📥 Request recebido:', { 
         uploadId: requestBody?.uploadId, 
-        textoLength: requestBody?.textoExtraido?.length 
+        textoLength: requestBody?.textoExtraido?.length,
+        userId: requestBody?.userId 
       });
     } catch (error) {
       console.error('❌ Erro ao fazer parse do JSON:', error);
@@ -79,7 +118,7 @@ serve(async (req) => {
       );
     }
 
-    const { uploadId, textoExtraido } = requestBody;
+    const { uploadId, textoExtraido, userId } = requestBody;
     
     if (!uploadId || !textoExtraido) {
       console.error('❌ Parâmetros obrigatórios ausentes:', { uploadId: !!uploadId, textoExtraido: !!textoExtraido });
@@ -96,11 +135,23 @@ serve(async (req) => {
       );
     }
 
+    // Inicializar Supabase para buscar plano do usuário
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Buscar plano do usuário
+    const userPlan = await getUserPlan(supabase, userId);
+    const modelConfig = getModelConfigForPlan(userPlan);
+    
+    console.log('👤 Plano do usuário:', userPlan);
+    console.log('🤖 Modelo selecionado:', modelConfig);
+
     console.log('✅ Parâmetros validados com sucesso');
     console.log('📊 Estatísticas do texto:', {
       caracteres: textoExtraido.length,
       palavras: textoExtraido.split(' ').length,
-      uploadId
+      uploadId,
+      userPlan,
+      modelUsed: modelConfig.model
     });
 
     // Verificar se o texto não é muito grande
@@ -137,7 +188,7 @@ ${textoExtraido}
 Gere um resumo estruturado que seja fácil de estudar e revisar:`;
 
     console.log('🤖 Iniciando chamada para API da Anthropic...');
-    console.log('📝 Modelo utilizado: claude-3-5-sonnet-20241022');
+    console.log('📝 Modelo utilizado:', modelConfig.model);
     
     const startTime = Date.now();
 
@@ -152,7 +203,7 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: modelConfig.model,
           max_tokens: 3000,
           messages: [
             {
@@ -169,8 +220,9 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Erro de conectividade com o serviço de IA. Tente novamente.',
-          details: `Erro de rede: ${error.message}`
+          error: 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.',
+          details: `Erro de rede: ${error.message}`,
+          fallbackMessage: 'Nossa IA está temporariamente indisponível. Por favor, tente novamente mais tarde.'
         }),
         {
           status: 503,
@@ -198,25 +250,26 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
       }
       
       // Mensagens de erro mais específicas baseadas no status
-      let userMessage = 'Erro ao gerar resumo. Tente novamente.';
+      let userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
       
       if (response.status === 400) {
         userMessage = 'Dados inválidos enviados para a API. Verifique o texto extraído.';
       } else if (response.status === 401) {
-        userMessage = 'Chave da API Anthropic inválida. Contate o administrador.';
+        userMessage = 'Problema de autenticação com o serviço de IA. Contate o administrador.';
       } else if (response.status === 403) {
-        userMessage = 'Acesso negado pela API Anthropic. Verifique as permissões.';
+        userMessage = 'Acesso negado pela API. Verifique as permissões.';
       } else if (response.status === 429) {
         userMessage = 'Limite de uso da API excedido. Tente novamente em alguns minutos.';
       } else if (response.status >= 500) {
-        userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente.';
+        userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
       }
       
       return new Response(
         JSON.stringify({ 
           success: false,
           error: userMessage,
-          details: `API retornou status ${response.status}: ${response.statusText}`
+          details: `API retornou status ${response.status}: ${response.statusText}`,
+          fallbackMessage: 'Nossa IA está temporariamente indisponível. Por favor, tente novamente mais tarde.'
         }),
         {
           status: 500,
@@ -235,7 +288,8 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         JSON.stringify({ 
           success: false,
           error: 'Resposta inválida da API de IA',
-          details: 'Erro ao processar resposta da Anthropic'
+          details: 'Erro ao processar resposta da Anthropic',
+          fallbackMessage: 'Houve um problema ao processar a resposta da IA. Tente novamente.'
         }),
         {
           status: 500,
@@ -250,7 +304,8 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         JSON.stringify({ 
           success: false,
           error: 'Resposta inválida da API Anthropic',
-          details: 'Estrutura de dados inesperada na resposta'
+          details: 'Estrutura de dados inesperada na resposta',
+          fallbackMessage: 'Recebemos uma resposta inesperada da IA. Tente novamente.'
         }),
         {
           status: 500,
@@ -268,8 +323,6 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
     });
 
     console.log('💾 Salvando resumo no banco de dados...');
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     let resumoData;
     try {
@@ -325,7 +378,8 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
           caracteres_entrada: textoExtraido.length,
           caracteres_resumo: resumoGerado.length,
           tempo_processamento: `${endTime - startTime}ms`,
-          modelo_usado: 'claude-3-5-sonnet-20241022'
+          modelo_usado: modelConfig.model,
+          plano_usuario: userPlan
         }
       }),
       {
@@ -342,7 +396,8 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
       JSON.stringify({ 
         success: false,
         error: 'Erro interno do servidor',
-        details: `Erro não tratado: ${error.message}`
+        details: `Erro não tratado: ${error.message}`,
+        fallbackMessage: 'Ocorreu um erro inesperado. Tente novamente mais tarde.'
       }),
       {
         status: 500,

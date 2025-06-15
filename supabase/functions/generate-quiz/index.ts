@@ -8,6 +8,48 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Função para obter configuração do modelo baseada no plano
+function getModelConfigForPlan(plan: string) {
+  switch (plan) {
+    case 'free':
+      return {
+        provider: 'openai',
+        model: 'gpt-3.5-turbo'
+      };
+    case 'pro':
+    case 'edu':
+      return {
+        provider: 'openai',
+        model: 'gpt-4o'
+      };
+    default:
+      return {
+        provider: 'openai',
+        model: 'gpt-3.5-turbo'
+      };
+  }
+}
+
+async function getUserPlan(supabase: any, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('uso_usuarios')
+      .select('plano')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Erro ao buscar plano do usuário:', error);
+      return 'free'; // Fallback para plano free
+    }
+    
+    return data?.plano || 'free';
+  } catch (error) {
+    console.error('Erro ao buscar plano:', error);
+    return 'free';
+  }
+}
+
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -20,7 +62,7 @@ serve(async (req) => {
   try {
     console.log("🎯 Iniciando geração de quiz...");
     
-    const { resumo_id, texto_resumo } = await req.json();
+    const { resumo_id, texto_resumo, userId } = await req.json();
     
     if (!resumo_id || !texto_resumo) {
       console.error("❌ Parâmetros faltando:", { resumo_id: !!resumo_id, texto_resumo: !!texto_resumo });
@@ -32,6 +74,15 @@ serve(async (req) => {
       throw new Error("Chave da API OpenAI não configurada. Entre em contato com o administrador.");
     }
 
+    // Inicializar Supabase para buscar plano do usuário
+    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    // Buscar plano do usuário
+    const userPlan = await getUserPlan(supabaseAdmin, userId);
+    const modelConfig = getModelConfigForPlan(userPlan);
+    
+    console.log("👤 Plano do usuário:", userPlan);
+    console.log("🤖 Modelo selecionado:", modelConfig);
     console.log("✅ Parâmetros recebidos:", { resumo_id, texto_length: texto_resumo.length });
 
     // PROMPT melhorado para IA gerar as questões
@@ -59,26 +110,41 @@ Resumo:
 ${texto_resumo}`;
 
     console.log("🚀 Fazendo chamada para OpenAI...");
+    console.log("📝 Modelo utilizado:", modelConfig.model);
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { 
-            role: "system", 
-            content: "Você é um especialista em criar quizzes educativos para crianças. Responda SEMPRE com JSON válido no formato exato solicitado." 
-          },
-          { role: "user", content: openaiPrompt },
-        ],
-        max_tokens: 3000,
-        temperature: 0.7,
-      }),
-    });
+    let openaiResponse;
+    try {
+      openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: modelConfig.model,
+          messages: [
+            { 
+              role: "system", 
+              content: "Você é um especialista em criar quizzes educativos para crianças. Responda SEMPRE com JSON válido no formato exato solicitado." 
+            },
+            { role: "user", content: openaiPrompt },
+          ],
+          max_tokens: 3000,
+          temperature: 0.7,
+        }),
+      });
+    } catch (error) {
+      console.error("❌ Erro de conexão com OpenAI:", error);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.",
+        fallbackMessage: "Nosso serviço de IA está temporariamente indisponível. Por favor, tente novamente mais tarde.",
+        details: "Erro de conectividade com OpenAI"
+      }), {
+        status: 503, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log("📡 Status da resposta OpenAI:", openaiResponse.status);
 
@@ -86,13 +152,26 @@ ${texto_resumo}`;
       const errorText = await openaiResponse.text();
       console.error("❌ Erro da OpenAI:", openaiResponse.status, errorText);
       
+      let userMessage = "Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.";
+      let fallbackMessage = "Nosso serviço de IA está temporariamente indisponível. Por favor, tente novamente mais tarde.";
+      
       if (openaiResponse.status === 429) {
-        throw new Error("Limite de uso da API OpenAI atingido. Aguarde alguns minutos ou verifique seus créditos.");
+        userMessage = "Limite de uso da API OpenAI atingido. Aguarde alguns minutos ou verifique seus créditos.";
+        fallbackMessage = "Muitas solicitações foram feitas. Aguarde alguns minutos e tente novamente.";
       } else if (openaiResponse.status === 401) {
-        throw new Error("Chave da API OpenAI inválida. Verifique a configuração.");
-      } else {
-        throw new Error(`Erro na API OpenAI (${openaiResponse.status}): ${errorText}`);
+        userMessage = "Problema de autenticação com o serviço de IA. Verifique a configuração.";
+        fallbackMessage = "Há um problema de configuração. Entre em contato com o administrador.";
       }
+      
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: userMessage,
+        fallbackMessage: fallbackMessage,
+        details: `Erro na API OpenAI (${openaiResponse.status}): ${errorText}`
+      }), {
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const result = await openaiResponse.json();
@@ -164,7 +243,6 @@ ${texto_resumo}`;
 
     // Salvando no Supabase
     console.log("💾 Salvando questões no Supabase...");
-    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
     let savedQuestions = [];
     for (let i = 0; i < questions.length; i++) {
@@ -193,7 +271,12 @@ ${texto_resumo}`;
     return new Response(JSON.stringify({ 
       success: true, 
       quizzes: savedQuestions,
-      message: `🎉 Quiz criado com sucesso! ${savedQuestions.length} perguntas prontas para você!`
+      message: `🎉 Quiz criado com sucesso! ${savedQuestions.length} perguntas prontas para você!`,
+      stats: {
+        modelo_usado: modelConfig.model,
+        plano_usuario: userPlan,
+        total_questoes: savedQuestions.length
+      }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -202,12 +285,17 @@ ${texto_resumo}`;
     console.error("💥 Erro na função generate-quiz:", e);
     
     let userMessage = "Erro inesperado ao gerar o quiz";
+    let fallbackMessage = "Houve um problema ao gerar o quiz. Tente novamente mais tarde.";
+    
     if (e.message.includes("Limite de uso")) {
       userMessage = "Limite da API atingido. Aguarde alguns minutos e tente novamente.";
+      fallbackMessage = "Muitas solicitações foram feitas. Aguarde alguns minutos e tente novamente.";
     } else if (e.message.includes("Chave da API")) {
       userMessage = "Problema com a configuração da API. Entre em contato com o administrador.";
+      fallbackMessage = "Há um problema de configuração. Entre em contato com o administrador.";
     } else if (e.message.includes("obrigatórios")) {
       userMessage = "Dados do resumo não encontrados. Tente novamente.";
+      fallbackMessage = "Não foi possível encontrar os dados necessários. Tente novamente.";
     } else if (e.message) {
       userMessage = e.message;
     }
@@ -215,6 +303,7 @@ ${texto_resumo}`;
     return new Response(JSON.stringify({ 
       success: false,
       error: userMessage,
+      fallbackMessage: fallbackMessage,
       details: "Verifique se há créditos na API OpenAI e tente novamente"
     }), {
       status: 500, 
