@@ -1,7 +1,8 @@
 
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target } from 'lucide-react';
+import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import { designColors } from '@/utils/designSystem';
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -22,10 +24,10 @@ const Header = () => {
   };
 
   const navigationItems = [
-    { icon: BookOpen, label: 'Resumos', path: '/meus-resumos', emoji: '📚' },
-    { icon: Brain, label: 'Flashcards', path: '/meus-flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/historico-quiz', emoji: '🎯' },
-    { icon: Trophy, label: 'Progresso', path: '/progresso', emoji: '🏆' },
+    { icon: BookOpen, label: 'Resumos', path: '/summaries', emoji: '📚' },
+    { icon: Brain, label: 'Flashcards', path: '/flashcards', emoji: '🧠' },
+    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
+    { icon: Trophy, label: 'Progresso', path: '/progress', emoji: '🏆' },
   ];
 
   return (
@@ -63,6 +65,18 @@ const Header = () => {
                 <span className="text-sm font-medium">{item.emoji} {item.label}</span>
               </Button>
             ))}
+            
+            {/* Admin Panel Link */}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/admin')}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all"
+              >
+                <Shield className="h-4 w-4" />
+                <span className="text-sm font-medium">⚡ Admin</span>
+              </Button>
+            )}
           </nav>
 
           {/* User Menu */}
@@ -87,6 +101,18 @@ const Header = () => {
                       <span>{item.emoji} {item.label}</span>
                     </DropdownMenuItem>
                   ))}
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => navigate('/admin')}
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-red-50 text-red-600"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>⚡ Admin Panel</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -112,6 +138,15 @@ const Header = () => {
                   <Settings className="h-4 w-4" />
                   <span>⚙️ Configurações</span>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/admin')}
+                    className="flex items-center space-x-2 cursor-pointer hover:bg-red-50 text-red-600"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>⚡ Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="bg-purple-200" />
                 <DropdownMenuItem 
                   onClick={handleSignOut}

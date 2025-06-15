@@ -283,6 +283,7 @@ export type Database = {
         Row: {
           arquivo_original_nome: string
           data_upload: string
+          file_size: number | null
           id: string
           imagem_url: string
           texto_extraido: string | null
@@ -291,6 +292,7 @@ export type Database = {
         Insert: {
           arquivo_original_nome: string
           data_upload?: string
+          file_size?: number | null
           id?: string
           imagem_url: string
           texto_extraido?: string | null
@@ -299,6 +301,7 @@ export type Database = {
         Update: {
           arquivo_original_nome?: string
           data_upload?: string
+          file_size?: number | null
           id?: string
           imagem_url?: string
           texto_extraido?: string | null
@@ -348,6 +351,7 @@ export type Database = {
           data_ultimo_reset: string
           flashcards_gerados: number
           id: string
+          is_admin: boolean
           plano: string
           quizzes_realizados: number
           updated_at: string
@@ -359,6 +363,7 @@ export type Database = {
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
+          is_admin?: boolean
           plano?: string
           quizzes_realizados?: number
           updated_at?: string
@@ -370,6 +375,7 @@ export type Database = {
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
+          is_admin?: boolean
           plano?: string
           quizzes_realizados?: number
           updated_at?: string
@@ -387,6 +393,40 @@ export type Database = {
         Args: { target_user_id: string; new_plan: string }
         Returns: boolean
       }
+      admin_delete_user_data: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      admin_promote_user: {
+        Args: { target_email: string }
+        Returns: boolean
+      }
+      admin_reset_user_usage: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_users: number
+          total_storage_mb: number
+          active_users_7_days: number
+        }[]
+      }
+      get_all_users_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+          plano: string
+          created_at: string
+          uploads_realizados: number
+          flashcards_gerados: number
+          quizzes_realizados: number
+          is_admin: boolean
+          storage_mb: number
+        }[]
+      }
       get_user_storage_usage: {
         Args: { user_uuid: string }
         Returns: {
@@ -397,6 +437,10 @@ export type Database = {
       }
       is_admin: {
         Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      is_current_user_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       reset_monthly_usage: {
