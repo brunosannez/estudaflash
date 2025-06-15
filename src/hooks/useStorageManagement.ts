@@ -29,8 +29,18 @@ export const useStorageManagement = () => {
         throw error;
       }
       
-      if (data && data.length > 0) {
-        setStorageUsage(data[0]);
+      if (data && Array.isArray(data) && data.length > 0) {
+        setStorageUsage({
+          total_files: Number(data[0].total_files),
+          total_size_bytes: Number(data[0].total_size_bytes),
+          total_size_mb: Number(data[0].total_size_mb),
+        });
+      } else {
+        setStorageUsage({
+          total_files: 0,
+          total_size_bytes: 0,
+          total_size_mb: 0,
+        });
       }
     } catch (error) {
       console.error('Erro ao buscar dados de storage:', error);

@@ -387,6 +387,14 @@ export type Database = {
         Args: { target_user_id: string; new_plan: string }
         Returns: boolean
       }
+      get_user_storage_usage: {
+        Args: { user_uuid: string }
+        Returns: {
+          total_files: number
+          total_size_bytes: number
+          total_size_mb: number
+        }[]
+      }
       is_admin: {
         Args: { user_uuid?: string }
         Returns: boolean

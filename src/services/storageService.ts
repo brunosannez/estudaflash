@@ -80,7 +80,15 @@ export class StorageService {
         throw error;
       }
       
-      return data?.[0] || { total_files: 0, total_size_bytes: 0, total_size_mb: 0 };
+      if (data && Array.isArray(data) && data.length > 0) {
+        return {
+          total_files: Number(data[0].total_files),
+          total_size_bytes: Number(data[0].total_size_bytes),
+          total_size_mb: Number(data[0].total_size_mb),
+        };
+      }
+      
+      return { total_files: 0, total_size_bytes: 0, total_size_mb: 0 };
     } catch (error) {
       console.error('❌ Error getting storage usage:', error);
       throw error;
