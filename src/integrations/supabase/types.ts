@@ -133,6 +133,42 @@ export type Database = {
           },
         ]
       }
+      guardians: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          relation_to_student: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone: string
+          relation_to_student: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          relation_to_student?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
@@ -412,6 +448,39 @@ export type Database = {
           id?: string
           imagem_url?: string
           texto_extraido?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          date_of_birth: string
+          full_name: string
+          id: string
+          is_minor: boolean
+          school_year: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth: string
+          full_name: string
+          id?: string
+          is_minor?: boolean
+          school_year?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string
+          full_name?: string
+          id?: string
+          is_minor?: boolean
+          school_year?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

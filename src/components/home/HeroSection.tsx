@@ -1,50 +1,76 @@
 
+import { ArrowRight, BookOpen, Brain, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { designColors } from '@/utils/designSystem';
 
 const HeroSection = () => {
   return (
-    <section className={`py-8 sm:py-12 md:py-20 ${designColors.responsive.containerPadding} relative z-10`}>
-      <div className="container mx-auto text-center">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-4 sm:mb-8">
-            <span className="text-4xl sm:text-6xl md:text-8xl animate-bounce-gentle inline-block pointer-events-none" style={{ animationDelay: '0s' }}>🎨</span>
-            <span className="text-4xl sm:text-6xl md:text-8xl animate-wiggle inline-block mx-2 sm:mx-4 pointer-events-none" style={{ animationDelay: '0.3s' }}>📚</span>
-            <span className="text-4xl sm:text-6xl md:text-8xl animate-bounce-gentle inline-block pointer-events-none" style={{ animationDelay: '0.6s' }}>🧠</span>
+    <section className="relative py-20 overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 opacity-80" />
+      <div className="absolute top-10 left-10 w-32 h-32 bg-purple-200 rounded-full opacity-20 animate-pulse" />
+      <div className="absolute bottom-10 right-10 w-24 h-24 bg-blue-200 rounded-full opacity-20 animate-pulse delay-1000" />
+      <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-pink-200 rounded-full opacity-20 animate-pulse delay-500" />
+      
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        <div className="max-w-4xl mx-auto">
+          {/* Floating icons */}
+          <div className="flex justify-center space-x-8 mb-8">
+            <div className="bg-white p-3 rounded-full shadow-lg animate-bounce">
+              <BookOpen className="w-8 h-8 text-purple-600" />
+            </div>
+            <div className="bg-white p-3 rounded-full shadow-lg animate-bounce delay-100">
+              <Brain className="w-8 h-8 text-blue-600" />
+            </div>
+            <div className="bg-white p-3 rounded-full shadow-lg animate-bounce delay-200">
+              <Trophy className="w-8 h-8 text-pink-600" />
+            </div>
           </div>
+
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+            Transforme seus estudos com{' '}
+            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Inteligência Artificial
+            </span>
+          </h1>
           
-          <h2 className={`${designColors.responsive.heroTitle} font-fredoka text-transparent bg-clip-text bg-gradient-to-r from-gray-700 via-purple-600 to-cyan-600 mb-4 sm:mb-8 leading-tight`}>
-            Transforme fotos em
-            <br />
-            <span className="text-green-500">diversão educativa!</span>
-          </h2>
-          
-          <p className={`${designColors.responsive.heroText} text-gray-700 mb-6 sm:mb-10 leading-relaxed font-nunito font-semibold bg-white/70 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border border-cyan-200`}>
-            🌈 Tire foto dos seus livros e cadernos! Nossa IA mágica cria jogos, 
-            quizzes coloridos e cartões super divertidos para você aprender brincando! 🎮✨
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+            Crie resumos inteligentes, flashcards personalizados e quizzes adaptativos 
+            em segundos. Estude de forma mais eficiente e divertida! 🚀
           </p>
           
-          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6 justify-center relative z-50">
-            <Link to="/signup" className="relative z-50">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/new-signup">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white text-sm sm:text-lg md:text-2xl font-fredoka px-6 py-3 sm:px-12 sm:py-6 rounded-full shadow-2xl border-4 border-white/50 transform hover:scale-105 transition-all relative z-50"
-                style={{ pointerEvents: 'auto' }}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
               >
-                🚀 Começar a Diversão - GRÁTIS!
+                Começar Gratuitamente
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/login" className="relative z-50">
+            
+            <Link to="/login">
               <Button 
-                size="lg" 
                 variant="outline" 
-                className="text-sm sm:text-lg md:text-2xl font-fredoka px-6 py-3 sm:px-12 sm:py-6 rounded-full bg-white/90 border-4 border-cyan-300 text-gray-700 hover:bg-cyan-50 shadow-xl transform hover:scale-105 transition-all relative z-50"
-                style={{ pointerEvents: 'auto' }}
+                size="lg"
+                className="px-8 py-4 text-lg font-semibold rounded-full border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-all duration-300"
               >
-                🎯 Já tenho conta!
+                Já tenho conta
               </Button>
             </Link>
+          </div>
+          
+          <div className="mt-12 text-sm text-gray-500 flex items-center justify-center space-x-4">
+            <span className="flex items-center">
+              ✅ Grátis para começar
+            </span>
+            <span className="flex items-center">
+              ✅ Sem cartão de crédito
+            </span>
+            <span className="flex items-center">
+              ✅ Resultados em segundos
+            </span>
           </div>
         </div>
       </div>
