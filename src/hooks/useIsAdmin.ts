@@ -11,6 +11,7 @@ export const useIsAdmin = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
+        console.log('🔍 Nenhum usuário logado, definindo isAdmin como false');
         setIsAdmin(false);
         setLoading(false);
         return;
@@ -38,7 +39,13 @@ export const useIsAdmin = () => {
       }
     };
 
-    checkAdminStatus();
+    // Só verificar se temos um usuário válido
+    if (user) {
+      checkAdminStatus();
+    } else {
+      setIsAdmin(false);
+      setLoading(false);
+    }
   }, [user]);
 
   return { isAdmin, loading };

@@ -64,6 +64,11 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    console.log('🚀 Navegando para:', path);
+    navigate(path);
+  };
+
   const isActiveRoute = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
@@ -78,7 +83,7 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
           <SidebarHeader className="p-4">
             <div 
               className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-purple-50 transition-colors"
-              onClick={() => navigate('/')}
+              onClick={() => handleNavigation('/')}
             >
               <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-lg">🎓</span>
@@ -95,7 +100,7 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigation(item.path)}
                     isActive={isActiveRoute(item.path)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
                   >
@@ -116,7 +121,7 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
                   {adminMenuItems.map((item) => (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton
-                        onClick={() => navigate(item.path)}
+                        onClick={() => handleNavigation(item.path)}
                         isActive={isActiveRoute(item.path)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-red-700 hover:bg-red-50"
                       >
