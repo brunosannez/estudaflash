@@ -4,6 +4,7 @@ import { useUsageLimit } from '@/hooks/useUsageLimit';
 import { useStorageManagement } from '@/hooks/useStorageManagement';
 import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
 import { useDataSync } from '@/hooks/useDataSync';
+import { PlanType } from '@/types/plans';
 import DashboardUsageHeader from './DashboardUsageHeader';
 import DashboardUsageItems from './DashboardUsageItems';
 import DashboardUsageFooter from './DashboardUsageFooter';
@@ -49,10 +50,13 @@ const DashboardUsageOverview = () => {
     );
   }
 
+  // Safely convert plano string to PlanType
+  const planType = (usageData.plano as PlanType) || 'free';
+
   return (
     <Card>
       <DashboardUsageHeader 
-        planType={usageData.plano}
+        planType={planType}
         syncing={syncing}
       />
       <CardContent className="space-y-4">
@@ -65,7 +69,7 @@ const DashboardUsageOverview = () => {
         />
         
         <DashboardUsageFooter
-          planType={usageData.plano}
+          planType={planType}
           currentLevel={progress?.current_level || 1}
           storageUsage={storageUsage}
           onRefresh={handleRefresh}

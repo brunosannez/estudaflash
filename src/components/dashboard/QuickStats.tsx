@@ -4,7 +4,7 @@ import { Upload, Brain, TestTube, Trophy } from 'lucide-react';
 import { useUsageLimit } from '@/hooks/useUsageLimit';
 import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
 import { useDataSync } from '@/hooks/useDataSync';
-import { PLAN_CONFIGS } from '@/types/plans';
+import { PLAN_CONFIGS, PlanType } from '@/types/plans';
 import QuickStatsHeader from './QuickStatsHeader';
 import QuickStatsLoading from './QuickStatsLoading';
 import QuickStatsEmpty from './QuickStatsEmpty';
@@ -37,8 +37,10 @@ const QuickStats = () => {
     return <QuickStatsEmpty onRefresh={handleRefresh} syncing={syncing} hasInitialized={hasInitialized} />;
   }
 
-  const planConfig = PLAN_CONFIGS[usageData.plano];
-  const isUnlimited = usageData.plano === 'edu';
+  // Safely convert plano string to PlanType
+  const planType = (usageData.plano as PlanType) || 'free';
+  const planConfig = PLAN_CONFIGS[planType];
+  const isUnlimited = planType === 'edu';
 
   const usageItems = [
     {
@@ -97,7 +99,7 @@ const QuickStats = () => {
         <QuickStatsActions 
           onRefresh={handleRefresh}
           syncing={syncing}
-          plan={usageData.plano}
+          plan={planType}
           currentLevel={progress?.current_level || 1}
         />
       </CardContent>

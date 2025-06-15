@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,10 +38,19 @@ export const useSyncManager = () => {
       // 3. Criar ou atualizar registro
       if (!existingUsage) {
         console.log('📝 Criando novo registro de uso...');
+        
+        // Get Free plan ID
+        const { data: freePlan } = await supabase
+          .from('plans')
+          .select('id')
+          .eq('name', 'Free')
+          .single();
+
         const { error: insertError } = await supabase
           .from('uso_usuarios')
           .insert({
             user_id: userId,
+            plan_id: freePlan?.id || '',
             uploads_realizados: realCounts.uploads,
             flashcards_gerados: realCounts.flashcards,
             quizzes_realizados: realCounts.quizzes,
@@ -115,7 +125,7 @@ export const useSyncManager = () => {
           .from('uso_usuarios')
           .insert({
             user_id: userId,
-            plan_id: freePlan?.id,
+            plan_id: freePlan?.id || '',
             uploads_realizados: 0,
             flashcards_gerados: 0,
             quizzes_realizados: 0,

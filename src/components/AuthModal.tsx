@@ -18,29 +18,33 @@ const AuthModal = ({ children }: AuthModalProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSignIn = async () => {
     setLoading(true);
-    const success = await signInWithEmail(email, password);
-    if (success) {
+    try {
+      await signIn(email, password);
       setOpen(false);
       setEmail('');
       setPassword('');
       navigate('/');
+    } catch (error) {
+      console.error('Sign in error:', error);
     }
     setLoading(false);
   };
 
   const handleSignUp = async () => {
     setLoading(true);
-    const success = await signUpWithEmail(email, password);
-    if (success) {
+    try {
+      await signUp(email, password);
       setOpen(false);
       setEmail('');
       setPassword('');
       navigate('/');
+    } catch (error) {
+      console.error('Sign up error:', error);
     }
     setLoading(false);
   };

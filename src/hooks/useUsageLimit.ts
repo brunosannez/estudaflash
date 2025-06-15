@@ -4,6 +4,7 @@ import { useUsageData } from '@/hooks/useUsageData';
 import { useUsageValidation } from '@/hooks/useUsageValidation';
 import { useUpgradeModal } from '@/hooks/useUpgradeModal';
 import { useUsagePercentage } from '@/hooks/useUsagePercentage';
+import { PlanType } from '@/types/plans';
 
 export const useUsageLimit = () => {
   const { usageData, loading, refreshUsage } = useUsageData();
@@ -15,10 +16,12 @@ export const useUsageLimit = () => {
     const canProceed = await baseCheckCanProceed(actionType);
     
     if (!canProceed && usageData) {
-      // Se não pode proceder, abrir modal de upgrade
+      // If not able to proceed, open upgrade modal
       const result = await UsageLimitService.checkLimit(usageData.user_id, actionType);
       if (!result.canProceed) {
-        openUpgradeModal(actionType, result.plan);
+        // Safely convert plano string to PlanType
+        const planType = (result.plan as PlanType) || 'free';
+        openUpgradeModal(actionType, planType);
       }
     }
     
