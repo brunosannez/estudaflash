@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_activities: {
         Row: {
           activity_date: string
@@ -362,6 +383,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_change_user_plan: {
+        Args: { target_user_id: string; new_plan: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined

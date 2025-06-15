@@ -1,94 +1,42 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
+import MySummaries from "./pages/MySummaries";
 import Resumo from "./pages/Resumo";
+import MyFlashcards from "./pages/MyFlashcards";
+import Quiz from "./pages/Quiz";
+import QuizHistory from "./pages/QuizHistory";
+import MyProgress from "./pages/MyProgress";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import QuizPage from "@/pages/Quiz";
-import QuizHistory from "@/pages/QuizHistory";
-import MyProgress from "@/pages/MyProgress";
-import MySummaries from "@/pages/MySummaries";
-import MyFlashcards from "@/pages/MyFlashcards";
-import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const AppRoutes = () => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
+function App() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/home" element={<Home />} />
-      
-      {/* Protected routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Index />
-        </ProtectedRoute>
-      } />
-      <Route path="/resumo/:uploadId" element={
-        <ProtectedRoute>
-          <Resumo />
-        </ProtectedRoute>
-      } />
-      <Route path="/quiz/:resumoId" element={
-        <ProtectedRoute>
-          <QuizPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/quiz-history" element={
-        <ProtectedRoute>
-          <QuizHistory />
-        </ProtectedRoute>
-      } />
-      <Route path="/progresso" element={
-        <ProtectedRoute>
-          <MyProgress />
-        </ProtectedRoute>
-      } />
-      <Route path="/meus-resumos" element={
-        <ProtectedRoute>
-          <MySummaries />
-        </ProtectedRoute>
-      } />
-      <Route path="/meus-flashcards" element={
-        <ProtectedRoute>
-          <MyFlashcards />
-        </ProtectedRoute>
-      } />
-      
-      {/* Redirect logic */}
-      <Route path="*" element={
-        user ? <Navigate to="/" replace /> : <Navigate to="/home" replace />
-      } />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="min-h-screen">
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/summaries" element={<MySummaries />} />
+            <Route path="/resumo/:id" element={<Resumo />} />
+            <Route path="/flashcards" element={<MyFlashcards />} />
+            <Route path="/quiz/:resumoId" element={<Quiz />} />
+            <Route path="/quiz-history" element={<QuizHistory />} />
+            <Route path="/progress" element={<MyProgress />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+        <Toaster />
+      </Router>
+    </QueryClientProvider>
   );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+}
 
 export default App;

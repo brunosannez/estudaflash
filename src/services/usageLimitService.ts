@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { PlanType, PLAN_CONFIGS } from '@/types/plans';
 
 export interface UsageData {
   id: string;
@@ -8,7 +9,7 @@ export interface UsageData {
   flashcards_gerados: number;
   quizzes_realizados: number;
   data_ultimo_reset: string;
-  plano: string;
+  plano: PlanType;
 }
 
 export const USAGE_LIMITS = {
@@ -17,7 +18,12 @@ export const USAGE_LIMITS = {
     flashcards: 10,
     quizzes: 10,
   },
-  premium: {
+  pro: {
+    uploads: 100,
+    flashcards: 100,
+    quizzes: 100,
+  },
+  edu: {
     uploads: Infinity,
     flashcards: Infinity,
     quizzes: Infinity,
@@ -86,7 +92,8 @@ export class UsageLimitService {
     canProceed: boolean;
     currentUsage: number;
     limit: number;
-    plan: string;
+    plan: PlanType;
+    isNearLimit: boolean;
   }> {
     try {
       const usage = await this.getUserUsage(userId);
@@ -94,19 +101,21 @@ export class UsageLimitService {
         throw new Error('Não foi possível obter dados de uso');
       }
 
-      const plan = usage.plano as keyof typeof USAGE_LIMITS;
+      const plan = usage.plano as PlanType;
       const limits = USAGE_LIMITS[plan] || USAGE_LIMITS.free;
       
       const currentUsage = this.getCurrentUsageByType(usage, actionType);
       const limit = limits[actionType];
       
       const canProceed = currentUsage < limit;
+      const isNearLimit = limit !== Infinity && currentUsage >= limit * 0.9;
 
       console.log(`🔍 Verificação de limite - ${actionType}:`, {
         currentUsage,
         limit,
         canProceed,
-        plan: usage.plano
+        plan: usage.plano,
+        isNearLimit
       });
 
       return {
@@ -114,6 +123,7 @@ export class UsageLimitService {
         currentUsage,
         limit: limit === Infinity ? -1 : limit,
         plan: usage.plano,
+        isNearLimit,
       };
     } catch (error) {
       console.error('❌ Erro ao verificar limite:', error);
@@ -133,13 +143,11 @@ export class UsageLimitService {
 
       const field = fieldMap[actionType];
       
-      // Buscar uso atual
       const currentUsage = await this.getUserUsage(userId);
       if (!currentUsage) {
         throw new Error('Usuário não encontrado');
       }
 
-      // Incrementar usando update manual
       const { error } = await supabase
         .from('uso_usuarios')
         .update({
@@ -173,13 +181,31 @@ export class UsageLimitService {
     }
   }
 
-  static getLimitMessage(actionType: ActionType): string {
-    const messages = {
-      uploads: 'Você atingiu o limite de uploads do plano gratuito. Faça upgrade para continuar.',
-      flashcards: 'Você atingiu o limite de flashcards do plano gratuito. Faça upgrade para continuar.',
-      quizzes: 'Você atingiu o limite de quizzes do plano gratuito. Faça upgrade para continuar.',
+  static getLimitMessage(actionType: ActionType, plan: PlanType): string {
+    const actionNames = {
+      uploads: 'uploads',
+      flashcards: 'flashcards',
+      quizzes: 'quizzes',
     };
     
-    return messages[actionType];
+    const planLimits = USAGE_LIMITS[plan];
+    const currentLimit = planLimits[actionType];
+    
+    if (plan === 'free') {
+      return `Você atingiu o limite de ${currentLimit} ${actionNames[actionType]} do plano gratuito.`;
+    } else if (plan === 'pro') {
+      return `Você atingiu o limite de ${currentLimit} ${actionNames[actionType]} do plano Pro.`;
+    } else {
+      return `Limite do plano EDU atingido para ${actionNames[actionType]}.`;
+    }
+  }
+
+  static getUpgradeMessage(plan: PlanType): string {
+    if (plan === 'free') {
+      return 'Assine o plano Pro para ter 10x mais limite ou EDU para acesso ilimitado!';
+    } else if (plan === 'pro') {
+      return 'Considere o plano EDU para acesso completamente ilimitado!';
+    }
+    return '';
   }
 }
