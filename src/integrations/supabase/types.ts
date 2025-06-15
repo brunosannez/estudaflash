@@ -409,6 +409,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      check_user_is_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>
         Returns: {

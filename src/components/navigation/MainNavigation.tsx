@@ -39,7 +39,12 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
+
+  // Logs de debug para o MainNavigation
+  console.log('🧭 MainNavigation: user:', user?.email);
+  console.log('🔐 MainNavigation: isAdmin:', isAdmin);
+  console.log('⏳ MainNavigation: adminLoading:', adminLoading);
 
   const mainMenuItems = [
     { icon: Home, label: 'Dashboard', path: '/', emoji: '🏠' },
@@ -76,6 +81,9 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
     return location.pathname.startsWith(path);
   };
 
+  // Log quando o menu admin deve aparecer
+  console.log('🎨 MainNavigation: Deve mostrar menu admin?', isAdmin && !adminLoading);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -111,8 +119,10 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               ))}
             </SidebarMenu>
 
-            {isAdmin && (
+            {/* Menu de Administração - com logs de debug */}
+            {isAdmin && !adminLoading && (
               <>
+                {console.log('🎯 MainNavigation: Renderizando menu admin!')}
                 <SidebarSeparator className="my-4" />
                 <div className="px-3 py-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Administração</p>
@@ -133,6 +143,14 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
                 </SidebarMenu>
               </>
             )}
+
+            {/* Debug de loading do admin */}
+            {adminLoading && (
+              <div className="px-3 py-2 text-xs text-gray-500">
+                {console.log('⏳ MainNavigation: Carregando status admin...')}
+                Verificando permissões...
+              </div>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="p-4">
@@ -142,6 +160,11 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
                 <span className="text-sm font-medium text-gray-700 truncate">
                   {user?.email?.split('@')[0] || 'Usuário'}
                 </span>
+                {isAdmin && (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                    Admin
+                  </span>
+                )}
               </div>
               <Button
                 variant="outline"
