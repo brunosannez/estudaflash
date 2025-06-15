@@ -19,7 +19,7 @@ const ProgressOverview = () => {
 
   const stats = getStats();
 
-  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats });
+  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats, progress, todayActivity });
 
   if (loading || !isInitialized) {
     return (
@@ -43,6 +43,9 @@ const ProgressOverview = () => {
         <div className="text-center space-y-4">
           <div className="text-6xl">🎮</div>
           <p className="text-lg font-semibold text-gray-600">Comece a estudar para ver seu progresso!</p>
+          <div className="text-sm text-gray-500 mb-4">
+            Complete flashcards ou quizzes para ganhar XP e começar seu streak
+          </div>
           <div className="flex gap-2 justify-center">
             <Button 
               onClick={refreshProgress}
@@ -78,7 +81,7 @@ const ProgressOverview = () => {
                 Progresso sincronizado em tempo real
               </p>
               <p className="text-xs text-green-600">
-                Baseado em todas as suas atividades na plataforma
+                Baseado em {progress?.total_xp || 0} XP de todas as suas atividades
               </p>
             </div>
           </div>
@@ -87,9 +90,10 @@ const ProgressOverview = () => {
             variant="outline"
             size="sm"
             className="flex items-center gap-2 text-green-700 border-green-300 hover:bg-green-100"
+            disabled={loading}
           >
-            <RotateCcw className="h-3 w-3" />
-            Atualizar
+            <RotateCcw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Atualizando...' : 'Atualizar'}
           </Button>
         </div>
       </div>
@@ -104,7 +108,7 @@ const ProgressOverview = () => {
         />
         <StatsCard
           title="Streak Atual"
-          value={`${stats.currentStreak} dias`}
+          value={stats.currentStreak > 0 ? `${stats.currentStreak} dias` : 'Inicie hoje!'}
           icon={Flame}
           gradient="bg-gradient-to-br from-red-500 to-pink-600"
         />
@@ -135,8 +139,9 @@ const ProgressOverview = () => {
               onClick={refreshProgress}
               variant="ghost"
               size="sm"
+              disabled={loading}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -175,7 +180,7 @@ const ProgressOverview = () => {
                 <div className="text-xs text-gray-500">Dias Atuais</div>
               </div>
               <div className="text-3xl">
-                {stats.currentStreak >= 7 ? '🔥' : stats.currentStreak >= 3 ? '⚡' : '💫'}
+                {stats.currentStreak >= 7 ? '🔥' : stats.currentStreak >= 3 ? '⚡' : stats.currentStreak >= 1 ? '💫' : '😴'}
               </div>
               <div className="text-center">
                 <div className="text-xl font-bold text-gray-600">{stats.longestStreak}</div>
@@ -203,10 +208,15 @@ const ProgressOverview = () => {
               </div>
             </div>
 
-            {stats.todayXp > 0 && (
+            {stats.todayXp > 0 ? (
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-3 rounded-lg text-center">
                 <div className="font-bold">🎉 {stats.todayXp} XP ganhos hoje!</div>
                 <div className="text-sm opacity-90">Continue assim!</div>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-gray-400 to-gray-500 text-white p-3 rounded-lg text-center">
+                <div className="font-bold">💪 Comece hoje mesmo!</div>
+                <div className="text-sm opacity-90">Faça um flashcard ou quiz para ganhar XP</div>
               </div>
             )}
 

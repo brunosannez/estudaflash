@@ -62,7 +62,7 @@ export const useProgressSync = () => {
       // 3. Calcular nível baseado no XP total
       const currentLevel = calculateLevel(totalXP);
 
-      // 4. Calcular streak real baseado em atividades
+      // 4. Calcular streak real baseado em atividades (CORRIGIDO)
       const streak = await calculateRealStreak(user.id);
 
       // 5. Buscar ou criar progresso do usuário
@@ -103,7 +103,7 @@ export const useProgressSync = () => {
         updatedProgress = data;
       }
 
-      // 6. Atualizar atividade de hoje
+      // 6. Atualizar atividade de hoje (CORRIGIDO)
       const todayStats = await calculateTodayStats(user.id);
       const { data: existingActivity } = await supabase
         .from('daily_activities')
@@ -178,6 +178,7 @@ export const useProgressSync = () => {
     return Math.floor((xp - 300) / 200) + 4;
   };
 
+  // CORRIGIDO: Cálculo de streak baseado em dias consecutivos
   const calculateRealStreak = async (userId: string) => {
     try {
       // Buscar todas as datas com atividades
@@ -208,20 +209,28 @@ export const useProgressSync = () => {
         return { current: 0, longest: 0, lastActivity: null };
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
       let currentStreak = 0;
       let longestStreak = 0;
-      let tempStreak = 0;
+      let tempStreak = 1; // Começa com 1 para a primeira data
 
-      // Calcular streak atual
-      for (let i = 0; i < sortedDates.length; i++) {
-        const date = sortedDates[i];
-        const expectedDate = new Date();
-        expectedDate.setDate(expectedDate.getDate() - i);
-        const expectedDateStr = expectedDate.toISOString().split('T')[0];
+      // Calcular streak atual (dias consecutivos até hoje ou ontem)
+      let checkDate = new Date(today);
+      
+      // Se não há atividade hoje, começar verificando ontem
+      if (!activityDates.has(todayStr)) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
 
-        if (date === expectedDateStr) {
+      // Verificar dias consecutivos para trás
+      for (let i = 0; i < 365; i++) { // Limite de 365 dias para evitar loop infinito
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+        
+        if (activityDates.has(checkDateStr)) {
           currentStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
         } else {
           break;
         }
@@ -234,7 +243,7 @@ export const useProgressSync = () => {
         } else {
           const currentDate = new Date(sortedDates[i]);
           const prevDate = new Date(sortedDates[i - 1]);
-          const diffDays = Math.abs((prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+          const diffDays = Math.floor((prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
           
           if (diffDays === 1) {
             tempStreak++;
@@ -257,30 +266,58 @@ export const useProgressSync = () => {
     }
   };
 
+  // CORRIGIDO: Cálculo preciso das estatísticas de hoje
   const calculateTodayStats = async (userId: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    
     try {
-      const [todayFlashcards, todayQuizAnswers] = await Promise.all([
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(todayStart);
+      todayEnd.setDate(todayEnd.getDate() + 1);
+      
+      const todayStartStr = todayStart.toISOString();
+      const todayEndStr = todayEnd.toISOString();
+      
+      console.log('📅 Calculating today stats from', todayStartStr, 'to', todayEndStr);
+      
+      const [todayFlashcards, todayQuizAnswers, todayQuizSessions] = await Promise.all([
         supabase
           .from('flashcard_reviews')
           .select('*')
           .eq('user_id', userId)
-          .gte('data_review', today)
-          .lt('data_review', `${today}T23:59:59`),
+          .gte('data_review', todayStartStr)
+          .lt('data_review', todayEndStr),
         supabase
           .from('quiz_respostas')
           .select('*')
           .eq('user_id', userId)
-          .gte('data_resposta', today)
-          .lt('data_resposta', `${today}T23:59:59`)
+          .gte('data_resposta', todayStartStr)
+          .lt('data_resposta', todayEndStr),
+        supabase
+          .from('quiz_sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .gte('created_at', todayStartStr)
+          .lt('created_at', todayEndStr)
       ]);
 
       const flashcards = todayFlashcards.data?.length || 0;
       const quizzes = todayQuizAnswers.data?.length || 0;
       const correctAnswers = todayQuizAnswers.data?.filter(a => a.acertou).length || 0;
       
-      const xp = (flashcards * 5) + (correctAnswers * 10) + ((quizzes - correctAnswers) * 2);
+      // Calcular XP de hoje
+      let xp = (flashcards * 5) + (correctAnswers * 10) + ((quizzes - correctAnswers) * 2);
+      
+      // Adicionar bônus de sessões completas
+      if (todayQuizSessions.data) {
+        todayQuizSessions.data.forEach(session => {
+          const accuracy = (session.correct_answers / session.total_questions) * 100;
+          if (accuracy === 100) xp += 50;
+          else if (accuracy >= 80) xp += 25;
+          else if (accuracy >= 60) xp += 10;
+        });
+      }
+
+      console.log('📊 Today stats calculated:', { flashcards, quizzes, correctAnswers, xp });
 
       return { flashcards, quizzes, correctAnswers, xp };
     } catch (error) {

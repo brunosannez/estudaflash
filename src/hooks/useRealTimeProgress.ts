@@ -23,13 +23,20 @@ export const useRealTimeProgress = () => {
 
       console.log('🔄 Fetching real-time progress for user:', user.id);
 
-      // Primeiro sincroniza dados históricos
+      // Sempre sincronizar dados históricos para garantir precisão
       const syncResult = await syncUserProgressFromHistory();
       
       if (syncResult.progress && syncResult.activity) {
         setProgress(syncResult.progress);
         setTodayActivity(syncResult.activity);
         setIsInitialized(true);
+        
+        console.log('✅ Progress loaded:', {
+          level: syncResult.progress.current_level,
+          xp: syncResult.progress.total_xp,
+          streak: syncResult.progress.current_streak,
+          todayXp: syncResult.activity.xp_earned
+        });
       }
 
     } catch (error) {
@@ -40,14 +47,17 @@ export const useRealTimeProgress = () => {
   };
 
   const getStats = (): GameStats | null => {
-    if (!progress || !todayActivity) return null;
+    if (!progress || !todayActivity) {
+      console.log('⚠️ No progress or activity data available for stats');
+      return null;
+    }
 
     try {
       const currentXp = progress.total_xp;
       const nextLevelXp = getXpForNextLevel(progress.current_level);
       const xpProgress = calculateXpProgress(currentXp, progress.current_level);
 
-      return {
+      const stats = {
         currentLevel: progress.current_level,
         currentXp,
         nextLevelXp,
@@ -63,6 +73,9 @@ export const useRealTimeProgress = () => {
         todayCorrectAnswers: todayActivity.quiz_correct_answers,
         todayXp: todayActivity.xp_earned
       };
+
+      console.log('📊 Stats generated:', stats);
+      return stats;
     } catch (error) {
       console.error('❌ Erro ao gerar estatísticas:', error);
       return null;
@@ -70,22 +83,29 @@ export const useRealTimeProgress = () => {
   };
 
   const refreshProgress = async () => {
+    console.log('🔄 Manual progress refresh triggered');
     await fetchCurrentProgress();
   };
 
-  // Auto-refresh a cada 30 segundos
+  // Carregar dados na inicialização
   useEffect(() => {
     fetchCurrentProgress();
+  }, []);
+
+  // Auto-refresh menos frequente para não sobrecarregar
+  useEffect(() => {
+    if (!isInitialized) return;
 
     const interval = setInterval(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user && !loading && !syncing) {
+        console.log('🔄 Auto-refresh triggered');
         await fetchCurrentProgress();
       }
-    }, 30000);
+    }, 60000); // 1 minuto ao invés de 30 segundos
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isInitialized, loading, syncing]);
 
   // Escutar mudanças em tempo real
   useEffect(() => {
@@ -105,7 +125,7 @@ export const useRealTimeProgress = () => {
             filter: `user_id=eq.${user.id}`
           }, 
           (payload) => {
-            console.log('🔄 Progress updated:', payload);
+            console.log('🔄 Progress updated via realtime:', payload);
             if (payload.new) {
               setProgress(payload.new as UserProgress);
             }
@@ -119,7 +139,7 @@ export const useRealTimeProgress = () => {
             filter: `user_id=eq.${user.id}`
           }, 
           (payload) => {
-            console.log('🔄 Activity updated:', payload);
+            console.log('🔄 Activity updated via realtime:', payload);
             if (payload.new) {
               setTodayActivity(payload.new as DailyActivity);
             }
@@ -133,8 +153,8 @@ export const useRealTimeProgress = () => {
             filter: `user_id=eq.${user.id}`
           }, 
           () => {
-            console.log('🔄 New flashcard review, refreshing...');
-            setTimeout(refreshProgress, 1000);
+            console.log('🔄 New flashcard review detected, refreshing...');
+            setTimeout(refreshProgress, 2000);
           }
         )
         .on('postgres_changes', 
@@ -145,8 +165,8 @@ export const useRealTimeProgress = () => {
             filter: `user_id=eq.${user.id}`
           }, 
           () => {
-            console.log('🔄 New quiz answer, refreshing...');
-            setTimeout(refreshProgress, 1000);
+            console.log('🔄 New quiz answer detected, refreshing...');
+            setTimeout(refreshProgress, 2000);
           }
         )
         .subscribe();
