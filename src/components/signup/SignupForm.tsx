@@ -25,6 +25,8 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
 
   const createUserUsageRecord = async (userId: string, planId: string) => {
     try {
+      console.log('Creating usage record for user:', userId, 'with plan:', planId);
+      
       const { error } = await supabase
         .from('uso_usuarios')
         .insert({
@@ -40,14 +42,24 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
         console.error('Error creating user usage record:', error);
         throw error;
       }
+      
+      console.log('Usage record created successfully');
     } catch (err) {
       console.error('Error in createUserUsageRecord:', err);
       throw err;
     }
   };
 
-  const getFreePlanId = async (): Promise<string | null> => {
+  const getValidPlanId = async (): Promise<string> => {
     try {
+      // Se já temos um plano selecionado válido, usar ele
+      if (selectedPlanId && selectedPlanId.trim() !== '') {
+        console.log('Using selected plan:', selectedPlanId);
+        return selectedPlanId;
+      }
+
+      // Caso contrário, buscar o plano Free
+      console.log('No plan selected, searching for Free plan...');
       const { data, error } = await supabase
         .from('plans')
         .select('id')
@@ -55,15 +67,29 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
         .eq('is_active', true)
         .single();
 
-      if (error) {
+      if (error || !data) {
         console.error('Error finding Free plan:', error);
-        return null;
+        // Se não encontrar o Free, pegar o primeiro plano ativo disponível
+        const { data: firstPlan, error: firstPlanError } = await supabase
+          .from('plans')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        if (firstPlanError || !firstPlan) {
+          throw new Error('Nenhum plano ativo encontrado no sistema');
+        }
+
+        console.log('Using first available plan:', firstPlan.id);
+        return firstPlan.id;
       }
 
-      return data?.id || null;
+      console.log('Using Free plan:', data.id);
+      return data.id;
     } catch (err) {
-      console.error('Error getting Free plan:', err);
-      return null;
+      console.error('Error getting valid plan ID:', err);
+      throw err;
     }
   };
 
@@ -82,24 +108,19 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
     setLoading(true);
     
     try {
-      // Ensure we have a valid plan ID
-      let finalPlanId = selectedPlanId;
+      // Garantir que temos um plano válido antes de prosseguir
+      const validPlanId = await getValidPlanId();
       
-      if (!finalPlanId) {
-        console.log('No plan selected, trying to get Free plan...');
-        const freePlanId = await getFreePlanId();
-        if (!freePlanId) {
-          toast({
-            title: "Erro de configuração",
-            description: "Não foi possível encontrar um plano válido. Tente novamente.",
-            variant: "destructive",
-          });
-          return;
-        }
-        finalPlanId = freePlanId;
+      if (!validPlanId) {
+        toast({
+          title: "Erro de configuração",
+          description: "Não foi possível determinar um plano válido. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      console.log('Creating user with plan ID:', finalPlanId);
+      console.log('Creating user with plan ID:', validPlanId);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -107,12 +128,13 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            plan_id: finalPlanId
+            plan_id: validPlanId
           }
         }
       });
 
       if (error) {
+        console.error('Auth signup error:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -130,17 +152,17 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
         return;
       }
 
-      // Create usage record immediately
-      await createUserUsageRecord(data.user.id, finalPlanId);
+      console.log('User created successfully:', data.user.id);
+
+      // Criar registro de uso imediatamente após criar o usuário
+      await createUserUsageRecord(data.user.id, validPlanId);
 
       if (!data.user.email_confirmed_at) {
-        // User needs email confirmation
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Verifique seu email para confirmar sua conta.",
         });
       } else {
-        // User is immediately confirmed
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Bem-vindo ao EstudoFácil AI!",
@@ -165,6 +187,9 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
       currency: 'BRL'
     }).format(price);
   };
+
+  // Verificar se temos planos carregados antes de permitir o cadastro
+  const canSignup = plans.length > 0 && !loading;
 
   return (
     <div className="lg:col-span-1">
@@ -228,10 +253,18 @@ const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
               </div>
             )}
 
+            {!canSignup && (
+              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-700">
+                  Carregando planos disponíveis...
+                </p>
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-2.5 relative z-20"
-              disabled={loading}
+              disabled={!canSignup}
               style={{ pointerEvents: 'auto' }}
             >
               {loading ? 'Criando conta...' : 'Criar Conta Grátis 🎉'}

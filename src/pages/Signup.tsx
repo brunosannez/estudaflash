@@ -12,12 +12,14 @@ const Signup = () => {
 
   // Set Free plan as default when plans are loaded
   useEffect(() => {
-    if (plans.length > 0 && !selectedPlanId) {
+    if (plans.length > 0) {
       const freePlan = plans.find(plan => plan.name.toLowerCase() === 'free');
-      if (freePlan) {
+      if (freePlan && !selectedPlanId) {
+        console.log('Setting default Free plan:', freePlan.id);
         setSelectedPlanId(freePlan.id);
-      } else {
+      } else if (!selectedPlanId) {
         // If no free plan, select the first available plan
+        console.log('No Free plan found, selecting first plan:', plans[0].id);
         setSelectedPlanId(plans[0].id);
       }
     }
@@ -30,22 +32,26 @@ const Signup = () => {
           <SignupHeader />
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <span className="ml-2">Carregando...</span>
+            <span className="ml-2">Carregando planos...</span>
           </div>
         </div>
       </SignupBackground>
     );
   }
 
-  // Don't render the form until we have plans loaded and a plan selected
-  if (!selectedPlanId && plans.length > 0) {
+  // Show error if no plans are available
+  if (plans.length === 0) {
     return (
       <SignupBackground>
         <div className="relative z-10 container mx-auto px-4 py-8">
           <SignupHeader />
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <span className="ml-2">Configurando planos...</span>
+            <div className="bg-red-50 p-6 rounded-lg border border-red-200 max-w-md">
+              <h3 className="text-red-800 font-medium mb-2">Erro de Configuração</h3>
+              <p className="text-red-600 text-sm">
+                Nenhum plano está disponível no momento. Por favor, tente novamente mais tarde.
+              </p>
+            </div>
           </div>
         </div>
       </SignupBackground>
