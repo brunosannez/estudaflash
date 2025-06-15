@@ -5,87 +5,32 @@ import { useToast } from "@/hooks/use-toast";
 import { UserProgress, DailyActivity, ActivityType, GameStats } from "@/types/gamification";
 import { GamificationService } from "@/services/gamificationService";
 import { getXpForNextLevel, calculateXpProgress } from "@/utils/gamificationUtils";
+import { useRealTimeProgress } from "./useRealTimeProgress";
 
 export const useGameification = () => {
-  const [progress, setProgress] = useState<UserProgress | null>(null);
-  const [todayActivity, setTodayActivity] = useState<DailyActivity | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
+  const realTimeProgress = useRealTimeProgress();
 
-  // Buscar progresso do usuário com tratamento robusto de erro
+  // Usar os dados do hook de tempo real como base
+  const [progress, setProgress] = useState<UserProgress | null>(realTimeProgress.progress);
+  const [todayActivity, setTodayActivity] = useState<DailyActivity | null>(realTimeProgress.todayActivity);
+  const [loading, setLoading] = useState(realTimeProgress.loading);
+  const [isInitialized, setIsInitialized] = useState(realTimeProgress.isInitialized);
+
+  // Sincronizar com os dados do hook de tempo real
+  useEffect(() => {
+    setProgress(realTimeProgress.progress);
+    setTodayActivity(realTimeProgress.todayActivity);
+    setLoading(realTimeProgress.loading);
+    setIsInitialized(realTimeProgress.isInitialized);
+  }, [realTimeProgress.progress, realTimeProgress.todayActivity, realTimeProgress.loading, realTimeProgress.isInitialized]);
+
+  // Buscar progresso do usuário
   const fetchUserProgress = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.log('No user found for gamification');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      console.log('🎮 Fetching gamification data for user:', user.id);
-      
-      // Buscar dados com retry em caso de falha
-      let progressData = null;
-      let activityData = null;
-      
-      try {
-        progressData = await GamificationService.fetchOrCreateUserProgress(user.id);
-        activityData = await GamificationService.fetchOrCreateDailyActivity(user.id);
-      } catch (error) {
-        console.error('❌ First attempt failed, retrying...', error);
-        // Retry uma vez
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        progressData = await GamificationService.fetchOrCreateUserProgress(user.id);
-        activityData = await GamificationService.fetchOrCreateDailyActivity(user.id);
-      }
-      
-      console.log('✅ Progress data loaded:', progressData);
-      console.log('✅ Activity data loaded:', activityData);
-      
-      setProgress(progressData);
-      setTodayActivity(activityData);
-      setIsInitialized(true);
-    } catch (error) {
-      console.error("❌ Erro crítico ao buscar dados de gamificação:", error);
-      
-      // Criar dados padrão em caso de erro crítico
-      const defaultProgress: UserProgress = {
-        id: 'temp',
-        user_id: user.id,
-        total_xp: 0,
-        current_level: 1,
-        current_streak: 0,
-        longest_streak: 0,
-        last_activity_date: null
-      };
-      
-      const defaultActivity: DailyActivity = {
-        id: 'temp',
-        user_id: user.id,
-        activity_date: new Date().toISOString().split('T')[0],
-        flashcards_reviewed: 0,
-        quizzes_completed: 0,
-        quiz_correct_answers: 0,
-        xp_earned: 0
-      };
-      
-      setProgress(defaultProgress);
-      setTodayActivity(defaultActivity);
-      setIsInitialized(true);
-      
-      toast({
-        title: "⚠️ Modo Offline",
-        description: "Usando dados temporários. Tente recarregar a página.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    await realTimeProgress.refreshProgress();
   };
 
-  // Adicionar XP com retry e fallback
+  // Adicionar XP com atualização em tempo real
   const addXP = async (xpAmount: number, activityType: ActivityType) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !progress || !todayActivity) {
@@ -150,8 +95,18 @@ export const useGameification = () => {
         }
         
         console.log('✅ XP atualizado com sucesso no banco');
+        
+        // Refresh do progresso em tempo real após alguns segundos
+        setTimeout(() => {
+          realTimeProgress.refreshProgress();
+        }, 2000);
+        
       } catch (dbError) {
         console.warn('⚠️ Falha ao salvar no banco, mas XP foi atualizado localmente:', dbError);
+        // Refresh do progresso em caso de erro
+        setTimeout(() => {
+          realTimeProgress.refreshProgress();
+        }, 3000);
       }
     } catch (error) {
       console.error("❌ Erro ao adicionar XP:", error);
@@ -163,114 +118,10 @@ export const useGameification = () => {
     }
   };
 
-  // Buscar estatísticas com fallbacks seguros
+  // Buscar estatísticas usando dados em tempo real
   const getStats = (): GameStats | null => {
-    if (!progress || !todayActivity) {
-      console.log('❌ Cannot get stats: missing progress or activity data');
-      return null;
-    }
-
-    try {
-      const currentXp = progress.total_xp;
-      const nextLevelXp = getXpForNextLevel(progress.current_level);
-      const currentLevelMinXp = progress.current_level === 1 ? 0 : 
-        progress.current_level === 2 ? 50 : 
-        progress.current_level === 3 ? 150 : 
-        300 + (progress.current_level - 4) * 200;
-
-      const xpProgress = calculateXpProgress(currentXp, progress.current_level);
-
-      const stats = {
-        currentLevel: progress.current_level,
-        currentXp,
-        nextLevelXp,
-        currentLevelMinXp,
-        xpProgress: Math.min(100, Math.max(0, xpProgress)),
-        currentStreak: progress.current_streak,
-        longestStreak: progress.longest_streak,
-        todayFlashcards: todayActivity.flashcards_reviewed,
-        todayQuizzes: todayActivity.quizzes_completed,
-        todayCorrectAnswers: todayActivity.quiz_correct_answers,
-        todayXp: todayActivity.xp_earned
-      };
-
-      console.log('📊 Stats generated:', stats);
-      return stats;
-    } catch (error) {
-      console.error('❌ Error generating stats:', error);
-      return null;
-    }
+    return realTimeProgress.getStats();
   };
-
-  // Auto-sincronizar dados periodicamente
-  useEffect(() => {
-    fetchUserProgress();
-    
-    // Refresh automático a cada 30 segundos se houver usuário
-    const interval = setInterval(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && !loading) {
-        fetchUserProgress();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Escutar mudanças em tempo real
-  useEffect(() => {
-    const setupRealtimeSubscriptions = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      console.log('🔄 Setting up real-time subscriptions');
-
-      const progressChannel = supabase
-        .channel('user_progress_changes')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'user_progress',
-            filter: `user_id=eq.${user.id}`
-          }, 
-          (payload) => {
-            console.log('🔄 Progress updated in real-time:', payload);
-            if (payload.new) {
-              setProgress(payload.new as UserProgress);
-            }
-          }
-        )
-        .subscribe();
-
-      const activityChannel = supabase
-        .channel('daily_activities_changes')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'daily_activities',
-            filter: `user_id=eq.${user.id}`
-          }, 
-          (payload) => {
-            console.log('🔄 Activity updated in real-time:', payload);
-            if (payload.new) {
-              setTodayActivity(payload.new as DailyActivity);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        progressChannel.unsubscribe();
-        activityChannel.unsubscribe();
-      };
-    };
-
-    if (isInitialized) {
-      setupRealtimeSubscriptions();
-    }
-  }, [isInitialized]);
 
   return {
     progress,

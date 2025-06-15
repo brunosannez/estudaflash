@@ -1,19 +1,19 @@
 
 import { useEffect } from 'react';
-import { Flame, Trophy, Target, TrendingUp, Award, RefreshCw } from 'lucide-react';
+import { Flame, Trophy, Target, TrendingUp, Award, RefreshCw, Sync } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import StatsCard from './StatsCard';
-import { useGameification } from '@/hooks/useGameification';
+import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
 import { Loader2 } from 'lucide-react';
 
 const ProgressOverview = () => {
-  const { loading, getStats, fetchUserProgress, isInitialized } = useGameification();
+  const { progress, todayActivity, loading, isInitialized, getStats, refreshProgress } = useRealTimeProgress();
 
   useEffect(() => {
     if (!isInitialized) {
-      fetchUserProgress();
+      refreshProgress();
     }
   }, [isInitialized]);
 
@@ -26,7 +26,12 @@ const ProgressOverview = () => {
       <div className="flex items-center justify-center py-8">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto" />
-          <p className="text-lg font-semibold text-gray-600">Carregando progresso...</p>
+          <p className="text-lg font-semibold text-gray-600">
+            {loading ? 'Sincronizando progresso...' : 'Carregando progresso...'}
+          </p>
+          <div className="text-sm text-gray-500 max-w-md mx-auto">
+            Estamos calculando seu progresso real baseado em todas as suas atividades na plataforma
+          </div>
         </div>
       </div>
     );
@@ -38,14 +43,24 @@ const ProgressOverview = () => {
         <div className="text-center space-y-4">
           <div className="text-6xl">🎮</div>
           <p className="text-lg font-semibold text-gray-600">Comece a estudar para ver seu progresso!</p>
-          <Button 
-            onClick={fetchUserProgress}
-            variant="outline"
-            className="mt-4"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={refreshProgress}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Sync className="h-4 w-4" />
+              Sincronizar
+            </Button>
+            <Button 
+              onClick={refreshProgress}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -53,6 +68,32 @@ const ProgressOverview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header com informações de sincronização */}
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div>
+              <p className="text-sm font-medium text-green-800">
+                Progresso sincronizado em tempo real
+              </p>
+              <p className="text-xs text-green-600">
+                Baseado em todas as suas atividades na plataforma
+              </p>
+            </div>
+          </div>
+          <Button 
+            onClick={refreshProgress}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 text-green-700 border-green-300 hover:bg-green-100"
+          >
+            <Sync className="h-3 w-3" />
+            Atualizar
+          </Button>
+        </div>
+      </div>
+
       {/* Cards de estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -91,7 +132,7 @@ const ProgressOverview = () => {
               Progresso do Nível {stats.currentLevel}
             </CardTitle>
             <Button 
-              onClick={fetchUserProgress}
+              onClick={refreshProgress}
               variant="ghost"
               size="sm"
             >
@@ -168,6 +209,14 @@ const ProgressOverview = () => {
                 <div className="text-sm opacity-90">Continue assim!</div>
               </div>
             )}
+
+            {/* Indicador de dados em tempo real */}
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Dados atualizados em tempo real
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
