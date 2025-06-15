@@ -1,16 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { UsageLimitService, type ActionType, type UsageData } from '@/services/usageLimitService';
 import { PlanType } from '@/types/plans';
 import { supabase } from '@/integrations/supabase/client';
+import { useDataSync } from '@/hooks/useDataSync';
 
 export const useUsageLimit = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { forceSyncIfNeeded, syncing: syncingData } = useDataSync();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [upgradeModal, setUpgradeModal] = useState<{
     isOpen: boolean;
     actionType: ActionType | null;
@@ -22,47 +23,62 @@ export const useUsageLimit = () => {
   });
 
   const fetchUsageData = async () => {
-    if (!user) return;
+    if (!user) {
+      setUsageData(null);
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('🔍 Fetching usage data for user:', user.id);
+      
+      // Primeiro, forçar sincronização se necessário
+      await forceSyncIfNeeded();
+      
+      // Buscar dados atualizados
       const data = await UsageLimitService.getUserUsage(user.id);
+      console.log('📊 Usage data loaded:', data);
       setUsageData(data);
     } catch (error) {
-      console.error('Erro ao buscar dados de uso:', error);
+      console.error('❌ Erro ao buscar dados de uso:', error);
+      // Em caso de erro, tentar criar registro inicial
+      try {
+        const initialData = await UsageLimitService.initializeUserUsage(user.id);
+        setUsageData(initialData);
+      } catch (initError) {
+        console.error('❌ Erro ao inicializar dados:', initError);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!user) {
-      setUsageData(null);
-      return;
-    }
-
     fetchUsageData();
 
-    const channel = supabase
-      .channel(`usage-updates-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'uso_usuarios',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('🔄 Usage data changed, refetching...', payload);
-          fetchUsageData();
-        }
-      )
-      .subscribe();
+    if (user) {
+      const channel = supabase
+        .channel(`usage-updates-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'uso_usuarios',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('🔄 Usage data changed, refetching...', payload);
+            setTimeout(fetchUsageData, 1000);
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user]);
 
   const checkCanProceed = async (actionType: ActionType): Promise<boolean> => {
@@ -155,7 +171,7 @@ export const useUsageLimit = () => {
 
   return {
     usageData,
-    loading,
+    loading: loading || syncingData,
     checkCanProceed,
     incrementUsage,
     getUsagePercentage,

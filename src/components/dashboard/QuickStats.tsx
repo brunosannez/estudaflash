@@ -14,6 +14,12 @@ const QuickStats = () => {
   const { progress, loading: progressLoading } = useRealTimeProgress();
   const { syncHistoricalData, syncing } = useDataSync();
 
+  const handleRefresh = async () => {
+    console.log('🔄 Manual refresh triggered...');
+    await syncHistoricalData();
+    await refreshUsage();
+  };
+
   if (usageLoading || progressLoading) {
     return (
       <Card>
@@ -46,13 +52,10 @@ const QuickStats = () => {
             <div className="mb-4">
               <Trophy className="h-12 w-12 mx-auto text-gray-300" />
             </div>
-            <p className="text-sm font-medium">Bem-vindo!</p>
-            <p className="text-xs mt-2">Faça seu primeiro upload para começar a estudar!</p>
+            <p className="text-sm font-medium">Carregando seus dados...</p>
+            <p className="text-xs mt-2">Sincronizando informações...</p>
             <Button 
-              onClick={async () => {
-                await syncHistoricalData();
-                await refreshUsage();
-              }}
+              onClick={handleRefresh}
               disabled={syncing}
               variant="outline"
               size="sm"
@@ -61,12 +64,12 @@ const QuickStats = () => {
               {syncing ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Preparando...
+                  Sincronizando...
                 </>
               ) : (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Preparar Conta
+                  Sincronizar Dados
                 </>
               )}
             </Button>
@@ -163,10 +166,7 @@ const QuickStats = () => {
         </div>
 
         <Button 
-          onClick={async () => {
-            await syncHistoricalData();
-            await refreshUsage();
-          }}
+          onClick={handleRefresh}
           disabled={syncing}
           variant="outline"
           size="sm"
@@ -175,12 +175,12 @@ const QuickStats = () => {
           {syncing ? (
             <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Atualizando...
+              Sincronizando...
             </>
           ) : (
             <>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar Dados
+              Sincronizar Dados
             </>
           )}
         </Button>
