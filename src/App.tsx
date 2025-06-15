@@ -27,13 +27,20 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
-            <Route path="/summaries" element={<MySummaries />} />
+            <Route path="/meus-resumos" element={<MySummaries />} />
             <Route path="/resumo/:id" element={<Resumo />} />
-            <Route path="/flashcards" element={<MyFlashcards />} />
+            <Route path="/meus-flashcards" element={<MyFlashcards />} />
             <Route path="/quiz/:resumoId" element={<Quiz />} />
+            <Route path="/historico-quiz" element={<QuizHistory />} />
+            <Route path="/progresso" element={<MyProgress />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            
+            {/* Redirecionamentos para manter compatibilidade */}
+            <Route path="/summaries" element={<MySummaries />} />
+            <Route path="/flashcards" element={<MyFlashcards />} />
             <Route path="/quiz-history" element={<QuizHistory />} />
             <Route path="/progress" element={<MyProgress />} />
-            <Route path="/admin" element={<AdminPanel />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

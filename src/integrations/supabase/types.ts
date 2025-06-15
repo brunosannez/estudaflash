@@ -389,6 +389,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_admin_by_email: {
+        Args: { admin_email: string }
+        Returns: boolean
+      }
       admin_change_user_plan: {
         Args: { target_user_id: string; new_plan: string }
         Returns: boolean

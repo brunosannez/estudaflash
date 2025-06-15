@@ -28,10 +28,10 @@ const Header = () => {
   };
 
   const navigationItems = [
-    { icon: BookOpen, label: 'Resumos', path: '/summaries', emoji: '📚' },
-    { icon: Brain, label: 'Flashcards', path: '/flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
-    { icon: Trophy, label: 'Progresso', path: '/progress', emoji: '🏆' },
+    { icon: BookOpen, label: 'Resumos', path: '/meus-resumos', emoji: '📚' },
+    { icon: Brain, label: 'Flashcards', path: '/meus-flashcards', emoji: '🧠' },
+    { icon: Target, label: 'Quiz', path: '/historico-quiz', emoji: '🎯' },
+    { icon: Trophy, label: 'Progresso', path: '/progresso', emoji: '🏆' },
   ];
 
   return (
@@ -136,7 +136,7 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-purple-200 shadow-xl">
                 <DropdownMenuItem 
-                  onClick={() => navigate('/progress')}
+                  onClick={() => navigate('/progresso')}
                   className="flex items-center space-x-2 cursor-pointer hover:bg-purple-50"
                 >
                   <Settings className="h-4 w-4" />

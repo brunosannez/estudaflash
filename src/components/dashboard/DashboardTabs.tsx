@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,7 @@ const DashboardTabs = () => {
                 </Button>
                 
                 <Button 
-                  onClick={() => navigate('/summaries')}
+                  onClick={() => navigate('/meus-resumos')}
                   variant="outline"
                   className="h-24 flex flex-col gap-2 border-2 border-purple-300 hover:bg-purple-50"
                 >
@@ -106,7 +107,7 @@ const DashboardTabs = () => {
                 </Button>
                 
                 <Button 
-                  onClick={() => navigate('/flashcards')}
+                  onClick={() => navigate('/meus-flashcards')}
                   variant="outline"
                   className="h-24 flex flex-col gap-2 border-2 border-green-300 hover:bg-green-50"
                 >
@@ -116,7 +117,7 @@ const DashboardTabs = () => {
                 </Button>
                 
                 <Button 
-                  onClick={() => navigate('/quiz-history')}
+                  onClick={() => navigate('/historico-quiz')}
                   variant="outline"
                   className="h-24 flex flex-col gap-2 border-2 border-orange-300 hover:bg-orange-50"
                 >
