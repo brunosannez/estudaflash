@@ -48,7 +48,7 @@ export class StatsCalculatorService {
       console.log('🔄 StatsCalculator: Executando fallback completo...');
 
       const [uploadsResult, usersResult] = await Promise.all([
-        supabase.from('uploads').select('file_size, data_upload, user_id'),
+        supabase.from('uploads').select('file_size, data_upload, user_id, arquivo_original_nome'),
         supabase.from('uso_usuarios').select('user_id, plano')
       ]);
 
