@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { PlanType, PLAN_CONFIGS } from '@/types/plans';
 
@@ -54,7 +53,11 @@ export class UsageLimitService {
       }
 
       console.log('✅ Dados de uso encontrados:', data);
-      return data;
+      // Type casting para PlanType
+      return {
+        ...data,
+        plano: data.plano as PlanType
+      };
     } catch (error) {
       console.error('❌ Erro no getUserUsage:', error);
       throw error;
@@ -81,7 +84,11 @@ export class UsageLimitService {
       }
 
       console.log('✅ Registro de uso inicializado:', data);
-      return data;
+      // Type casting para PlanType
+      return {
+        ...data,
+        plano: data.plano as PlanType
+      };
     } catch (error) {
       console.error('❌ Erro no initializeUserUsage:', error);
       throw error;

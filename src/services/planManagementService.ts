@@ -37,7 +37,7 @@ export class PlanManagementService {
 
       // Combinar os dados
       const usersWithPlans: UserWithPlan[] = usageData?.map(usage => {
-        const user = users.find(u => u.id === usage.user_id);
+        const user = users?.find(u => u.id === usage.user_id);
         return {
           user_id: usage.user_id,
           email: user?.email || 'Email não encontrado',
