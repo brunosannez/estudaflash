@@ -31,7 +31,7 @@ const Index = () => {
           <main className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
               <div className="xl:col-span-3 space-y-6">
-                <DashboardTabs activeTab="progress" />
+                <DashboardTabs />
               </div>
               
               <div className="xl:col-span-1 space-y-6">
