@@ -136,9 +136,12 @@ export type Database = {
       plans: {
         Row: {
           created_at: string
+          description: string | null
+          features: string[] | null
           flashcard_model: string
           flashcards_limit: number
           id: string
+          is_active: boolean | null
           is_editable: boolean
           name: string
           price_brl: number
@@ -152,9 +155,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
+          features?: string[] | null
           flashcard_model?: string
           flashcards_limit?: number
           id?: string
+          is_active?: boolean | null
           is_editable?: boolean
           name: string
           price_brl?: number
@@ -168,9 +174,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
+          features?: string[] | null
           flashcard_model?: string
           flashcards_limit?: number
           id?: string
+          is_active?: boolean | null
           is_editable?: boolean
           name?: string
           price_brl?: number
@@ -510,6 +519,24 @@ export type Database = {
         Args: { target_user_id: string; new_plan_id: string }
         Returns: boolean
       }
+      admin_create_plan: {
+        Args: {
+          plan_name: string
+          plan_description?: string
+          plan_price_brl?: number
+          plan_price_brl_yearly?: number
+          plan_uploads_limit?: number
+          plan_summaries_limit?: number
+          plan_flashcards_limit?: number
+          plan_quizzes_limit?: number
+          plan_quiz_model?: string
+          plan_summary_model?: string
+          plan_flashcard_model?: string
+          plan_features?: string[]
+          plan_is_active?: boolean
+        }
+        Returns: string
+      }
       admin_delete_user_data: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -523,19 +550,36 @@ export type Database = {
         Returns: boolean
       }
       admin_update_plan: {
-        Args: {
-          target_plan_id: string
-          new_price_brl?: number
-          new_price_brl_yearly?: number
-          new_uploads_limit?: number
-          new_summaries_limit?: number
-          new_flashcards_limit?: number
-          new_quizzes_limit?: number
-          new_quiz_model?: string
-          new_summary_model?: string
-          new_flashcard_model?: string
-          new_is_editable?: boolean
-        }
+        Args:
+          | {
+              target_plan_id: string
+              new_price_brl?: number
+              new_price_brl_yearly?: number
+              new_uploads_limit?: number
+              new_summaries_limit?: number
+              new_flashcards_limit?: number
+              new_quizzes_limit?: number
+              new_quiz_model?: string
+              new_summary_model?: string
+              new_flashcard_model?: string
+              new_is_editable?: boolean
+            }
+          | {
+              target_plan_id: string
+              new_price_brl?: number
+              new_price_brl_yearly?: number
+              new_uploads_limit?: number
+              new_summaries_limit?: number
+              new_flashcards_limit?: number
+              new_quizzes_limit?: number
+              new_quiz_model?: string
+              new_summary_model?: string
+              new_flashcard_model?: string
+              new_is_editable?: boolean
+              new_features?: string[]
+              new_description?: string
+              new_is_active?: boolean
+            }
         Returns: boolean
       }
       check_user_is_admin: {
@@ -547,6 +591,24 @@ export type Database = {
         Returns: {
           deleted_files: number
           freed_storage_mb: number
+        }[]
+      }
+      get_active_plans: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          description: string
+          price_brl: number
+          price_brl_yearly: number
+          uploads_limit: number
+          summaries_limit: number
+          flashcards_limit: number
+          quizzes_limit: number
+          quiz_model: string
+          summary_model: string
+          flashcard_model: string
+          features: string[]
         }[]
       }
       get_admin_dashboard_stats: {

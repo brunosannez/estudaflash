@@ -2,15 +2,18 @@
 export interface Plan {
   id: string;
   name: string;
+  description: string;
   price_brl: number;
   price_brl_yearly: number;
   uploads_limit: number;
   summaries_limit: number;
-  flashcards_limit: number;
+  flashcards_limit: integer;
   quizzes_limit: number;
   quiz_model: string;
   summary_model: string;
   flashcard_model: string;
+  features: string[];
+  is_active: boolean;
   is_editable: boolean;
   created_at: string;
   updated_at: string;
@@ -67,4 +70,10 @@ export const PLAN_CONFIGS = {
     color: 'text-green-600',
     badgeVariant: 'default' as const,
   },
+} as const;
+
+export const AI_MODELS = {
+  quiz: ['GPT-3.5', 'GPT-4o', 'Claude 3'],
+  summary: ['Claude 3', 'Claude 3.5', 'GPT-4o'],
+  flashcard: ['DeepSeek-V2', 'GPT-3.5', 'Claude 3']
 } as const;

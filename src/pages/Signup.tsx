@@ -4,10 +4,10 @@ import SignupBackground from '@/components/signup/SignupBackground';
 import SignupHeader from '@/components/signup/SignupHeader';
 import PlanSelection from '@/components/signup/PlanSelection';
 import SignupForm from '@/components/signup/SignupForm';
-import { usePlans } from '@/hooks/usePlans';
+import { useActivePlans } from '@/hooks/usePlans';
 
 const Signup = () => {
-  const { plans, loading } = usePlans();
+  const { plans, loading } = useActivePlans();
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
   // Set Free plan as default when plans are loaded
@@ -16,6 +16,9 @@ const Signup = () => {
       const freePlan = plans.find(plan => plan.name.toLowerCase() === 'free');
       if (freePlan) {
         setSelectedPlanId(freePlan.id);
+      } else {
+        // If no free plan, select the first available plan
+        setSelectedPlanId(plans[0].id);
       }
     }
   }, [plans, selectedPlanId]);

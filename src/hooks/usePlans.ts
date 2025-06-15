@@ -49,11 +49,64 @@ export const usePlans = () => {
     }
   };
 
+  const createPlan = async (planData: Omit<Plan, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      await PlansService.createPlan(planData);
+      await loadPlans(); // Reload plans
+      
+      toast({
+        title: "Sucesso!",
+        description: "Plano criado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao criar plano:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar plano. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     plans,
     loading,
     loadPlans,
     updatePlan,
+    createPlan,
+  };
+};
+
+export const useActivePlans = () => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadActivePlans();
+  }, []);
+
+  const loadActivePlans = async () => {
+    try {
+      setLoading(true);
+      const data = await PlansService.getActivePlans();
+      setPlans(data);
+    } catch (error) {
+      console.error('Erro ao carregar planos ativos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar planos. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    plans,
+    loading,
+    loadActivePlans,
   };
 };
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { usePlans } from '@/hooks/usePlans';
+import { useActivePlans } from '@/hooks/usePlans';
 import PlanCard from '@/components/plans/PlanCard';
 
 interface PlanSelectionProps {
@@ -12,7 +12,7 @@ interface PlanSelectionProps {
 }
 
 const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => {
-  const { plans, loading } = usePlans();
+  const { plans, loading } = useActivePlans();
   const [showYearlyPricing, setShowYearlyPricing] = useState(false);
 
   if (loading) {
@@ -45,7 +45,7 @@ const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => 
           </Label>
           {showYearlyPricing && (
             <span className="text-sm text-green-600 font-medium">
-              (Economize até 10%)
+              (Economize até 20%)
             </span>
           )}
         </div>
