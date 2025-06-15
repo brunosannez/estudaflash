@@ -3,6 +3,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import AppBreadcrumbs from '@/components/navigation/AppBreadcrumbs';
 import {
@@ -39,23 +40,16 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { getDisplayName, getFullName } = useUserProfile();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
-
-  // Logs de debug para o MainNavigation
-  console.log('🧭 MainNavigation: user:', user?.email);
-  console.log('🔐 MainNavigation: isAdmin:', isAdmin);
-  console.log('⏳ MainNavigation: adminLoading:', adminLoading);
-
-  // Log quando o menu admin deve aparecer
-  console.log('🎨 MainNavigation: Deve mostrar menu admin?', isAdmin && !adminLoading);
 
   const mainMenuItems = [
     { icon: Home, label: 'Dashboard', path: '/', emoji: '🏠' },
     { icon: Upload, label: 'Upload', path: '/upload', emoji: '📤' },
-    { icon: BookOpen, label: 'Meus Resumos', path: '/meus-resumos', emoji: '📚' },
-    { icon: Brain, label: 'Flashcards', path: '/meus-flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/historico-quiz', emoji: '🎯' },
-    { icon: Trophy, label: 'Progresso', path: '/progresso', emoji: '🏆' },
+    { icon: BookOpen, label: 'Meus Resumos', path: '/my-summaries', emoji: '📚' },
+    { icon: Brain, label: 'Flashcards', path: '/my-flashcards', emoji: '🧠' },
+    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
+    { icon: Trophy, label: 'Progresso', path: '/my-progress', emoji: '🏆' },
   ];
 
   const adminMenuItems = [
@@ -119,7 +113,6 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               ))}
             </SidebarMenu>
 
-            {/* Menu de Administração */}
             {isAdmin && !adminLoading && (
               <>
                 <SidebarSeparator className="my-4" />
@@ -142,13 +135,6 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
                 </SidebarMenu>
               </>
             )}
-
-            {/* Debug de loading do admin */}
-            {adminLoading && (
-              <div className="px-3 py-2 text-xs text-gray-500">
-                Verificando permissões...
-              </div>
-            )}
           </SidebarContent>
 
           <SidebarFooter className="p-4">
@@ -156,7 +142,7 @@ const MainNavigation = ({ children }: MainNavigationProps) => {
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
                 <User className="h-4 w-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700 truncate">
-                  {user?.email?.split('@')[0] || 'Usuário'}
+                  {getDisplayName()}
                 </span>
                 {isAdmin && (
                   <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">

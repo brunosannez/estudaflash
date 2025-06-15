@@ -3,18 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, Search, Calendar, Brain, Sparkles, Clock, BookOpen } from 'lucide-react';
+import { FileText, Search, Calendar, Brain, Sparkles, Clock, BookOpen, Edit2, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
+import MainNavigation from '@/components/navigation/MainNavigation';
 import { designColors } from '@/utils/designSystem';
 
 interface Resumo {
   id: string;
   resumo_gerado: string;
   data_criacao: string;
+  custom_name?: string;
   uploads: {
     id: string;
     texto_extraido: string;
@@ -25,6 +26,8 @@ const MySummaries = () => {
   const [resumos, setResumos] = useState<Resumo[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,6 +46,7 @@ const MySummaries = () => {
           id,
           resumo_gerado,
           data_criacao,
+          custom_name,
           uploads!inner(
             id,
             texto_extraido,
@@ -66,9 +70,55 @@ const MySummaries = () => {
     }
   };
 
+  const updateResumoName = async (resumoId: string, customName: string) => {
+    try {
+      const { error } = await supabase
+        .from('resumos')
+        .update({ custom_name: customName || null })
+        .eq('id', resumoId);
+
+      if (error) throw error;
+
+      setResumos(prev => prev.map(resumo => 
+        resumo.id === resumoId 
+          ? { ...resumo, custom_name: customName || undefined }
+          : resumo
+      ));
+
+      toast({
+        title: "Sucesso",
+        description: "Nome do resumo atualizado com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar nome do resumo:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o nome do resumo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditName = (resumo: Resumo) => {
+    setEditingId(resumo.id);
+    setEditingName(resumo.custom_name || '');
+  };
+
+  const handleSaveName = async (resumoId: string) => {
+    await updateResumoName(resumoId, editingName);
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
   const filteredResumos = resumos.filter(resumo =>
     resumo.resumo_gerado.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resumo.uploads.texto_extraido?.toLowerCase().includes(searchTerm.toLowerCase())
+    resumo.uploads.texto_extraido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    resumo.custom_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -82,18 +132,21 @@ const MySummaries = () => {
   };
 
   const getReadingTime = (text: string) => {
-    return Math.ceil(text.length / 1000); // ~1000 chars per minute
+    return Math.ceil(text.length / 1000);
   };
 
-  const handleOpenResumo = (uploadId: string) => {
-    navigate(`/resumo/${uploadId}`);
+  const handleOpenResumo = (resumoId: string) => {
+    navigate(`/resumo/${resumoId}`);
+  };
+
+  const getResumoTitle = (resumo: Resumo) => {
+    return resumo.custom_name || `Resumo de ${resumo.uploads.texto_extraido?.slice(0, 30)}...` || 'Resumo';
   };
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${designColors.backgrounds.main}`}>
-        <Header />
-        <main className="container mx-auto px-4 py-8">
+      <AuthGuard>
+        <MainNavigation>
           <div className="flex items-center justify-center py-20">
             <div className={`${designColors.cards.primary} p-8 text-center`}>
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
@@ -103,26 +156,24 @@ const MySummaries = () => {
               <p className="text-gray-600 text-lg">Preparando seu conhecimento!</p>
             </div>
           </div>
-        </main>
-      </div>
+        </MainNavigation>
+      </AuthGuard>
     );
   }
 
   return (
     <AuthGuard>
-      <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
-        {/* Elementos decorativos flutuantes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 text-4xl animate-bounce opacity-20">📚</div>
-          <div className="absolute top-40 right-20 text-3xl animate-pulse opacity-30">✨</div>
-          <div className="absolute bottom-20 left-20 text-5xl animate-float opacity-20">📖</div>
-          <div className="absolute bottom-40 right-10 text-2xl animate-bounce opacity-25">🌟</div>
-        </div>
+      <MainNavigation>
+        <div className="space-y-8 relative overflow-hidden">
+          {/* Elementos decorativos flutuantes */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 text-4xl animate-bounce opacity-20">📚</div>
+            <div className="absolute top-40 right-20 text-3xl animate-pulse opacity-30">✨</div>
+            <div className="absolute bottom-20 left-20 text-5xl animate-float opacity-20">📖</div>
+            <div className="absolute bottom-40 right-10 text-2xl animate-bounce opacity-25">🌟</div>
+          </div>
 
-        <Header />
-        
-        <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
-          <div className={`text-center space-y-4 ${designColors.animations.slideIn}`}>
+          <div className={`text-center space-y-4 ${designColors.animations.slideIn} relative z-10`}>
             <div className="flex items-center justify-center gap-4">
               <Sparkles className="h-10 w-10 text-cyan-500 animate-pulse" />
               <div className="flex items-center gap-3">
@@ -144,7 +195,7 @@ const MySummaries = () => {
           </div>
 
           {/* Search bar */}
-          <div className={`max-w-md mx-auto ${designColors.animations.slideIn}`}>
+          <div className={`max-w-md mx-auto ${designColors.animations.slideIn} relative z-10`}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -157,7 +208,7 @@ const MySummaries = () => {
           </div>
 
           {/* Statistics */}
-          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${designColors.animations.slideIn}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${designColors.animations.slideIn} relative z-10`}>
             <Card className={`bg-gradient-to-r from-cyan-400 to-cyan-500 text-white border-0 ${designColors.animations.cardHover}`}>
               <CardContent className="p-4 flex items-center gap-3">
                 <FileText className="h-8 w-8" />
@@ -195,7 +246,7 @@ const MySummaries = () => {
 
           {/* Resumos list */}
           {filteredResumos.length === 0 ? (
-            <div className={designColors.animations.slideIn}>
+            <div className={`${designColors.animations.slideIn} relative z-10`}>
               <Card className={designColors.cards.primary}>
                 <CardContent className="text-center py-12">
                   <div className="text-6xl mb-4">📚</div>
@@ -210,7 +261,7 @@ const MySummaries = () => {
                   </p>
                   {!searchTerm && (
                     <Button 
-                      onClick={() => navigate('/')}
+                      onClick={() => navigate('/upload')}
                       className={`${designColors.buttons.primary} text-white font-bold py-3 px-6 rounded-xl shadow-lg ${designColors.animations.buttonHover}`}
                     >
                       ✨ Criar Primeiro Resumo
@@ -220,7 +271,7 @@ const MySummaries = () => {
               </Card>
             </div>
           ) : (
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${designColors.animations.slideIn}`}>
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${designColors.animations.slideIn} relative z-10`}>
               {filteredResumos.map((resumo, index) => (
                 <div 
                   key={resumo.id}
@@ -230,9 +281,53 @@ const MySummaries = () => {
                   <Card className={`${designColors.cards.primary} h-full`}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg line-clamp-2 text-gray-700">
-                          📝 {resumo.uploads.texto_extraido?.slice(0, 50) || 'Resumo'}...
-                        </CardTitle>
+                        <div className="flex-1">
+                          {editingId === resumo.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                placeholder="Nome do resumo..."
+                                className="text-sm"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSaveName(resumo.id);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSaveName(resumo.id)}
+                                className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEdit}
+                                className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <CardTitle className="text-lg line-clamp-2 text-gray-700 flex-1">
+                                📝 {getResumoTitle(resumo)}
+                              </CardTitle>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditName(resumo)}
+                                className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-100"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                         <Calendar className="h-4 w-4 text-cyan-500 flex-shrink-0 ml-2" />
                       </div>
                       <p className="text-sm text-gray-500">
@@ -258,7 +353,7 @@ const MySummaries = () => {
                       
                       <div className="flex gap-2">
                         <Button 
-                          onClick={() => handleOpenResumo(resumo.uploads.id)}
+                          onClick={() => handleOpenResumo(resumo.id)}
                           className={`flex-1 ${designColors.buttons.primary} text-white font-bold rounded-xl shadow-lg ${designColors.animations.buttonHover}`}
                           size="sm"
                         >
@@ -271,8 +366,8 @@ const MySummaries = () => {
               ))}
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </MainNavigation>
     </AuthGuard>
   );
 };

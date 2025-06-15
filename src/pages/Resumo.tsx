@@ -5,15 +5,15 @@ import { Loader2 } from 'lucide-react';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
-import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
+import MainNavigation from '@/components/navigation/MainNavigation';
 import FlashcardList from '@/components/FlashcardList';
 import ResumoHeader from '@/components/resumo/ResumoHeader';
 import ResumoStats from '@/components/resumo/ResumoStats';
 import ResumoMainContent from '@/components/resumo/ResumoMainContent';
 
 const Resumo = () => {
-  const { id } = useParams(); // Mudança: usar 'id' genérico em vez de 'uploadId'
+  const { id } = useParams();
   const navigate = useNavigate();
   const { getResumo, getResumoById } = useSummary();
   const { generateAutoFlashcards, isGenerating } = useAutoFlashcards();
@@ -21,24 +21,20 @@ const Resumo = () => {
   const [loading, setLoading] = useState(true);
   const [showFlashcards, setShowFlashcards] = useState(false);
   
-  // Hook do quiz
   const { generateQuiz, loading: quizLoading } = useQuiz(resumo?.id || '');
 
   useEffect(() => {
     if (id) {
       loadResumo();
     }
-    // eslint-disable-next-line
   }, [id]);
 
   const loadResumo = async () => {
     try {
       setLoading(true);
       
-      // Primeiro tenta buscar por ID do resumo
       let resumoData = await getResumoById(id!);
       
-      // Se não encontrou, tenta buscar por upload ID (compatibilidade)
       if (!resumoData) {
         resumoData = await getResumo(id!);
       }
@@ -81,19 +77,18 @@ const Resumo = () => {
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate('/my-summaries');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
+      <AuthGuard>
+        <MainNavigation>
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
-        </main>
-      </div>
+        </MainNavigation>
+      </AuthGuard>
     );
   }
 
@@ -109,10 +104,8 @@ const Resumo = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Header />
-        
-        <main className="container mx-auto px-4 py-8 space-y-8">
+      <MainNavigation>
+        <div className="space-y-8">
           <ResumoHeader onBack={handleBack} />
 
           <ResumoStats
@@ -130,10 +123,10 @@ const Resumo = () => {
             isGeneratingFlashcards={isGenerating}
             isGeneratingQuiz={quizLoading}
           />
-        </main>
+        </div>
 
         <FlashcardList resumoId={resumo.id} open={showFlashcards} onClose={() => setShowFlashcards(false)} />
-      </div>
+      </MainNavigation>
     </AuthGuard>
   );
 };

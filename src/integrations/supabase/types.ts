@@ -348,18 +348,21 @@ export type Database = {
       }
       resumos: {
         Row: {
+          custom_name: string | null
           data_criacao: string
           id: string
           resumo_gerado: string
           upload_id: string
         }
         Insert: {
+          custom_name?: string | null
           data_criacao?: string
           id?: string
           resumo_gerado: string
           upload_id: string
         }
         Update: {
+          custom_name?: string | null
           data_criacao?: string
           id?: string
           resumo_gerado?: string

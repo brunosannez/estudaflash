@@ -7,9 +7,9 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string;
-  username: string | null;
+  username?: string;
   date_of_birth: string;
-  school_year: string | null;
+  school_year?: string;
   is_minor: boolean;
   created_at: string;
   updated_at: string;
@@ -19,56 +19,61 @@ export const useUserProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (user) {
+      fetchProfile();
+    } else {
       setProfile(null);
       setLoading(false);
-      return;
     }
-
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        setProfile(data);
-      } catch (error: any) {
-        console.error('Error fetching user profile:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
   }, [user]);
 
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar perfil:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getDisplayName = () => {
+    if (!user) return 'Usuário';
+    
+    // Prioridade: username > primeiro nome > email
     if (profile?.username) {
       return profile.username;
     }
-    if (user?.email) {
-      return user.email.split('@')[0];
+    
+    if (profile?.full_name) {
+      return profile.full_name.split(' ')[0];
     }
-    return 'Usuário';
+    
+    return user.email?.split('@')[0] || 'Usuário';
+  };
+
+  const getFullName = () => {
+    return profile?.full_name || user?.email?.split('@')[0] || 'Usuário';
   };
 
   return {
     profile,
     loading,
-    error,
     getDisplayName,
+    getFullName,
+    refetch: fetchProfile
   };
 };

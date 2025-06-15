@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Brain, ArrowRight, Play, Sparkles } from 'lucide-react';
-import Header from '@/components/Header';
 import AuthGuard from '@/components/AuthGuard';
+import MainNavigation from '@/components/navigation/MainNavigation';
 import ResumoSelector from '@/components/ResumoSelector';
 import FlashcardStudyMode from '@/components/FlashcardStudyMode';
 import { designColors } from '@/utils/designSystem';
@@ -25,21 +25,19 @@ const MyFlashcards = () => {
 
   return (
     <AuthGuard>
-      <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
-        {/* Elementos decorativos flutuantes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 text-5xl animate-bounce opacity-20">🧠</div>
-          <div className="absolute top-40 right-20 text-4xl animate-pulse opacity-30">💡</div>
-          <div className="absolute bottom-20 left-20 text-6xl animate-float opacity-20">⚡</div>
-          <div className="absolute bottom-40 right-10 text-3xl animate-bounce opacity-25">🌟</div>
-          <div className="absolute top-1/2 left-1/4 text-7xl animate-pulse opacity-10">🎪</div>
-        </div>
+      <MainNavigation>
+        <div className="space-y-8 relative overflow-hidden">
+          {/* Elementos decorativos flutuantes */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 text-5xl animate-bounce opacity-20">🧠</div>
+            <div className="absolute top-40 right-20 text-4xl animate-pulse opacity-30">💡</div>
+            <div className="absolute bottom-20 left-20 text-6xl animate-float opacity-20">⚡</div>
+            <div className="absolute bottom-40 right-10 text-3xl animate-bounce opacity-25">🌟</div>
+            <div className="absolute top-1/2 left-1/4 text-7xl animate-pulse opacity-10">🎪</div>
+          </div>
 
-        <Header />
-        
-        <main className="container mx-auto px-4 py-8 relative z-10">
           {!studyMode ? (
-            <div className={`space-y-8 ${designColors.animations.slideIn}`}>
+            <div className={`space-y-8 ${designColors.animations.slideIn} relative z-10`}>
               <div className="text-center space-y-6">
                 <div className="flex items-center justify-center gap-4 mb-6">
                   <Sparkles className="h-12 w-12 text-cyan-500 animate-pulse" />
@@ -72,12 +70,12 @@ const MyFlashcards = () => {
               </div>
             </div>
           ) : (
-            <div className={`space-y-6 ${designColors.animations.slideIn}`}>
+            <div className={`space-y-6 ${designColors.animations.slideIn} relative z-10`}>
               <div className={`${designColors.cards.accent} p-6 text-center`}>
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <Brain className="h-8 w-8 text-purple-600 animate-pulse" />
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-purple-600 bg-clip-text text-transparent">
-                    🎪 Estudando: {selectedResumo?.uploads?.texto_extraido?.slice(0, 50)}...
+                    🎪 Estudando: {selectedResumo?.uploads?.texto_extraido?.slice(0, 50) || selectedResumo?.custom_name}...
                   </h1>
                   <div className="text-3xl animate-bounce">⚡</div>
                 </div>
@@ -96,8 +94,8 @@ const MyFlashcards = () => {
               </div>
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </MainNavigation>
     </AuthGuard>
   );
 };
