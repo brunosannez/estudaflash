@@ -7,37 +7,29 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PlanType } from '@/types/plans';
+import { usePlans } from '@/hooks/usePlans';
 
 interface SignupFormProps {
-  selectedPlan: PlanType;
+  selectedPlanId: string;
 }
 
-const SignupForm = ({ selectedPlan }: SignupFormProps) => {
+const SignupForm = ({ selectedPlanId }: SignupFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { plans } = usePlans();
 
-  const plans = [
-    {
-      id: 'free' as PlanType,
-      name: 'Plano Gratuito',
-    },
-    {
-      id: 'pro' as PlanType,
-      name: 'Plano Pro',
-    }
-  ];
+  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
-  const createUserUsageRecord = async (userId: string, plan: PlanType) => {
+  const createUserUsageRecord = async (userId: string, planId: string) => {
     try {
       const { error } = await supabase
         .from('uso_usuarios')
         .insert({
           user_id: userId,
-          plano: plan,
+          plan_id: planId,
           is_admin: false,
           uploads_realizados: 0,
           flashcards_gerados: 0,
@@ -64,6 +56,15 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
       return;
     }
 
+    if (!selectedPlanId) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, selecione um plano.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -73,7 +74,7 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            plan: selectedPlan
+            plan_id: selectedPlanId
           }
         }
       });
@@ -96,7 +97,7 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
         });
       } else if (data.user) {
         // User is immediately confirmed, create usage record
-        await createUserUsageRecord(data.user.id, selectedPlan);
+        await createUserUsageRecord(data.user.id, selectedPlanId);
         toast({
           title: "Conta criada com sucesso! 🎉",
           description: "Bem-vindo ao EstudoFácil AI!",
@@ -113,6 +114,13 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
   };
 
   return (
@@ -158,14 +166,24 @@ const SignupForm = ({ selectedPlan }: SignupFormProps) => {
               />
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <p className="text-sm text-gray-700 mb-2">
-                <strong>Plano selecionado:</strong>
-              </p>
-              <p className="text-purple-700 font-medium">
-                {plans.find(p => p.id === selectedPlan)?.name}
-              </p>
-            </div>
+            {selectedPlan && (
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Plano selecionado:</strong>
+                </p>
+                <div className="space-y-1">
+                  <p className="text-purple-700 font-medium">
+                    {selectedPlan.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {formatPrice(selectedPlan.price_brl)}/mês
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {selectedPlan.uploads_limit} uploads • {selectedPlan.quizzes_limit} quizzes • {selectedPlan.flashcards_limit} flashcards
+                  </p>
+                </div>
+              </div>
+            )}
 
             <Button
               type="submit"

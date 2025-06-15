@@ -133,6 +133,57 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          created_at: string
+          flashcard_model: string
+          flashcards_limit: number
+          id: string
+          is_editable: boolean
+          name: string
+          price_brl: number
+          price_brl_yearly: number
+          quiz_model: string
+          quizzes_limit: number
+          summaries_limit: number
+          summary_model: string
+          updated_at: string
+          uploads_limit: number
+        }
+        Insert: {
+          created_at?: string
+          flashcard_model?: string
+          flashcards_limit?: number
+          id?: string
+          is_editable?: boolean
+          name: string
+          price_brl?: number
+          price_brl_yearly?: number
+          quiz_model?: string
+          quizzes_limit?: number
+          summaries_limit?: number
+          summary_model?: string
+          updated_at?: string
+          uploads_limit?: number
+        }
+        Update: {
+          created_at?: string
+          flashcard_model?: string
+          flashcards_limit?: number
+          id?: string
+          is_editable?: boolean
+          name?: string
+          price_brl?: number
+          price_brl_yearly?: number
+          quiz_model?: string
+          quizzes_limit?: number
+          summaries_limit?: number
+          summary_model?: string
+          updated_at?: string
+          uploads_limit?: number
+        }
+        Relationships: []
+      }
       quiz_respostas: {
         Row: {
           acertou: boolean
@@ -279,6 +330,53 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          amount_paid_brl: number
+          created_at: string
+          id: string
+          payment_method: string | null
+          plan_id: string
+          renewal_date: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid_brl: number
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          plan_id: string
+          renewal_date?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid_brl?: number
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          plan_id?: string
+          renewal_date?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploads: {
         Row: {
           arquivo_original_nome: string
@@ -352,6 +450,7 @@ export type Database = {
           flashcards_gerados: number
           id: string
           is_admin: boolean
+          plan_id: string
           plano: string
           quizzes_realizados: number
           updated_at: string
@@ -364,6 +463,7 @@ export type Database = {
           flashcards_gerados?: number
           id?: string
           is_admin?: boolean
+          plan_id: string
           plano?: string
           quizzes_realizados?: number
           updated_at?: string
@@ -376,13 +476,22 @@ export type Database = {
           flashcards_gerados?: number
           id?: string
           is_admin?: boolean
+          plan_id?: string
           plano?: string
           quizzes_realizados?: number
           updated_at?: string
           uploads_realizados?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "uso_usuarios_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -397,6 +506,10 @@ export type Database = {
         Args: { target_user_id: string; new_plan: string }
         Returns: boolean
       }
+      admin_change_user_plan_new: {
+        Args: { target_user_id: string; new_plan_id: string }
+        Returns: boolean
+      }
       admin_delete_user_data: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -407,6 +520,22 @@ export type Database = {
       }
       admin_reset_user_usage: {
         Args: { target_user_id: string }
+        Returns: boolean
+      }
+      admin_update_plan: {
+        Args: {
+          target_plan_id: string
+          new_price_brl?: number
+          new_price_brl_yearly?: number
+          new_uploads_limit?: number
+          new_summaries_limit?: number
+          new_flashcards_limit?: number
+          new_quizzes_limit?: number
+          new_quiz_model?: string
+          new_summary_model?: string
+          new_flashcard_model?: string
+          new_is_editable?: boolean
+        }
         Returns: boolean
       }
       check_user_is_admin: {
@@ -454,6 +583,19 @@ export type Database = {
           active_users_30_days: number
           largest_file_size_mb: number
           storage_by_plan: Json
+        }[]
+      }
+      get_user_plan_details: {
+        Args: { user_uuid?: string }
+        Returns: {
+          plan_name: string
+          uploads_limit: number
+          summaries_limit: number
+          flashcards_limit: number
+          quizzes_limit: number
+          quiz_model: string
+          summary_model: string
+          flashcard_model: string
         }[]
       }
       get_user_storage_usage: {
