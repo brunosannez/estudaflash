@@ -30,6 +30,48 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage_tracking: {
+        Row: {
+          action_type: string
+          api_provider: string
+          created_at: string
+          error_message: string | null
+          estimated_cost_usd: number
+          id: string
+          model_used: string
+          success: boolean
+          timestamp: string
+          tokens_used: number
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          api_provider: string
+          created_at?: string
+          error_message?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          model_used: string
+          success?: boolean
+          timestamp?: string
+          tokens_used?: number
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          api_provider?: string
+          created_at?: string
+          error_message?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          model_used?: string
+          success?: boolean
+          timestamp?: string
+          tokens_used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_activities: {
         Row: {
           activity_date: string

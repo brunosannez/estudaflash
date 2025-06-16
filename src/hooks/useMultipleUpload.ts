@@ -201,8 +201,33 @@ export const useMultipleUpload = () => {
     }
   };
 
+  const processMultipleFiles = async (files: File[]) => {
+    const result = await uploadMultipleImages(files);
+    
+    // Convert to format expected by useExpandedUpload
+    if (result && result.texto_extraido) {
+      const successfulResults: SuccessfulUploadResult[] = files.map((file, index) => ({
+        file,
+        status: 'completed' as const,
+        imageUrl: `${result.imagem_url}_${index}`,
+        extractedText: result.texto_extraido || ''
+      }));
+      
+      return {
+        success: true,
+        data: successfulResults
+      };
+    }
+    
+    return {
+      success: false,
+      data: []
+    };
+  };
+
   return {
     uploadMultipleImages,
+    processMultipleFiles,
     uploadResults,
     isProcessing,
     resetUpload

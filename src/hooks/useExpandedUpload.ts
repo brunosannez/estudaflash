@@ -19,15 +19,8 @@ export const useExpandedUpload = () => {
   } = useMultipleUploadState();
 
   const {
-    processMultipleFiles
-  } = useMultipleUpload({
-    uploadResults,
-    isProcessing,
-    setIsProcessing,
-    initializeResults,
-    updateResult,
-    resetUpload
-  });
+    uploadMultipleImages
+  } = useMultipleUpload();
 
   const canAddMoreImages = () => {
     return allUploadedFiles.length < 30;
@@ -53,10 +46,17 @@ export const useExpandedUpload = () => {
     }
 
     try {
-      const result = await processMultipleFiles(files);
+      const result = await uploadMultipleImages(files);
       
-      if (result?.success && result.data) {
-        const successfulResults = result.data as SuccessfulUploadResult[];
+      if (result?.texto_extraido) {
+        // Process successful upload
+        const successfulResults: SuccessfulUploadResult[] = files.map((file, index) => ({
+          file,
+          status: 'completed' as const,
+          imageUrl: `${result.imagem_url}_${index}`,
+          extractedText: result.texto_extraido || ''
+        }));
+        
         setAllUploadedFiles(prev => [...prev, ...successfulResults]);
         setCurrentBatch(prev => prev + 1);
         
