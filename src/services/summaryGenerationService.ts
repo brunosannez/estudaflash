@@ -1,10 +1,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { createSummaryPrompt } from '@/utils/improvedPrompts';
 
 export const summaryGenerationService = {
-  async generateSummary(uploadId: string, textoExtraido: string, maxRetries = 3) {
+  async generateSummary(uploadId: string, textoExtraido: string, maxRetries = 3, schoolYear?: string) {
     console.log('🚀 Iniciando geração de resumo para:', uploadId);
     console.log('📊 Tamanho do texto:', textoExtraido.length, 'caracteres');
+    console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
 
     // Verificar se o texto não está vazio
     if (!textoExtraido || textoExtraido.trim().length === 0) {
@@ -22,6 +24,15 @@ export const summaryGenerationService = {
       throw new Error('Usuário não autenticado');
     }
 
+    // Buscar informações do usuário para personalizar o prompt
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('school_year')
+      .eq('user_id', user.id)
+      .single();
+
+    const userSchoolYear = schoolYear || userProfile?.school_year;
+
     let lastError = null;
     
     // Implementar retry logic
@@ -29,12 +40,17 @@ export const summaryGenerationService = {
       try {
         console.log(`🔄 Tentativa ${attempt}/${maxRetries}`);
         
+        // Criar prompt personalizado baseado no nível educacional
+        const improvedPrompt = createSummaryPrompt(textoExtraido, userSchoolYear);
+        
         const { data, error } = await supabase.functions
           .invoke('generate-summary', {
             body: { 
               uploadId,
               textoExtraido,
-              userId: user.id
+              userId: user.id,
+              customPrompt: improvedPrompt,
+              schoolYear: userSchoolYear
             }
           });
 
@@ -79,6 +95,8 @@ export const summaryGenerationService = {
         }
 
         console.log('✅ Resumo gerado com sucesso:', data.stats);
+        console.log('🎓 Nível educacional aplicado:', userSchoolYear);
+        
         return data.resumo;
 
       } catch (attemptError) {

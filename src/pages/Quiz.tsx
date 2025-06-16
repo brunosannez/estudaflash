@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,14 +40,10 @@ const Quiz = () => {
   // Generate quiz on component mount
   useEffect(() => {
     if (resumoId && quizzes.length === 0 && !loading) {
-      // First fetch existing quizzes
       const loadQuizzes = async () => {
         try {
-          // Try to load existing quizzes first
           const existingQuizzes = await fetchQuizzes();
           if (!existingQuizzes || existingQuizzes.length === 0) {
-            // Generate new quiz - we'll need to get the resumo content
-            // For now, we'll use a placeholder
             await generateQuiz("Conteúdo do resumo não disponível diretamente");
           }
         } catch (error) {
@@ -82,7 +79,6 @@ const Quiz = () => {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      // Quiz completed
       completeQuiz();
     }
   };

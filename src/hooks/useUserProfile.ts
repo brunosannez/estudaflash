@@ -15,9 +15,19 @@ interface UserProfile {
   updated_at: string;
 }
 
+interface GuardianInfo {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  cpf?: string;
+  relation_to_student: string;
+}
+
 export const useUserProfile = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [guardian, setGuardian] = useState<GuardianInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,24 +35,42 @@ export const useUserProfile = () => {
       fetchProfile();
     } else {
       setProfile(null);
+      setGuardian(null);
       setLoading(false);
     }
   }, [user]);
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar perfil do usuário
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user?.id)
         .single();
 
-      if (error) {
-        console.error('Erro ao buscar perfil:', error);
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        setLoading(false);
         return;
       }
 
-      setProfile(data);
+      setProfile(profileData);
+
+      // Se for menor de idade, buscar dados do responsável
+      if (profileData?.is_minor) {
+        const { data: guardianData, error: guardianError } = await supabase
+          .from('guardians')
+          .select('*')
+          .eq('user_id', user?.id)
+          .single();
+
+        if (guardianError) {
+          console.error('Erro ao buscar dados do responsável:', guardianError);
+        } else {
+          setGuardian(guardianData);
+        }
+      }
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
     } finally {
@@ -69,11 +97,36 @@ export const useUserProfile = () => {
     return profile?.full_name || user?.email?.split('@')[0] || 'Usuário';
   };
 
+  const getSchoolYear = () => {
+    return profile?.school_year || 'Não informado';
+  };
+
+  const getDateOfBirth = () => {
+    if (!profile?.date_of_birth) return 'Não informado';
+    return new Date(profile.date_of_birth).toLocaleDateString('pt-BR');
+  };
+
+  const getAge = () => {
+    if (!profile?.date_of_birth) return null;
+    const today = new Date();
+    const birthDate = new Date(profile.date_of_birth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   return {
     profile,
+    guardian,
     loading,
     getDisplayName,
     getFullName,
+    getSchoolYear,
+    getDateOfBirth,
+    getAge,
     refetch: fetchProfile
   };
 };

@@ -6,10 +6,11 @@ import AdminDashboard from '@/components/admin/AdminDashboard';
 import PlanManagement from '@/components/admin/PlanManagement';
 import DataManagement from '@/components/admin/DataManagement';
 import UsageAnalytics from '@/components/admin/UsageAnalytics';
+import ApiUsageMonitoring from '@/components/admin/ApiUsageMonitoring';
 import PageLayout from '@/components/navigation/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Loader2, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Shield, Loader2, BarChart3, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminPanel = () => {
@@ -62,25 +63,37 @@ const AdminPanel = () => {
             <Shield className="h-8 w-8 text-blue-600" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-              <p className="text-gray-600">Gerencie usuários, planos e monitore o sistema completo</p>
+              <p className="text-gray-600">Gerencie usuários, planos, APIs e monitore o sistema completo</p>
             </div>
           </div>
           
-          <Button
-            onClick={() => navigate('/admin/analytics')}
-            className="flex items-center gap-2"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Ver Analytics Avançados
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate('/admin/analytics')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Analytics Avançados
+            </Button>
+            <Button
+              onClick={() => window.open('https://supabase.com/dashboard/project/wevafattotpzozkmgpwm', '_blank')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Activity className="h-4 w-4" />
+              Supabase Dashboard
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 min-w-fit">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 min-w-fit">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="users">Usuários</TabsTrigger>
               <TabsTrigger value="plans">Planos</TabsTrigger>
+              <TabsTrigger value="apis">APIs</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="data">Dados</TabsTrigger>
             </TabsList>
@@ -96,6 +109,10 @@ const AdminPanel = () => {
 
           <TabsContent value="plans" className="space-y-6">
             <PlanManagement />
+          </TabsContent>
+
+          <TabsContent value="apis" className="space-y-6">
+            <ApiUsageMonitoring />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
