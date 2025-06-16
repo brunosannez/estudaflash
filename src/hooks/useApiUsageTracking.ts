@@ -84,11 +84,14 @@ export const useApiUsageTracking = () => {
 
       if (error) throw error;
 
+      // Cast the data to the correct type since we know the database schema
+      const typedData = (data || []) as ApiUsageData[];
+      
       // Processar dados para estatísticas por provedor
-      const stats = processApiStats(data || []);
+      const stats = processApiStats(typedData);
       setApiStats(stats);
 
-      return data;
+      return typedData;
     } catch (error) {
       console.error('Erro ao buscar estatísticas de API:', error);
       return [];
@@ -132,7 +135,20 @@ export const useApiUsageTracking = () => {
 
       if (error) throw error;
 
-      return processApiStats(data || []);
+      // Create mock full data structures for processing
+      const mockData: ApiUsageData[] = (data || []).map(item => ({
+        id: '',
+        api_provider: item.api_provider as 'openai' | 'anthropic' | 'huggingface',
+        action_type: 'summary' as const,
+        tokens_used: item.tokens_used,
+        estimated_cost_usd: item.estimated_cost_usd,
+        user_id: '',
+        timestamp: new Date().toISOString(),
+        model_used: '',
+        success: true
+      }));
+
+      return processApiStats(mockData);
     } catch (error) {
       console.error('Erro ao buscar estatísticas em tempo real:', error);
       return [];
