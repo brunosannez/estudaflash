@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
-import { useFlashcards } from '@/hooks/useFlashcards';
+import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
 import ResumoContent from '@/components/ResumoContent';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,8 +14,8 @@ const Resumo = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getResumoById } = useSummary();
-  const { generateFlashcards } = useFlashcards();
-  const { generateQuiz } = useQuiz();
+  const { generateAutoFlashcards, isGenerating: isGeneratingFlashcards } = useAutoFlashcards();
+  const { generateQuiz, loading: isGeneratingQuiz } = useQuiz(id || '');
   
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ const Resumo = () => {
     if (!resumo?.id) return;
     
     try {
-      await generateFlashcards(resumo.id);
+      await generateAutoFlashcards(resumo.id, resumo.resumo_gerado);
       navigate('/my-flashcards');
     } catch (error) {
       console.error('Erro ao gerar flashcards:', error);
@@ -61,11 +61,13 @@ const Resumo = () => {
   };
 
   const handleGenerateQuiz = async () => {
-    if (!resumo?.id) return;
+    if (!resumo?.resumo_gerado) return;
     
     try {
-      await generateQuiz(resumo.id);
-      navigate(`/quiz/${resumo.id}`);
+      const success = await generateQuiz(resumo.resumo_gerado);
+      if (success) {
+        navigate(`/quiz/${resumo.id}`);
+      }
     } catch (error) {
       console.error('Erro ao gerar quiz:', error);
     }
@@ -128,20 +130,37 @@ const Resumo = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3">
-          <Button onClick={handleGenerateFlashcards}>
-            🧠 Gerar Flashcards
+          <Button 
+            onClick={handleGenerateFlashcards}
+            disabled={isGeneratingFlashcards}
+          >
+            {isGeneratingFlashcards ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Gerando...
+              </>
+            ) : (
+              '🧠 Gerar Flashcards'
+            )}
           </Button>
-          <Button onClick={handleGenerateQuiz} variant="outline">
-            🎯 Fazer Quiz
+          <Button 
+            onClick={handleGenerateQuiz} 
+            variant="outline"
+            disabled={isGeneratingQuiz}
+          >
+            {isGeneratingQuiz ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Gerando...
+              </>
+            ) : (
+              '🎯 Fazer Quiz'
+            )}
           </Button>
         </div>
 
         {/* Content */}
-        <ResumoContent 
-          resumo={resumo}
-          onGenerateFlashcards={handleGenerateFlashcards}
-          onGenerateQuiz={handleGenerateQuiz}
-        />
+        <ResumoContent content={resumo.resumo_gerado} />
       </div>
     </PageLayout>
   );

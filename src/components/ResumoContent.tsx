@@ -1,122 +1,94 @@
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText } from 'lucide-react';
 
 interface ResumoContentProps {
   content: string;
 }
 
 const ResumoContent = ({ content }: ResumoContentProps) => {
-  // Função para processar e formatar o conteúdo do resumo
+  // Split content into sections based on markdown-like headers
   const formatContent = (text: string) => {
-    // Limpar o texto removendo símbolos # e formatando para crianças
-    let cleanText = text
-      .replace(/#{1,6}\s*/g, '') // Remove # símbolos
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
-      .replace(/\*(.*?)\*/g, '$1'); // Remove markdown italic
-
-    const lines = cleanText.split('\n');
-    const formattedLines: JSX.Element[] = [];
-
-    lines.forEach((line, index) => {
-      const trimmedLine = line.trim();
+    const lines = text.split('\n');
+    const formattedLines = lines.map((line, index) => {
+      // Headers (lines starting with #)
+      if (line.startsWith('# ')) {
+        return (
+          <h1 key={index} className="text-2xl font-bold mt-6 mb-3 text-blue-800">
+            {line.substring(2)}
+          </h1>
+        );
+      }
+      if (line.startsWith('## ')) {
+        return (
+          <h2 key={index} className="text-xl font-semibold mt-5 mb-2 text-blue-700">
+            {line.substring(3)}
+          </h2>
+        );
+      }
+      if (line.startsWith('### ')) {
+        return (
+          <h3 key={index} className="text-lg font-medium mt-4 mb-2 text-blue-600">
+            {line.substring(4)}
+          </h3>
+        );
+      }
       
-      if (!trimmedLine) {
-        formattedLines.push(<br key={index} />);
-        return;
-      }
-
-      // Títulos principais (linhas curtas e em maiúsculas ou que terminam com :)
-      if (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 50 && !trimmedLine.includes('.') ||
-          trimmedLine.endsWith(':')) {
-        formattedLines.push(
-          <div key={index} className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 rounded-xl p-6 my-6 shadow-lg transform hover:scale-105 transition-all duration-300">
-            <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-3">
-              <span className="text-3xl">🌟</span>
-              {trimmedLine.replace(/:$/, '')}
-              <span className="text-3xl">🌟</span>
-            </h2>
-          </div>
+      // Bullet points
+      if (line.startsWith('• ') || line.startsWith('- ')) {
+        return (
+          <li key={index} className="ml-4 mb-1 text-gray-700">
+            {line.substring(2)}
+          </li>
         );
-        return;
       }
-
-      // Pontos de lista ou itens numerados
-      if (/^[-*•]\s+/.test(trimmedLine) || /^\d+[\.)]\s+/.test(trimmedLine)) {
-        formattedLines.push(
-          <div key={index} className="flex items-start gap-4 my-4 p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg border-l-4 border-blue-400 shadow-md hover:shadow-lg transition-shadow">
-            <span className="text-2xl flex-shrink-0">✨</span>
-            <p className="text-gray-800 leading-relaxed text-lg font-medium">
-              {trimmedLine.replace(/^[-*•]\s+/, '').replace(/^\d+[\.)]\s+/, '')}
-            </p>
-          </div>
+      
+      // Bold text
+      if (line.includes('**')) {
+        const parts = line.split('**');
+        const formatted = parts.map((part, i) => 
+          i % 2 === 1 ? <strong key={i} className="font-semibold text-gray-900">{part}</strong> : part
         );
-        return;
-      }
-
-      // Texto em aspas ou parênteses (citações importantes)
-      if ((trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) ||
-          (trimmedLine.startsWith('(') && trimmedLine.endsWith(')'))) {
-        formattedLines.push(
-          <div key={index} className="bg-gradient-to-r from-yellow-100 to-orange-100 border-l-4 border-yellow-400 rounded-lg p-5 my-4 shadow-md">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">💡</span>
-              <p className="text-orange-800 italic text-lg font-semibold">
-                {trimmedLine.replace(/^["(]/, '').replace(/[")]$/, '')}
-              </p>
-            </div>
-          </div>
-        );
-        return;
-      }
-
-      // Parágrafos normais
-      formattedLines.push(
-        <div key={index} className="bg-white rounded-lg p-5 my-3 shadow-sm border border-gray-100 hover:border-purple-200 transition-colors">
-          <p className="text-gray-800 leading-relaxed text-lg flex items-start gap-3">
-            <span className="text-xl flex-shrink-0 mt-1">📚</span>
-            <span>{trimmedLine}</span>
+        return (
+          <p key={index} className="mb-3 text-gray-700 leading-relaxed">
+            {formatted}
           </p>
-        </div>
+        );
+      }
+      
+      // Empty lines
+      if (line.trim() === '') {
+        return <br key={index} />;
+      }
+      
+      // Regular paragraphs
+      return (
+        <p key={index} className="mb-3 text-gray-700 leading-relaxed">
+          {line}
+        </p>
       );
     });
-
+    
     return formattedLines;
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-0 shadow-xl rounded-2xl">
-      <div className="max-w-none">
-        <div className="space-y-3">
-          <div className="text-center mb-6">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
-              <span className="text-5xl">🎓</span>
-              Vamos Aprender!
-              <span className="text-5xl">📖</span>
-            </h1>
-            <p className="text-xl font-semibold text-purple-600 mt-3">
-              Leia com atenção e prepare-se para o quiz! 🚀
-            </p>
+    <Card className="overflow-hidden shadow-lg border-0">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+        <CardTitle className="flex items-center gap-3 text-2xl">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+            <FileText className="h-5 w-5 text-white" />
           </div>
-          
-          <div className="space-y-4">
-            {formatContent(content)}
-          </div>
-          
-          <div className="text-center mt-8 p-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl shadow-lg border-2 border-green-300">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-4xl">🏆</span>
-              <h2 className="text-2xl font-bold text-green-700">
-                Parabéns! Você terminou de ler!
-              </h2>
-              <span className="text-4xl">🎉</span>
-            </div>
-            <p className="text-lg font-semibold text-green-600">
-              Agora você está pronto para o desafio do quiz! 💪
-            </p>
-          </div>
+          Conteúdo do Resumo
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="p-8">
+        <div className="prose prose-lg max-w-none">
+          {formatContent(content)}
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 };

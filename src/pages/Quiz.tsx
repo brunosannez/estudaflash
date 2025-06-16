@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, CheckCircle, XCircle, Clock, RotateCcw } from 'lucide-react';
-import { useQuizGame } from '@/hooks/useQuizGame';
+import { useQuiz } from '@/hooks/useQuiz';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 
@@ -20,31 +20,44 @@ const Quiz = () => {
   const [isQuizComplete, setIsQuizComplete] = useState(false);
 
   const {
-    questions,
+    quizzes,
     loading,
-    error,
-    generateQuiz,
-    saveQuizSession,
-    isGenerating
-  } = useQuizGame();
+    generateQuiz
+  } = useQuiz(resumoId || '');
 
   // Timer effect
   useEffect(() => {
-    if (questions.length > 0 && !isQuizComplete) {
+    if (quizzes.length > 0 && !isQuizComplete) {
       const timer = setInterval(() => {
         setTimeElapsed(prev => prev + 1);
       }, 1000);
 
       return () => clearInterval(timer);
     }
-  }, [questions, isQuizComplete]);
+  }, [quizzes, isQuizComplete]);
 
   // Generate quiz on component mount
   useEffect(() => {
-    if (resumoId && questions.length === 0 && !loading && !isGenerating) {
-      generateQuiz(resumoId);
+    if (resumoId && quizzes.length === 0 && !loading) {
+      // First fetch existing quizzes
+      const loadQuizzes = async () => {
+        try {
+          // Try to load existing quizzes first
+          // If none exist, we'll generate them
+          const existingQuizzes = await fetchQuizzes();
+          if (!existingQuizzes || existingQuizzes.length === 0) {
+            // Generate new quiz - we'll need to get the resumo content
+            // For now, we'll use a placeholder
+            await generateQuiz("Conteúdo do resumo não disponível diretamente");
+          }
+        } catch (error) {
+          console.error('Erro ao carregar quiz:', error);
+          toast.error('Erro ao carregar quiz');
+        }
+      };
+      loadQuizzes();
     }
-  }, [resumoId, questions.length, loading, isGenerating, generateQuiz]);
+  }, [resumoId, quizzes.length, loading]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showExplanation) return;
@@ -54,7 +67,7 @@ const Quiz = () => {
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null) return;
 
-    const currentQuestion = questions[currentQuestionIndex];
+    const currentQuestion = quizzes[currentQuestionIndex];
     const isCorrect = selectedAnswer === currentQuestion.correta;
     
     if (isCorrect) {
@@ -65,7 +78,7 @@ const Quiz = () => {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < quizzes.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
@@ -77,23 +90,7 @@ const Quiz = () => {
 
   const completeQuiz = async () => {
     setIsQuizComplete(true);
-    
-    try {
-      if (resumoId) {
-        await saveQuizSession({
-          resumoId,
-          questions,
-          score,
-          timeElapsed,
-          totalQuestions: questions.length
-        });
-        
-        toast.success('Quiz concluído com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro ao salvar sessão do quiz:', error);
-      toast.error('Erro ao salvar resultado do quiz');
-    }
+    toast.success('Quiz concluído com sucesso!');
   };
 
   const handleRestartQuiz = () => {
@@ -103,10 +100,6 @@ const Quiz = () => {
     setScore(0);
     setTimeElapsed(0);
     setIsQuizComplete(false);
-    
-    if (resumoId) {
-      generateQuiz(resumoId);
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -115,7 +108,7 @@ const Quiz = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (loading || isGenerating) {
+  if (loading) {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -130,7 +123,7 @@ const Quiz = () => {
     );
   }
 
-  if (error || questions.length === 0) {
+  if (quizzes.length === 0) {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -139,7 +132,7 @@ const Quiz = () => {
               <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl font-bold mb-2">Erro ao carregar quiz</h2>
               <p className="text-gray-600 mb-4">
-                {error || 'Não foi possível gerar o quiz para este resumo.'}
+                Não foi possível gerar o quiz para este resumo.
               </p>
               <Button onClick={() => navigate('/my-summaries')} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -153,7 +146,7 @@ const Quiz = () => {
   }
 
   if (isQuizComplete) {
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = Math.round((score / quizzes.length) * 100);
     const passed = percentage >= 70;
 
     return (
@@ -208,8 +201,8 @@ const Quiz = () => {
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const currentQuestion = quizzes[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / quizzes.length) * 100;
 
   return (
     <PageLayout>
@@ -227,7 +220,7 @@ const Quiz = () => {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <CardTitle>Quiz - Questão {currentQuestionIndex + 1} de {questions.length}</CardTitle>
+                  <CardTitle>Quiz - Questão {currentQuestionIndex + 1} de {quizzes.length}</CardTitle>
                   <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
@@ -301,7 +294,7 @@ const Quiz = () => {
               <p className="mb-4">{currentQuestion.explicacao}</p>
               <div className="flex justify-end">
                 <Button onClick={handleNextQuestion}>
-                  {currentQuestionIndex < questions.length - 1 ? 'Próxima Questão' : 'Finalizar Quiz'}
+                  {currentQuestionIndex < quizzes.length - 1 ? 'Próxima Questão' : 'Finalizar Quiz'}
                 </Button>
               </div>
             </CardContent>

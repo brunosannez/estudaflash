@@ -1,18 +1,18 @@
 
 import ProtectedRoute from '@/components/ProtectedRoute';
-import MainNavigation from '@/components/navigation/MainNavigation';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
+import PageLayout from '@/components/navigation/PageLayout';
 
 const Index = () => {
   console.log('🏠 Index page rendering...');
 
   return (
     <ProtectedRoute>
-      <MainNavigation>
+      <PageLayout>
         <div className="relative">
           <FloatingBackground />
           
@@ -31,7 +31,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </MainNavigation>
+      </PageLayout>
     </ProtectedRoute>
   );
 };
