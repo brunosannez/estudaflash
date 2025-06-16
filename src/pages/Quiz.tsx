@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,7 @@ const Quiz = () => {
   const {
     quizzes,
     loading,
+    fetchQuizzes,
     generateQuiz
   } = useQuiz(resumoId || '');
 
@@ -43,7 +43,6 @@ const Quiz = () => {
       const loadQuizzes = async () => {
         try {
           // Try to load existing quizzes first
-          // If none exist, we'll generate them
           const existingQuizzes = await fetchQuizzes();
           if (!existingQuizzes || existingQuizzes.length === 0) {
             // Generate new quiz - we'll need to get the resumo content
@@ -57,7 +56,7 @@ const Quiz = () => {
       };
       loadQuizzes();
     }
-  }, [resumoId, quizzes.length, loading]);
+  }, [resumoId, quizzes.length, loading, fetchQuizzes, generateQuiz]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showExplanation) return;
