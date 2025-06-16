@@ -17,8 +17,8 @@ const Home = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      console.log('User is logged in, redirecting to /dashboard');
-      navigate('/dashboard', { replace: true });
+      console.log('User is logged in, redirecting to dashboard');
+      navigate('/', { replace: true }); // Corrigido: redirecionar para '/' em vez de '/dashboard'
     }
   }, [user, loading, navigate]);
 

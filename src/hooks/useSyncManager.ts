@@ -81,6 +81,7 @@ export const useSyncManager = () => {
 
       console.log('✅ Sincronização completa! Dados atualizados:', realCounts);
       
+      // Mostrar toast de sucesso apenas se não houver erros
       toast({
         title: "✅ Dados Sincronizados!",
         description: `Uploads: ${realCounts.uploads}, Flashcards: ${realCounts.flashcards}, Quizzes: ${realCounts.quizzes}`,
@@ -92,11 +93,17 @@ export const useSyncManager = () => {
 
     } catch (error) {
       console.error('❌ Erro crítico na sincronização:', error);
-      toast({
-        title: "❌ Erro na Sincronização",
-        description: "Não foi possível sincronizar os dados. Tentando novamente...",
-        variant: "destructive",
-      });
+      
+      // Mostrar toast de erro apenas para erros críticos, não para problemas menores
+      if (error instanceof Error && error.message.includes('network')) {
+        toast({
+          title: "⚠️ Problema de Conectividade",
+          description: "Tentando sincronizar novamente...",
+          variant: "destructive",
+          duration: 2000,
+        });
+      }
+      
       return false;
     } finally {
       setSyncing(false);

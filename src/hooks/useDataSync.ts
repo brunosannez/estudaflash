@@ -11,7 +11,7 @@ export const useDataSync = () => {
   const { checkDataConsistency } = useConsistencyChecker();
   const { getRealUserCounts } = useRealUserCounts();
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const maxRetries = 2; // Reduzido de 3 para 2
 
   const forceSyncUserData = async (): Promise<boolean> => {
     if (!user) {
@@ -31,10 +31,10 @@ export const useDataSync = () => {
         console.log(`⚠️ Sincronização falhou, tentativa ${retryCount + 1}/${maxRetries}`);
         setRetryCount(prev => prev + 1);
         
-        // Retry after a delay
+        // Retry after a longer delay to avoid spam
         setTimeout(() => {
           forceSyncUserData();
-        }, 1000 * (retryCount + 1)); // Exponential backoff
+        }, 3000 * (retryCount + 1)); // Delay maior para evitar spam
         
         return false;
       } else {
@@ -44,6 +44,7 @@ export const useDataSync = () => {
       }
     } catch (error) {
       console.error('❌ Erro durante sincronização:', error);
+      setRetryCount(0); // Reset em caso de erro
       return false;
     }
   };
@@ -73,6 +74,10 @@ export const useDataSync = () => {
           }
         } catch (error) {
           console.error('❌ Erro na sincronização inicial:', error);
+          // Marcar como inicializado mesmo com erro para evitar loops infinitos
+          if (isMounted) {
+            setHasInitialized(true);
+          }
         }
       }
     };
