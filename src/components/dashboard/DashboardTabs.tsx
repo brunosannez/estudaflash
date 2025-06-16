@@ -7,11 +7,13 @@ import { Upload, RefreshCw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDataSync } from '@/hooks/useDataSync';
 import ProgressOverview from '@/components/ProgressOverview';
+import SuccessPopup from '@/components/dashboard/SuccessPopup';
 
 const DashboardTabs = () => {
   const navigate = useNavigate();
   const { forceSyncUserData, checkDataConsistency, syncing } = useDataSync();
   const [dataInconsistent, setDataInconsistent] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     // Verificar consistência dos dados ao carregar
@@ -26,6 +28,8 @@ const DashboardTabs = () => {
     const success = await forceSyncUserData();
     if (success) {
       setDataInconsistent(false);
+      setShowSuccessPopup(true);
+      
       // Recarregar a página após 2 segundos para garantir que os dados sejam atualizados
       setTimeout(() => {
         window.location.reload();
@@ -35,6 +39,11 @@ const DashboardTabs = () => {
 
   return (
     <div className="w-full">
+      <SuccessPopup 
+        show={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+      />
+      
       {dataInconsistent && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
           <CardContent className="pt-6">

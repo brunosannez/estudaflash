@@ -1,133 +1,149 @@
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { useSummary } from '@/hooks/useSummary';
-import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
+import { useFlashcards } from '@/hooks/useFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
-import AuthGuard from '@/components/AuthGuard';
-import MainNavigation from '@/components/navigation/MainNavigation';
-import FlashcardList from '@/components/FlashcardList';
-import ResumoHeader from '@/components/resumo/ResumoHeader';
-import ResumoStats from '@/components/resumo/ResumoStats';
-import ResumoMainContent from '@/components/resumo/ResumoMainContent';
+import ResumoContent from '@/components/ResumoContent';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import PageLayout from '@/components/navigation/PageLayout';
 
 const Resumo = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getResumo, getResumoById } = useSummary();
-  const { generateAutoFlashcards, isGenerating } = useAutoFlashcards();
+  const { getResumoById } = useSummary();
+  const { generateFlashcards } = useFlashcards();
+  const { generateQuiz } = useQuiz();
+  
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showFlashcards, setShowFlashcards] = useState(false);
-  
-  const { generateQuiz, loading: quizLoading } = useQuiz(resumo?.id || '');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      loadResumo();
-    }
-  }, [id]);
-
-  const loadResumo = async () => {
-    try {
-      setLoading(true);
-      
-      let resumoData = await getResumoById(id!);
-      
-      if (!resumoData) {
-        resumoData = await getResumo(id!);
+    const fetchResumo = async () => {
+      if (!id) {
+        setError('ID do resumo não fornecido');
+        setLoading(false);
+        return;
       }
-      
-      if (resumoData) {
-        setResumo(resumoData);
-      } else {
-        console.error('Resumo não encontrado com ID:', id);
-        navigate('/', { replace: true });
+
+      try {
+        setLoading(true);
+        const data = await getResumoById(id);
+        
+        if (data) {
+          setResumo(data);
+        } else {
+          setError('Resumo não encontrado');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar resumo:', err);
+        setError('Erro ao carregar resumo');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Erro ao carregar resumo:', error);
-      navigate('/', { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const handleGerarFlashcards = () => {
-    setShowFlashcards(true);
-  };
+    fetchResumo();
+  }, [id, getResumoById]);
 
-  const handleGerarFlashcardsAutomatico = async () => {
+  const handleGenerateFlashcards = async () => {
+    if (!resumo?.id) return;
+    
     try {
-      await generateAutoFlashcards(resumo.id, resumo.resumo_gerado);
+      await generateFlashcards(resumo.id);
+      navigate('/my-flashcards');
     } catch (error) {
-      console.error('Erro ao gerar flashcards automáticos:', error);
+      console.error('Erro ao gerar flashcards:', error);
     }
   };
 
   const handleGenerateQuiz = async () => {
+    if (!resumo?.id) return;
+    
     try {
-      const success = await generateQuiz(resumo.resumo_gerado);
-      if (success) {
-        navigate(`/quiz/${resumo.id}`);
-      }
+      await generateQuiz(resumo.id);
+      navigate(`/quiz/${resumo.id}`);
     } catch (error) {
       console.error('Erro ao gerar quiz:', error);
     }
   };
 
-  const handleBack = () => {
-    navigate('/my-summaries');
-  };
-
   if (loading) {
     return (
-      <AuthGuard>
-        <MainNavigation>
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        </MainNavigation>
-      </AuthGuard>
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="w-96">
+            <CardContent className="py-8 text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p>Carregando resumo...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
     );
   }
 
-  const dataFormatada = new Date(resumo.data_criacao).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  const estimatedReadTime = Math.ceil(resumo.resumo_gerado.length / 1000);
+  if (error || !resumo) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="w-96">
+            <CardContent className="py-8 text-center">
+              <p className="text-red-600 mb-4">{error || 'Resumo não encontrado'}</p>
+              <Button onClick={() => navigate('/my-summaries')} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar aos Resumos
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
-    <AuthGuard>
-      <MainNavigation>
-        <div className="space-y-8">
-          <ResumoHeader onBack={handleBack} />
-
-          <ResumoStats
-            estimatedReadTime={estimatedReadTime}
-            contentLength={resumo.resumo_gerado.length}
-            createdDate={dataFormatada}
-          />
-
-          <ResumoMainContent
-            content={resumo.resumo_gerado}
-            createdDate={dataFormatada}
-            onGenerateAutoFlashcards={handleGerarFlashcardsAutomatico}
-            onManageFlashcards={handleGerarFlashcards}
-            onGenerateQuiz={handleGenerateQuiz}
-            isGeneratingFlashcards={isGenerating}
-            isGeneratingQuiz={quizLoading}
-          />
+    <PageLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button 
+            onClick={() => navigate('/my-summaries')} 
+            variant="ghost" 
+            size="sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {resumo.custom_name || 'Resumo'}
+            </h1>
+            <p className="text-gray-600">
+              Criado em {new Date(resumo.data_criacao).toLocaleDateString('pt-BR')}
+            </p>
+          </div>
         </div>
 
-        <FlashcardList resumoId={resumo.id} open={showFlashcards} onClose={() => setShowFlashcards(false)} />
-      </MainNavigation>
-    </AuthGuard>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handleGenerateFlashcards}>
+            🧠 Gerar Flashcards
+          </Button>
+          <Button onClick={handleGenerateQuiz} variant="outline">
+            🎯 Fazer Quiz
+          </Button>
+        </div>
+
+        {/* Content */}
+        <ResumoContent 
+          resumo={resumo}
+          onGenerateFlashcards={handleGenerateFlashcards}
+          onGenerateQuiz={handleGenerateQuiz}
+        />
+      </div>
+    </PageLayout>
   );
 };
 

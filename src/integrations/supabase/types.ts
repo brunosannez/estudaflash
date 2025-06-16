@@ -455,6 +455,33 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_logs: {
+        Row: {
+          action_type: string
+          credits_used: number
+          id: string
+          metadata: Json | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          credits_used?: number
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          credits_used?: number
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
@@ -624,6 +651,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      admin_toggle_user_status: {
+        Args: { target_user_id: string; is_active: boolean }
+        Returns: boolean
+      }
       admin_update_plan: {
         Args:
           | {
@@ -726,6 +757,16 @@ export type Database = {
           storage_by_plan: Json
         }[]
       }
+      get_usage_analytics: {
+        Args: { start_date?: string; end_date?: string }
+        Returns: {
+          action_type: string
+          usage_date: string
+          total_actions: number
+          unique_users: number
+          total_credits: number
+        }[]
+      }
       get_user_plan_details: {
         Args: { user_uuid?: string }
         Returns: {
@@ -747,12 +788,31 @@ export type Database = {
           total_size_mb: number
         }[]
       }
+      get_user_usage_summary: {
+        Args: { target_user_id: string }
+        Returns: {
+          action_type: string
+          current_month_usage: number
+          current_month_credits: number
+          all_time_usage: number
+          all_time_credits: number
+        }[]
+      }
       is_admin: {
         Args: { user_uuid?: string }
         Returns: boolean
       }
       is_current_user_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_usage: {
+        Args: {
+          target_user_id: string
+          target_action_type: string
+          target_credits_used?: number
+          target_metadata?: Json
+        }
         Returns: boolean
       }
       reset_monthly_usage: {

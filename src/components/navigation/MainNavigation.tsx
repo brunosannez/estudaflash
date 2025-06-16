@@ -1,184 +1,273 @@
 
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
-import AppBreadcrumbs from '@/components/navigation/AppBreadcrumbs';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-  SidebarFooter,
-  SidebarSeparator,
-} from '@/components/ui/sidebar';
-import {
-  BookOpen,
-  Brain,
-  Target,
-  Trophy,
-  Upload,
   Home,
-  Shield,
+  Upload,
+  FileText,
+  Brain,
+  BarChart3,
   User,
   LogOut,
-  BarChart3,
+  Menu,
+  X,
+  Settings,
+  Trophy,
+  Target
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-interface MainNavigationProps {
-  children: React.ReactNode;
-}
-
-const MainNavigation = ({ children }: MainNavigationProps) => {
-  const location = useLocation();
-  const navigate = useNavigate();
+const MainNavigation = () => {
   const { user, signOut } = useAuth();
-  const { getDisplayName, getFullName } = useUserProfile();
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { isAdmin } = useIsAdmin();
+  const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const mainMenuItems = [
-    { icon: Home, label: 'Dashboard', path: '/', emoji: '🏠' },
-    { icon: Upload, label: 'Upload', path: '/upload', emoji: '📤' },
-    { icon: BookOpen, label: 'Meus Resumos', path: '/my-summaries', emoji: '📚' },
-    { icon: Brain, label: 'Flashcards', path: '/my-flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
-    { icon: Trophy, label: 'Progresso', path: '/my-progress', emoji: '🏆' },
+  const navItems = [
+    { to: '/', icon: Home, label: 'Dashboard' },
+    { to: '/upload', icon: Upload, label: 'Upload' },
+    { to: '/my-summaries', icon: FileText, label: 'Resumos' },
+    { to: '/my-flashcards', icon: Brain, label: 'Flashcards' },
+    { to: '/quiz-history', icon: Target, label: 'Quizzes' },
+    { to: '/my-progress', icon: Trophy, label: 'Progresso' },
   ];
 
-  const adminMenuItems = [
-    { icon: Shield, label: 'Admin Panel', path: '/admin', emoji: '⚡' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics', emoji: '📊' },
+  const adminItems = [
+    { to: '/admin', icon: Settings, label: 'Admin Panel' },
+    { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   ];
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/home');
+      navigate('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
   };
 
-  const handleNavigation = (path: string) => {
-    console.log('🚀 Navegando para:', path);
-    navigate(path);
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
 
-  const isActiveRoute = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
+  if (!user) return null;
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Sidebar className="border-r-2 border-purple-200/50">
-          <SidebarHeader className="p-4">
-            <div 
-              className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-purple-50 transition-colors"
-              onClick={() => handleNavigation('/')}
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-lg">🎓</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-700">EstudoFácil AI</h1>
-                <p className="text-sm text-gray-600">✨ Aprender nunca foi tão divertido!</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="px-2">
-            <SidebarMenu>
-              {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    onClick={() => handleNavigation(item.path)}
-                    isActive={isActiveRoute(item.path)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-medium">{item.emoji} {item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-gray-200">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Logo */}
+          <div className="flex items-center h-16 px-6 border-b border-gray-200">
+            <h1 className="text-xl font-bold text-gray-900">StudyAI</h1>
+          </div>
 
-            {isAdmin && !adminLoading && (
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`
+                }
+                onClick={closeMobileMenu}
+              >
+                <item.icon className="h-5 w-5 mr-3" />
+                {item.label}
+              </NavLink>
+            ))}
+
+            {isAdmin && (
               <>
-                <SidebarSeparator className="my-4" />
-                <div className="px-3 py-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Administração</p>
+                <div className="pt-4 mt-4 border-t border-gray-200">
+                  <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Administração
+                  </p>
                 </div>
-                <SidebarMenu>
-                  {adminMenuItems.map((item) => (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        onClick={() => handleNavigation(item.path)}
-                        isActive={isActiveRoute(item.path)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-red-700 hover:bg-red-50"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span className="font-medium">{item.emoji} {item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                {adminItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActive
+                          ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`
+                    }
+                    onClick={closeMobileMenu}
+                  >
+                    <item.icon className="h-5 w-5 mr-3" />
+                    {item.label}
+                  </NavLink>
+                ))}
               </>
             )}
-          </SidebarContent>
+          </nav>
 
-          <SidebarFooter className="p-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
-                <User className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700 truncate">
-                  {getDisplayName()}
-                </span>
-                {isAdmin && (
-                  <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                    Admin
-                  </span>
-                )}
+          {/* User Profile */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-200">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start p-2">
+                  <Avatar className="h-8 w-8 mr-3">
+                    <AvatarImage src="" />
+                    <AvatarFallback className="bg-blue-500 text-white">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-gray-500">Estudante</p>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold text-gray-900">StudyAI</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50" 
+            onClick={closeMobileMenu}
+          />
+          <aside className="relative flex flex-col w-64 bg-white shadow-xl">
+            <div className="flex items-center h-16 px-6 border-b border-gray-200">
+              <h1 className="text-xl font-bold text-gray-900">StudyAI</h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeMobileMenu}
+                className="ml-auto"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  {item.label}
+                </NavLink>
+              ))}
+
+              {isAdmin && (
+                <>
+                  <div className="pt-4 mt-4 border-t border-gray-200">
+                    <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Administração
+                    </p>
+                  </div>
+                  {adminItems.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) =>
+                        `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          isActive
+                            ? 'bg-purple-50 text-purple-700'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        }`
+                      }
+                      onClick={closeMobileMenu}
+                    >
+                      <item.icon className="h-5 w-5 mr-3" />
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </>
+              )}
+            </nav>
+
+            <div className="flex-shrink-0 p-4 border-t border-gray-200">
+              <div className="flex items-center">
+                <Avatar className="h-8 w-8 mr-3">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-blue-500 text-white">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.email}
+                  </p>
+                  <p className="text-xs text-gray-500">Estudante</p>
+                </div>
               </div>
               <Button
-                variant="outline"
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                variant="ghost"
+                className="w-full mt-3 justify-start text-gray-700"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4 mr-2" />
                 Sair
               </Button>
             </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-purple-200/50 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="hover:bg-purple-50" />
-              <div className="h-6 w-px bg-purple-200" />
-              <div className="flex-1">
-                <AppBreadcrumbs />
-              </div>
-            </div>
-          </header>
-          
-          <main className="flex-1 p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+          </aside>
+        </div>
+      )}
+    </>
   );
 };
 

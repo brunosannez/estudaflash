@@ -1,8 +1,6 @@
 
 import React from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import MainNavigation from '@/components/navigation/MainNavigation';
-import FloatingBackground from '@/components/dashboard/FloatingBackground';
+import MainNavigation from './MainNavigation';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -11,16 +9,17 @@ interface PageLayoutProps {
 
 const PageLayout = ({ children, showBackground = false }: PageLayoutProps) => {
   return (
-    <ProtectedRoute>
-      <MainNavigation>
-        <div className="relative min-h-[calc(100vh-12rem)]">
-          {showBackground && <FloatingBackground />}
-          <div className={showBackground ? "relative z-10" : ""}>
+    <div className="min-h-screen bg-gray-50">
+      <MainNavigation />
+      
+      <main className="lg:pl-64">
+        <div className={`${showBackground ? 'min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50' : ''}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>
         </div>
-      </MainNavigation>
-    </ProtectedRoute>
+      </main>
+    </div>
   );
 };
 
