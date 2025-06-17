@@ -27,19 +27,26 @@ export const useUserProfile = () => {
       }
 
       try {
+        console.log('🔍 Buscando perfil do usuário:', user.id);
+        
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao buscar perfil:', error);
+        if (error) {
+          if (error.code === 'PGRST116') {
+            console.warn('⚠️ Perfil não encontrado, usando dados do auth');
+          } else {
+            console.error('❌ Erro ao buscar perfil:', error);
+          }
         } else {
+          console.log('✅ Perfil encontrado:', data);
           setProfile(data);
         }
       } catch (error) {
-        console.error('Erro ao buscar perfil do usuário:', error);
+        console.error('💥 Erro ao buscar perfil do usuário:', error);
       } finally {
         setLoading(false);
       }
@@ -49,16 +56,21 @@ export const useUserProfile = () => {
   }, [user]);
 
   const getDisplayName = (): string => {
+    // 1. Usar full_name do perfil se disponível
     if (profile?.full_name) {
-      return profile.full_name.split(' ')[0]; // Primeiro nome
+      const firstName = profile.full_name.split(' ')[0];
+      return firstName;
     }
     
+    // 2. Usar username do perfil se disponível
     if (profile?.username) {
       return profile.username;
     }
     
+    // 3. Usar email como fallback
     if (user?.email) {
-      return user.email.split('@')[0]; // Parte antes do @
+      const emailUsername = user.email.split('@')[0];
+      return emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
     }
     
     return 'Usuário';

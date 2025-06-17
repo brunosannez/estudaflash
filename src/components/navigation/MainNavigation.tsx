@@ -71,8 +71,8 @@ const MainNavigation = () => {
   };
 
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
-    <div className="flex flex-col h-full">
-      <div className="p-6 border-b border-gray-200">
+    <div className="flex flex-col h-full bg-white">
+      <div className="p-6 border-b border-gray-200 bg-white">
         <Link to="/" className="flex items-center gap-2" onClick={onItemClick}>
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">S</span>
@@ -81,7 +81,7 @@ const MainNavigation = () => {
         </Link>
       </div>
 
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 bg-white">
         <ul className="space-y-2">
           {navigationItems.map((item) => (
             <li key={item.href}>
@@ -102,7 +102,7 @@ const MainNavigation = () => {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 bg-white">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start p-2 h-auto">
@@ -158,7 +158,7 @@ const MainNavigation = () => {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-white">
+            <SheetContent side="left" className="w-64 p-0 bg-white border-r border-gray-200">
               <SheetHeader className="sr-only">
                 <SheetTitle>Menu de navegação</SheetTitle>
               </SheetHeader>

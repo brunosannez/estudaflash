@@ -19,10 +19,10 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const getSession = async () => {
       try {
-        setAuthState(prev => ({ ...prev, loading: true }));
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -30,20 +30,24 @@ export const useAuth = () => {
           throw error;
         }
 
-        setAuthState({
-          user: session?.user || null,
-          session: session || null,
-          loading: false,
-          error: null,
-        });
+        if (isMounted) {
+          setAuthState({
+            user: session?.user || null,
+            session: session || null,
+            loading: false,
+            error: null,
+          });
+        }
       } catch (error: any) {
         console.error('Erro na autenticação:', error);
-        setAuthState({
-          user: null,
-          session: null,
-          loading: false,
-          error: error.message,
-        });
+        if (isMounted) {
+          setAuthState({
+            user: null,
+            session: null,
+            loading: false,
+            error: error.message,
+          });
+        }
       }
     };
 
@@ -52,20 +56,25 @@ export const useAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.email);
       
-      setAuthState({
-        user: session?.user || null,
-        session: session || null,
-        loading: false,
-        error: null,
-      });
+      if (isMounted) {
+        setAuthState({
+          user: session?.user || null,
+          session: session || null,
+          loading: false,
+          error: null,
+        });
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      setAuthState(prev => ({ ...prev, loading: true }));
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -74,33 +83,25 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Erro no login:', error);
+        setAuthState(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: error.message 
+        }));
         throw error;
       }
 
       console.log('Login realizado com sucesso:', data.user?.email);
-      
-      setAuthState({
-        user: data.user,
-        session: data.session,
-        loading: false,
-        error: null,
-      });
-
       return data;
     } catch (error: any) {
       console.error('Erro no signIn:', error);
-      setAuthState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: error.message 
-      }));
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
-      setAuthState(prev => ({ ...prev, loading: true }));
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -113,28 +114,18 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Erro no cadastro:', error);
+        setAuthState(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: error.message 
+        }));
         throw error;
       }
 
       console.log('Cadastro realizado:', data.user?.email);
-      
-      // O trigger handle_new_user_setup criará automaticamente os registros necessários
-      
-      setAuthState({
-        user: data.user,
-        session: data.session,
-        loading: false,
-        error: null,
-      });
-
       return data;
     } catch (error: any) {
       console.error('Erro no signUp:', error);
-      setAuthState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: error.message 
-      }));
       throw error;
     }
   };
