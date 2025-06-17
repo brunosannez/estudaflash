@@ -36,12 +36,12 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
           <Routes>
             <Route path="/home" element={<Home />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/new-signup" element={<NewSignup />} />

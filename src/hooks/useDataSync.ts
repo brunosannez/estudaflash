@@ -2,12 +2,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSyncManager } from './useSyncManager';
+import { useConsistencyChecker } from './useConsistencyChecker';
+import { useRealUserCounts } from './useRealUserCounts';
 
 export const useDataSync = () => {
   const { user } = useAuth();
   const { syncing, hasInitialized, setHasInitialized, forceSyncUserData: baseForceSyncUserData } = useSyncManager();
+  const { checkDataConsistency } = useConsistencyChecker();
+  const { getRealUserCounts } = useRealUserCounts();
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 2;
+  const maxRetries = 2; // Reduzido de 3 para 2
 
   const forceSyncUserData = async (): Promise<boolean> => {
     if (!user) {
@@ -27,9 +31,10 @@ export const useDataSync = () => {
         console.log(`⚠️ Sincronização falhou, tentativa ${retryCount + 1}/${maxRetries}`);
         setRetryCount(prev => prev + 1);
         
+        // Retry after a longer delay to avoid spam
         setTimeout(() => {
           forceSyncUserData();
-        }, 3000 * (retryCount + 1));
+        }, 3000 * (retryCount + 1)); // Delay maior para evitar spam
         
         return false;
       } else {
@@ -39,11 +44,22 @@ export const useDataSync = () => {
       }
     } catch (error) {
       console.error('❌ Erro durante sincronização:', error);
-      setRetryCount(0);
+      setRetryCount(0); // Reset em caso de erro
       return false;
     }
   };
 
+  const checkDataConsistencyForCurrentUser = async () => {
+    if (!user) return null;
+    return await checkDataConsistency(user.id);
+  };
+
+  const getRealUserCountsForCurrentUser = async () => {
+    if (!user) throw new Error('User not authenticated');
+    return await getRealUserCounts(user.id);
+  };
+
+  // Enhanced automatic synchronization on initialization
   useEffect(() => {
     let isMounted = true;
     
@@ -58,6 +74,7 @@ export const useDataSync = () => {
           }
         } catch (error) {
           console.error('❌ Erro na sincronização inicial:', error);
+          // Marcar como inicializado mesmo com erro para evitar loops infinitos
           if (isMounted) {
             setHasInitialized(true);
           }
@@ -75,6 +92,8 @@ export const useDataSync = () => {
   return {
     syncing,
     hasInitialized,
-    forceSyncUserData
+    forceSyncUserData,
+    checkDataConsistency: checkDataConsistencyForCurrentUser,
+    getRealUserCounts: getRealUserCountsForCurrentUser
   };
 };

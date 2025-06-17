@@ -1,39 +1,42 @@
 
 import { useState } from 'react';
+import { type ActionType } from '@/services/usageLimitService';
 import { PlanType } from '@/types/plans';
-import { ActionType } from '@/services/usageLimitService';
-
-interface UpgradeModalData {
-  isOpen: boolean;
-  currentPlan: PlanType;
-  actionType: ActionType;
-  onClose: () => void;
-}
 
 export const useUpgradeModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<PlanType>('free');
-  const [actionType, setActionType] = useState<ActionType>('uploads');
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean;
+    actionType: ActionType | null;
+    plan: PlanType;
+  }>({
+    isOpen: false,
+    actionType: null,
+    plan: 'free',
+  });
 
-  const openUpgradeModal = (action: ActionType, plan: PlanType) => {
-    setActionType(action);
-    setCurrentPlan(plan);
-    setIsOpen(true);
+  const openUpgradeModal = (actionType: ActionType, plan: PlanType) => {
+    setUpgradeModal({
+      isOpen: true,
+      actionType,
+      plan,
+    });
   };
 
   const closeUpgradeModal = () => {
-    setIsOpen(false);
-  };
-
-  const upgradeModalData: UpgradeModalData = {
-    isOpen,
-    currentPlan,
-    actionType,
-    onClose: closeUpgradeModal,
+    setUpgradeModal({
+      isOpen: false,
+      actionType: null,
+      plan: 'free',
+    });
   };
 
   return {
-    upgradeModalData,
+    upgradeModalData: {
+      isOpen: upgradeModal.isOpen,
+      onClose: closeUpgradeModal,
+      currentPlan: upgradeModal.plan,
+      actionType: upgradeModal.actionType || '',
+    },
     openUpgradeModal,
     closeUpgradeModal,
   };
