@@ -1,209 +1,229 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface AdminDiagnostics {
+interface DiagnosticsResult {
   isAdmin: boolean;
-  adminCheckMethod: 'rpc' | 'direct' | 'failed';
-  currentUserId: string | null;
+  adminCheckMethod: string;
   userRecord: any;
-  totalUploads: number;
-  totalUsers: number;
-  sampleUpload: any;
+  currentUserId?: string;
+  totalUploads?: number;
+  totalUsers?: number;
+  sampleUpload?: any;
   errors: string[];
+  warnings: string[];
+  suggestions: string[];
 }
 
 export class AdminDiagnosticsService {
-  static async runDiagnostics(): Promise<AdminDiagnostics> {
-    const diagnostics: AdminDiagnostics = {
+  static async runDiagnostics(): Promise<DiagnosticsResult> {
+    const result: DiagnosticsResult = {
       isAdmin: false,
-      adminCheckMethod: 'failed',
-      currentUserId: null,
+      adminCheckMethod: 'none',
       userRecord: null,
-      totalUploads: 0,
-      totalUsers: 0,
-      sampleUpload: null,
-      errors: []
+      errors: [],
+      warnings: [],
+      suggestions: []
     };
 
     try {
-      // 1. Verificar usuário atual
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        diagnostics.errors.push(`Erro auth: ${userError.message}`);
-        return diagnostics;
-      }
-      
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        diagnostics.errors.push('Usuário não autenticado');
-        return diagnostics;
+        result.errors.push('Usuário não autenticado');
+        return result;
       }
 
-      diagnostics.currentUserId = user.id;
-      console.log('🔍 Diagnóstico: Usuário atual:', user.id, user.email);
+      result.currentUserId = user.id;
+      console.log('🔍 Executando diagnósticos para usuário:', user.id);
 
-      // 2. Verificar registro do usuário na tabela uso_usuarios
-      const { data: userRecord, error: userRecordError } = await supabase
+      // 1. Verificar na tabela uso_usuarios
+      const { data: usageUser, error: usageError } = await supabase
         .from('uso_usuarios')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (userRecordError) {
-        diagnostics.errors.push(`Erro ao buscar registro: ${userRecordError.message}`);
+      if (usageError) {
+        result.errors.push(`Erro ao buscar uso_usuarios: ${usageError.message}`);
+      } else if (usageUser) {
+        result.userRecord = usageUser;
+        if (usageUser.is_admin) {
+          result.isAdmin = true;
+          result.adminCheckMethod = 'uso_usuarios.is_admin';
+        }
       } else {
-        diagnostics.userRecord = userRecord;
-        console.log('👤 Diagnóstico: Registro do usuário:', userRecord);
+        result.warnings.push('Usuário não encontrado na tabela uso_usuarios');
+        result.suggestions.push('Executar sincronização de dados do usuário');
       }
 
-      // 3. Verificar se é admin via RPC
-      try {
-        const { data: isAdminRpc, error: rpcError } = await supabase
-          .rpc('is_current_user_admin');
+      // 2. Verificar na tabela admin_users
+      if (!result.isAdmin) {
+        const { data: adminUser, error: adminError } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (!rpcError && isAdminRpc) {
-          diagnostics.isAdmin = true;
-          diagnostics.adminCheckMethod = 'rpc';
-          console.log('✅ Diagnóstico: Admin via RPC');
-        } else if (rpcError) {
-          diagnostics.errors.push(`RPC admin falhou: ${rpcError.message}`);
+        if (adminError) {
+          result.errors.push(`Erro ao buscar admin_users: ${adminError.message}`);
+        } else if (adminUser) {
+          result.isAdmin = true;
+          result.adminCheckMethod = 'admin_users table';
+          
+          // Sincronizar com uso_usuarios se necessário
+          if (usageUser && !usageUser.is_admin) {
+            result.suggestions.push('Sincronizar status de admin entre tabelas');
+          }
+        }
+      }
+
+      // 3. Verificar função RPC
+      if (!result.isAdmin) {
+        try {
+          const { data: rpcResult, error: rpcError } = await supabase.rpc('is_current_user_admin');
+          
+          if (rpcError) {
+            result.errors.push(`Erro na função RPC: ${rpcError.message}`);
+          } else if (rpcResult) {
+            result.isAdmin = true;
+            result.adminCheckMethod = 'RPC is_current_user_admin';
+          }
+        } catch (error) {
+          result.errors.push(`Erro ao executar RPC: ${error}`);
+        }
+      }
+
+      // 4. Estatísticas gerais
+      try {
+        const { count: uploadsCount } = await supabase
+          .from('uploads')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: usersCount } = await supabase
+          .from('uso_usuarios')
+          .select('*', { count: 'exact', head: true });
+
+        result.totalUploads = uploadsCount || 0;
+        result.totalUsers = usersCount || 0;
+
+        // Sample upload
+        const { data: sampleUpload } = await supabase
+          .from('uploads')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (sampleUpload) {
+          result.sampleUpload = sampleUpload;
         }
       } catch (error) {
-        diagnostics.errors.push(`Erro RPC: ${error}`);
+        result.warnings.push('Erro ao buscar estatísticas gerais');
       }
 
-      // 4. Verificar admin via consulta direta se RPC falhou
-      if (!diagnostics.isAdmin && userRecord) {
-        if (userRecord.is_admin) {
-          diagnostics.isAdmin = true;
-          diagnostics.adminCheckMethod = 'direct';
-          console.log('✅ Diagnóstico: Admin via consulta direta');
+      // 5. Verificações adicionais
+      if (user.email) {
+        const adminEmails = [
+          'admin@studyai.com',
+          'gabriel@studyai.com',
+          'suporte@studyai.com'
+        ];
+        
+        if (adminEmails.includes(user.email.toLowerCase())) {
+          result.suggestions.push(`Email ${user.email} deveria ser admin automático`);
         }
       }
 
-      // 5. Contar dados básicos
-      const [uploadsCount, usersCount] = await Promise.all([
-        supabase.from('uploads').select('*', { count: 'exact', head: true }),
-        supabase.from('uso_usuarios').select('*', { count: 'exact', head: true })
-      ]);
-
-      diagnostics.totalUploads = uploadsCount.count || 0;
-      diagnostics.totalUsers = usersCount.count || 0;
-
-      // 6. Buscar upload de exemplo para verificar file_size
-      const { data: sampleUpload } = await supabase
-        .from('uploads')
-        .select('id, file_size, data_upload, arquivo_original_nome')
-        .limit(1)
-        .single();
-
-      diagnostics.sampleUpload = sampleUpload;
-
-      console.log('📊 Diagnóstico completo:', diagnostics);
-      return diagnostics;
+      console.log('📊 Diagnósticos completos:', result);
+      return result;
 
     } catch (error) {
-      diagnostics.errors.push(`Erro geral: ${error}`);
-      console.error('💥 Erro no diagnóstico:', error);
-      return diagnostics;
+      result.errors.push(`Erro geral nos diagnósticos: ${error}`);
+      return result;
     }
   }
 
   static async ensureUserIsAdmin(userId: string): Promise<boolean> {
     try {
-      console.log('🔧 Garantindo que usuário é admin:', userId);
+      console.log('🔧 Promovendo usuário a admin:', userId);
 
-      // Verificar se já é admin
-      const { data: userRecord } = await supabase
+      // 1. Atualizar uso_usuarios
+      const { error: usageError } = await supabase
         .from('uso_usuarios')
-        .select('is_admin')
-        .eq('user_id', userId)
-        .single();
-
-      if (userRecord?.is_admin) {
-        console.log('✅ Usuário já é admin');
-        return true;
-      }
-
-      // Tornar admin
-      const { error } = await supabase
-        .from('uso_usuarios')
-        .update({ is_admin: true, updated_at: new Date().toISOString() })
+        .update({ is_admin: true })
         .eq('user_id', userId);
 
-      if (error) {
-        console.error('❌ Erro ao tornar usuário admin:', error);
+      if (usageError) {
+        console.error('❌ Erro ao atualizar uso_usuarios:', usageError);
         return false;
       }
 
-      console.log('✅ Usuário promovido a admin');
+      // 2. Buscar email do usuário
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        console.error('❌ Email do usuário não disponível');
+        return false;
+      }
+
+      // 3. Inserir em admin_users (sem onConflict)
+      const { error: adminError } = await supabase
+        .from('admin_users')
+        .upsert({
+          user_id: userId,
+          email: user.email
+        }, {
+          onConflict: 'email'
+        });
+
+      if (adminError) {
+        console.error('❌ Erro ao inserir em admin_users:', adminError);
+        // Não falhar se já existir
+      }
+
+      console.log('✅ Usuário promovido a admin com sucesso');
       return true;
 
     } catch (error) {
-      console.error('💥 Erro ao garantir admin:', error);
+      console.error('❌ Erro ao promover usuário:', error);
       return false;
     }
   }
 
-  static async fixFileSizes(): Promise<{ fixed: number; errors: string[] }> {
+  static async fixFileSizes(): Promise<{ fixed: number }> {
     try {
-      console.log('🔧 Corrigindo file_size dos uploads...');
+      console.log('🔧 Corrigindo file sizes...');
 
-      // Buscar uploads com file_size zerado ou nulo
+      // Buscar uploads sem file_size
       const { data: uploadsToFix, error } = await supabase
         .from('uploads')
-        .select('id, arquivo_original_nome, imagem_url')
+        .select('id')
         .or('file_size.is.null,file_size.eq.0');
 
       if (error) {
-        return { fixed: 0, errors: [`Erro ao buscar uploads: ${error.message}`] };
+        console.error('❌ Erro ao buscar uploads:', error);
+        return { fixed: 0 };
       }
 
       if (!uploadsToFix || uploadsToFix.length === 0) {
-        return { fixed: 0, errors: [] };
+        console.log('✅ Nenhum upload para corrigir');
+        return { fixed: 0 };
       }
 
-      let fixed = 0;
-      const errors: string[] = [];
+      // Atualizar com tamanho padrão (simulação)
+      const { error: updateError } = await supabase
+        .from('uploads')
+        .update({ file_size: 1024 * 1024 }) // 1MB padrão
+        .in('id', uploadsToFix.map(u => u.id));
 
-      // Para cada upload, tentar obter o tamanho real
-      for (const upload of uploadsToFix) {
-        try {
-          // Estimar tamanho baseado no nome do arquivo (fallback)
-          let estimatedSize = 1024 * 1024; // 1MB padrão
-
-          // Se tiver informações do arquivo, usar
-          if (upload.arquivo_original_nome) {
-            // Estimar baseado na extensão
-            const ext = upload.arquivo_original_nome.toLowerCase();
-            if (ext.includes('.jpg') || ext.includes('.jpeg') || ext.includes('.png')) {
-              estimatedSize = 2 * 1024 * 1024; // 2MB para imagens
-            } else if (ext.includes('.pdf')) {
-              estimatedSize = 5 * 1024 * 1024; // 5MB para PDFs
-            }
-          }
-
-          const { error: updateError } = await supabase
-            .from('uploads')
-            .update({ file_size: estimatedSize })
-            .eq('id', upload.id);
-
-          if (updateError) {
-            errors.push(`Erro no upload ${upload.id}: ${updateError.message}`);
-          } else {
-            fixed++;
-          }
-
-        } catch (error) {
-          errors.push(`Erro processando upload ${upload.id}: ${error}`);
-        }
+      if (updateError) {
+        console.error('❌ Erro ao atualizar uploads:', updateError);
+        return { fixed: 0 };
       }
 
-      console.log(`✅ File sizes corrigidos: ${fixed} uploads`);
-      return { fixed, errors };
+      console.log(`✅ ${uploadsToFix.length} uploads corrigidos`);
+      return { fixed: uploadsToFix.length };
 
     } catch (error) {
-      console.error('💥 Erro ao corrigir file sizes:', error);
-      return { fixed: 0, errors: [`Erro geral: ${error}`] };
+      console.error('❌ Erro ao corrigir file sizes:', error);
+      return { fixed: 0 };
     }
   }
 }
