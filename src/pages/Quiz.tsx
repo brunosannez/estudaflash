@@ -107,7 +107,7 @@ const Quiz = () => {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-96">
+          <Card className="w-full max-w-md">
             <CardContent className="py-8 text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p>Gerando quiz...</p>
@@ -122,7 +122,7 @@ const Quiz = () => {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-96">
+          <Card className="w-full max-w-md">
             <CardContent className="py-8 text-center">
               <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl font-bold mb-2">Erro ao carregar quiz</h2>
@@ -146,7 +146,7 @@ const Quiz = () => {
 
     return (
       <PageLayout>
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           <Card className="text-center">
             <CardHeader>
               <div className="flex justify-center mb-4">
@@ -215,8 +215,8 @@ const Quiz = () => {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <CardTitle>Quiz - Questão {currentQuestionIndex + 1} de {quizzes.length}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                  <CardTitle className="text-lg sm:text-xl">Quiz - Questão {currentQuestionIndex + 1} de {quizzes.length}</CardTitle>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {formatTime(timeElapsed)}
@@ -233,7 +233,7 @@ const Quiz = () => {
         {/* Question */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{currentQuestion.pergunta}</CardTitle>
+            <CardTitle className="text-lg leading-relaxed">{currentQuestion.pergunta}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {currentQuestion.alternativas.map((alternativa: string, index: number) => {
@@ -242,15 +242,15 @@ const Quiz = () => {
               const showResult = showExplanation;
               
               let buttonVariant: "default" | "outline" | "secondary" = "outline";
-              let className = "";
+              let className = "w-full text-left justify-start p-4 h-auto whitespace-normal";
               
               if (showResult) {
                 if (isCorrect) {
                   buttonVariant = "default";
-                  className = "bg-green-500 hover:bg-green-600 text-white border-green-500";
+                  className += " bg-green-500 hover:bg-green-600 text-white border-green-500";
                 } else if (isSelected && !isCorrect) {
                   buttonVariant = "secondary";
-                  className = "bg-red-500 hover:bg-red-600 text-white border-red-500";
+                  className += " bg-red-500 hover:bg-red-600 text-white border-red-500";
                 }
               } else if (isSelected) {
                 buttonVariant = "default";
@@ -261,11 +261,11 @@ const Quiz = () => {
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
                   variant={buttonVariant}
-                  className={`w-full text-left justify-start p-4 h-auto whitespace-normal ${className}`}
+                  className={className}
                   disabled={showExplanation}
                 >
-                  <span className="font-semibold mr-3">{String.fromCharCode(65 + index)})</span>
-                  {alternativa}
+                  <span className="font-semibold mr-3 flex-shrink-0">{String.fromCharCode(65 + index)})</span>
+                  <span className="text-left">{alternativa}</span>
                 </Button>
               );
             })}
@@ -286,7 +286,7 @@ const Quiz = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4">{currentQuestion.explicacao}</p>
+              <p className="mb-4 leading-relaxed">{currentQuestion.explicacao}</p>
               <div className="flex justify-end">
                 <Button onClick={handleNextQuestion}>
                   {currentQuestionIndex < quizzes.length - 1 ? 'Próxima Questão' : 'Finalizar Quiz'}
