@@ -5,6 +5,7 @@ interface ConsistencyReport {
   uploadsConsistent: boolean;
   flashcardsConsistent: boolean;
   quizzesConsistent: boolean;
+  isInconsistent: boolean;
   realCounts: {
     uploads: number;
     flashcards: number;
@@ -24,24 +25,48 @@ export const useConsistencyChecker = () => {
       console.log('🔍 Verificando consistência de dados para:', userId);
 
       // Buscar contagens reais das tabelas
-      const [uploadsResult, flashcardsResult, quizzesResult, usageResult] = await Promise.all([
+      const [uploadsResult, quizzesResult, usageResult] = await Promise.all([
         supabase.from('uploads').select('id', { count: 'exact' }).eq('user_id', userId),
-        supabase.from('flashcards').select('id', { count: 'exact' }).eq('resumo_id', 
-          supabase.from('resumos').select('id').eq('upload_id', 
-            supabase.from('uploads').select('id').eq('user_id', userId)
-          )
-        ),
         supabase.from('quiz_sessions').select('id', { count: 'exact' }).eq('user_id', userId),
         supabase.from('uso_usuarios').select('uploads_realizados, flashcards_gerados, quizzes_realizados').eq('user_id', userId).single()
       ]);
 
-      if (uploadsResult.error || flashcardsResult.error || quizzesResult.error || usageResult.error) {
+      if (uploadsResult.error || quizzesResult.error || usageResult.error) {
         throw new Error('Erro ao buscar dados para verificação de consistência');
+      }
+
+      // Contar flashcards dos uploads do usuário
+      let flashcardsCount = 0;
+      if (uploadsResult.data && uploadsResult.count && uploadsResult.count > 0) {
+        const { data: userUploads } = await supabase
+          .from('uploads')
+          .select('id')
+          .eq('user_id', userId);
+
+        if (userUploads && userUploads.length > 0) {
+          const uploadIds = userUploads.map(upload => upload.id);
+          
+          const { data: resumos } = await supabase
+            .from('resumos')
+            .select('id')
+            .in('upload_id', uploadIds);
+
+          if (resumos && resumos.length > 0) {
+            const resumoIds = resumos.map(resumo => resumo.id);
+            
+            const { count: flashcardsCountResult } = await supabase
+              .from('flashcards')
+              .select('*', { count: 'exact', head: true })
+              .in('resumo_id', resumoIds);
+
+            flashcardsCount = flashcardsCountResult || 0;
+          }
+        }
       }
 
       const realCounts = {
         uploads: uploadsResult.count || 0,
-        flashcards: flashcardsResult.count || 0,
+        flashcards: flashcardsCount,
         quizzes: quizzesResult.count || 0
       };
 
@@ -65,10 +90,15 @@ export const useConsistencyChecker = () => {
         discrepancies.push(`Quizzes: real ${realCounts.quizzes} vs registrado ${recordedCounts.quizzes}`);
       }
 
+      const uploadsConsistent = realCounts.uploads === recordedCounts.uploads;
+      const flashcardsConsistent = realCounts.flashcards === recordedCounts.flashcards;
+      const quizzesConsistent = realCounts.quizzes === recordedCounts.quizzes;
+
       const report: ConsistencyReport = {
-        uploadsConsistent: realCounts.uploads === recordedCounts.uploads,
-        flashcardsConsistent: realCounts.flashcards === recordedCounts.flashcards,
-        quizzesConsistent: realCounts.quizzes === recordedCounts.quizzes,
+        uploadsConsistent,
+        flashcardsConsistent,
+        quizzesConsistent,
+        isInconsistent: !uploadsConsistent || !flashcardsConsistent || !quizzesConsistent,
         realCounts,
         recordedCounts,
         discrepancies

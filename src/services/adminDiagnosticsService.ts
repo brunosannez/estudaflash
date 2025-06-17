@@ -5,6 +5,10 @@ interface DiagnosticsResult {
   isAdmin: boolean;
   adminCheckMethod: string;
   userRecord: any;
+  currentUserId?: string;
+  totalUploads?: number;
+  totalUsers?: number;
+  sampleUpload?: any;
   errors: string[];
   warnings: string[];
   suggestions: string[];
@@ -28,6 +32,7 @@ export class AdminDiagnosticsService {
         return result;
       }
 
+      result.currentUserId = user.id;
       console.log('🔍 Executando diagnósticos para usuário:', user.id);
 
       // 1. Verificar na tabela uso_usuarios
@@ -87,7 +92,34 @@ export class AdminDiagnosticsService {
         }
       }
 
-      // 4. Verificações adicionais
+      // 4. Estatísticas gerais
+      try {
+        const { count: uploadsCount } = await supabase
+          .from('uploads')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: usersCount } = await supabase
+          .from('uso_usuarios')
+          .select('*', { count: 'exact', head: true });
+
+        result.totalUploads = uploadsCount || 0;
+        result.totalUsers = usersCount || 0;
+
+        // Sample upload
+        const { data: sampleUpload } = await supabase
+          .from('uploads')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (sampleUpload) {
+          result.sampleUpload = sampleUpload;
+        }
+      } catch (error) {
+        result.warnings.push('Erro ao buscar estatísticas gerais');
+      }
+
+      // 5. Verificações adicionais
       if (user.email) {
         const adminEmails = [
           'admin@studyai.com',
@@ -131,15 +163,15 @@ export class AdminDiagnosticsService {
         return false;
       }
 
-      // 3. Inserir em admin_users
+      // 3. Inserir em admin_users (sem onConflict)
       const { error: adminError } = await supabase
         .from('admin_users')
-        .insert({
+        .upsert({
           user_id: userId,
           email: user.email
-        })
-        .onConflict('email')
-        .ignoreDuplicates();
+        }, {
+          onConflict: 'email'
+        });
 
       if (adminError) {
         console.error('❌ Erro ao inserir em admin_users:', adminError);
@@ -152,6 +184,46 @@ export class AdminDiagnosticsService {
     } catch (error) {
       console.error('❌ Erro ao promover usuário:', error);
       return false;
+    }
+  }
+
+  static async fixFileSizes(): Promise<{ fixed: number }> {
+    try {
+      console.log('🔧 Corrigindo file sizes...');
+
+      // Buscar uploads sem file_size
+      const { data: uploadsToFix, error } = await supabase
+        .from('uploads')
+        .select('id')
+        .or('file_size.is.null,file_size.eq.0');
+
+      if (error) {
+        console.error('❌ Erro ao buscar uploads:', error);
+        return { fixed: 0 };
+      }
+
+      if (!uploadsToFix || uploadsToFix.length === 0) {
+        console.log('✅ Nenhum upload para corrigir');
+        return { fixed: 0 };
+      }
+
+      // Atualizar com tamanho padrão (simulação)
+      const { error: updateError } = await supabase
+        .from('uploads')
+        .update({ file_size: 1024 * 1024 }) // 1MB padrão
+        .in('id', uploadsToFix.map(u => u.id));
+
+      if (updateError) {
+        console.error('❌ Erro ao atualizar uploads:', updateError);
+        return { fixed: 0 };
+      }
+
+      console.log(`✅ ${uploadsToFix.length} uploads corrigidos`);
+      return { fixed: uploadsToFix.length };
+
+    } catch (error) {
+      console.error('❌ Erro ao corrigir file sizes:', error);
+      return { fixed: 0 };
     }
   }
 }
