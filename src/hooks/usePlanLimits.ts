@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UsageLimitService, type ActionType, type UsageData } from '@/services/usageLimitService';
 import { useToast } from '@/hooks/use-toast';
+import { PlanType } from '@/types/plans';
 
 export const usePlanLimits = () => {
   const { user } = useAuth();
@@ -44,8 +45,9 @@ export const usePlanLimits = () => {
       const result = await UsageLimitService.checkLimit(user.id, actionType);
       
       if (!result.canProceed) {
-        const limitMessage = UsageLimitService.getLimitMessage(actionType, result.plan);
-        const upgradeMessage = UsageLimitService.getUpgradeMessage(result.plan);
+        const planType = result.plan as PlanType;
+        const limitMessage = UsageLimitService.getLimitMessage(actionType, planType);
+        const upgradeMessage = UsageLimitService.getUpgradeMessage(planType);
         
         toast({
           title: "Limite do Plano Atingido",
