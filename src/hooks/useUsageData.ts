@@ -107,8 +107,11 @@ export const useUsageData = () => {
 
     console.log('👂 Configurando listener para mudanças em tempo real...');
     
+    // Create a unique channel name to avoid conflicts
+    const channelName = `usage-updates-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel(`usage-updates-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -123,7 +126,9 @@ export const useUsageData = () => {
           setTimeout(() => fetchUsageData(true), 1000);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Status da subscription:', status);
+      });
 
     return () => {
       console.log('🔌 Removendo listener de tempo real...');
