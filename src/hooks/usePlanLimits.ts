@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { PlanLimitService, ActionType, UserUsage } from '@/services/planLimitService';
+import { UsageLimitService, type ActionType, type UsageData } from '@/services/usageLimitService';
 import { useToast } from '@/hooks/use-toast';
 
 export const usePlanLimits = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [usage, setUsage] = useState<UserUsage | null>(null);
+  const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +20,14 @@ export const usePlanLimits = () => {
     if (!user) return;
     
     setLoading(true);
-    const userUsage = await PlanLimitService.checkUserLimits(user.id);
-    setUsage(userUsage);
-    setLoading(false);
+    try {
+      const userUsage = await UsageLimitService.getUserUsage(user.id);
+      setUsage(userUsage);
+    } catch (error) {
+      console.error('❌ Erro ao carregar uso do usuário:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const checkLimit = async (actionType: ActionType): Promise<boolean> => {
@@ -35,29 +40,45 @@ export const usePlanLimits = () => {
       return false;
     }
 
-    const result = await PlanLimitService.canPerformAction(user.id, actionType);
-    
-    if (!result.canProceed) {
+    try {
+      const result = await UsageLimitService.checkLimit(user.id, actionType);
+      
+      if (!result.canProceed) {
+        const limitMessage = UsageLimitService.getLimitMessage(actionType, result.plan);
+        const upgradeMessage = UsageLimitService.getUpgradeMessage(result.plan);
+        
+        toast({
+          title: "Limite do Plano Atingido",
+          description: `${limitMessage} ${upgradeMessage}`,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao verificar limite:', error);
       toast({
-        title: "Limite do Plano Atingido",
-        description: result.message || "Você atingiu o limite do seu plano atual",
+        title: "Erro de Verificação",
+        description: "Não foi possível verificar os limites do seu plano",
         variant: "destructive"
       });
       return false;
     }
-
-    return true;
   };
 
   const incrementUsage = async (actionType: ActionType): Promise<boolean> => {
     if (!user) return false;
 
-    const success = await PlanLimitService.incrementUsage(user.id, actionType);
-    if (success) {
+    try {
+      await UsageLimitService.incrementUsage(user.id, actionType);
       // Recarregar usage após incrementar
       await loadUsage();
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao incrementar uso:', error);
+      return false;
     }
-    return success;
   };
 
   const getUsagePercentage = (actionType: ActionType): number => {
@@ -67,23 +88,27 @@ export const usePlanLimits = () => {
     let limit: number;
 
     switch (actionType) {
-      case 'upload':
+      case 'uploads':
         currentUsage = usage.uploads_realizados;
-        limit = usage.plan_limits.uploads_limit;
+        limit = usage.uploads_limit || 10;
         break;
-      case 'flashcard':
+      case 'flashcards':
         currentUsage = usage.flashcards_gerados;
-        limit = usage.plan_limits.flashcards_limit;
+        limit = usage.flashcards_limit || 10;
         break;
-      case 'quiz':
+      case 'quizzes':
         currentUsage = usage.quizzes_realizados;
-        limit = usage.plan_limits.quizzes_limit;
+        limit = usage.quizzes_limit || 10;
+        break;
+      case 'summaries':
+        currentUsage = usage.uploads_realizados; // Summaries são baseados em uploads
+        limit = usage.summaries_limit || 10;
         break;
       default:
         return 0;
     }
 
-    if (limit === -1) return 0; // Ilimitado
+    if (limit === Infinity || limit === 0) return 0;
     return Math.min((currentUsage / limit) * 100, 100);
   };
 
