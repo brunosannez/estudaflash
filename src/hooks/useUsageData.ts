@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UsageLimitService, type UsageData } from '@/services/usageLimitService';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +8,9 @@ export const useUsageData = () => {
   const { user } = useAuth();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchUsageData = async () => {
+  const fetchUsageData = useCallback(async () => {
     if (!user) {
       console.log('👤 Usuário não autenticado');
       setUsageData(null);
@@ -19,6 +20,7 @@ export const useUsageData = () => {
     
     try {
       setLoading(true);
+      setError(null);
       console.log('🔍 Buscando dados de uso para usuário:', user.id);
       
       const data = await UsageLimitService.getUserUsage(user.id);
@@ -32,12 +34,15 @@ export const useUsageData = () => {
         if (initializedData) {
           setUsageData(initializedData);
           console.log('✅ Dados de uso inicializados:', initializedData);
+        } else {
+          throw new Error('Falha ao inicializar dados de uso');
         }
       }
     } catch (error) {
       console.error('❌ Erro ao buscar dados de uso:', error);
+      setError(error.message || 'Erro ao carregar dados de uso');
       
-      // Fallback data
+      // Fallback data mínima para não quebrar a aplicação
       const fallbackData: UsageData = {
         id: '',
         user_id: user.id,
@@ -57,28 +62,30 @@ export const useUsageData = () => {
         flashcard_model: 'DeepSeek-V2',
       };
       
-      console.log('📋 Usando dados de fallback:', fallbackData);
       setUsageData(fallbackData);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       console.log('🚀 Carregando dados de uso...');
       fetchUsageData();
+    } else {
+      setUsageData(null);
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchUsageData]);
 
-  // Simplified realtime listener without conflicts
+  // Listener simples sem conflitos
   useEffect(() => {
     if (!user) return;
 
-    console.log('👂 Configurando listener simples para mudanças...');
+    console.log('👂 Configurando listener para mudanças de uso...');
     
     const channel = supabase
-      .channel(`usage-simple-${user.id}`)
+      .channel(`usage-updates-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -87,28 +94,31 @@ export const useUsageData = () => {
           table: 'uso_usuarios',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          console.log('🔄 Dados alterados, recarregando...');
-          setTimeout(() => fetchUsageData(), 500);
+        (payload) => {
+          console.log('🔄 Dados de uso alterados:', payload);
+          // Delay para evitar conflitos
+          setTimeout(() => {
+            fetchUsageData();
+          }, 1000);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('🔌 Removendo listener...');
+      console.log('🔌 Removendo listener de uso...');
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchUsageData]);
 
-  const manualRefresh = async () => {
-    console.log('🔄 Atualização manual solicitada...');
+  const refreshUsage = useCallback(async () => {
+    console.log('🔄 Refresh manual dos dados de uso...');
     await fetchUsageData();
-  };
+  }, [fetchUsageData]);
 
   return {
     usageData,
     loading,
-    refreshUsage: manualRefresh,
-    fetchUsageData,
+    error,
+    refreshUsage,
   };
 };

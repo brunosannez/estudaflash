@@ -46,6 +46,45 @@ async function getUserPlan(supabase: any, userId: string) {
   }
 }
 
+// Criar prompt otimizado para ENEM e Ari de Sá
+function createOptimizedPrompt(texto: string, schoolYear: string) {
+  return `Você é um professor especialista do Colégio Ari de Sá, referência em preparação para ENEM e vestibulares. 
+
+Crie um RESUMO DIDÁTICO COMPLETO baseado no texto fornecido, seguindo estas diretrizes específicas:
+
+🎯 **FOCO PEDAGÓGICO:**
+- Linguagem clara e acessível para estudantes de ${schoolYear}
+- Estrutura didática típica do Ari de Sá
+- Preparação específica para ENEM e vestibulares
+- Conexões com questões de provas anteriores quando relevante
+
+📚 **ESTRUTURA OBRIGATÓRIA:**
+1. **CONCEITOS CENTRAIS** - Defina os pontos principais
+2. **TEORIA FUNDAMENTAL** - Explique com exemplos práticos
+3. **APLICAÇÕES ENEM** - Como o tema aparece em provas
+4. **DICAS ESTRATÉGICAS** - Macetes para resolução rápida
+5. **PONTOS DE ATENÇÃO** - Erros comuns e como evitar
+
+✨ **ESTILO ARI DE SÁ:**
+- Use bullet points e listas organizadas
+- Inclua mnemonicos e associações quando útil
+- Destaque fórmulas/conceitos importantes com **negrito**
+- Faça conexões interdisciplinares quando possível
+- Tom motivacional e confiante
+
+🎓 **ADAPTAÇÃO POR NÍVEL:**
+${schoolYear === 'Ensino Fundamental' ? 
+  '- Foque em conceitos básicos e fundamentos\n- Use exemplos do cotidiano\n- Explique passo a passo' :
+schoolYear === 'Ensino Médio' ?
+  '- Nível intermediário com preparo para vestibular\n- Inclua conexões entre matérias\n- Foque em aplicações práticas' :
+  '- Nível avançado para competições\n- Aborde aspectos mais complexos\n- Inclua contexto universitário'}
+
+📖 **TEXTO PARA RESUMIR:**
+${texto}
+
+Gere um resumo completo, didático e estratégico que ajude o aluno a dominar o conteúdo e se sair bem nas provas!`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,23 +93,18 @@ serve(async (req) => {
   try {
     console.log('🚀 Função generate-summary iniciada');
     
-    // Verificar configuração inicial
+    // Verificar configurações
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    console.log('🔧 Verificando configurações...');
-    console.log('- ANTHROPIC_API_KEY:', anthropicApiKey ? '✅ Configurada' : '❌ Não encontrada');
-    console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Configurada' : '❌ Não encontrada');
-    console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseKey ? '✅ Configurada' : '❌ Não encontrada');
-
     if (!anthropicApiKey) {
-      console.error('❌ ANTHROPIC_API_KEY não encontrada nas variáveis de ambiente');
+      console.error('❌ ANTHROPIC_API_KEY não encontrada');
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Configuração da API Anthropic não encontrada. Contate o administrador.',
-          details: 'ANTHROPIC_API_KEY não está configurada no Supabase'
+          error: 'Configuração da API Anthropic não encontrada',
+          fallbackMessage: 'Serviço temporariamente indisponível. Tente novamente mais tarde.'
         }),
         {
           status: 500,
@@ -85,7 +119,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false,
           error: 'Configuração do banco de dados inválida',
-          details: 'Configurações do Supabase não encontradas'
+          fallbackMessage: 'Erro de configuração. Contate o suporte.'
         }),
         {
           status: 500,
@@ -94,22 +128,17 @@ serve(async (req) => {
       );
     }
 
-    // Parse do request body
+    // Parse do request
     let requestBody;
     try {
       requestBody = await req.json();
-      console.log('📥 Request recebido:', { 
-        uploadId: requestBody?.uploadId, 
-        textoLength: requestBody?.textoExtraido?.length,
-        userId: requestBody?.userId 
-      });
     } catch (error) {
       console.error('❌ Erro ao fazer parse do JSON:', error);
       return new Response(
         JSON.stringify({ 
           success: false,
           error: 'Dados de entrada inválidos',
-          details: 'Erro ao processar JSON do request'
+          fallbackMessage: 'Erro nos dados enviados. Tente novamente.'
         }),
         {
           status: 400,
@@ -118,15 +147,16 @@ serve(async (req) => {
       );
     }
 
-    const { uploadId, textoExtraido, userId } = requestBody;
+    const { uploadId, textoExtraido, userId, schoolYear } = requestBody;
     
-    if (!uploadId || !textoExtraido) {
-      console.error('❌ Parâmetros obrigatórios ausentes:', { uploadId: !!uploadId, textoExtraido: !!textoExtraido });
+    // Validações
+    if (!uploadId || !textoExtraido || !userId) {
+      console.error('❌ Parâmetros obrigatórios ausentes');
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Upload ID e texto extraído são obrigatórios',
-          details: 'Parâmetros necessários não foram fornecidos'
+          error: 'Parâmetros obrigatórios ausentes',
+          fallbackMessage: 'Dados incompletos. Tente fazer upload novamente.'
         }),
         {
           status: 400,
@@ -135,66 +165,56 @@ serve(async (req) => {
       );
     }
 
-    // Inicializar Supabase para buscar plano do usuário
+    if (textoExtraido.length > 50000) {
+      console.error('❌ Texto muito grande:', textoExtraido.length);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Texto muito grande para processar',
+          fallbackMessage: 'Imagem com muito texto. Use uma imagem menor ou divida o conteúdo.'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (textoExtraido.length < 10) {
+      console.error('❌ Texto muito pequeno:', textoExtraido.length);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Texto muito pequeno para resumir',
+          fallbackMessage: 'Muito pouco texto na imagem. Use uma imagem com mais conteúdo textual.'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Inicializar Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Buscar plano do usuário
     const userPlan = await getUserPlan(supabase, userId);
     const modelConfig = getModelConfigForPlan(userPlan);
     
-    console.log('👤 Plano do usuário:', userPlan);
-    console.log('🤖 Modelo selecionado:', modelConfig);
+    console.log('👤 Usuário:', userId);
+    console.log('📊 Plano:', userPlan);
+    console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
+    console.log('📝 Tamanho do texto:', textoExtraido.length, 'caracteres');
 
-    console.log('✅ Parâmetros validados com sucesso');
-    console.log('📊 Estatísticas do texto:', {
-      caracteres: textoExtraido.length,
-      palavras: textoExtraido.split(' ').length,
-      uploadId,
-      userPlan,
-      modelUsed: modelConfig.model
-    });
-
-    // Verificar se o texto não é muito grande
-    if (textoExtraido.length > 50000) {
-      console.error('❌ Texto muito grande:', textoExtraido.length, 'caracteres');
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Texto muito grande para processar. Use uma imagem com menos texto.',
-          details: `Texto tem ${textoExtraido.length} caracteres, máximo permitido: 50000`
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Prompt otimizado para gerar resumos didáticos
-    const prompt = `Você é um professor experiente que precisa criar um resumo didático para ajudar um aluno a se preparar para uma prova.
-
-Baseado no seguinte texto extraído de material de estudo, crie um resumo seguindo estas diretrizes:
-
-1. Use linguagem simples e objetiva
-2. Organize em tópicos curtos e fáceis de memorizar
-3. Inclua exemplos simples quando possível
-4. Destaque conceitos principais com bullet points
-5. Mantenha um tom professoral e didático
-6. Estruture o conteúdo de forma hierárquica (títulos, subtítulos, pontos principais)
-
-Texto do material de estudo:
-${textoExtraido}
-
-Gere um resumo estruturado que seja fácil de estudar e revisar:`;
-
-    console.log('🤖 Iniciando chamada para API da Anthropic...');
-    console.log('📝 Modelo utilizado:', modelConfig.model);
+    // Criar prompt otimizado para Ari de Sá
+    const optimizedPrompt = createOptimizedPrompt(textoExtraido, schoolYear || 'Ensino Médio');
     
+    console.log('🤖 Iniciando chamada para API da Anthropic...');
     const startTime = Date.now();
 
     let response;
     try {
-      // Chamar API da Anthropic
       response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -204,11 +224,11 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         },
         body: JSON.stringify({
           model: modelConfig.model,
-          max_tokens: 3000,
+          max_tokens: 4000, // Aumentado para resumos mais completos
           messages: [
             {
               role: 'user',
-              content: prompt
+              content: optimizedPrompt
             }
           ],
           temperature: 0.3,
@@ -216,13 +236,12 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         })
       });
     } catch (error) {
-      console.error('❌ Erro na conexão com a API Anthropic:', error);
+      console.error('❌ Erro na conexão com a API:', error);
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.',
-          details: `Erro de rede: ${error.message}`,
-          fallbackMessage: 'Nossa IA está temporariamente indisponível. Por favor, tente novamente mais tarde.'
+          error: 'Erro de conexão com o serviço de IA',
+          fallbackMessage: 'Problema de conexão. Verifique sua internet e tente novamente.'
         }),
         {
           status: 503,
@@ -232,44 +251,31 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
     }
 
     const endTime = Date.now();
-    console.log(`⏱️ Tempo de resposta da API Anthropic: ${endTime - startTime}ms`);
-    console.log('📡 Status da resposta:', response.status);
+    console.log(`⏱️ Tempo da API: ${endTime - startTime}ms`);
 
     if (!response.ok) {
       let errorData;
       try {
         errorData = await response.text();
-        console.error('❌ Erro da API Anthropic:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorData
-        });
       } catch (e) {
-        console.error('❌ Erro ao ler resposta de erro da API:', e);
-        errorData = 'Não foi possível ler a resposta de erro';
+        errorData = 'Não foi possível ler erro';
       }
       
-      // Mensagens de erro mais específicas baseadas no status
+      console.error('❌ Erro da API:', response.status, errorData);
+      
       let userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
       
-      if (response.status === 400) {
-        userMessage = 'Dados inválidos enviados para a API. Verifique o texto extraído.';
-      } else if (response.status === 401) {
-        userMessage = 'Problema de autenticação com o serviço de IA. Contate o administrador.';
-      } else if (response.status === 403) {
-        userMessage = 'Acesso negado pela API. Verifique as permissões.';
-      } else if (response.status === 429) {
-        userMessage = 'Limite de uso da API excedido. Tente novamente em alguns minutos.';
+      if (response.status === 429) {
+        userMessage = 'Muitas solicitações. Aguarde alguns minutos e tente novamente.';
       } else if (response.status >= 500) {
-        userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
+        userMessage = 'Serviço temporariamente fora do ar. Tente novamente em alguns minutos.';
       }
       
       return new Response(
         JSON.stringify({ 
           success: false,
           error: userMessage,
-          details: `API retornou status ${response.status}: ${response.statusText}`,
-          fallbackMessage: 'Nossa IA está temporariamente indisponível. Por favor, tente novamente mais tarde.'
+          fallbackMessage: userMessage
         }),
         {
           status: 500,
@@ -281,15 +287,13 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
     let data;
     try {
       data = await response.json();
-      console.log('✅ Resposta da API parseada com sucesso');
     } catch (error) {
-      console.error('❌ Erro ao fazer parse da resposta da API:', error);
+      console.error('❌ Erro ao processar resposta:', error);
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Resposta inválida da API de IA',
-          details: 'Erro ao processar resposta da Anthropic',
-          fallbackMessage: 'Houve um problema ao processar a resposta da IA. Tente novamente.'
+          error: 'Resposta inválida da IA',
+          fallbackMessage: 'Problema ao processar resposta. Tente novamente.'
         }),
         {
           status: 500,
@@ -299,13 +303,12 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
     }
     
     if (!data.content || !data.content[0] || !data.content[0].text) {
-      console.error('❌ Estrutura de resposta inesperada da API:', data);
+      console.error('❌ Estrutura de resposta inválida:', data);
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Resposta inválida da API Anthropic',
-          details: 'Estrutura de dados inesperada na resposta',
-          fallbackMessage: 'Recebemos uma resposta inesperada da IA. Tente novamente.'
+          error: 'Resposta inesperada da IA',
+          fallbackMessage: 'Resposta inesperada. Tente novamente.'
         }),
         {
           status: 500,
@@ -315,16 +318,9 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
     }
 
     const resumoGerado = data.content[0].text;
-    console.log('✅ Resumo gerado com sucesso');
-    console.log('📊 Estatísticas do resumo:', {
-      caracteres: resumoGerado.length,
-      palavras: resumoGerado.split(' ').length,
-      tempoProcessamento: `${endTime - startTime}ms`
-    });
+    console.log('✅ Resumo gerado:', resumoGerado.length, 'caracteres');
 
-    console.log('💾 Salvando resumo no banco de dados...');
-
-    let resumoData;
+    // Salvar no banco
     try {
       const { data: insertData, error: resumoError } = await supabase
         .from('resumos')
@@ -336,12 +332,12 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         .single();
 
       if (resumoError) {
-        console.error('❌ Erro ao salvar resumo no banco:', resumoError);
+        console.error('❌ Erro ao salvar:', resumoError);
         return new Response(
           JSON.stringify({ 
             success: false,
-            error: 'Erro ao salvar resumo no banco de dados',
-            details: `Erro do banco: ${resumoError.message}`
+            error: 'Erro ao salvar resumo',
+            fallbackMessage: 'Resumo gerado mas não foi possível salvar. Tente novamente.'
           }),
           {
             status: 500,
@@ -350,16 +346,33 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
         );
       }
 
-      resumoData = insertData;
-      console.log('✅ Resumo salvo com sucesso no banco. ID:', resumoData.id);
+      console.log('✅ Resumo salvo com ID:', insertData.id);
       
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          resumo: insertData,
+          stats: {
+            caracteres_entrada: textoExtraido.length,
+            caracteres_resumo: resumoGerado.length,
+            tempo_processamento: `${endTime - startTime}ms`,
+            modelo_usado: modelConfig.model,
+            plano_usuario: userPlan,
+            nivel_escolar: schoolYear || 'Ensino Médio'
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+
     } catch (error) {
-      console.error('❌ Erro inesperado ao salvar no banco:', error);
+      console.error('❌ Erro inesperado ao salvar:', error);
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Erro inesperado ao salvar no banco de dados',
-          details: error.message
+          error: 'Erro inesperado ao salvar',
+          fallbackMessage: 'Erro interno. Tente novamente.'
         }),
         {
           status: 500,
@@ -368,36 +381,14 @@ Gere um resumo estruturado que seja fácil de estudar e revisar:`;
       );
     }
 
-    console.log('🎉 Processo concluído com sucesso!');
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        resumo: resumoData,
-        stats: {
-          caracteres_entrada: textoExtraido.length,
-          caracteres_resumo: resumoGerado.length,
-          tempo_processamento: `${endTime - startTime}ms`,
-          modelo_usado: modelConfig.model,
-          plano_usuario: userPlan
-        }
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-
   } catch (error) {
-    console.error('❌ Erro geral na função generate-summary:', error);
-    console.error('📋 Stack trace:', error.stack);
-    console.error('🔍 Tipo do erro:', typeof error);
+    console.error('❌ Erro geral:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false,
         error: 'Erro interno do servidor',
-        details: `Erro não tratado: ${error.message}`,
-        fallbackMessage: 'Ocorreu um erro inesperado. Tente novamente mais tarde.'
+        fallbackMessage: 'Erro inesperado. Tente novamente mais tarde.'
       }),
       {
         status: 500,

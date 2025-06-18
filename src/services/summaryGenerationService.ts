@@ -8,14 +8,21 @@ export const summaryGenerationService = {
     console.log('📊 Tamanho do texto:', textoExtraido.length, 'caracteres');
     console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
 
-    // Verificar se o texto não está vazio
-    if (!textoExtraido || textoExtraido.trim().length === 0) {
+    // Validações iniciais
+    if (!uploadId || !textoExtraido) {
+      throw new Error('Upload ID e texto extraído são obrigatórios');
+    }
+
+    if (!textoExtraido.trim()) {
       throw new Error('Nenhum texto foi extraído para gerar o resumo');
     }
 
-    // Verificar se o texto não é muito grande
     if (textoExtraido.length > 50000) {
       throw new Error('Texto muito grande para processar. Use uma imagem com menos texto.');
+    }
+
+    if (textoExtraido.length < 10) {
+      throw new Error('Texto muito pequeno para gerar um resumo útil. Verifique se a imagem tem texto claro.');
     }
 
     // Obter usuário atual
@@ -25,22 +32,28 @@ export const summaryGenerationService = {
     }
 
     // Buscar informações do usuário para personalizar o prompt
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
-      .select('school_year')
-      .eq('user_id', user.id)
-      .single();
-
-    const userSchoolYear = schoolYear || userProfile?.school_year;
+    let userSchoolYear = schoolYear;
+    try {
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('school_year')
+        .eq('user_id', user.id)
+        .single();
+      
+      userSchoolYear = schoolYear || userProfile?.school_year || 'Ensino Médio';
+    } catch (error) {
+      console.warn('⚠️ Não foi possível obter nível escolar, usando padrão');
+      userSchoolYear = 'Ensino Médio';
+    }
 
     let lastError = null;
     
-    // Implementar retry logic
+    // Implementar retry logic com backoff exponencial
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`🔄 Tentativa ${attempt}/${maxRetries}`);
+        console.log(`🔄 Tentativa ${attempt}/${maxRetries} - Gerando resumo...`);
         
-        // Criar prompt personalizado baseado no nível educacional
+        // Criar prompt personalizado focado no ENEM e Ari de Sá
         const improvedPrompt = createSummaryPrompt(textoExtraido, userSchoolYear);
         
         const { data, error } = await supabase.functions
@@ -58,15 +71,23 @@ export const summaryGenerationService = {
           console.error(`❌ Erro na tentativa ${attempt}:`, error);
           lastError = error;
           
-          // Se for erro de rede ou timeout, tenta novamente
-          if (attempt < maxRetries && (
+          // Verificar se é erro temporário que vale a pena retry
+          const isRetryableError = (
             error.message?.includes('fetch') || 
             error.message?.includes('network') ||
             error.message?.includes('timeout') ||
-            error.message?.includes('Failed to send a request')
-          )) {
-            console.log(`⏳ Aguardando ${attempt * 2} segundos antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+            error.message?.includes('Failed to send a request') ||
+            error.message?.includes('503') ||
+            error.message?.includes('temporarily') ||
+            error.message?.includes('temporariamente') ||
+            error.message?.includes('rate') ||
+            error.message?.includes('limit')
+          );
+          
+          if (attempt < maxRetries && isRetryableError) {
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Backoff exponencial, max 10s
+            console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
           
@@ -76,8 +97,9 @@ export const summaryGenerationService = {
         if (!data) {
           lastError = new Error('Nenhum dado retornado da função');
           if (attempt < maxRetries) {
-            console.log(`⏳ Aguardando ${attempt * 2} segundos antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+            const delay = Math.min(2000 * attempt, 8000);
+            console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
           throw lastError;
@@ -86,12 +108,30 @@ export const summaryGenerationService = {
         if (!data.success) {
           console.error('❌ Função retornou erro:', data.error);
           
-          // Se há uma mensagem de fallback, exibe ela
+          // Se há uma mensagem de fallback, use ela
           if (data.fallbackMessage) {
             throw new Error(data.fallbackMessage);
           }
           
-          throw new Error(data.error || 'Erro ao gerar resumo');
+          const errorMsg = data.error || 'Erro desconhecido na geração de resumo';
+          
+          // Verificar se vale a pena retry
+          const isRetryableError = (
+            errorMsg.includes('temporariamente') ||
+            errorMsg.includes('timeout') ||
+            errorMsg.includes('temporarily') ||
+            errorMsg.includes('rate limit') ||
+            errorMsg.includes('503')
+          );
+          
+          if (attempt < maxRetries && isRetryableError) {
+            const delay = Math.min(3000 * attempt, 12000);
+            console.log(`⏳ Erro temporário, aguardando ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          throw new Error(errorMsg);
         }
 
         console.log('✅ Resumo gerado com sucesso:', data.stats);
@@ -104,17 +144,22 @@ export const summaryGenerationService = {
         lastError = attemptError;
         
         // Se não é o último retry e é um erro temporário, continua
-        if (attempt < maxRetries && (
+        const isRetryableError = (
           attemptError.message?.includes('fetch') || 
           attemptError.message?.includes('network') ||
           attemptError.message?.includes('timeout') ||
           attemptError.message?.includes('Failed to send a request') ||
           attemptError.message?.includes('503') ||
           attemptError.message?.includes('temporarily') ||
-          attemptError.message?.includes('temporariamente')
-        )) {
-          console.log(`⏳ Aguardando ${attempt * 2} segundos antes da próxima tentativa...`);
-          await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+          attemptError.message?.includes('temporariamente') ||
+          attemptError.message?.includes('rate') ||
+          attemptError.message?.includes('limit')
+        );
+        
+        if (attempt < maxRetries && isRetryableError) {
+          const delay = Math.min(2000 * Math.pow(2, attempt - 1), 15000);
+          console.log(`⏳ Erro temporário, aguardando ${delay}ms antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
         
@@ -124,35 +169,43 @@ export const summaryGenerationService = {
     }
 
     // Se chegou aqui, todas as tentativas falharam
-    throw lastError || new Error('Todas as tentativas falharam');
+    console.error('❌ Todas as tentativas de geração falharam');
+    throw lastError || new Error('Falha em todas as tentativas de geração de resumo');
   },
 
   getErrorMessage(error: any): string {
     let userMessage = "Erro ao gerar resumo.";
     
-    if (error.message) {
-      // Se já há uma mensagem de fallback da API, usa ela
-      if (error.message.includes('temporariamente indisponível') || 
-          error.message.includes('Tente novamente')) {
-        userMessage = error.message;
-      } else if (error.message.includes('ANTHROPIC_API_KEY')) {
-        userMessage = "Configuração da API Anthropic necessária. Contate o administrador.";
-      } else if (error.message.includes('rate') || error.message.includes('limit')) {
-        userMessage = "Limite de uso excedido. Aguarde alguns minutos e tente novamente.";
-      } else if (error.message.includes('API Anthropic') || error.message.includes('IA')) {
-        userMessage = "Serviço de IA temporariamente indisponível. Tente novamente.";
-      } else if (error.message.includes('banco') || error.message.includes('database')) {
+    if (error?.message) {
+      const message = error.message.toLowerCase();
+      
+      // Mensagens específicas e amigáveis
+      if (message.includes('temporariamente indisponível') || message.includes('tente novamente')) {
+        userMessage = "Serviço temporariamente indisponível. Tente novamente em alguns minutos.";
+      } else if (message.includes('anthropic_api_key') || message.includes('configuração')) {
+        userMessage = "Problema de configuração do sistema. Contate o suporte.";
+      } else if (message.includes('rate') || message.includes('limit')) {
+        userMessage = "Muitas solicitações simultâneas. Aguarde alguns minutos e tente novamente.";
+      } else if (message.includes('api anthropic') || message.includes('ia') || message.includes('ai')) {
+        userMessage = "Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.";
+      } else if (message.includes('banco') || message.includes('database')) {
         userMessage = "Erro ao salvar o resumo. Tente novamente.";
-      } else if (error.message.includes('muito grande')) {
-        userMessage = "Texto muito grande para processar. Use uma imagem menor.";
-      } else if (error.message.includes('Failed to send a request') || error.message.includes('fetch')) {
+      } else if (message.includes('muito grande')) {
+        userMessage = "Texto muito grande para processar. Use uma imagem com menos texto.";
+      } else if (message.includes('muito pequeno')) {
+        userMessage = "Texto muito pequeno para gerar resumo. Verifique se a imagem tem texto claro.";
+      } else if (message.includes('failed to send') || message.includes('fetch') || message.includes('network')) {
         userMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-      } else if (error.message.includes('timeout')) {
+      } else if (message.includes('timeout')) {
         userMessage = "Tempo limite excedido. Tente novamente com uma imagem menor.";
-      } else if (error.message.includes('Nenhum texto')) {
-        userMessage = "Nenhum texto foi extraído da imagem. Tente com uma imagem mais clara.";
+      } else if (message.includes('nenhum texto')) {
+        userMessage = "Nenhum texto foi extraído da imagem. Use uma imagem mais clara.";
+      } else if (message.includes('usuário não autenticado')) {
+        userMessage = "Sessão expirada. Faça login novamente.";
+      } else if (message.includes('limite') && message.includes('atingido')) {
+        userMessage = error.message; // Manter mensagem original dos limites
       } else {
-        userMessage = error.message;
+        userMessage = `Erro na geração: ${error.message}`;
       }
     }
     

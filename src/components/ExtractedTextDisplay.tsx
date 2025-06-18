@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Loader2, Home } from 'lucide-react';
+import { FileText, Loader2, Home, CheckCircle } from 'lucide-react';
 import { useSummary } from '@/hooks/useSummary';
 import { useNavigate } from 'react-router-dom';
 import ImageGallery from './ImageGallery';
@@ -12,24 +12,39 @@ interface ExtractedTextDisplayProps {
 }
 
 const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
-  const { generateSummary, isGenerating: isSummaryGenerating } = useSummary();
+  const { generateSummary, isGenerating } = useSummary();
   const [summaryGenerated, setSummaryGenerated] = useState(false);
   const [generatedResumoId, setGeneratedResumoId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleGenerateSummary = async () => {
+    if (!uploadData?.id || !uploadData?.texto_extraido) {
+      setError('Dados de upload inválidos');
+      return;
+    }
+
     try {
-      const result = await generateSummary(uploadData.id, uploadData.texto_extraido || '');
-      if (result) {
+      setError(null);
+      console.log('🎯 Iniciando geração de resumo para upload:', uploadData.id);
+      
+      const result = await generateSummary(uploadData.id, uploadData.texto_extraido);
+      
+      if (result?.id) {
         setSummaryGenerated(true);
         setGeneratedResumoId(result.id);
-        // Navegar para a página do resumo usando o ID do resumo gerado
+        console.log('✅ Resumo gerado com ID:', result.id);
+        
+        // Navegar após um breve delay para mostrar o sucesso
         setTimeout(() => {
           navigate(`/resumo/${result.id}`);
         }, 2000);
+      } else {
+        throw new Error('ID do resumo não retornado');
       }
     } catch (error) {
-      console.error('Erro ao gerar resumo:', error);
+      console.error('❌ Erro no componente ao gerar resumo:', error);
+      setError(error.message || 'Erro desconhecido na geração');
     }
   };
 
@@ -71,61 +86,82 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
           </div>
           
           <div className="mt-6 text-center">
-            <p className="text-gray-600 mb-6">
-              Agora você pode gerar um resumo didático deste conteúdo:
-            </p>
-            
-            <div className="max-w-md mx-auto">
-              {/* Botão Gerar Resumo */}
-              {!summaryGenerated ? (
-                <Button
-                  onClick={handleGenerateSummary}
-                  disabled={isSummaryGenerating}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg w-full"
-                  size="lg"
-                >
-                  {isSummaryGenerating ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Gerando Resumo...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="h-5 w-5 mr-2" />
-                      Gerar Resumo Didático
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-green-600 font-semibold text-lg">
-                    ✅ Resumo gerado com sucesso!
-                  </div>
-                  <p className="text-gray-600 text-sm">
-                    Redirecionando para o resumo onde você poderá gerar flashcards e quiz...
-                  </p>
-                  {generatedResumoId && (
-                    <Button
-                      onClick={() => navigate(`/resumo/${generatedResumoId}`)}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Ver Resumo
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
 
-            {/* Botão de voltar ao início após geração */}
+            {!summaryGenerated && !isGenerating && (
+              <>
+                <p className="text-gray-600 mb-6">
+                  Agora você pode gerar um resumo didático personalizado para o ENEM e vestibulares do Ari de Sá:
+                </p>
+                
+                <div className="max-w-md mx-auto">
+                  <Button
+                    onClick={handleGenerateSummary}
+                    disabled={isGenerating || !uploadData?.texto_extraido}
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg w-full"
+                    size="lg"
+                  >
+                    <FileText className="h-5 w-5 mr-2" />
+                    Gerar Resumo Didático
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {isGenerating && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center space-x-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <span className="text-lg font-semibold text-blue-600">
+                    Gerando seu resumo personalizado...
+                  </span>
+                </div>
+                <div className="text-gray-600 text-sm">
+                  <p>📚 Analisando o conteúdo com foco no ENEM e vestibulares</p>
+                  <p>🎯 Criando resumo didático no estilo Ari de Sá</p>
+                  <p>⚡ Isso pode levar alguns segundos...</p>
+                </div>
+              </div>
+            )}
+
             {summaryGenerated && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center space-x-2 text-green-600">
+                  <CheckCircle className="h-6 w-6" />
+                  <span className="text-lg font-semibold">
+                    Resumo gerado com sucesso!
+                  </span>
+                </div>
+                <div className="text-gray-600 text-sm">
+                  <p>✅ Resumo otimizado para ENEM e vestibulares</p>
+                  <p>🧠 Pronto para gerar flashcards e quiz</p>
+                  <p>🚀 Redirecionando...</p>
+                </div>
+                {generatedResumoId && (
+                  <Button
+                    onClick={() => navigate(`/resumo/${generatedResumoId}`)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Ver Resumo Agora
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Botão de voltar ao início */}
+            {(summaryGenerated || error) && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <Button
                   onClick={() => navigate('/')}
                   variant="outline"
                 >
                   <Home className="h-4 w-4 mr-2" />
-                  Início
+                  Voltar ao Início
                 </Button>
               </div>
             )}
