@@ -1,5 +1,6 @@
 
-import { UsageLimitService, type ActionType } from '@/services/usageLimitService';
+import { UsageLimitService } from '@/services/usageLimitService';
+import type { ActionType } from '@/services/usageLimitsConfig';
 import { useUsageData } from '@/hooks/useUsageData';
 import { useUsageValidation } from '@/hooks/useUsageValidation';
 import { useUpgradeModal } from '@/hooks/useUpgradeModal';
@@ -16,10 +17,8 @@ export const useUsageLimit = () => {
     const canProceed = await baseCheckCanProceed(actionType);
     
     if (!canProceed && usageData) {
-      // If not able to proceed, open upgrade modal
       const result = await UsageLimitService.checkLimit(usageData.user_id, actionType);
       if (!result.canProceed) {
-        // Safely convert plano string to PlanType
         const planType = (result.plan as PlanType) || 'free';
         openUpgradeModal(actionType, planType);
       }

@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { UsageLimitService, type ActionType } from '@/services/usageLimitService';
+import { UsageLimitService } from '@/services/usageLimitService';
+import type { ActionType } from '@/services/usageLimitsConfig';
 import { useToast } from '@/hooks/use-toast';
 import { PlanType } from '@/types/plans';
 

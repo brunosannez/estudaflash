@@ -1,6 +1,6 @@
 
 import { UsageData } from '@/services/usageLimitService';
-import { ActionType } from '@/services/usageLimitService';
+import type { ActionType } from '@/services/usageLimitsConfig';
 import { PLAN_CONFIGS } from '@/types/plans';
 
 export const useUsagePercentage = () => {
@@ -16,15 +16,19 @@ export const useUsagePercentage = () => {
     switch (actionType) {
       case 'uploads':
         current = usageData.uploads_realizados;
-        limit = planConfig.uploads;
+        limit = usageData.uploads_limit || planConfig.uploads;
         break;
       case 'flashcards':
         current = usageData.flashcards_gerados;
-        limit = planConfig.flashcards;
+        limit = usageData.flashcards_limit || planConfig.flashcards;
         break;
       case 'quizzes':
         current = usageData.quizzes_realizados;
-        limit = planConfig.quizzes;
+        limit = usageData.quizzes_limit || planConfig.quizzes;
+        break;
+      case 'summaries':
+        current = usageData.uploads_realizados;
+        limit = usageData.summaries_limit || planConfig.summaries || planConfig.uploads;
         break;
       default:
         return 0;

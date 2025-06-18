@@ -1,56 +1,43 @@
 
-import { PlanType } from '@/types/plans';
+export type ActionType = 'uploads' | 'summaries' | 'flashcards' | 'quizzes';
 
 export const USAGE_LIMITS = {
   free: {
     uploads: 10,
+    summaries: 10,
     flashcards: 10,
     quizzes: 10,
   },
   pro: {
     uploads: 100,
+    summaries: 100,
     flashcards: 100,
     quizzes: 100,
   },
   edu: {
     uploads: Infinity,
+    summaries: Infinity,
     flashcards: Infinity,
     quizzes: Infinity,
   },
 } as const;
 
-export type ActionType = 'uploads' | 'flashcards' | 'quizzes';
-
 export class UsageLimitsConfig {
-  static getLimits(plan: PlanType) {
-    return USAGE_LIMITS[plan] || USAGE_LIMITS.free;
-  }
-
-  static getLimitMessage(actionType: ActionType, plan: PlanType): string {
+  static getLimitMessage(actionType: ActionType, plan: string): string {
     const actionNames = {
       uploads: 'uploads',
+      summaries: 'resumos',
       flashcards: 'flashcards',
       quizzes: 'quizzes',
     };
     
-    const planLimits = USAGE_LIMITS[plan];
-    const currentLimit = planLimits[actionType];
-    
-    if (plan === 'free') {
-      return `Você atingiu o limite de ${currentLimit} ${actionNames[actionType]} do plano gratuito.`;
-    } else if (plan === 'pro') {
-      return `Você atingiu o limite de ${currentLimit} ${actionNames[actionType]} do plano Pro.`;
-    } else {
-      return `Limite do plano EDU atingido para ${actionNames[actionType]}.`;
-    }
+    return `Você atingiu o limite de ${actionNames[actionType]} do plano ${plan.toUpperCase()}.`;
   }
 
-  static getUpgradeMessage(plan: PlanType): string {
+  static getUpgradeMessage(plan: string): string {
     if (plan === 'free') {
-      return 'Assine o plano Pro para ter 10x mais limite ou EDU para acesso ilimitado!';
-    } else if (plan === 'pro') {
-      return 'Considere o plano EDU para acesso completamente ilimitado!';
+      return 'Faça upgrade para PRO ou EDU para continuar!';
     }
-    return '';
+    return 'Considere fazer upgrade para o plano EDU para recursos ilimitados!';
   }
 }

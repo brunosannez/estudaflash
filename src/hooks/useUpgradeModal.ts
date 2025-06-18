@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { PlanType } from '@/types/plans';
-import { ActionType } from '@/services/usageLimitService';
+import type { ActionType } from '@/services/usageLimitsConfig';
 
 interface UpgradeModalData {
   isOpen: boolean;

@@ -1,5 +1,6 @@
 
 import { UsageDataService, type UsageData } from './usageDataService';
+import type { ActionType } from './usageLimitsConfig';
 
 export interface UsageValidationResult {
   canProceed: boolean;
@@ -10,7 +11,7 @@ export interface UsageValidationResult {
 }
 
 export class UsageValidationService {
-  static async checkLimit(userId: string, actionType: 'uploads' | 'summaries' | 'flashcards' | 'quizzes'): Promise<UsageValidationResult> {
+  static async checkLimit(userId: string, actionType: ActionType): Promise<UsageValidationResult> {
     try {
       const usage = await UsageDataService.getUserUsage(userId);
       if (!usage) {
@@ -20,8 +21,8 @@ export class UsageValidationService {
       const currentUsage = this.getCurrentUsageByType(usage, actionType);
       const limit = this.getLimitByType(usage, actionType);
       
-      const canProceed = currentUsage < limit;
-      const isNearLimit = limit !== Infinity && currentUsage >= limit * 0.9;
+      const canProceed = limit === -1 || currentUsage < limit;
+      const isNearLimit = limit !== -1 && limit !== Infinity && currentUsage >= limit * 0.9;
 
       console.log(`🔍 Verificação de limite - ${actionType}:`, {
         currentUsage,
@@ -44,12 +45,12 @@ export class UsageValidationService {
     }
   }
 
-  private static getCurrentUsageByType(usage: UsageData, actionType: 'uploads' | 'summaries' | 'flashcards' | 'quizzes'): number {
+  private static getCurrentUsageByType(usage: UsageData, actionType: ActionType): number {
     switch (actionType) {
       case 'uploads':
         return usage.uploads_realizados;
       case 'summaries':
-        return usage.uploads_realizados; // Summaries are tied to uploads
+        return usage.uploads_realizados;
       case 'flashcards':
         return usage.flashcards_gerados;
       case 'quizzes':
@@ -59,7 +60,7 @@ export class UsageValidationService {
     }
   }
 
-  private static getLimitByType(usage: UsageData, actionType: 'uploads' | 'summaries' | 'flashcards' | 'quizzes'): number {
+  private static getLimitByType(usage: UsageData, actionType: ActionType): number {
     switch (actionType) {
       case 'uploads':
         return usage.uploads_limit || 10;
