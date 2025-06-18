@@ -138,22 +138,45 @@ export class PlanLimitService {
 
   static async incrementUsage(userId: string, actionType: ActionType): Promise<boolean> {
     try {
-      const fieldMap: Record<ActionType, string> = {
-        upload: 'uploads_realizados',
-        summary: 'uploads_realizados', // Resumos incrementam uploads
-        flashcard: 'flashcards_gerados',
-        quiz: 'quizzes_realizados'
-      };
+      let fieldToIncrement: string;
 
-      const field = fieldMap[actionType];
-      
-      const { error } = await supabase.rpc('increment_user_usage', {
-        user_id: userId,
-        field_name: field
-      });
+      switch (actionType) {
+        case 'upload':
+        case 'summary':
+          fieldToIncrement = 'uploads_realizados';
+          break;
+        case 'flashcard':
+          fieldToIncrement = 'flashcards_gerados';
+          break;
+        case 'quiz':
+          fieldToIncrement = 'quizzes_realizados';
+          break;
+        default:
+          console.error('❌ Tipo de ação inválido:', actionType);
+          return false;
+      }
 
-      if (error) {
-        console.error('❌ Erro ao incrementar uso:', error);
+      // Get current value
+      const { data: currentData, error: fetchError } = await supabase
+        .from('uso_usuarios')
+        .select(fieldToIncrement)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Erro ao buscar uso atual:', fetchError);
+        return false;
+      }
+
+      // Increment the value
+      const currentValue = currentData[fieldToIncrement] || 0;
+      const { error: updateError } = await supabase
+        .from('uso_usuarios')
+        .update({ [fieldToIncrement]: currentValue + 1 })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        console.error('❌ Erro ao incrementar uso:', updateError);
         return false;
       }
 
