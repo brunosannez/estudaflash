@@ -13,7 +13,7 @@ export const useUsageManager = () => {
   const { toast } = useToast();
 
   const checkCanProceed = useCallback(async (actionType: ActionType): Promise<boolean> => {
-    if (!user) {
+    if (!user?.id) {
       console.log('❌ Usuário não autenticado para verificação de limite');
       toast({
         title: "Erro de Autenticação",
@@ -23,10 +23,10 @@ export const useUsageManager = () => {
       return false;
     }
 
-    // Se ainda está carregando, esperar um pouco
+    // Se ainda está carregando, aguardar
     if (loading) {
       console.log('⏳ Aguardando carregamento dos dados de uso...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      return false;
     }
 
     try {
@@ -69,10 +69,10 @@ export const useUsageManager = () => {
       });
       return false;
     }
-  }, [user, loading, toast]);
+  }, [user?.id, loading, toast]);
 
   const incrementUsage = useCallback(async (actionType: ActionType): Promise<boolean> => {
-    if (!user) {
+    if (!user?.id) {
       console.log('❌ Usuário não autenticado para incrementar uso');
       return false;
     }
@@ -82,17 +82,17 @@ export const useUsageManager = () => {
       await UsageLimitService.incrementUsage(user.id, actionType);
       console.log(`✅ Uso incrementado para ${actionType}`);
       
-      // Refresh dos dados após incrementar
+      // Refresh dos dados após incrementar com delay
       setTimeout(() => {
         refreshUsage();
-      }, 500);
+      }, 1000);
       
       return true;
     } catch (error) {
       console.error(`❌ Erro ao incrementar uso para ${actionType}:`, error);
       return false;
     }
-  }, [user, refreshUsage]);
+  }, [user?.id, refreshUsage]);
 
   const getUsagePercentage = useCallback((actionType: ActionType): number => {
     if (!usageData) return 0;

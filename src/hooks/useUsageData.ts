@@ -66,23 +66,25 @@ export const useUsageData = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]); // Simplificado para apenas user.id
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       console.log('🚀 Carregando dados de uso...');
       fetchUsageData();
     } else {
       setUsageData(null);
       setLoading(false);
     }
-  }, [user, fetchUsageData]);
+  }, [user?.id]); // Removido fetchUsageData das dependências
 
-  // Listener simples sem conflitos
+  // Listener simplificado com debounce
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     console.log('👂 Configurando listener para mudanças de uso...');
+    
+    let timeoutId: NodeJS.Timeout;
     
     const channel = supabase
       .channel(`usage-updates-${user.id}`)
@@ -96,19 +98,22 @@ export const useUsageData = () => {
         },
         (payload) => {
           console.log('🔄 Dados de uso alterados:', payload);
-          // Delay para evitar conflitos
-          setTimeout(() => {
+          
+          // Debounce para evitar múltiplas chamadas
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
             fetchUsageData();
-          }, 1000);
+          }, 2000);
         }
       )
       .subscribe();
 
     return () => {
       console.log('🔌 Removendo listener de uso...');
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [user, fetchUsageData]);
+  }, [user?.id]); // Removido fetchUsageData das dependências
 
   const refreshUsage = useCallback(async () => {
     console.log('🔄 Refresh manual dos dados de uso...');

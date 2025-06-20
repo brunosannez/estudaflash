@@ -1,27 +1,19 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, BookOpen, RefreshCw } from 'lucide-react';
+import { Upload, BookOpen, RefreshCw, Brain, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUsageLimit } from '@/hooks/useUsageLimit';
-import { useStorageManagement } from '@/hooks/useStorageManagement';
-import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
-import { useDataSync } from '@/hooks/useDataSync';
+import { useUsageData } from '@/hooks/useUsageData';
 
 const DashboardUsageOverview = () => {
   const navigate = useNavigate();
-  const { usageData, loading: usageLoading } = useUsageLimit();
-  const { storageUsage, loading: storageLoading } = useStorageManagement();
-  const { progress, loading: progressLoading } = useRealTimeProgress();
-  const { forceSyncUserData, syncing } = useDataSync();
-
-  const isLoading = usageLoading || storageLoading || progressLoading;
+  const { usageData, loading, refreshUsage } = useUsageData();
 
   const handleRefresh = async () => {
-    await forceSyncUserData();
+    await refreshUsage();
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
@@ -55,6 +47,7 @@ const DashboardUsageOverview = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
+            <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
             <div className="text-2xl font-bold text-purple-600">
               {usageData?.uploads_realizados || 0}
             </div>
@@ -64,6 +57,7 @@ const DashboardUsageOverview = () => {
 
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
+            <Brain className="w-6 h-6 mx-auto mb-2 text-blue-600" />
             <div className="text-2xl font-bold text-blue-600">
               {usageData?.flashcards_gerados || 0}
             </div>
@@ -73,6 +67,7 @@ const DashboardUsageOverview = () => {
 
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
+            <Target className="w-6 h-6 mx-auto mb-2 text-green-600" />
             <div className="text-2xl font-bold text-green-600">
               {usageData?.quizzes_realizados || 0}
             </div>
@@ -82,10 +77,11 @@ const DashboardUsageOverview = () => {
 
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
+            <Trophy className="w-6 h-6 mx-auto mb-2 text-orange-600" />
             <div className="text-2xl font-bold text-orange-600">
-              {progress?.current_level || 1}
+              {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
             </div>
-            <div className="text-sm text-gray-600">Nível</div>
+            <div className="text-sm text-gray-600">Plano</div>
           </CardContent>
         </Card>
       </div>
@@ -95,11 +91,11 @@ const DashboardUsageOverview = () => {
         <Button 
           variant="outline" 
           onClick={handleRefresh}
-          disabled={syncing}
+          disabled={loading}
           className="bg-white/70 backdrop-blur-sm border-purple-200 hover:bg-purple-50"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Sincronizando...' : 'Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Sincronizando...' : 'Atualizar Dados'}
         </Button>
       </div>
     </div>

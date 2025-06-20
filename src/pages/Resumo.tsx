@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
@@ -21,37 +21,37 @@ const Resumo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchResumo = useCallback(async () => {
+    if (!id) {
+      setError('ID do resumo não fornecido');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('📖 Carregando resumo com ID:', id);
+      const data = await getResumoById(id);
+      
+      if (data) {
+        console.log('✅ Resumo carregado:', data);
+        setResumo(data);
+        setError(null);
+      } else {
+        console.warn('⚠️ Resumo não encontrado');
+        setError('Resumo não encontrado');
+      }
+    } catch (err) {
+      console.error('❌ Erro ao carregar resumo:', err);
+      setError('Erro ao carregar resumo');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]); // Removido getResumoById das dependências
+
   useEffect(() => {
-    const fetchResumo = async () => {
-      if (!id) {
-        setError('ID do resumo não fornecido');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        console.log('📖 Carregando resumo com ID:', id);
-        const data = await getResumoById(id);
-        
-        if (data) {
-          console.log('✅ Resumo carregado:', data);
-          setResumo(data);
-          setError(null);
-        } else {
-          console.warn('⚠️ Resumo não encontrado');
-          setError('Resumo não encontrado');
-        }
-      } catch (err) {
-        console.error('❌ Erro ao carregar resumo:', err);
-        setError('Erro ao carregar resumo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchResumo();
-  }, [id, getResumoById]);
+  }, [fetchResumo]);
 
   const handleGenerateFlashcards = async () => {
     if (!resumo?.id) return;
