@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Brain, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAllFlashcards, FlashcardWithResumo } from '@/hooks/useAllFlashcards';
-import FlashcardStudyModeImproved from '@/components/FlashcardStudyModeImproved';
+import FlashcardStudyMode from '@/components/FlashcardStudyMode';
 import PageLayout from '@/components/navigation/PageLayout';
 
 interface FlashcardSet {
@@ -103,7 +103,10 @@ const MyFlashcards = () => {
             </div>
           </div>
           
-          <FlashcardStudyModeImproved cards={selectedSet.flashcards} />
+          <FlashcardStudyMode 
+            resumoId={selectedSet.resumo_id}
+            onBack={handleBackToList}
+          />
         </div>
       </PageLayout>
     );
