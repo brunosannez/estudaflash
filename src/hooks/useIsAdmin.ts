@@ -58,19 +58,62 @@ export const useIsAdmin = () => {
   }, [user]);
 
   const makeCurrentUserAdmin = async () => {
-    if (!user) return false;
-    
-    console.log('🔧 useIsAdmin: Promovendo usuário atual a admin...');
-    const success = await AdminDiagnosticsService.ensureUserIsAdmin(user.id);
-    
-    if (success) {
-      setIsAdmin(true);
-      // Re-executar diagnósticos
-      const newDiagnostics = await AdminDiagnosticsService.runDiagnostics();
-      setDiagnostics(newDiagnostics);
+    if (!user) {
+      console.log('❌ Usuário não autenticado para promover a admin');
+      return false;
     }
     
-    return success;
+    try {
+      console.log('🔧 useIsAdmin: Promovendo usuário atual a admin...');
+      
+      // Primeiro, verificar se já existe um admin
+      const { data: existingAdmins, error: checkError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('role', 'admin')
+        .limit(1);
+
+      if (checkError) {
+        console.error('❌ Erro ao verificar admins existentes:', checkError);
+        // Tentar criar a tabela se não existir
+        const { error: createError } = await supabase.rpc('ensure_admin_table');
+        if (createError) {
+          console.error('❌ Erro ao criar tabela de admin:', createError);
+        }
+      }
+
+      // Se não há nenhum admin, tornar o usuário atual admin
+      if (!existingAdmins || existingAdmins.length === 0) {
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert([
+            {
+              user_id: user.id,
+              role: 'admin'
+            }
+          ]);
+
+        if (insertError) {
+          console.error('❌ Erro ao inserir role de admin:', insertError);
+          return false;
+        }
+
+        console.log('✅ Usuário promovido a admin com sucesso');
+        setIsAdmin(true);
+        
+        // Re-executar diagnósticos
+        const newDiagnostics = await AdminDiagnosticsService.runDiagnostics();
+        setDiagnostics(newDiagnostics);
+        
+        return true;
+      } else {
+        console.log('⚠️ Já existe um administrador no sistema');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao promover usuário a admin:', error);
+      return false;
+    }
   };
 
   return { 

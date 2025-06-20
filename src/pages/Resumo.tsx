@@ -7,7 +7,7 @@ import { useQuiz } from '@/hooks/useQuiz';
 import ResumoContent from '@/components/ResumoContent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Brain, Target } from 'lucide-react';
 import PageLayout from '@/components/navigation/PageLayout';
 
 const Resumo = () => {
@@ -31,15 +31,19 @@ const Resumo = () => {
 
       try {
         setLoading(true);
+        console.log('📖 Carregando resumo com ID:', id);
         const data = await getResumoById(id);
         
         if (data) {
+          console.log('✅ Resumo carregado:', data);
           setResumo(data);
+          setError(null);
         } else {
+          console.warn('⚠️ Resumo não encontrado');
           setError('Resumo não encontrado');
         }
       } catch (err) {
-        console.error('Erro ao carregar resumo:', err);
+        console.error('❌ Erro ao carregar resumo:', err);
         setError('Erro ao carregar resumo');
       } finally {
         setLoading(false);
@@ -80,7 +84,7 @@ const Resumo = () => {
           <Card className="w-96">
             <CardContent className="py-8 text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p>Carregando resumo...</p>
+              <p className="text-gray-600">Carregando resumo...</p>
             </CardContent>
           </Card>
         </div>
@@ -133,6 +137,7 @@ const Resumo = () => {
           <Button 
             onClick={handleGenerateFlashcards}
             disabled={isGeneratingFlashcards}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
           >
             {isGeneratingFlashcards ? (
               <>
@@ -140,7 +145,10 @@ const Resumo = () => {
                 Gerando...
               </>
             ) : (
-              '🧠 Gerar Flashcards'
+              <>
+                <Brain className="h-4 w-4 mr-2" />
+                Gerar Flashcards
+              </>
             )}
           </Button>
           <Button 
@@ -154,7 +162,10 @@ const Resumo = () => {
                 Gerando...
               </>
             ) : (
-              '🎯 Fazer Quiz'
+              <>
+                <Target className="h-4 w-4 mr-2" />
+                Fazer Quiz
+              </>
             )}
           </Button>
         </div>
