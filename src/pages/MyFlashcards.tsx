@@ -4,16 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Brain, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useFlashcards } from '@/hooks/useFlashcards';
+import { useAllFlashcards, FlashcardWithResumo } from '@/hooks/useAllFlashcards';
 import FlashcardStudyModeImproved from '@/components/FlashcardStudyModeImproved';
 import PageLayout from '@/components/navigation/PageLayout';
 
+interface FlashcardSet {
+  resumo_id: string;
+  resumo_title: string;
+  data_criacao: string;
+  flashcards: FlashcardWithResumo[];
+}
+
 const MyFlashcards = () => {
   const navigate = useNavigate();
-  const { getAllFlashcards } = useFlashcards();
-  const [flashcards, setFlashcards] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSet, setSelectedSet] = useState<any>(null);
+  const { getAllFlashcards, loading } = useAllFlashcards();
+  const [flashcards, setFlashcards] = useState<FlashcardSet[]>([]);
+  const [selectedSet, setSelectedSet] = useState<FlashcardSet | null>(null);
   const [studyMode, setStudyMode] = useState(false);
 
   useEffect(() => {
@@ -22,20 +28,19 @@ const MyFlashcards = () => {
 
   const loadFlashcards = async () => {
     try {
-      setLoading(true);
       console.log('🔄 Carregando flashcards...');
       const data = await getAllFlashcards();
       console.log('📚 Flashcards carregados:', data);
       
       if (data && data.length > 0) {
         // Agrupar flashcards por resumo
-        const groupedFlashcards = data.reduce((acc: any, flashcard: any) => {
+        const groupedFlashcards = data.reduce((acc: Record<string, FlashcardSet>, flashcard: FlashcardWithResumo) => {
           const resumoId = flashcard.resumo_id;
           if (!acc[resumoId]) {
             acc[resumoId] = {
               resumo_id: resumoId,
               resumo_title: flashcard.resumos?.custom_name || 'Resumo sem título',
-              data_criacao: flashcard.resumos?.data_criacao,
+              data_criacao: flashcard.resumos?.data_criacao || flashcard.data_criacao,
               flashcards: []
             };
           }
@@ -50,12 +55,10 @@ const MyFlashcards = () => {
     } catch (error) {
       console.error('❌ Erro ao carregar flashcards:', error);
       setFlashcards([]);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleStartStudy = (flashcardSet: any) => {
+  const handleStartStudy = (flashcardSet: FlashcardSet) => {
     setSelectedSet(flashcardSet);
     setStudyMode(true);
   };
@@ -100,7 +103,7 @@ const MyFlashcards = () => {
             </div>
           </div>
           
-          <FlashcardStudyModeImproved flashcards={selectedSet.flashcards} />
+          <FlashcardStudyModeImproved cards={selectedSet.flashcards} />
         </div>
       </PageLayout>
     );

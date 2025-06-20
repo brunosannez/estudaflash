@@ -68,33 +68,38 @@ export const useIsAdmin = () => {
       
       // Primeiro, verificar se já existe um admin
       const { data: existingAdmins, error: checkError } = await supabase
-        .from('user_roles')
+        .from('admin_users')
         .select('*')
-        .eq('role', 'admin')
         .limit(1);
 
       if (checkError) {
         console.error('❌ Erro ao verificar admins existentes:', checkError);
-        // Tentar criar a tabela se não existir
-        const { error: createError } = await supabase.rpc('ensure_admin_table');
-        if (createError) {
-          console.error('❌ Erro ao criar tabela de admin:', createError);
-        }
       }
 
       // Se não há nenhum admin, tornar o usuário atual admin
       if (!existingAdmins || existingAdmins.length === 0) {
-        const { error: insertError } = await supabase
-          .from('user_roles')
+        // Primeiro adicionar em admin_users
+        const { error: adminInsertError } = await supabase
+          .from('admin_users')
           .insert([
             {
               user_id: user.id,
-              role: 'admin'
+              email: user.email || 'admin@example.com'
             }
           ]);
 
-        if (insertError) {
-          console.error('❌ Erro ao inserir role de admin:', insertError);
+        if (adminInsertError) {
+          console.error('❌ Erro ao inserir em admin_users:', adminInsertError);
+        }
+
+        // Depois atualizar uso_usuarios
+        const { error: usageUpdateError } = await supabase
+          .from('uso_usuarios')
+          .update({ is_admin: true })
+          .eq('user_id', user.id);
+
+        if (usageUpdateError) {
+          console.error('❌ Erro ao atualizar uso_usuarios:', usageUpdateError);
           return false;
         }
 
