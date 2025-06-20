@@ -66,7 +66,7 @@ export const useUsageData = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]); // Simplificado para apenas user.id
+  }, [user?.id]);
 
   useEffect(() => {
     if (user?.id) {
@@ -76,9 +76,9 @@ export const useUsageData = () => {
       setUsageData(null);
       setLoading(false);
     }
-  }, [user?.id]); // Removido fetchUsageData das dependências
+  }, [user?.id, fetchUsageData]);
 
-  // Listener simplificado com debounce
+  // Simplified listener with unique channel name to prevent multiple subscriptions
   useEffect(() => {
     if (!user?.id) return;
 
@@ -86,8 +86,11 @@ export const useUsageData = () => {
     
     let timeoutId: NodeJS.Timeout;
     
+    // Create a unique channel name using timestamp to prevent conflicts
+    const channelName = `usage-updates-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel(`usage-updates-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -113,7 +116,7 @@ export const useUsageData = () => {
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]); // Removido fetchUsageData das dependências
+  }, [user?.id, fetchUsageData]);
 
   const refreshUsage = useCallback(async () => {
     console.log('🔄 Refresh manual dos dados de uso...');

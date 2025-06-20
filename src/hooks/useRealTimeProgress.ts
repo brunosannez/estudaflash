@@ -107,7 +107,7 @@ export const useRealTimeProgress = () => {
     return () => clearInterval(interval);
   }, [isInitialized, loading, syncing]);
 
-  // Escutar mudanças em tempo real
+  // Escutar mudanças em tempo real com nome único de canal
   useEffect(() => {
     const setupRealtimeSubscriptions = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -115,8 +115,11 @@ export const useRealTimeProgress = () => {
 
       console.log('🔄 Setting up real-time subscriptions');
 
+      // Create unique channel name to prevent multiple subscriptions
+      const channelName = `progress_updates-${user.id}-${Date.now()}`;
+
       const progressChannel = supabase
-        .channel('progress_updates')
+        .channel(channelName)
         .on('postgres_changes', 
           { 
             event: '*', 

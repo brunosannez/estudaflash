@@ -150,8 +150,11 @@ export const useRecentActivity = () => {
     fetchRecentActivity();
     
     if (user) {
+      // Create unique channel name to prevent multiple subscriptions
+      const channelName = `recent_activity_updates-${user.id}-${Date.now()}`;
+      
       const channel = supabase
-        .channel(`recent_activity_updates-${user.id}`)
+        .channel(channelName)
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'uploads', filter: `user_id=eq.${user.id}` },
           () => {
