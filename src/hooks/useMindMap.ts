@@ -79,7 +79,10 @@ export const useMindMap = () => {
         description: "Mapa mental gerado com sucesso!",
       });
 
-      return savedMindMap as MindMap;
+      return {
+        ...savedMindMap,
+        content: savedMindMap.content as MindMapData
+      } as MindMap;
 
     } catch (error) {
       console.error('❌ Erro ao gerar mapa mental:', error);
@@ -107,7 +110,14 @@ export const useMindMap = () => {
         return null;
       }
 
-      return data as MindMap;
+      if (!data) {
+        return null;
+      }
+
+      return {
+        ...data,
+        content: data.content as MindMapData
+      } as MindMap;
     } catch (error) {
       console.error('❌ Erro ao buscar mapa mental:', error);
       return null;
@@ -127,7 +137,10 @@ export const useMindMap = () => {
         return null;
       }
 
-      return data as MindMap;
+      return {
+        ...data,
+        content: data.content as MindMapData
+      } as MindMap;
     } catch (error) {
       console.error('❌ Erro ao buscar mapa mental:', error);
       return null;
