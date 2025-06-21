@@ -4,10 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
+import { useMindMap } from '@/hooks/useMindMap';
 import ResumoContent from '@/components/ResumoContent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Brain, Target } from 'lucide-react';
+import { ArrowLeft, Loader2, Brain, Target, Lightbulb } from 'lucide-react';
 import PageLayout from '@/components/navigation/PageLayout';
 
 const Resumo = () => {
@@ -16,10 +17,12 @@ const Resumo = () => {
   const { getResumoById } = useSummary();
   const { generateAutoFlashcards, isGenerating: isGeneratingFlashcards } = useAutoFlashcards();
   const { generateQuiz, loading: isGeneratingQuiz } = useQuiz(id || '');
+  const { generateMindMap, getMindMapByResumoId, loading: isGeneratingMindMap } = useMindMap();
   
   const [resumo, setResumo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [existingMindMap, setExistingMindMap] = useState<any>(null);
 
   const fetchResumo = useCallback(async () => {
     if (!id) {
@@ -37,6 +40,10 @@ const Resumo = () => {
         console.log('✅ Resumo carregado:', data);
         setResumo(data);
         setError(null);
+        
+        // Check if mind map already exists
+        const mindMap = await getMindMapByResumoId(id);
+        setExistingMindMap(mindMap);
       } else {
         console.warn('⚠️ Resumo não encontrado');
         setError('Resumo não encontrado');
@@ -47,7 +54,7 @@ const Resumo = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]); // Removido getResumoById das dependências
+  }, [id, getResumoById, getMindMapByResumoId]);
 
   useEffect(() => {
     fetchResumo();
@@ -74,6 +81,25 @@ const Resumo = () => {
       }
     } catch (error) {
       console.error('Erro ao gerar quiz:', error);
+    }
+  };
+
+  const handleGenerateMindMap = async () => {
+    if (!resumo?.resumo_gerado || !resumo?.id) return;
+    
+    try {
+      const mindMap = await generateMindMap(resumo.id, resumo.resumo_gerado);
+      if (mindMap) {
+        navigate(`/mind-map/${mindMap.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao gerar mapa mental:', error);
+    }
+  };
+
+  const handleViewMindMap = () => {
+    if (existingMindMap) {
+      navigate(`/mind-map/${existingMindMap.id}`);
     }
   };
 
@@ -151,6 +177,7 @@ const Resumo = () => {
               </>
             )}
           </Button>
+          
           <Button 
             onClick={handleGenerateQuiz} 
             variant="outline"
@@ -168,6 +195,35 @@ const Resumo = () => {
               </>
             )}
           </Button>
+
+          {/* Mind Map Button */}
+          {existingMindMap ? (
+            <Button 
+              onClick={handleViewMindMap}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Ver Mapa Mental
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleGenerateMindMap}
+              disabled={isGeneratingMindMap}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              {isGeneratingMindMap ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Criar Mapa Mental
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Content */}

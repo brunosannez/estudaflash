@@ -1,9 +1,14 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import Home from '@/pages/Home';
+import { Toaster } from "@/components/ui/toaster";
+import AuthGuard from '@/components/AuthGuard';
+
+// Pages
 import Index from '@/pages/Index';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import NewSignup from '@/pages/NewSignup';
 import Upload from '@/pages/Upload';
 import MySummaries from '@/pages/MySummaries';
 import Resumo from '@/pages/Resumo';
@@ -11,85 +16,86 @@ import MyFlashcards from '@/pages/MyFlashcards';
 import Quiz from '@/pages/Quiz';
 import QuizHistory from '@/pages/QuizHistory';
 import MyProgress from '@/pages/MyProgress';
-import Login from '@/pages/Login';
-import Signup from '@/pages/Signup';
-import NewSignup from '@/pages/NewSignup';
 import AdminPanel from '@/pages/AdminPanel';
 import AdminAnalytics from '@/pages/AdminAnalytics';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Home from '@/pages/Home';
 import NotFound from '@/pages/NotFound';
+import MindMap from '@/pages/MindMap';
+
 import './App.css';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
           <Routes>
+            {/* Public Routes */}
             <Route path="/home" element={<Home />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/new-signup" element={<NewSignup />} />
+
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <AuthGuard>
+                <Index />
+              </AuthGuard>
+            } />
             <Route path="/upload" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <Upload />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
             <Route path="/my-summaries" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <MySummaries />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
             <Route path="/resumo/:id" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <Resumo />
-              </ProtectedRoute>
+              </AuthGuard>
+            } />
+            <Route path="/mind-map/:id" element={
+              <AuthGuard>
+                <MindMap />
+              </AuthGuard>
             } />
             <Route path="/my-flashcards" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <MyFlashcards />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
-            <Route path="/quiz/:resumoId" element={
-              <ProtectedRoute>
+            <Route path="/quiz/:id" element={
+              <AuthGuard>
                 <Quiz />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
             <Route path="/quiz-history" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <QuizHistory />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
-            <Route path="/my-progress" element={
-              <ProtectedRoute>
+            <Route path="/progress" element={
+              <AuthGuard>
                 <MyProgress />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <AdminPanel />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
             <Route path="/admin/analytics" element={
-              <ProtectedRoute>
+              <AuthGuard>
                 <AdminAnalytics />
-              </ProtectedRoute>
+              </AuthGuard>
             } />
+
+            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />

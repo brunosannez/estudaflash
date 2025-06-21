@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, BookOpen, Brain, Target, TrendingUp, Zap } from 'lucide-react';
+import { Upload, BookOpen, Brain, Target, TrendingUp, Zap, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const QuickActions = () => {
