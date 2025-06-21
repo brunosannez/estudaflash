@@ -81,7 +81,7 @@ export const useMindMap = () => {
 
       return {
         ...savedMindMap,
-        content: savedMindMap.content as MindMapData
+        content: savedMindMap.content as unknown as MindMapData
       } as MindMap;
 
     } catch (error) {
@@ -116,7 +116,7 @@ export const useMindMap = () => {
 
       return {
         ...data,
-        content: data.content as MindMapData
+        content: data.content as unknown as MindMapData
       } as MindMap;
     } catch (error) {
       console.error('❌ Erro ao buscar mapa mental:', error);
@@ -139,7 +139,7 @@ export const useMindMap = () => {
 
       return {
         ...data,
-        content: data.content as MindMapData
+        content: data.content as unknown as MindMapData
       } as MindMap;
     } catch (error) {
       console.error('❌ Erro ao buscar mapa mental:', error);
