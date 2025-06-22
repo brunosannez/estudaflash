@@ -45,7 +45,7 @@ const QuizResultScreen = ({ score, totalQuestions, onRestart }: QuizResultScreen
             </Button>
           </div>
         </CardContent>
-      </div>
+      </Card>
     </div>
   );
 };
