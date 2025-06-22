@@ -16,6 +16,7 @@ const Quiz = () => {
   const [hasQuiz, setHasQuiz] = useState(false);
   const [quizData, setQuizData] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [resumo, setResumo] = useState<any>(null);
 
   const {
     quizzes,
@@ -24,14 +25,23 @@ const Quiz = () => {
     generateQuiz
   } = useQuiz(resumoId || '');
 
-  const { resumo, fetchResumo } = useSummary();
+  const { getResumoById } = useSummary();
 
   // Buscar resumo primeiro
   useEffect(() => {
     if (resumoId) {
-      fetchResumo(resumoId);
+      const loadResumo = async () => {
+        try {
+          const resumoData = await getResumoById(resumoId);
+          setResumo(resumoData);
+        } catch (error) {
+          console.error('Erro ao carregar resumo:', error);
+          toast.error('Erro ao carregar resumo');
+        }
+      };
+      loadResumo();
     }
-  }, [resumoId]);
+  }, [resumoId, getResumoById]);
 
   // Generate or fetch quiz on component mount
   useEffect(() => {
@@ -80,7 +90,7 @@ const Quiz = () => {
 
       loadOrGenerateQuiz();
     }
-  }, [resumoId, resumo]);
+  }, [resumoId, resumo, fetchQuizzes, generateQuiz]);
 
   const handleQuizComplete = (sessionResult: any) => {
     console.log('🏆 Quiz completed with result:', sessionResult);
@@ -115,13 +125,27 @@ const Quiz = () => {
               </p>
               <div className="space-y-2">
                 <Button 
-                  onClick={() => {
+                  onClick={async () => {
                     if (resumo) {
                       setIsGenerating(true);
-                      generateQuiz(resumo.resumo_gerado).then(() => {
-                        setIsGenerating(false);
-                        window.location.reload();
-                      });
+                      try {
+                        const success = await generateQuiz(resumo.resumo_gerado);
+                        if (success) {
+                          const newQuizzes = await fetchQuizzes();
+                          if (newQuizzes && newQuizzes.length > 0) {
+                            setQuizData({
+                              resumo_id: resumoId,
+                              questoes: newQuizzes
+                            });
+                            setHasQuiz(true);
+                            toast.success('Quiz gerado com sucesso!');
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Erro ao gerar quiz:', error);
+                        toast.error('Erro ao gerar quiz');
+                      }
+                      setIsGenerating(false);
                     }
                   }}
                   className="w-full mb-2"
