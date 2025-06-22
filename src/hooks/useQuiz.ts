@@ -14,30 +14,19 @@ export interface Quiz {
   data_criacao: string;
 }
 
-export interface QuizResposta {
-  id?: string;
-  user_id?: string;
-  quiz_id: string;
-  acertou: boolean;
-  resposta_selecionada: number;
-  data_resposta?: string;
-}
-
 export function useQuiz(resumoId: string) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [respostas, setRespostas] = useState<QuizResposta[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const fetchQuizzes = async () => {
     if (!resumoId) {
-      console.log('⚠️ Nenhum resumoId fornecido para fetchQuizzes');
+      console.log('⚠️ Nenhum resumoId fornecido');
       return [];
     }
     
     try {
-      setLoading(true);
       console.log('🔍 Buscando quizzes para resumo:', resumoId);
       
       const { data, error } = await supabase
@@ -57,8 +46,6 @@ export function useQuiz(resumoId: string) {
           ...q,
           alternativas: Array.isArray(q.alternativas)
             ? q.alternativas.filter((alt) => typeof alt === "string")
-            : typeof q.alternativas === "string"
-            ? [q.alternativas]
             : [],
         })) as Quiz[];
         
@@ -73,29 +60,26 @@ export function useQuiz(resumoId: string) {
       console.error('❌ Erro ao buscar quizzes:', error);
       setQuizzes([]);
       return [];
-    } finally {
-      setLoading(false);
     }
   };
 
   const generateQuiz = async (texto_resumo: string) => {
     if (!resumoId) {
-      console.error('❌ Nenhum resumoId fornecido para generateQuiz');
+      console.error('❌ Nenhum resumoId fornecido');
       return false;
     }
 
     setLoading(true);
     
-    // Verificar limite de uso ANTES de gerar quiz
+    // Verificar limite de uso
     const canProceed = await checkCanProceed('quizzes');
     if (!canProceed) {
-      console.log('❌ Geração de quiz bloqueada por limite de uso');
+      console.log('❌ Limite de uso atingido');
       setLoading(false);
       return false;
     }
 
     try {
-      // Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Usuário não autenticado');
@@ -111,18 +95,12 @@ export function useQuiz(resumoId: string) {
       });
       
       if (error) {
-        console.error('❌ Erro na função de geração:', error);
+        console.error('❌ Erro na função:', error);
         throw error;
       }
       
       if (!data || !data.success) {
-        let errorMessage = data?.error || 'Erro desconhecido';
-        
-        // Se há uma mensagem de fallback, usa ela
-        if (data?.fallbackMessage) {
-          errorMessage = data.fallbackMessage;
-        }
-        
+        const errorMessage = data?.error || 'Erro desconhecido';
         toast({
           title: "Erro ao gerar quiz",
           description: errorMessage,
@@ -131,23 +109,9 @@ export function useQuiz(resumoId: string) {
         return false;
       }
       
-      // Incrementar contador de uso APENAS após sucesso
+      // Incrementar uso apenas após sucesso
       await incrementUsage('quizzes');
-      console.log('✅ Usage counter incremented for quizzes');
-      
-      toast({ title: "Quiz gerado com sucesso!" });
-      
-      // Atualizar estado local com os novos quizzes
-      if (data.quizzes && data.quizzes.length > 0) {
-        const formattedQuizzes = data.quizzes.map((q: any) => ({
-          ...q,
-          alternativas: Array.isArray(q.alternativas)
-            ? q.alternativas.filter((alt: any) => typeof alt === "string")
-            : [],
-        })) as Quiz[];
-        
-        setQuizzes(formattedQuizzes);
-      }
+      console.log('✅ Quiz gerado com sucesso');
       
       return true;
     } catch (error) {
@@ -165,60 +129,46 @@ export function useQuiz(resumoId: string) {
 
   const enviarResposta = async (quizId: string, resposta_selecionada: number) => {
     const quiz = quizzes.find((q) => q.id === quizId);
-    if (!quiz) return;
+    if (!quiz) return { acertou: false, explicacao: '' };
     
     const acertou = resposta_selecionada === quiz.correta;
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       toast({ 
-        title: "Você precisa estar autenticado para responder o quiz.", 
+        title: "Você precisa estar autenticado para responder.", 
         variant: "destructive" 
       });
-      return { acertou: false, explicacao: quiz.explicacao };
-    }
-    
-    const { data, error } = await supabase
-      .from("quiz_respostas")
-      .insert({
-        quiz_id: quizId,
-        resposta_selecionada,
-        acertou,
-        user_id: user.id,
-      })
-      .select()
-      .single();
-    
-    if (!error && data) {
-      setRespostas((prev) => [...prev, data]);
-      
-      // Apenas retornar o resultado, sem adicionar XP aqui
-      // O XP será adicionado apenas no final da sessão
       return { acertou, explicacao: quiz.explicacao };
     }
     
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from("quiz_respostas")
+        .insert({
+          quiz_id: quizId,
+          resposta_selecionada,
+          acertou,
+          user_id: user.id,
+        });
+      
+      if (error) {
+        console.error("Erro ao salvar resposta:", error);
+      }
+      
+      return { acertou, explicacao: quiz.explicacao };
+    } catch (error) {
       console.error("Erro ao salvar resposta:", error);
-      toast({
-        title: "Erro ao salvar resposta",
-        description: "Tente novamente.",
-        variant: "destructive",
-      });
+      return { acertou, explicacao: quiz.explicacao };
     }
-    
-    return { acertou: false, explicacao: quiz.explicacao };
   };
-
-  const resetRespostas = () => setRespostas([]);
 
   return {
     quizzes,
-    respostas,
     loading,
     fetchQuizzes,
     generateQuiz,
     enviarResposta,
     setQuizzes,
-    resetRespostas,
   };
 }

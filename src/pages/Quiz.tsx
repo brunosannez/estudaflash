@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, XCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useSummary } from '@/hooks/useSummary';
 import { toast } from 'sonner';
@@ -13,27 +13,20 @@ import QuizPlay from '@/components/QuizPlay';
 const Quiz = () => {
   const { resumoId } = useParams<{ resumoId: string }>();
   const navigate = useNavigate();
-  const [hasQuiz, setHasQuiz] = useState(false);
-  const [quizData, setQuizData] = useState<any>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [resumo, setResumo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const {
-    quizzes,
-    loading: quizLoading,
-    fetchQuizzes,
-    generateQuiz
-  } = useQuiz(resumoId || '');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [quizData, setQuizData] = useState<any>(null);
 
   const { getResumoById } = useSummary();
+  const { fetchQuizzes, generateQuiz } = useQuiz(resumoId || '');
 
-  // Buscar resumo primeiro
+  // Carregar resumo
   useEffect(() => {
     const loadResumo = async () => {
       if (!resumoId) {
         console.error('❌ ID do resumo não fornecido');
-        setIsLoading(false);
+        navigate('/my-summaries');
         return;
       }
 
@@ -60,41 +53,37 @@ const Quiz = () => {
     loadResumo();
   }, [resumoId, getResumoById, navigate]);
 
-  // Verificar quiz existente após carregar o resumo
+  // Verificar quiz existente após carregar resumo
   useEffect(() => {
-    const checkExistingQuiz = async () => {
-      if (!resumoId || !resumo) {
+    const checkQuiz = async () => {
+      if (!resumo || !resumoId) {
         return;
       }
 
       try {
-        console.log('🎯 Verificando quiz existente para resumo:', resumoId);
-        const existingQuizzes = await fetchQuizzes();
+        console.log('🎯 Verificando quiz para resumo:', resumoId);
+        const quizzes = await fetchQuizzes();
         
-        console.log('📊 Resultado da busca de quizzes:', existingQuizzes);
-        
-        if (existingQuizzes && existingQuizzes.length > 0) {
-          console.log('✅ Quiz existente encontrado com', existingQuizzes.length, 'questões');
+        if (quizzes && quizzes.length > 0) {
+          console.log('✅ Quiz encontrado com', quizzes.length, 'questões');
           setQuizData({
             resumo_id: resumoId,
-            questoes: existingQuizzes
+            questoes: quizzes,
+            titulo: `Quiz - ${quizzes.length} questões`
           });
-          setHasQuiz(true);
         } else {
           console.log('❌ Nenhum quiz encontrado');
-          setHasQuiz(false);
           setQuizData(null);
         }
       } catch (error) {
         console.error('❌ Erro ao verificar quiz:', error);
-        setHasQuiz(false);
         setQuizData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkExistingQuiz();
+    checkQuiz();
   }, [resumo, resumoId, fetchQuizzes]);
 
   const handleGenerateQuiz = async () => {
@@ -105,32 +94,30 @@ const Quiz = () => {
 
     setIsGenerating(true);
     try {
-      console.log('🚀 Iniciando geração de quiz...');
+      console.log('🚀 Gerando quiz...');
       const success = await generateQuiz(resumo.resumo_gerado);
       
       if (success) {
-        console.log('✅ Quiz gerado com sucesso, recarregando...');
+        console.log('✅ Quiz gerado, recarregando...');
         
-        // Aguardar um pouco para garantir que o quiz foi salvo
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Recarregar os quizzes
-        const newQuizzes = await fetchQuizzes();
-        console.log('🔄 Quizzes recarregados:', newQuizzes);
-        
-        if (newQuizzes && newQuizzes.length > 0) {
-          setQuizData({
-            resumo_id: resumoId,
-            questoes: newQuizzes
-          });
-          setHasQuiz(true);
-          toast.success('Quiz gerado com sucesso!');
-        } else {
-          console.error('❌ Quiz gerado mas não foi possível carregar as questões');
-          toast.error('Quiz gerado mas houve problema ao carregar. Tente recarregar a página.');
-        }
+        // Aguardar e recarregar
+        setTimeout(async () => {
+          const newQuizzes = await fetchQuizzes();
+          console.log('🔄 Quizzes recarregados:', newQuizzes);
+          
+          if (newQuizzes && newQuizzes.length > 0) {
+            setQuizData({
+              resumo_id: resumoId,
+              questoes: newQuizzes,
+              titulo: `Quiz - ${newQuizzes.length} questões`
+            });
+            toast.success('Quiz gerado com sucesso!');
+          } else {
+            toast.error('Erro ao carregar quiz gerado');
+          }
+        }, 1000);
       } else {
-        toast.error('Erro ao gerar quiz. Tente novamente.');
+        toast.error('Erro ao gerar quiz');
       }
     } catch (error) {
       console.error('❌ Erro ao gerar quiz:', error);
@@ -140,13 +127,13 @@ const Quiz = () => {
     }
   };
 
-  const handleQuizComplete = (sessionResult: any) => {
-    console.log('🏆 Quiz completado com resultado:', sessionResult);
-    toast.success('Quiz concluído com sucesso!');
+  const handleQuizComplete = (result: any) => {
+    console.log('🏆 Quiz completado:', result);
+    toast.success('Quiz concluído!');
   };
 
-  // Loading state
-  if (isLoading || quizLoading || !resumo) {
+  // Loading
+  if (isLoading) {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -154,10 +141,10 @@ const Quiz = () => {
             <CardContent className="py-8 text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-lg font-medium text-gray-700 mb-2">
-                🔍 Verificando quiz...
+                🔍 Carregando...
               </p>
               <p className="text-sm text-gray-500">
-                Aguarde um momento
+                Verificando quiz disponível
               </p>
             </CardContent>
           </Card>
@@ -166,7 +153,7 @@ const Quiz = () => {
     );
   }
 
-  // Generation state
+  // Generating
   if (isGenerating) {
     return (
       <PageLayout>
@@ -178,7 +165,7 @@ const Quiz = () => {
                 🧠 Gerando quiz...
               </p>
               <p className="text-sm text-gray-500">
-                Criando questões contextualizadas
+                Criando questões personalizadas
               </p>
             </CardContent>
           </Card>
@@ -188,7 +175,7 @@ const Quiz = () => {
   }
 
   // Show quiz if available
-  if (hasQuiz && quizData) {
+  if (quizData && quizData.questoes && quizData.questoes.length > 0) {
     return (
       <PageLayout>
         <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />
@@ -196,7 +183,7 @@ const Quiz = () => {
     );
   }
 
-  // No quiz found - show generation option
+  // No quiz - show generation option
   return (
     <PageLayout>
       <div className="flex items-center justify-center min-h-[400px]">
