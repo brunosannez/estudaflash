@@ -1,0 +1,137 @@
+
+import { useState, useEffect } from 'react';
+import { useQuiz } from '@/hooks/useQuiz';
+import { useSummary } from '@/hooks/useSummary';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+
+export const useQuizData = (resumoId: string | undefined) => {
+  const navigate = useNavigate();
+  const [resumo, setResumo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [quizData, setQuizData] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const { getResumoById } = useSummary();
+  const { fetchQuizzes, generateQuiz } = useQuiz(resumoId || '');
+
+  // Load resumo
+  useEffect(() => {
+    const loadResumo = async () => {
+      if (!resumoId) {
+        console.error('❌ ID do resumo não fornecido');
+        navigate('/my-summaries');
+        return;
+      }
+
+      try {
+        console.log('🔍 Carregando resumo:', resumoId);
+        const resumoData = await getResumoById(resumoId);
+        
+        if (!resumoData) {
+          console.error('❌ Resumo não encontrado');
+          toast.error('Resumo não encontrado');
+          navigate('/my-summaries');
+          return;
+        }
+        
+        console.log('📄 Resumo carregado:', resumoData);
+        setResumo(resumoData);
+      } catch (error) {
+        console.error('❌ Erro ao carregar resumo:', error);
+        toast.error('Erro ao carregar resumo');
+        navigate('/my-summaries');
+      }
+    };
+
+    loadResumo();
+  }, [resumoId, getResumoById, navigate]);
+
+  // Check existing quiz after loading resumo
+  useEffect(() => {
+    const checkQuiz = async () => {
+      if (!resumo || !resumoId) {
+        return;
+      }
+
+      try {
+        console.log('🎯 Verificando quiz para resumo:', resumoId);
+        const quizzes = await fetchQuizzes();
+        
+        if (quizzes && quizzes.length > 0) {
+          console.log('✅ Quiz encontrado com', quizzes.length, 'questões');
+          setQuizData({
+            resumo_id: resumoId,
+            questoes: quizzes,
+            titulo: `Quiz - ${quizzes.length} questões`
+          });
+        } else {
+          console.log('❌ Nenhum quiz encontrado');
+          setQuizData(null);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao verificar quiz:', error);
+        setQuizData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkQuiz();
+  }, [resumo, resumoId, fetchQuizzes]);
+
+  const handleGenerateQuiz = async () => {
+    if (!resumo) {
+      toast.error('Resumo não carregado');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      console.log('🚀 Gerando quiz...');
+      const success = await generateQuiz(resumo.resumo_gerado);
+      
+      if (success) {
+        console.log('✅ Quiz gerado, recarregando...');
+        
+        // Wait and reload
+        setTimeout(async () => {
+          const newQuizzes = await fetchQuizzes();
+          console.log('🔄 Quizzes recarregados:', newQuizzes);
+          
+          if (newQuizzes && newQuizzes.length > 0) {
+            setQuizData({
+              resumo_id: resumoId,
+              questoes: newQuizzes,
+              titulo: `Quiz - ${newQuizzes.length} questões`
+            });
+            toast.success('Quiz gerado com sucesso!');
+          } else {
+            toast.error('Erro ao carregar quiz gerado');
+          }
+        }, 1000);
+      } else {
+        toast.error('Erro ao gerar quiz');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao gerar quiz:', error);
+      toast.error('Erro ao gerar quiz');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleQuizComplete = (result: any) => {
+    console.log('🏆 Quiz completado:', result);
+    toast.success('Quiz concluído!');
+  };
+
+  return {
+    resumo,
+    quizData,
+    isLoading,
+    isGenerating,
+    handleGenerateQuiz,
+    handleQuizComplete
+  };
+};
