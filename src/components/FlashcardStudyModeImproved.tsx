@@ -100,7 +100,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
     if (flashcards.length === 0 || isAnimating) return;
 
     const currentCard = flashcards[currentIndex];
-    const xpToAdd = remembered ? 5 : 1; // Corrigido: 5XP para acerto, 1XP para erro
+    const xpToAdd = remembered ? 5 : 1;
     
     try {
       // Registrar review no banco
@@ -140,7 +140,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
           : `+${xpToAdd} XP por tentar! Você está aprendendo!`,
       });
 
-      // Avançar para próximo card com animação
+      // Avançar para próximo card automaticamente após resposta
       setTimeout(() => {
         if (currentIndex < flashcards.length - 1) {
           setCurrentIndex(currentIndex + 1);
@@ -150,7 +150,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
         }
         setShowAnswer(false);
         setIsFlipped(false);
-      }, 1000);
+      }, 1500); // Dar tempo para ver o feedback
 
     } catch (error) {
       console.error('Erro ao registrar review:', error);
@@ -198,7 +198,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
 
   if (flashcards.length === 0) {
     return (
-      <Card className={designColors.cards.primary}>
+      <Card className="border-4 border-blue-200 shadow-xl overflow-hidden">
         <CardContent className="text-center py-12">
           <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-gray-700 mb-2">
@@ -207,7 +207,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
           <p className="text-gray-600 mb-6">
             Este resumo ainda não possui flashcards. Gere alguns para começar a estudar!
           </p>
-          <Button onClick={onBack} className={designColors.buttons.primary}>
+          <Button onClick={onBack} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
@@ -242,7 +242,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-6 w-6 mx-auto mb-2" />
             <p className="text-blue-100 text-sm font-medium">Sequência</p>
-            <p className={`text-2xl font-bold ${getStreakColor()}`}>{studyStats.streak}</p>
+            <p className={`text-2xl font-bold`} style={{color: 'white'}}>{studyStats.streak}</p>
           </CardContent>
         </Card>
 
@@ -280,7 +280,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
         <div className={`flashcard-container ${isFlipped ? 'flipped' : ''} mx-auto max-w-2xl`}>
           {/* Frente do Card */}
           <Card className="flashcard-front absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-            <CardContent className="h-full flex flex-col justify-center p-8 text-center">
+            <CardContent className="h-full flex flex-col justify-center p-8 text-center min-h-[400px]">
               <div className="flex items-center justify-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
                   <Brain className="h-6 w-6 text-white" />
@@ -308,7 +308,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
 
           {/* Verso do Card */}
           <Card className="flashcard-back absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50">
-            <CardContent className="h-full flex flex-col justify-center p-8 text-center">
+            <CardContent className="h-full flex flex-col justify-center p-8 text-center min-h-[400px]">
               <div className="flex items-center justify-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-6 w-6 text-white" />

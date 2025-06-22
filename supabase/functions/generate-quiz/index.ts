@@ -1,313 +1,189 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Função para obter configuração do modelo baseada no plano
-function getModelConfigForPlan(plan: string) {
-  switch (plan) {
-    case 'free':
-      return {
-        provider: 'openai',
-        model: 'gpt-3.5-turbo'
-      };
-    case 'pro':
-    case 'edu':
-      return {
-        provider: 'openai',
-        model: 'gpt-4o'
-      };
-    default:
-      return {
-        provider: 'openai',
-        model: 'gpt-3.5-turbo'
-      };
-  }
+interface Quiz {
+  pergunta: string;
+  alternativas: string[];
+  correta: number;
+  explicacao: string;
 }
-
-async function getUserPlan(supabase: any, userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('uso_usuarios')
-      .select('plano')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Erro ao buscar plano do usuário:', error);
-      return 'free'; // Fallback para plano free
-    }
-    
-    return data?.plano || 'free';
-  } catch (error) {
-    console.error('Erro ao buscar plano:', error);
-    return 'free';
-  }
-}
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("🎯 Iniciando geração de quiz...");
-    
     const { resumo_id, texto_resumo, userId } = await req.json();
-    
-    if (!resumo_id || !texto_resumo) {
-      console.error("❌ Parâmetros faltando:", { resumo_id: !!resumo_id, texto_resumo: !!texto_resumo });
-      throw new Error("Parâmetros obrigatórios não fornecidos: resumo_id e texto_resumo são necessários");
+
+    console.log('🎯 Generating ENEM/Ari de Sá style quiz for resumo:', resumo_id);
+
+    // Usar OpenAI para gerar quiz no estilo ENEM/Ari de Sá
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
-    if (!OPENAI_API_KEY) {
-      console.error("❌ OPENAI_API_KEY não configurada");
-      throw new Error("Chave da API OpenAI não configurada. Entre em contato com o administrador.");
+    const quizzes = await generateQuizWithOpenAI(texto_resumo, openaiKey);
+
+    if (!quizzes || quizzes.length === 0) {
+      throw new Error('Nenhum quiz foi gerado');
     }
 
-    // Inicializar Supabase para buscar plano do usuário
-    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
-    // Buscar plano do usuário
-    const userPlan = await getUserPlan(supabaseAdmin, userId);
-    const modelConfig = getModelConfigForPlan(userPlan);
-    
-    console.log("👤 Plano do usuário:", userPlan);
-    console.log("🤖 Modelo selecionado:", modelConfig);
-    console.log("✅ Parâmetros recebidos:", { resumo_id, texto_length: texto_resumo.length });
+    // Salvar no Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // PROMPT melhorado para IA gerar as questões
-    const openaiPrompt = `
-Você é um gerador de quizzes educativos para crianças de 10 anos. Crie EXATAMENTE 5 perguntas de múltipla escolha baseadas no resumo abaixo.
+    const quizData = quizzes.map(quiz => ({
+      resumo_id,
+      pergunta: quiz.pergunta,
+      alternativas: quiz.alternativas,
+      correta: quiz.correta,
+      explicacao: quiz.explicacao
+    }));
 
-REGRAS IMPORTANTES:
-- Cada pergunta deve ter EXATAMENTE 4 alternativas
-- Use linguagem simples e divertida para crianças
-- Marque qual alternativa é a correta (índice 0, 1, 2 ou 3)
-- Crie uma explicação curta e didática para cada pergunta
-- Responda APENAS com JSON válido, sem texto adicional
+    const { data, error } = await supabase
+      .from('quizzes')
+      .insert(quizData)
+      .select();
 
-Formato OBRIGATÓRIO (JSON):
-[
-  {
-    "pergunta": "Pergunta clara e simples...",
-    "alternativas": ["Opção A", "Opção B", "Opção C", "Opção D"],
-    "correta": 0,
-    "explicacao": "Explicação simples para crianças..."
-  }
-]
-
-Resumo:
-${texto_resumo}`;
-
-    console.log("🚀 Fazendo chamada para OpenAI...");
-    console.log("📝 Modelo utilizado:", modelConfig.model);
-
-    let openaiResponse;
-    try {
-      openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: modelConfig.model,
-          messages: [
-            { 
-              role: "system", 
-              content: "Você é um especialista em criar quizzes educativos para crianças. Responda SEMPRE com JSON válido no formato exato solicitado." 
-            },
-            { role: "user", content: openaiPrompt },
-          ],
-          max_tokens: 3000,
-          temperature: 0.7,
-        }),
-      });
-    } catch (error) {
-      console.error("❌ Erro de conexão com OpenAI:", error);
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: "Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.",
-        fallbackMessage: "Nosso serviço de IA está temporariamente indisponível. Por favor, tente novamente mais tarde.",
-        details: "Erro de conectividade com OpenAI"
-      }), {
-        status: 503, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (error) {
+      console.error('Error saving to database:', error);
+      throw error;
     }
 
-    console.log("📡 Status da resposta OpenAI:", openaiResponse.status);
-
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error("❌ Erro da OpenAI:", openaiResponse.status, errorText);
-      
-      let userMessage = "Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.";
-      let fallbackMessage = "Nosso serviço de IA está temporariamente indisponível. Por favor, tente novamente mais tarde.";
-      
-      if (openaiResponse.status === 429) {
-        userMessage = "Limite de uso da API OpenAI atingido. Aguarde alguns minutos ou verifique seus créditos.";
-        fallbackMessage = "Muitas solicitações foram feitas. Aguarde alguns minutos e tente novamente.";
-      } else if (openaiResponse.status === 401) {
-        userMessage = "Problema de autenticação com o serviço de IA. Verifique a configuração.";
-        fallbackMessage = "Há um problema de configuração. Entre em contato com o administrador.";
-      }
-      
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: userMessage,
-        fallbackMessage: fallbackMessage,
-        details: `Erro na API OpenAI (${openaiResponse.status}): ${errorText}`
-      }), {
-        status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const result = await openaiResponse.json();
-    console.log("✅ Resposta da OpenAI recebida com sucesso");
-
-    let content: string;
-    try {
-      content = result.choices?.[0]?.message?.content || "";
-      if (!content) {
-        throw new Error("Resposta vazia da IA");
-      }
-    } catch (e) {
-      console.error("❌ Erro ao extrair conteúdo:", e);
-      throw new Error("Erro ao extrair resposta da IA: " + e.message);
-    }
-
-    // Limpar e tentar extrair JSON
-    let questions;
-    try {
-      content = content.trim();
-      
-      // Remover blocos de código se existirem
-      if (content.includes("```json")) {
-        content = content.replace(/^.*```json\s*/, "").replace(/```.*$/, "");
-      } else if (content.includes("```")) {
-        content = content.replace(/^.*```\w*\s*/, "").replace(/```.*$/, "");
-      }
-      
-      // Tentar encontrar o JSON no texto
-      const jsonStart = content.indexOf('[');
-      const jsonEnd = content.lastIndexOf(']');
-      
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        content = content.substring(jsonStart, jsonEnd + 1);
-      }
-      
-      console.log("🔍 Tentando fazer parse do JSON:", content.substring(0, 200) + "...");
-      questions = JSON.parse(content);
-      
-      if (!Array.isArray(questions)) {
-        throw new Error("Resposta não é um array de questões");
-      }
-      
-      if (questions.length !== 5) {
-        console.warn("⚠️ Número de questões diferente de 5:", questions.length);
-      }
-      
-      console.log("✅ JSON parseado com sucesso:", questions.length, "questões");
-    } catch (e) {
-      console.error("❌ Erro ao parsear JSON:", e.message);
-      console.error("📄 Conteúdo recebido:", content);
-      throw new Error("Erro ao processar as perguntas geradas pela IA. Tente novamente.");
-    }
-
-    // Validar estrutura das questões
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q.pergunta || !Array.isArray(q.alternativas) || typeof q.correta !== 'number' || !q.explicacao) {
-        console.error("❌ Questão inválida:", q);
-        throw new Error(`Questão ${i + 1} tem estrutura inválida. Tente gerar o quiz novamente.`);
-      }
-      if (q.alternativas.length !== 4) {
-        throw new Error(`Questão ${i + 1} deve ter exatamente 4 alternativas`);
-      }
-      if (q.correta < 0 || q.correta >= 4) {
-        throw new Error(`Questão ${i + 1} tem resposta correta inválida (deve ser 0, 1, 2 ou 3)`);
-      }
-    }
-
-    // Salvando no Supabase
-    console.log("💾 Salvando questões no Supabase...");
-    
-    let savedQuestions = [];
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      console.log(`💾 Salvando questão ${i + 1}:`, q.pergunta.substring(0, 50) + "...");
-      
-      const { error, data } = await supabaseAdmin.from('quizzes').insert([{
-        resumo_id,
-        pergunta: q.pergunta,
-        alternativas: q.alternativas,
-        correta: q.correta,
-        explicacao: q.explicacao,
-      }]).select().single();
-      
-      if (error) {
-        console.error(`❌ Erro ao salvar questão ${i + 1}:`, error);
-        throw new Error(`Erro ao salvar questão ${i + 1}: ${error.message}`);
-      }
-      
-      savedQuestions.push(data);
-      console.log(`✅ Questão ${i + 1} salva com sucesso`);
-    }
-
-    console.log("🎉 Quiz gerado com sucesso:", savedQuestions.length, "questões salvas");
+    console.log('✅ Quiz saved successfully, generated', data.length, 'questions');
 
     return new Response(JSON.stringify({ 
       success: true, 
-      quizzes: savedQuestions,
-      message: `🎉 Quiz criado com sucesso! ${savedQuestions.length} perguntas prontas para você!`,
-      stats: {
-        modelo_usado: modelConfig.model,
-        plano_usuario: userPlan,
-        total_questoes: savedQuestions.length
-      }
+      quizzes: data 
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
-  } catch (e) {
-    console.error("💥 Erro na função generate-quiz:", e);
-    
-    let userMessage = "Erro inesperado ao gerar o quiz";
-    let fallbackMessage = "Houve um problema ao gerar o quiz. Tente novamente mais tarde.";
-    
-    if (e.message.includes("Limite de uso")) {
-      userMessage = "Limite da API atingido. Aguarde alguns minutos e tente novamente.";
-      fallbackMessage = "Muitas solicitações foram feitas. Aguarde alguns minutos e tente novamente.";
-    } else if (e.message.includes("Chave da API")) {
-      userMessage = "Problema com a configuração da API. Entre em contato com o administrador.";
-      fallbackMessage = "Há um problema de configuração. Entre em contato com o administrador.";
-    } else if (e.message.includes("obrigatórios")) {
-      userMessage = "Dados do resumo não encontrados. Tente novamente.";
-      fallbackMessage = "Não foi possível encontrar os dados necessários. Tente novamente.";
-    } else if (e.message) {
-      userMessage = e.message;
-    }
-    
+  } catch (error) {
+    console.error('❌ Error generating quiz:', error);
     return new Response(JSON.stringify({ 
-      success: false,
-      error: userMessage,
-      fallbackMessage: fallbackMessage,
-      details: "Verifique se há créditos na API OpenAI e tente novamente"
+      success: false, 
+      error: error.message 
     }), {
-      status: 500, 
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+async function generateQuizWithOpenAI(content: string, apiKey: string): Promise<Quiz[]> {
+  const prompt = `
+Você é um especialista em criar questões de vestibular no estilo ENEM e colégio Ari de Sá. 
+
+Baseado no seguinte conteúdo, crie exatamente 5 questões de múltipla escolha que sigam estas características:
+
+ESTILO ENEM/ARI DE SÁ:
+- Questões contextualizadas com situações reais
+- Texto base seguido de pergunta objetiva
+- 5 alternativas (A, B, C, D, E)
+- Foco na interpretação e aplicação do conhecimento
+- Interdisciplinaridade quando possível
+- Linguagem clara e precisa
+- Explicação detalhada da resposta correta
+
+CONTEÚDO PARA BASE:
+${content}
+
+FORMATO DE RESPOSTA (JSON):
+[
+  {
+    "pergunta": "Texto contextualizador + pergunta objetiva",
+    "alternativas": ["A) primeira alternativa", "B) segunda alternativa", "C) terceira alternativa", "D) quarta alternativa", "E) quinta alternativa"],
+    "correta": 2,
+    "explicacao": "Explicação detalhada de por que a alternativa C está correta e por que as outras estão incorretas"
+  }
+]
+
+IMPORTANTE:
+- Use situações do cotidiano, notícias, ou casos práticos
+- Faça perguntas que exijam análise, não apenas memorização
+- Todas as alternativas devem ser plausíveis
+- A explicação deve ser educativa e completa
+- Numere as alternativas como A), B), C), D), E)
+- O índice "correta" deve ser 0 para A, 1 para B, 2 para C, etc.
+
+Responda APENAS com o JSON válido, sem texto adicional.`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em educação que cria questões de vestibular no estilo ENEM e Ari de Sá. Sempre responda com JSON válido.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 3000
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('OpenAI API error:', error);
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const generatedContent = data.choices[0].message.content;
+
+  try {
+    // Tentar parsear o JSON
+    let jsonContent = generatedContent.trim();
+    
+    // Remover possíveis caracteres de markdown
+    if (jsonContent.startsWith('```json')) {
+      jsonContent = jsonContent.replace(/```json\n?/, '').replace(/```\n?$/, '');
+    } else if (jsonContent.startsWith('```')) {
+      jsonContent = jsonContent.replace(/```\n?/, '').replace(/```\n?$/, '');
+    }
+    
+    const quizzes = JSON.parse(jsonContent);
+    
+    // Validar estrutura
+    if (!Array.isArray(quizzes)) {
+      throw new Error('Response is not an array');
+    }
+    
+    // Validar cada quiz
+    const validQuizzes = quizzes.filter(quiz => 
+      quiz.pergunta && 
+      Array.isArray(quiz.alternativas) && 
+      quiz.alternativas.length === 5 &&
+      typeof quiz.correta === 'number' &&
+      quiz.correta >= 0 && quiz.correta < 5 &&
+      quiz.explicacao
+    );
+    
+    console.log('✅ Generated', validQuizzes.length, 'valid quizzes');
+    return validQuizzes;
+    
+  } catch (parseError) {
+    console.error('Error parsing OpenAI response:', parseError);
+    console.error('Raw response:', generatedContent);
+    throw new Error('Failed to parse quiz generation response');
+  }
+}
