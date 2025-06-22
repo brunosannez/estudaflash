@@ -32,10 +32,12 @@ const Quiz = () => {
     if (resumoId) {
       const loadResumo = async () => {
         try {
+          console.log('🔍 Carregando resumo:', resumoId);
           const resumoData = await getResumoById(resumoId);
+          console.log('📄 Resumo carregado:', resumoData);
           setResumo(resumoData);
         } catch (error) {
-          console.error('Erro ao carregar resumo:', error);
+          console.error('❌ Erro ao carregar resumo:', error);
           toast.error('Erro ao carregar resumo');
         }
       };
@@ -48,52 +50,67 @@ const Quiz = () => {
     if (resumoId && resumo) {
       const loadOrGenerateQuiz = async () => {
         try {
-          console.log('🎯 Loading quiz for resumo:', resumoId);
+          console.log('🎯 Verificando quiz existente para resumo:', resumoId);
           const existingQuizzes = await fetchQuizzes();
           
           if (existingQuizzes && existingQuizzes.length > 0) {
-            console.log('✅ Found existing quiz with', existingQuizzes.length, 'questions');
+            console.log('✅ Quiz existente encontrado com', existingQuizzes.length, 'questões');
             setQuizData({
               resumo_id: resumoId,
               questoes: existingQuizzes
             });
             setHasQuiz(true);
           } else {
-            console.log('🔄 No existing quiz found, generating new one...');
-            setIsGenerating(true);
-            
-            // Usar o conteúdo real do resumo
-            const success = await generateQuiz(resumo.resumo_gerado);
-            
-            if (success) {
-              // Recarregar quizzes após gerar
-              const newQuizzes = await fetchQuizzes();
-              if (newQuizzes && newQuizzes.length > 0) {
-                setQuizData({
-                  resumo_id: resumoId,
-                  questoes: newQuizzes
-                });
-                setHasQuiz(true);
-                toast.success('Quiz gerado com sucesso!');
-              }
-            } else {
-              toast.error('Erro ao gerar quiz. Tente novamente.');
-            }
-            setIsGenerating(false);
+            console.log('❌ Nenhum quiz encontrado, será necessário gerar');
+            setHasQuiz(false);
           }
         } catch (error) {
-          console.error('❌ Error loading/generating quiz:', error);
-          toast.error('Erro ao carregar quiz');
-          setIsGenerating(false);
+          console.error('❌ Erro ao verificar quiz:', error);
+          setHasQuiz(false);
         }
       };
 
       loadOrGenerateQuiz();
     }
-  }, [resumoId, resumo, fetchQuizzes, generateQuiz]);
+  }, [resumoId, resumo, fetchQuizzes]);
+
+  const handleGenerateQuiz = async () => {
+    if (!resumo) {
+      toast.error('Resumo não carregado');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      console.log('🚀 Iniciando geração de quiz...');
+      const success = await generateQuiz(resumo.resumo_gerado);
+      
+      if (success) {
+        console.log('✅ Quiz gerado com sucesso, recarregando...');
+        const newQuizzes = await fetchQuizzes();
+        if (newQuizzes && newQuizzes.length > 0) {
+          setQuizData({
+            resumo_id: resumoId,
+            questoes: newQuizzes
+          });
+          setHasQuiz(true);
+          toast.success('Quiz gerado com sucesso!');
+        } else {
+          toast.error('Quiz gerado mas não foi possível carregar as questões');
+        }
+      } else {
+        toast.error('Erro ao gerar quiz. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao gerar quiz:', error);
+      toast.error('Erro ao gerar quiz');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleQuizComplete = (sessionResult: any) => {
-    console.log('🏆 Quiz completed with result:', sessionResult);
+    console.log('🏆 Quiz completado com resultado:', sessionResult);
     toast.success('Quiz concluído com sucesso!');
   };
 
@@ -104,7 +121,12 @@ const Quiz = () => {
           <Card className="w-full max-w-md">
             <CardContent className="py-8 text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p>{isGenerating ? 'Gerando quiz estilo ENEM/Ari de Sá...' : 'Carregando quiz...'}</p>
+              <p className="text-lg font-medium text-gray-700 mb-2">
+                {isGenerating ? '🧠 Gerando quiz estilo ENEM/Ari de Sá...' : '📖 Carregando quiz...'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {isGenerating ? 'Criando questões contextualizadas e interdisciplinares' : 'Aguarde um momento'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -118,42 +140,33 @@ const Quiz = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="w-full max-w-md">
             <CardContent className="py-8 text-center">
-              <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Erro ao carregar quiz</h2>
-              <p className="text-gray-600 mb-4">
-                Não foi possível gerar o quiz para este resumo.
+              <div className="text-6xl mb-4">🎯</div>
+              <h2 className="text-xl font-bold mb-2 text-gray-800">Nenhum quiz encontrado</h2>
+              <p className="text-gray-600 mb-6">
+                Este resumo ainda não possui um quiz. Vamos criar questões no estilo ENEM e Ari de Sá!
               </p>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Button 
-                  onClick={async () => {
-                    if (resumo) {
-                      setIsGenerating(true);
-                      try {
-                        const success = await generateQuiz(resumo.resumo_gerado);
-                        if (success) {
-                          const newQuizzes = await fetchQuizzes();
-                          if (newQuizzes && newQuizzes.length > 0) {
-                            setQuizData({
-                              resumo_id: resumoId,
-                              questoes: newQuizzes
-                            });
-                            setHasQuiz(true);
-                            toast.success('Quiz gerado com sucesso!');
-                          }
-                        }
-                      } catch (error) {
-                        console.error('Erro ao gerar quiz:', error);
-                        toast.error('Erro ao gerar quiz');
-                      }
-                      setIsGenerating(false);
-                    }
-                  }}
-                  className="w-full mb-2"
-                  disabled={isGenerating}
+                  onClick={handleGenerateQuiz}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+                  disabled={isGenerating || !resumo}
                 >
-                  {isGenerating ? 'Gerando...' : 'Tentar Gerar Quiz Novamente'}
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Gerando Quiz...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Gerar Quiz Estilo ENEM
+                    </>
+                  )}
                 </Button>
-                <Button onClick={() => navigate('/my-summaries')} variant="outline">
+                <Button 
+                  onClick={() => navigate('/my-summaries')} 
+                  variant="outline"
+                  className="w-full"
+                >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar aos Resumos
                 </Button>
@@ -165,7 +178,11 @@ const Quiz = () => {
     );
   }
 
-  return <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />;
+  return (
+    <PageLayout>
+      <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />
+    </PageLayout>
+  );
 };
 
 export default Quiz;

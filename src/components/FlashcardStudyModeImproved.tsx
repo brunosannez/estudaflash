@@ -55,6 +55,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
 
   const fetchFlashcards = async () => {
     try {
+      console.log('🔍 Carregando flashcards para resumo:', resumoId);
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
@@ -64,8 +65,10 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
       if (error) throw error;
       
       if (data && data.length > 0) {
+        console.log('✅ Flashcards carregados:', data.length);
         setFlashcards(data);
       } else {
+        console.log('❌ Nenhum flashcard encontrado');
         toast({
           title: "Nenhum flashcard encontrado",
           description: "Este resumo ainda não possui flashcards. Gere alguns primeiro!",
@@ -73,7 +76,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar flashcards:', error);
+      console.error('❌ Erro ao carregar flashcards:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os flashcards.",
@@ -102,18 +105,31 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
     const currentCard = flashcards[currentIndex];
     const xpToAdd = remembered ? 5 : 1;
     
+    console.log('📝 Registrando resposta:', { remembered, xpToAdd, cardId: currentCard.id });
+    
     try {
       // Registrar review no banco
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('flashcard_reviews').insert({
+        const { error: reviewError } = await supabase.from('flashcard_reviews').insert({
           flashcard_id: currentCard.id,
           user_id: user.id,
           lembrou: remembered
         });
 
+        if (reviewError) {
+          console.error('❌ Erro ao registrar review:', reviewError);
+        } else {
+          console.log('✅ Review registrado com sucesso');
+        }
+
         // Adicionar XP através do sistema de gamificação
-        await addXP(xpToAdd, 'flashcard');
+        try {
+          await addXP(xpToAdd, 'flashcard');
+          console.log('✅ XP adicionado:', xpToAdd);
+        } catch (xpError) {
+          console.error('❌ Erro ao adicionar XP:', xpError);
+        }
       }
 
       // Atualizar estatísticas locais
@@ -144,16 +160,23 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
       setTimeout(() => {
         if (currentIndex < flashcards.length - 1) {
           setCurrentIndex(currentIndex + 1);
+          console.log('➡️ Avançando para próximo card:', currentIndex + 1);
         } else {
           // Reiniciar do começo se chegou ao fim
           setCurrentIndex(0);
+          console.log('🔄 Reiniciando do primeiro card');
         }
         setShowAnswer(false);
         setIsFlipped(false);
       }, 1500);
 
     } catch (error) {
-      console.error('Erro ao registrar review:', error);
+      console.error('❌ Erro ao registrar review:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar progresso",
+        variant: "destructive",
+      });
     }
   };
 
@@ -176,13 +199,6 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
 
   const getCurrentCard = () => {
     return flashcards[currentIndex];
-  };
-
-  const getStreakColor = () => {
-    if (studyStats.streak >= 10) return "text-purple-600";
-    if (studyStats.streak >= 5) return "text-blue-600";
-    if (studyStats.streak >= 3) return "text-green-600";
-    return "text-gray-600";
   };
 
   if (loading) {
@@ -242,7 +258,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-6 w-6 mx-auto mb-2" />
             <p className="text-blue-100 text-sm font-medium">Sequência</p>
-            <p className={`text-2xl font-bold`} style={{color: 'white'}}>{studyStats.streak}</p>
+            <p className="text-2xl font-bold">{studyStats.streak}</p>
           </CardContent>
         </Card>
 
@@ -280,19 +296,21 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
         <div className={`flashcard-container ${isFlipped ? 'flipped' : ''} mx-auto max-w-2xl`}>
           {/* Frente do Card */}
           <Card className="flashcard-front absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-            <CardContent className="h-full flex flex-col justify-center p-8 text-center min-h-[400px]">
-              <div className="flex items-center justify-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                  <Brain className="h-6 w-6 text-white" />
+            <CardContent className="h-full flex flex-col justify-between p-8 min-h-[500px]">
+              <div className="flex-1 flex flex-col justify-center text-center">
+                <div className="flex items-center justify-center gap-3 mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <Brain className="h-6 w-6 text-white" />
+                  </div>
+                  <Badge className="text-lg px-4 py-2 bg-purple-100 text-purple-700">
+                    🤔 Pergunta {currentIndex + 1}
+                  </Badge>
                 </div>
-                <Badge className="text-lg px-4 py-2 bg-purple-100 text-purple-700">
-                  🤔 Pergunta {currentIndex + 1}
-                </Badge>
+                
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 leading-relaxed">
+                  {currentCard.pergunta}
+                </h2>
               </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 leading-relaxed min-h-[120px] flex items-center justify-center">
-                {currentCard.pergunta}
-              </h2>
               
               <Button 
                 onClick={handleFlip}
@@ -308,7 +326,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
 
           {/* Verso do Card */}
           <Card className="flashcard-back absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50">
-            <CardContent className="h-full flex flex-col justify-between p-6 min-h-[400px]">
+            <CardContent className="h-full flex flex-col justify-between p-6 min-h-[500px]">
               <div className="flex-1">
                 <div className="flex items-center justify-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
@@ -319,13 +337,13 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
                   </Badge>
                 </div>
                 
-                <div className="text-center mb-6">
+                <div className="text-center mb-6 flex-1 flex flex-col justify-center">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 leading-relaxed">
                     {currentCard.resposta}
                   </h2>
                   
                   {currentCard.exemplo && (
-                    <div className="bg-white/70 rounded-xl p-4 border border-green-200">
+                    <div className="bg-white/70 rounded-xl p-4 border border-green-200 mt-4">
                       <p className="text-sm font-semibold text-green-700 mb-2 flex items-center justify-center gap-2">
                         <Star className="h-4 w-4" />
                         Exemplo:
@@ -337,7 +355,7 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
               </div>
               
               {/* Botões de resposta fixos na parte inferior */}
-              <div className="grid grid-cols-2 gap-3 mt-auto">
+              <div className="grid grid-cols-2 gap-4 mt-auto">
                 <Button
                   onClick={() => handleAnswer(false)}
                   disabled={isAnimating}
@@ -347,8 +365,8 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
                 >
                   <XCircle className="h-5 w-5 mr-2" />
                   <div className="text-center">
-                    <div>😅 Não Lembrei</div>
-                    <div className="text-xs">(+1 XP)</div>
+                    <div className="text-sm">😅 Não Lembrei</div>
+                    <div className="text-xs opacity-75">(+1 XP)</div>
                   </div>
                 </Button>
                 <Button
@@ -359,8 +377,8 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack }: FlashcardStudyModeImpr
                 >
                   <CheckCircle className="h-5 w-5 mr-2" />
                   <div className="text-center">
-                    <div>🎉 Acertei!</div>
-                    <div className="text-xs">(+5 XP)</div>
+                    <div className="text-sm">🎉 Acertei!</div>
+                    <div className="text-xs opacity-90">(+5 XP)</div>
                   </div>
                 </Button>
               </div>
