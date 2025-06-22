@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, XCircle } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
+import { useSummary } from '@/hooks/useSummary';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 import QuizPlay from '@/components/QuizPlay';
@@ -14,6 +15,7 @@ const Quiz = () => {
   const navigate = useNavigate();
   const [hasQuiz, setHasQuiz] = useState(false);
   const [quizData, setQuizData] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const {
     quizzes,
@@ -22,9 +24,18 @@ const Quiz = () => {
     generateQuiz
   } = useQuiz(resumoId || '');
 
-  // Generate or fetch quiz on component mount
+  const { resumo, fetchResumo } = useSummary();
+
+  // Buscar resumo primeiro
   useEffect(() => {
     if (resumoId) {
+      fetchResumo(resumoId);
+    }
+  }, [resumoId]);
+
+  // Generate or fetch quiz on component mount
+  useEffect(() => {
+    if (resumoId && resumo) {
       const loadOrGenerateQuiz = async () => {
         try {
           console.log('🎯 Loading quiz for resumo:', resumoId);
@@ -39,8 +50,11 @@ const Quiz = () => {
             setHasQuiz(true);
           } else {
             console.log('🔄 No existing quiz found, generating new one...');
-            // Buscar o conteúdo do resumo para gerar o quiz
-            const success = await generateQuiz("Conteúdo do resumo - será usado pela edge function");
+            setIsGenerating(true);
+            
+            // Usar o conteúdo real do resumo
+            const success = await generateQuiz(resumo.resumo_gerado);
+            
             if (success) {
               // Recarregar quizzes após gerar
               const newQuizzes = await fetchQuizzes();
@@ -50,34 +64,37 @@ const Quiz = () => {
                   questoes: newQuizzes
                 });
                 setHasQuiz(true);
+                toast.success('Quiz gerado com sucesso!');
               }
+            } else {
+              toast.error('Erro ao gerar quiz. Tente novamente.');
             }
+            setIsGenerating(false);
           }
         } catch (error) {
           console.error('❌ Error loading/generating quiz:', error);
           toast.error('Erro ao carregar quiz');
+          setIsGenerating(false);
         }
       };
 
       loadOrGenerateQuiz();
     }
-  }, [resumoId]);
+  }, [resumoId, resumo]);
 
   const handleQuizComplete = (sessionResult: any) => {
     console.log('🏆 Quiz completed with result:', sessionResult);
     toast.success('Quiz concluído com sucesso!');
-    // Navegar para uma página de resultado ou histórico se desejar
-    // navigate('/quiz-history');
   };
 
-  if (loading) {
+  if (loading || isGenerating) {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="w-full max-w-md">
             <CardContent className="py-8 text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p>Gerando quiz estilo ENEM/Ari de Sá...</p>
+              <p>{isGenerating ? 'Gerando quiz estilo ENEM/Ari de Sá...' : 'Carregando quiz...'}</p>
             </CardContent>
           </Card>
         </div>
@@ -96,10 +113,27 @@ const Quiz = () => {
               <p className="text-gray-600 mb-4">
                 Não foi possível gerar o quiz para este resumo.
               </p>
-              <Button onClick={() => navigate('/my-summaries')} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar aos Resumos
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => {
+                    if (resumo) {
+                      setIsGenerating(true);
+                      generateQuiz(resumo.resumo_gerado).then(() => {
+                        setIsGenerating(false);
+                        window.location.reload();
+                      });
+                    }
+                  }}
+                  className="w-full mb-2"
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Gerando...' : 'Tentar Gerar Quiz Novamente'}
+                </Button>
+                <Button onClick={() => navigate('/my-summaries')} variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar aos Resumos
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -107,7 +141,6 @@ const Quiz = () => {
     );
   }
 
-  // Usar o componente QuizPlay que já tem gamificação implementada
   return <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />;
 };
 
