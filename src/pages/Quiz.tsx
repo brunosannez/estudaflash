@@ -17,6 +17,7 @@ const Quiz = () => {
   const [quizData, setQuizData] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [resumo, setResumo] = useState<any>(null);
+  const [checkingQuiz, setCheckingQuiz] = useState(true);
 
   const {
     quizzes,
@@ -45,13 +46,16 @@ const Quiz = () => {
     }
   }, [resumoId, getResumoById]);
 
-  // Generate or fetch quiz on component mount
+  // Verificar quiz existente
   useEffect(() => {
     if (resumoId && resumo) {
-      const loadOrGenerateQuiz = async () => {
+      const checkExistingQuiz = async () => {
         try {
+          setCheckingQuiz(true);
           console.log('🎯 Verificando quiz existente para resumo:', resumoId);
           const existingQuizzes = await fetchQuizzes();
+          
+          console.log('📊 Quizzes encontrados:', existingQuizzes);
           
           if (existingQuizzes && existingQuizzes.length > 0) {
             console.log('✅ Quiz existente encontrado com', existingQuizzes.length, 'questões');
@@ -61,16 +65,20 @@ const Quiz = () => {
             });
             setHasQuiz(true);
           } else {
-            console.log('❌ Nenhum quiz encontrado, será necessário gerar');
+            console.log('❌ Nenhum quiz encontrado');
             setHasQuiz(false);
+            setQuizData(null);
           }
         } catch (error) {
           console.error('❌ Erro ao verificar quiz:', error);
           setHasQuiz(false);
+          setQuizData(null);
+        } finally {
+          setCheckingQuiz(false);
         }
       };
 
-      loadOrGenerateQuiz();
+      checkExistingQuiz();
     }
   }, [resumoId, resumo, fetchQuizzes]);
 
@@ -87,7 +95,13 @@ const Quiz = () => {
       
       if (success) {
         console.log('✅ Quiz gerado com sucesso, recarregando...');
+        
+        // Aguardar um pouco para garantir que o quiz foi salvo
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const newQuizzes = await fetchQuizzes();
+        console.log('🔄 Quizzes recarregados:', newQuizzes);
+        
         if (newQuizzes && newQuizzes.length > 0) {
           setQuizData({
             resumo_id: resumoId,
@@ -96,6 +110,7 @@ const Quiz = () => {
           setHasQuiz(true);
           toast.success('Quiz gerado com sucesso!');
         } else {
+          console.error('❌ Quiz gerado mas não foi possível carregar as questões');
           toast.error('Quiz gerado mas não foi possível carregar as questões');
         }
       } else {
@@ -114,7 +129,7 @@ const Quiz = () => {
     toast.success('Quiz concluído com sucesso!');
   };
 
-  if (loading || isGenerating) {
+  if (loading || isGenerating || checkingQuiz) {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -122,10 +137,10 @@ const Quiz = () => {
             <CardContent className="py-8 text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-lg font-medium text-gray-700 mb-2">
-                {isGenerating ? '🧠 Gerando quiz estilo ENEM/Ari de Sá...' : '📖 Carregando quiz...'}
+                {isGenerating ? '🧠 Gerando quiz...' : checkingQuiz ? '🔍 Verificando quiz...' : '📖 Carregando quiz...'}
               </p>
               <p className="text-sm text-gray-500">
-                {isGenerating ? 'Criando questões contextualizadas e interdisciplinares' : 'Aguarde um momento'}
+                {isGenerating ? 'Criando questões contextualizadas' : 'Aguarde um momento'}
               </p>
             </CardContent>
           </Card>
@@ -143,7 +158,7 @@ const Quiz = () => {
               <div className="text-6xl mb-4">🎯</div>
               <h2 className="text-xl font-bold mb-2 text-gray-800">Nenhum quiz encontrado</h2>
               <p className="text-gray-600 mb-6">
-                Este resumo ainda não possui um quiz. Vamos criar questões no estilo ENEM e Ari de Sá!
+                Este resumo ainda não possui um quiz. Vamos criar questões de múltipla escolha!
               </p>
               <div className="space-y-3">
                 <Button 
@@ -158,7 +173,7 @@ const Quiz = () => {
                     </>
                   ) : (
                     <>
-                      ✨ Gerar Quiz Estilo ENEM
+                      ✨ Gerar Quiz
                     </>
                   )}
                 </Button>

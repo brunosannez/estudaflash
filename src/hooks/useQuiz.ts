@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -30,29 +31,48 @@ export function useQuiz(resumoId: string) {
   const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const fetchQuizzes = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("quizzes")
-      .select("*")
-      .eq("resumo_id", resumoId)
-      .order("data_criacao", { ascending: true });
+    if (!resumoId) return [];
+    
+    try {
+      setLoading(true);
+      console.log('🔍 Buscando quizzes para resumo:', resumoId);
+      
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select("*")
+        .eq("resumo_id", resumoId)
+        .order("data_criacao", { ascending: true });
 
-    if (!error && data) {
-      setQuizzes(
-        data.map((q) => ({
+      if (error) {
+        console.error('❌ Erro ao buscar quizzes:', error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        console.log('✅ Quizzes encontrados:', data.length);
+        const formattedQuizzes = data.map((q) => ({
           ...q,
           alternativas: Array.isArray(q.alternativas)
             ? q.alternativas.filter((alt) => typeof alt === "string")
             : typeof q.alternativas === "string"
             ? [q.alternativas]
-            : Array.isArray(q.alternativas)
-            ? q.alternativas.filter((alt) => typeof alt === "string")
-            : [], // fallback if not array/string
-        })) as Quiz[]
-      );
-    } else setQuizzes([]);
-    setLoading(false);
-    return data;
+            : [],
+        })) as Quiz[];
+        
+        setQuizzes(formattedQuizzes);
+        return formattedQuizzes;
+      } else {
+        console.log('ℹ️ Nenhum quiz encontrado');
+        setQuizzes([]);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar quizzes:', error);
+      setQuizzes([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateQuiz = async (texto_resumo: string) => {
@@ -73,6 +93,7 @@ export function useQuiz(resumoId: string) {
         throw new Error('Usuário não autenticado');
       }
 
+      console.log('🚀 Chamando função de geração de quiz...');
       const { data, error } = await supabase.functions.invoke("generate-quiz", {
         body: { 
           resumo_id: resumoId, 
@@ -81,8 +102,13 @@ export function useQuiz(resumoId: string) {
         },
       });
       
-      if (error || !data.success) {
-        let errorMessage = data?.error || error?.message || 'Erro desconhecido';
+      if (error) {
+        console.error('❌ Erro na função de geração:', error);
+        throw error;
+      }
+      
+      if (!data || !data.success) {
+        let errorMessage = data?.error || 'Erro desconhecido';
         
         // Se há uma mensagem de fallback, usa ela
         if (data?.fallbackMessage) {
@@ -102,10 +128,22 @@ export function useQuiz(resumoId: string) {
       console.log('✅ Usage counter incremented for quizzes');
       
       toast({ title: "Quiz gerado com sucesso!" });
-      setQuizzes(data.quizzes);
+      
+      // Atualizar estado local com os novos quizzes
+      if (data.quizzes && data.quizzes.length > 0) {
+        const formattedQuizzes = data.quizzes.map((q: any) => ({
+          ...q,
+          alternativas: Array.isArray(q.alternativas)
+            ? q.alternativas.filter((alt: any) => typeof alt === "string")
+            : [],
+        })) as Quiz[];
+        
+        setQuizzes(formattedQuizzes);
+      }
+      
       return true;
     } catch (error) {
-      console.error('Erro ao gerar quiz:', error);
+      console.error('❌ Erro ao gerar quiz:', error);
       toast({
         title: "Erro ao gerar quiz",
         description: error.message || "Erro inesperado",

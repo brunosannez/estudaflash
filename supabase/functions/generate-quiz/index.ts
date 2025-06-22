@@ -23,9 +23,9 @@ serve(async (req) => {
   try {
     const { resumo_id, texto_resumo, userId } = await req.json();
 
-    console.log('🎯 Generating ENEM/Ari de Sá style quiz for resumo:', resumo_id);
+    console.log('🎯 Generating quiz for resumo:', resumo_id);
 
-    // Usar OpenAI para gerar quiz no estilo ENEM/Ari de Sá
+    // Usar OpenAI para gerar quiz
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiKey) {
       throw new Error('OpenAI API key not configured');
@@ -82,11 +82,11 @@ serve(async (req) => {
 
 async function generateQuizWithOpenAI(content: string, apiKey: string): Promise<Quiz[]> {
   const prompt = `
-Você é um especialista em criar questões de vestibular no estilo ENEM e colégio Ari de Sá. 
+Você é um especialista em criar questões de vestibular estilo múltipla escolha. 
 
 Baseado no seguinte conteúdo, crie exatamente 5 questões de múltipla escolha que sigam estas características:
 
-ESTILO ENEM/ARI DE SÁ:
+ESTILO DE QUESTÕES:
 - Questões contextualizadas com situações reais
 - Texto base seguido de pergunta objetiva
 - 5 alternativas (A, B, C, D, E)
@@ -129,7 +129,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       messages: [
         {
           role: 'system',
-          content: 'Você é um especialista em educação que cria questões de vestibular no estilo ENEM e Ari de Sá. Sempre responda com JSON válido.'
+          content: 'Você é um especialista em educação que cria questões de vestibular. Sempre responda com JSON válido.'
         },
         {
           role: 'user',
