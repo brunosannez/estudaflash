@@ -17,36 +17,48 @@ const MindMap = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchMindMap = async () => {
-      if (!id) {
-        setError('ID do mapa mental não fornecido');
-        setLoading(false);
-        return;
-      }
+    if (!id) {
+      setError('ID do mapa mental não fornecido');
+      setLoading(false);
+      return;
+    }
 
+    let isMounted = true;
+
+    const fetchMindMap = async () => {
       try {
         setLoading(true);
         console.log('🧠 Carregando mapa mental com ID:', id);
         const data = await getMindMapById(id);
         
-        if (data) {
-          console.log('✅ Mapa mental carregado:', data);
-          setMindMap(data);
-          setError(null);
-        } else {
-          console.warn('⚠️ Mapa mental não encontrado');
-          setError('Mapa mental não encontrado');
+        if (isMounted) {
+          if (data) {
+            console.log('✅ Mapa mental carregado:', data);
+            setMindMap(data);
+            setError(null);
+          } else {
+            console.warn('⚠️ Mapa mental não encontrado');
+            setError('Mapa mental não encontrado');
+          }
         }
       } catch (err) {
-        console.error('❌ Erro ao carregar mapa mental:', err);
-        setError('Erro ao carregar mapa mental');
+        if (isMounted) {
+          console.error('❌ Erro ao carregar mapa mental:', err);
+          setError('Erro ao carregar mapa mental');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMindMap();
-  }, [id, getMindMapById]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]); // APENAS 'id' como dependência
 
   const handleBack = () => {
     if (mindMap?.resumo_id) {
