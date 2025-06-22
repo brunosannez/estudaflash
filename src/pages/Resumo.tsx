@@ -25,17 +25,17 @@ const Resumo = () => {
   const [existingMindMap, setExistingMindMap] = useState<any>(null);
   const [mindMapLoading, setMindMapLoading] = useState(false);
 
-  // Carregar resumo - useEffect direto sem useCallback
+  // Carregar resumo - usando apenas 'id' como dependência
   useEffect(() => {
+    if (!id) {
+      setError('ID do resumo não fornecido');
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
     const fetchResumo = async () => {
-      if (!id) {
-        setError('ID do resumo não fornecido');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         console.log('📖 Carregando resumo com ID:', id);
@@ -68,15 +68,15 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, getResumoById]);
+  }, [id]); // APENAS 'id' como dependência
 
-  // Carregar mapa mental existente - separado do carregamento do resumo
+  // Carregar mapa mental existente - usando apenas 'id' como dependência
   useEffect(() => {
+    if (!id) return;
+
     let isMounted = true;
 
     const fetchMindMap = async () => {
-      if (!id) return;
-
       try {
         setMindMapLoading(true);
         console.log('🧠 Verificando mapa mental existente...');
@@ -102,7 +102,7 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, getMindMapByResumoId]);
+  }, [id]); // APENAS 'id' como dependência
 
   const handleGenerateFlashcards = async () => {
     if (!resumo?.id) return;
