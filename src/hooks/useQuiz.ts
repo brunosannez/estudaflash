@@ -31,7 +31,10 @@ export function useQuiz(resumoId: string) {
   const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const fetchQuizzes = async () => {
-    if (!resumoId) return [];
+    if (!resumoId) {
+      console.log('⚠️ Nenhum resumoId fornecido para fetchQuizzes');
+      return [];
+    }
     
     try {
       setLoading(true);
@@ -45,7 +48,7 @@ export function useQuiz(resumoId: string) {
 
       if (error) {
         console.error('❌ Erro ao buscar quizzes:', error);
-        throw error;
+        return [];
       }
 
       if (data && data.length > 0) {
@@ -76,6 +79,11 @@ export function useQuiz(resumoId: string) {
   };
 
   const generateQuiz = async (texto_resumo: string) => {
+    if (!resumoId) {
+      console.error('❌ Nenhum resumoId fornecido para generateQuiz');
+      return false;
+    }
+
     setLoading(true);
     
     // Verificar limite de uso ANTES de gerar quiz
