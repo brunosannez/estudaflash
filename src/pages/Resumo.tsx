@@ -5,11 +5,9 @@ import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useMindMap } from '@/hooks/useMindMap';
-import ResumoContent from '@/components/ResumoContent';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Brain, Target, Lightbulb } from 'lucide-react';
-import PageLayout from '@/components/navigation/PageLayout';
+import ResumoLoadingState from '@/components/resumo/ResumoLoadingState';
+import ResumoErrorState from '@/components/resumo/ResumoErrorState';
+import ResumoPageContent from '@/components/resumo/ResumoPageContent';
 
 const Resumo = () => {
   const { id } = useParams<{ id: string }>();
@@ -147,141 +145,30 @@ const Resumo = () => {
     }
   };
 
-  // Loading state - mostrar enquanto carrega resumo
+  // Loading state
   if (loading) {
-    return (
-      <PageLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-96">
-            <CardContent className="py-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-gray-600">Carregando resumo...</p>
-            </CardContent>
-          </Card>
-        </div>
-      </PageLayout>
-    );
+    return <ResumoLoadingState />;
   }
 
   // Error state
   if (error || !resumo) {
-    return (
-      <PageLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-96">
-            <CardContent className="py-8 text-center">
-              <p className="text-red-600 mb-4">{error || 'Resumo não encontrado'}</p>
-              <Button onClick={() => navigate('/my-summaries')} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar aos Resumos
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </PageLayout>
-    );
+    return <ResumoErrorState error={error} />;
   }
 
+  // Main content
   return (
-    <PageLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button 
-            onClick={() => navigate('/my-summaries')} 
-            variant="ghost" 
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {resumo.custom_name || 'Resumo'}
-            </h1>
-            <p className="text-gray-600">
-              Criado em {new Date(resumo.data_criacao).toLocaleDateString('pt-BR')}
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          <Button 
-            onClick={handleGenerateFlashcards}
-            disabled={isGeneratingFlashcards}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-          >
-            {isGeneratingFlashcards ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Gerando...
-              </>
-            ) : (
-              <>
-                <Brain className="h-4 w-4 mr-2" />
-                Gerar Flashcards
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={handleGenerateQuiz} 
-            variant="outline"
-            disabled={isGeneratingQuiz}
-          >
-            {isGeneratingQuiz ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Gerando...
-              </>
-            ) : (
-              <>
-                <Target className="h-4 w-4 mr-2" />
-                Fazer Quiz
-              </>
-            )}
-          </Button>
-
-          {/* Mind Map Button */}
-          {existingMindMap ? (
-            <Button 
-              onClick={handleViewMindMap}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              disabled={mindMapLoading}
-            >
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Ver Mapa Mental
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleGenerateMindMap}
-              disabled={isGeneratingMindMap || mindMapLoading}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              {isGeneratingMindMap ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Gerando...
-                </>
-              ) : mindMapLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                <>
-                  <Lightbulb className="h-4 w-4 mr-2" />
-                  Criar Mapa Mental
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-
-        {/* Content */}
-        <ResumoContent content={resumo.resumo_gerado} />
-      </div>
-    </PageLayout>
+    <ResumoPageContent
+      resumo={resumo}
+      existingMindMap={existingMindMap}
+      mindMapLoading={mindMapLoading}
+      isGeneratingFlashcards={isGeneratingFlashcards}
+      isGeneratingQuiz={isGeneratingQuiz}
+      isGeneratingMindMap={isGeneratingMindMap}
+      onGenerateFlashcards={handleGenerateFlashcards}
+      onGenerateQuiz={handleGenerateQuiz}
+      onGenerateMindMap={handleGenerateMindMap}
+      onViewMindMap={handleViewMindMap}
+    />
   );
 };
 
