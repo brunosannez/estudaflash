@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
@@ -23,42 +23,86 @@ const Resumo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [existingMindMap, setExistingMindMap] = useState<any>(null);
+  const [mindMapLoading, setMindMapLoading] = useState(false);
 
-  const fetchResumo = useCallback(async () => {
-    if (!id) {
-      setError('ID do resumo não fornecido');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      console.log('📖 Carregando resumo com ID:', id);
-      const data = await getResumoById(id);
-      
-      if (data) {
-        console.log('✅ Resumo carregado:', data);
-        setResumo(data);
-        setError(null);
-        
-        // Check if mind map already exists
-        const mindMap = await getMindMapByResumoId(id);
-        setExistingMindMap(mindMap);
-      } else {
-        console.warn('⚠️ Resumo não encontrado');
-        setError('Resumo não encontrado');
-      }
-    } catch (err) {
-      console.error('❌ Erro ao carregar resumo:', err);
-      setError('Erro ao carregar resumo');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, getResumoById, getMindMapByResumoId]);
-
+  // Carregar resumo - useEffect direto sem useCallback
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchResumo = async () => {
+      if (!id) {
+        setError('ID do resumo não fornecido');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        console.log('📖 Carregando resumo com ID:', id);
+        const data = await getResumoById(id);
+        
+        if (isMounted) {
+          if (data) {
+            console.log('✅ Resumo carregado:', data);
+            setResumo(data);
+            setError(null);
+          } else {
+            console.warn('⚠️ Resumo não encontrado');
+            setError('Resumo não encontrado');
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('❌ Erro ao carregar resumo:', err);
+          setError('Erro ao carregar resumo');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchResumo();
-  }, [fetchResumo]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getResumoById]);
+
+  // Carregar mapa mental existente - separado do carregamento do resumo
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchMindMap = async () => {
+      if (!id) return;
+
+      try {
+        setMindMapLoading(true);
+        console.log('🧠 Verificando mapa mental existente...');
+        const mindMap = await getMindMapByResumoId(id);
+        
+        if (isMounted) {
+          setExistingMindMap(mindMap);
+          console.log(mindMap ? '✅ Mapa mental encontrado' : 'ℹ️ Nenhum mapa mental encontrado');
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('❌ Erro ao buscar mapa mental:', err);
+        }
+      } finally {
+        if (isMounted) {
+          setMindMapLoading(false);
+        }
+      }
+    };
+
+    fetchMindMap();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getMindMapByResumoId]);
 
   const handleGenerateFlashcards = async () => {
     if (!resumo?.id) return;
@@ -103,6 +147,7 @@ const Resumo = () => {
     }
   };
 
+  // Loading state - mostrar enquanto carrega resumo
   if (loading) {
     return (
       <PageLayout>
@@ -118,6 +163,7 @@ const Resumo = () => {
     );
   }
 
+  // Error state
   if (error || !resumo) {
     return (
       <PageLayout>
@@ -201,6 +247,7 @@ const Resumo = () => {
             <Button 
               onClick={handleViewMindMap}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              disabled={mindMapLoading}
             >
               <Lightbulb className="h-4 w-4 mr-2" />
               Ver Mapa Mental
@@ -208,13 +255,18 @@ const Resumo = () => {
           ) : (
             <Button 
               onClick={handleGenerateMindMap}
-              disabled={isGeneratingMindMap}
+              disabled={isGeneratingMindMap || mindMapLoading}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
               {isGeneratingMindMap ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Gerando...
+                </>
+              ) : mindMapLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verificando...
                 </>
               ) : (
                 <>
