@@ -1,16 +1,4 @@
 
-interface Alternative {
-  emoji: string;
-  letter: string;
-  bg: string;
-  border: string;
-  text: string;
-  hover: string;
-  selected: string;
-  correct: string;
-  wrong: string;
-}
-
 interface QuizAlternativesProps {
   alternatives: string[];
   selectedAnswer: number | null;
@@ -26,77 +14,32 @@ const QuizAlternatives = ({
   showResult, 
   onAnswerSelect 
 }: QuizAlternativesProps) => {
-  const alternativeStyles: Alternative[] = [
-    { 
-      emoji: "🔵", 
-      letter: "A", 
-      bg: "bg-blue-50", 
-      border: "border-blue-300", 
-      text: "text-blue-700", 
-      hover: "hover:bg-blue-100",
-      selected: "bg-blue-200 border-blue-500",
-      correct: "bg-blue-100 border-blue-500 shadow-blue-200",
-      wrong: "bg-red-100 border-red-400"
-    },
-    { 
-      emoji: "🟢", 
-      letter: "B", 
-      bg: "bg-emerald-50", 
-      border: "border-emerald-300", 
-      text: "text-emerald-700", 
-      hover: "hover:bg-emerald-100",
-      selected: "bg-emerald-200 border-emerald-500",
-      correct: "bg-emerald-100 border-emerald-500 shadow-emerald-200",
-      wrong: "bg-red-100 border-red-400"
-    },
-    { 
-      emoji: "🟠", 
-      letter: "C", 
-      bg: "bg-orange-50", 
-      border: "border-orange-300", 
-      text: "text-orange-700", 
-      hover: "hover:bg-orange-100",
-      selected: "bg-orange-200 border-orange-500",
-      correct: "bg-orange-100 border-orange-500 shadow-orange-200",
-      wrong: "bg-red-100 border-red-400"
-    },
-    { 
-      emoji: "🟣", 
-      letter: "D", 
-      bg: "bg-purple-50", 
-      border: "border-purple-300", 
-      text: "text-purple-700", 
-      hover: "hover:bg-purple-100",
-      selected: "bg-purple-200 border-purple-500",
-      correct: "bg-purple-100 border-purple-500 shadow-purple-200",
-      wrong: "bg-red-100 border-red-400"
-    }
+  const alternativeLabels = ['A', 'B', 'C', 'D', 'E'];
+  const alternativeColors = [
+    'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100',
+    'bg-green-50 border-green-300 text-green-700 hover:bg-green-100',
+    'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100',
+    'bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100',
+    'bg-pink-50 border-pink-300 text-pink-700 hover:bg-pink-100'
   ];
 
   return (
-    <div className="space-y-2">
-      {alternatives.map((alt, index) => {
-        const altStyle = alternativeStyles[index];
-        const isSelected = selectedAnswer === index;
-        const isCorrect = showResult && index === correctAnswer;
-        const isWrong = showResult && isSelected && index !== correctAnswer;
-        
-        let buttonClass = `w-full p-3 lg:p-4 rounded-xl border-2 text-left transition-all duration-300 transform hover:scale-[1.01] font-nunito font-semibold text-xs lg:text-sm`;
+    <div className="space-y-3 mb-6">
+      {alternatives.map((alternativa: string, index: number) => {
+        let buttonClass = `w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${alternativeColors[index]}`;
         
         if (showResult) {
-          if (isCorrect) {
-            buttonClass += ` ${altStyle.correct} ${altStyle.text} animate-pulse shadow-lg`;
-          } else if (isWrong) {
-            buttonClass += ` ${altStyle.wrong} text-red-800 shadow-lg`;
+          if (index === correctAnswer) {
+            buttonClass = 'w-full p-4 text-left rounded-xl border-2 bg-green-100 border-green-500 text-green-800';
+          } else if (index === selectedAnswer && index !== correctAnswer) {
+            buttonClass = 'w-full p-4 text-left rounded-xl border-2 bg-red-100 border-red-500 text-red-800';
           } else {
-            buttonClass += ` bg-gray-100 border-gray-300 text-gray-600`;
+            buttonClass = 'w-full p-4 text-left rounded-xl border-2 bg-gray-100 border-gray-300 text-gray-600';
           }
-        } else if (isSelected) {
-          buttonClass += ` ${altStyle.selected} ${altStyle.text} scale-[1.01] shadow-lg`;
-        } else {
-          buttonClass += ` ${altStyle.bg} ${altStyle.border} ${altStyle.text} ${altStyle.hover} hover:shadow-lg hover:animate-pulse`;
+        } else if (selectedAnswer === index) {
+          buttonClass += ' ring-2 ring-purple-500 scale-[1.02]';
         }
-        
+
         return (
           <button
             key={index}
@@ -104,25 +47,11 @@ const QuizAlternatives = ({
             disabled={showResult}
             className={buttonClass}
           >
-            <div className="flex items-center space-x-2 lg:space-x-3">
-              <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-fredoka text-sm lg:text-lg font-bold
-                ${isSelected || (showResult && isCorrect) ? 'bg-white shadow-md' : 
-                  showResult && isCorrect ? 'bg-green-200 animate-bounce' :
-                  showResult && isWrong ? 'bg-red-200' :
-                  'bg-white/70'
-                }`}>
-                <span className="text-lg lg:text-xl">{altStyle.emoji}</span>
-                <span className={`ml-1 text-xs lg:text-sm ${isSelected ? altStyle.text : 'text-gray-700'}`}>
-                  {altStyle.letter}
-                </span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-sm">
+                {alternativeLabels[index]}
               </div>
-              <span className="flex-1 leading-relaxed">{alt}</span>
-              {showResult && isCorrect && (
-                <span className="text-lg lg:text-xl animate-bounce">✅</span>
-              )}
-              {showResult && isWrong && (
-                <span className="text-lg lg:text-xl">❌</span>
-              )}
+              <span className="flex-1">{alternativa}</span>
             </div>
           </button>
         );

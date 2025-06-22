@@ -1,73 +1,40 @@
 
-import { CheckCircle, XCircle, Lightbulb } from 'lucide-react';
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface QuizFeedbackProps {
   isCorrect: boolean;
-  streakCount: number;
-  explanation: string;
+  explanation?: string;
   correctAnswer: number;
   alternatives: string[];
 }
 
-const QuizFeedback = ({ 
-  isCorrect, 
-  streakCount, 
-  explanation, 
-  correctAnswer, 
-  alternatives 
-}: QuizFeedbackProps) => {
-  const alternativeStyles = [
-    { letter: "A" },
-    { letter: "B" },
-    { letter: "C" },
-    { letter: "D" }
-  ];
+const QuizFeedback = ({ isCorrect, explanation, correctAnswer, alternatives }: QuizFeedbackProps) => {
+  const alternativeLabels = ['A', 'B', 'C', 'D', 'E'];
 
   return (
-    <div className="mt-4 space-y-3">
-      {isCorrect ? (
-        <div className="flex items-center text-green-600 font-semibold font-nunito bg-green-50 p-3 rounded-xl border-2 border-green-200">
-          <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-          <div className="flex-1">
-            <span className="block text-sm">🎉 Resposta Correta! +10 XP</span>
-            {streakCount > 0 && (
-              <span className="text-orange-600 text-xs">🔥 Sequência: {streakCount + 1}</span>
-            )}
-          </div>
+    <div className={`p-4 rounded-xl mb-6 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border-2`}>
+      <div className="flex items-start space-x-3">
+        {isCorrect ? (
+          <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+        ) : (
+          <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+        )}
+        <div>
+          <h4 className={`font-semibold mb-2 ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+            {isCorrect ? '🎉 Correto!' : '💡 Resposta Incorreta'}
+          </h4>
+          {!isCorrect && (
+            <p className="text-red-700 mb-2">
+              <strong>Resposta correta:</strong> {alternativeLabels[correctAnswer]} - {alternatives[correctAnswer]}
+            </p>
+          )}
+          {explanation && (
+            <p className={`text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <strong>Explicação:</strong> {explanation}
+            </p>
+          )}
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex items-start text-red-600 font-semibold font-nunito bg-red-50 p-3 rounded-xl border-2 border-red-200">
-            <XCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
-            <span className="text-sm">💪 Boa tentativa! +2 XP pelo esforço</span>
-          </div>
-          
-          {/* Explicação da resposta correta - sempre mostrar quando errar */}
-          <div className="bg-blue-50 p-3 rounded-xl border-2 border-blue-200">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-blue-800 font-fredoka mb-1 text-sm">
-                  💡 Explicação da Resposta Correta:
-                </h4>
-                <p className="text-blue-700 font-nunito text-xs lg:text-sm leading-relaxed">
-                  <strong>Resposta correta: {alternativeStyles[correctAnswer].letter}</strong> - {alternatives[correctAnswer]}
-                </p>
-                {explanation && (
-                  <p className="text-blue-700 font-nunito text-xs lg:text-sm leading-relaxed mt-2">
-                    {explanation}
-                  </p>
-                )}
-                {!explanation && (
-                  <p className="text-blue-600 font-nunito text-xs italic mt-1">
-                    Explicação não disponível para esta pergunta.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

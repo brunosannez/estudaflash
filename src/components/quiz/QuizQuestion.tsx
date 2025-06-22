@@ -7,11 +7,11 @@ interface QuizQuestionProps {
 
 const QuizQuestion = ({ question, currentQuestionIndex, totalQuestions }: QuizQuestionProps) => {
   return (
-    <div className="mb-4">
-      <h2 className="text-lg lg:text-xl font-semibold text-gray-700 mb-2 font-fredoka">
-        Pergunta {currentQuestionIndex + 1} de {totalQuestions}
+    <div className="mb-6">
+      <h2 className="text-lg font-semibold text-gray-700 mb-4">
+        Questão {currentQuestionIndex + 1}
       </h2>
-      <p className="text-gray-600 font-nunito text-sm lg:text-base leading-relaxed">
+      <p className="text-gray-800 text-base leading-relaxed">
         {question}
       </p>
     </div>
