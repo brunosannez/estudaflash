@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Sparkles, Trophy, ArrowLeft } from "lucide-react";
 import { useEnhancedQuizHistory } from "@/hooks/useEnhancedQuizHistory";
 import { useMindMap } from "@/hooks/useMindMap";
+import { supabase } from "@/integrations/supabase/client";
 import { designColors } from '@/utils/designSystem';
 import PageLayout from '@/components/navigation/PageLayout';
 import { Button } from '@/components/ui/button';
