@@ -6,30 +6,22 @@ import PageLayout from '@/components/navigation/PageLayout';
 import QuizPlay from '@/components/QuizPlay';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
-import { useQuiz } from '@/hooks/useQuiz';
 import { useSummary } from '@/hooks/useSummary';
+import { supabase } from '@/integrations/supabase/client';
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const [resumo, setResumo] = useState<any>(null);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [hasCheckedData, setHasCheckedData] = useState(false);
   
   const { getResumoById } = useSummary();
-  const { quizzes, loading: quizLoading, generating, fetchQuizzes, generateQuiz } = useQuiz(id || '');
 
   console.log('📍 Quiz page rendered - ID:', id);
-  console.log('🎯 Current state:', { 
-    hasQuizzes: quizzes.length > 0, 
-    questionsCount: quizzes.length,
-    isLoading, 
-    generating,
-    quizLoading,
-    hasCheckedData,
-    resumoLoaded: !!resumo
-  });
 
   // Load summary and quiz data
   useEffect(() => {
@@ -60,31 +52,36 @@ const Quiz = () => {
           return;
         }
         
-        console.log('📄 Summary loaded successfully:', {
-          id: resumoData.id,
-          hasContent: !!resumoData.resumo_gerado,
-          contentLength: resumoData.resumo_gerado?.length || 0
-        });
+        console.log('📄 Summary loaded successfully');
         setResumo(resumoData);
 
         // Load existing quizzes
-        console.log('🎯 Loading existing quizzes...');
-        const existingQuizzes = await fetchQuizzes();
-        console.log('📊 Existing quizzes loaded:', existingQuizzes.length);
+        const { data: existingQuizzes, error: quizError } = await supabase
+          .from('quizzes')
+          .select('*')
+          .eq('resumo_id', id)
+          .order('data_criacao', { ascending: true });
+
+        if (quizError) {
+          console.error('❌ Error loading quizzes:', quizError);
+          throw quizError;
+        }
+
+        console.log('📊 Existing quizzes loaded:', existingQuizzes?.length || 0);
+        setQuizzes(existingQuizzes || []);
         
         setHasCheckedData(true);
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
         toast.error('Erro ao carregar dados do quiz');
-        navigate('/my-summaries');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [id, getResumoById, fetchQuizzes, navigate, hasCheckedData]);
+  }, [id, getResumoById, navigate, hasCheckedData]);
 
   const handleGenerateQuiz = async () => {
     if (!resumo?.resumo_gerado) {
@@ -93,15 +90,38 @@ const Quiz = () => {
       return;
     }
 
-    console.log('🚀 Starting quiz generation...');
-    const success = await generateQuiz(resumo.resumo_gerado);
-    
-    if (success) {
-      console.log('✅ Quiz generated successfully, refreshing data...');
-      // Force refresh after successful generation
-      await fetchQuizzes();
-    } else {
-      console.log('❌ Quiz generation failed');
+    setGenerating(true);
+    console.log('🚀 Starting quiz generation with edge function...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz', {
+        body: { 
+          resumoContent: resumo.resumo_gerado,
+          resumoId: id 
+        }
+      });
+
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw error;
+      }
+
+      if (!data.success) {
+        console.error('❌ Quiz generation failed:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('✅ Quiz generated successfully:', data);
+      toast.success(`Quiz gerado com ${data.questoes.length} questões!`);
+      
+      // Reload quizzes
+      setQuizzes(data.questoes);
+      
+    } catch (error) {
+      console.error('❌ Quiz generation error:', error);
+      toast.error('Erro ao gerar quiz. Tente novamente.');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -137,7 +157,7 @@ const Quiz = () => {
     return (
       <QuizLoader 
         message="🧠 Gerando quiz..."
-        description="Criando questões personalizadas baseadas no seu resumo"
+        description="Criando questões personalizadas no estilo ENEM e Colégio Ari de Sá"
       />
     );
   }

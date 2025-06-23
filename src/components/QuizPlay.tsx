@@ -27,14 +27,13 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const [finalResult, setFinalResult] = useState<any>(null);
   const [isExiting, setIsExiting] = useState(false);
   
-  const { addXP, getStats } = useGameification();
+  const { getStats } = useGameification();
 
   console.log('🎯 QuizPlay initialized with:', {
     resumoId: quiz.resumo_id,
     questionsCount: quiz.questoes.length,
     sessionId,
-    resumeMode,
-    quizStructure: quiz.questoes[0] // Log first question structure
+    resumeMode
   });
 
   const handleGameFinish = (finalScore: number) => {
@@ -56,18 +55,14 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   };
 
   const handleExitQuiz = async () => {
-    console.log('🚪 Exiting quiz - saving progress automatically...');
+    console.log('🚪 Exiting quiz - progress saved automatically by trigger...');
     setIsExiting(true);
     
     try {
-      // Progress is automatically saved by the EnhancedQuizGameManager
-      // Show success message
       toast.success('Progresso salvo automaticamente! Você pode continuar mais tarde.', {
         duration: 3000
       });
       
-      // Navigate to quiz history page where user can resume
-      console.log('🔄 Navigating to quiz history page...');
       navigate('/quiz-history');
       
     } catch (error) {
@@ -206,7 +201,7 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
 
             {/* Question */}
             <div className={`${designColors.cards.primary} mb-6 p-8`}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6 leading-relaxed">
                 {currentQuestion?.pergunta}
               </h2>
 
@@ -216,12 +211,8 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
                   let buttonClass = 'w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ';
                   
                   if (showResult) {
-                    // Show result after confirming
-                    const correctIndex = currentQuestion.correta !== undefined ? 
-                      currentQuestion.correta : 
-                      (currentQuestion.resposta_correta !== undefined ? 
-                        currentQuestion.resposta_correta : 
-                        currentQuestion.correct);
+                    // Show result after confirming - use the correta field directly
+                    const correctIndex = currentQuestion.correta;
                     
                     if (index === correctIndex) {
                       // Correct answer always in green
@@ -249,11 +240,11 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
                       disabled={showResult}
                       className={buttonClass}
                     >
-                      <div className="flex items-center">
-                        <span className="font-semibold mr-3 text-gray-500">
+                      <div className="flex items-start">
+                        <span className="font-semibold mr-3 text-gray-500 mt-1">
                           {String.fromCharCode(65 + index)}.
                         </span>
-                        {alternativa}
+                        <span className="text-left">{alternativa}</span>
                       </div>
                     </button>
                   );

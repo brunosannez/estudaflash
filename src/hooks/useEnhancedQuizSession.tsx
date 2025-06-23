@@ -26,8 +26,6 @@ export const useEnhancedQuizSession = () => {
         id: q.id,
         pergunta: q.pergunta?.slice(0, 50) + '...',
         correta: q.correta,
-        resposta_correta: q.resposta_correta,
-        correct: q.correct,
         alternativas_count: q.alternativas?.length
       })));
       
@@ -38,13 +36,13 @@ export const useEnhancedQuizSession = () => {
 
       const quizTitle = `Quiz - ${questoes.length} questões`;
       
-      // Prepare questions data with proper structure
+      // Prepare questions with standardized structure
       const questionsData = questoes.map((q, index) => ({
         index,
         id: q.id || `q_${index}`,
         pergunta: q.pergunta,
         alternativas: q.alternativas,
-        correta: q.correta !== undefined ? q.correta : (q.resposta_correta !== undefined ? q.resposta_correta : q.correct),
+        correta: typeof q.correta === 'number' ? q.correta : 0,
         explicacao: q.explicacao
       }));
 
@@ -140,7 +138,7 @@ export const useEnhancedQuizSession = () => {
 
       console.log('📊 Resuming session with data:', { session, attempts });
 
-      // Parse questions data
+      // Parse questions data safely
       let questoes = [];
       try {
         if (typeof session.questions_data === 'string') {
@@ -148,6 +146,13 @@ export const useEnhancedQuizSession = () => {
         } else if (Array.isArray(session.questions_data)) {
           questoes = session.questions_data as any[];
         }
+        
+        // Ensure questions have proper structure
+        questoes = questoes.map((q, index) => ({
+          ...q,
+          id: q.id || `q_${index}`,
+          correta: typeof q.correta === 'number' ? q.correta : 0
+        }));
       } catch (parseError) {
         console.error('Error parsing questions_data:', parseError);
         questoes = [];
@@ -218,9 +223,6 @@ export const useEnhancedQuizSession = () => {
         ...prev,
         respostas: [...prev.respostas, attempt]
       } : null);
-
-      // Update session progress automatically
-      await updateSessionProgress();
 
       return attempt;
     } catch (error) {

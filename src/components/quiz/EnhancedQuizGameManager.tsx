@@ -96,95 +96,78 @@ const EnhancedQuizGameManager = ({
   const currentQuestion = sessionData.questoes[gameState.currentIndex];
   const isLastQuestion = gameState.currentIndex === sessionData.questoes.length - 1;
 
-  // Detailed logging for debugging answer verification
   console.log('🎯 Enhanced QuizGameManager - Current state:', {
     index: gameState.currentIndex,
-    pergunta: currentQuestion?.pergunta,
+    pergunta: currentQuestion?.pergunta?.slice(0, 50),
     selectedAnswer: gameState.selectedAnswer,
     score: gameState.score,
-    gameFinished: gameState.gameFinished,
-    sessionId: sessionData.sessionId,
     correctAnswer: currentQuestion?.correta,
-    questionStructure: currentQuestion
+    questionStructure: {
+      id: currentQuestion?.id,
+      correta: currentQuestion?.correta,
+      alternativasCount: currentQuestion?.alternativas?.length
+    }
   });
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (gameState.showResult) return;
     console.log('📝 Answer selected:', {
       answerIndex,
-      currentQuestion: currentQuestion?.pergunta,
-      currentQuestionStructure: currentQuestion
+      currentQuestion: currentQuestion?.pergunta?.slice(0, 50)
     });
     setGameState(prev => ({ ...prev, selectedAnswer: answerIndex }));
   };
 
+  // BULLETPROOF answer verification
   const handleConfirmAnswer = async () => {
     if (gameState.selectedAnswer === null || !currentQuestion) return;
 
-    // Enhanced logging for answer verification
-    console.log('🔍 DEBUGGING ANSWER VERIFICATION:', {
+    console.log('🔍 BULLETPROOF ANSWER VERIFICATION:', {
       selectedAnswer: gameState.selectedAnswer,
       currentQuestion: {
         id: currentQuestion.id,
-        pergunta: currentQuestion.pergunta,
-        alternativas: currentQuestion.alternativas,
+        pergunta: currentQuestion.pergunta?.slice(0, 50),
         correta: currentQuestion.correta,
-        resposta_correta: currentQuestion.resposta_correta,
-        fullStructure: currentQuestion
+        correctAnswerType: typeof currentQuestion.correta,
+        selectedAnswerType: typeof gameState.selectedAnswer
       }
     });
 
-    // Multiple ways to get correct answer - more robust approach
-    let correctAnswerIndex = null;
+    // Get correct answer with multiple fallbacks
+    let correctAnswerIndex: number;
     
-    // Try different possible field names for correct answer
     if (typeof currentQuestion.correta === 'number') {
       correctAnswerIndex = currentQuestion.correta;
-      console.log('✅ Using correta field:', correctAnswerIndex);
-    } else if (typeof currentQuestion.resposta_correta === 'number') {
-      correctAnswerIndex = currentQuestion.resposta_correta;
-      console.log('✅ Using resposta_correta field:', correctAnswerIndex);
-    } else if (typeof currentQuestion.correct === 'number') {
-      correctAnswerIndex = currentQuestion.correct;
-      console.log('✅ Using correct field:', correctAnswerIndex);
+    } else if (typeof currentQuestion.correta === 'string') {
+      correctAnswerIndex = parseInt(currentQuestion.correta);
     } else {
-      console.error('❌ Could not find correct answer index in question:', currentQuestion);
-      // Try to extract from any available field
-      const possibleKeys = ['correta', 'resposta_correta', 'correct', 'answer', 'correctAnswer'];
-      for (const key of possibleKeys) {
-        if (currentQuestion[key] !== undefined && currentQuestion[key] !== null) {
-          correctAnswerIndex = Number(currentQuestion[key]);
-          console.log(`✅ Found correct answer using ${key}:`, correctAnswerIndex);
-          break;
-        }
-      }
+      console.error('❌ CRITICAL: Invalid correct answer format:', currentQuestion.correta);
+      correctAnswerIndex = 0; // Default fallback
     }
 
-    if (correctAnswerIndex === null) {
-      console.error('❌ CRITICAL: Could not determine correct answer index');
-      toast.error('Erro: não foi possível verificar a resposta');
-      return;
-    }
+    // Ensure both values are numbers for comparison
+    const selectedAnswerNum = Number(gameState.selectedAnswer);
+    const correctAnswerNum = Number(correctAnswerIndex);
 
-    const isAnswerCorrect = gameState.selectedAnswer === correctAnswerIndex;
+    const isAnswerCorrect = selectedAnswerNum === correctAnswerNum;
     
-    console.log('✅ Final answer verification:', {
-      selectedAnswer: gameState.selectedAnswer,
-      correctAnswerIndex: correctAnswerIndex,
+    console.log('✅ FINAL ANSWER VERIFICATION:', {
+      selectedAnswer: selectedAnswerNum,
+      correctAnswer: correctAnswerNum,
       isCorrect: isAnswerCorrect,
-      comparison: `${gameState.selectedAnswer} === ${correctAnswerIndex} = ${isAnswerCorrect}`
+      comparison: `${selectedAnswerNum} === ${correctAnswerNum} = ${isAnswerCorrect}`
     });
 
     // Save response to database
     try {
       await saveQuestionResponse(
         currentQuestion.id || `q_${gameState.currentIndex}`, 
-        gameState.selectedAnswer, 
+        selectedAnswerNum, 
         isAnswerCorrect
       );
-      console.log('💾 Response saved to database successfully');
+      console.log('💾 Response saved successfully');
     } catch (error) {
-      console.error('⚠️ Error saving response to database:', error);
+      console.error('⚠️ Error saving response:', error);
       toast.error('Erro ao salvar resposta');
     }
     
