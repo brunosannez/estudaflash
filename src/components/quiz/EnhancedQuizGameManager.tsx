@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useEnhancedQuizSession } from '@/hooks/useEnhancedQuizSession';
 import { useGameification } from '@/hooks/useGameification';
@@ -96,7 +95,7 @@ const EnhancedQuizGameManager = ({
     };
 
     if (quiz.questoes && quiz.questoes.length > 0) {
-      init ializeSession();
+      initializeSession();
     }
   }, [quiz, sessionId, resumeMode, sessionInitialized]);
 
