@@ -79,8 +79,12 @@ const QuizGameManager = ({
     console.log('🔍 Local verification:', localIsCorrect);
 
     // Enviar resposta para o servidor (para manter compatibilidade)
-    const result = await enviarResposta(currentQuestion.id, gameState.selectedAnswer);
-    console.log('📊 Server response:', result);
+    try {
+      const result = await enviarResposta(currentQuestion.id, gameState.selectedAnswer);
+      console.log('📊 Server response:', result);
+    } catch (error) {
+      console.error('⚠️ Server response failed, continuing with local verification:', error);
+    }
     
     // Adicionar resposta à sessão
     const responseData = {
@@ -120,7 +124,6 @@ const QuizGameManager = ({
       
       if (sessionResult) {
         console.log('✅ Quiz session saved successfully:', sessionResult);
-        toast.success(`Quiz concluído! Você acertou ${gameState.score} de ${quiz.questoes.length} questões.`);
         setGameState(prev => ({ ...prev, gameFinished: true }));
         onGameFinish(gameState.score);
       } else {

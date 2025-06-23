@@ -28,7 +28,10 @@ export const useQuizSession = () => {
   };
 
   const addResponse = (response: any) => {
-    if (!sessionData) return;
+    if (!sessionData) {
+      console.error('❌ No session data available to add response');
+      return;
+    }
     
     console.log('📝 Adding response to session:', response);
     setSessionData(prev => prev ? {
@@ -40,6 +43,11 @@ export const useQuizSession = () => {
   const completeSession = async () => {
     if (!sessionData) {
       console.error('❌ No session data to complete');
+      toast({
+        title: "Erro",
+        description: "Dados da sessão não encontrados.",
+        variant: "destructive",
+      });
       return null;
     }
 
@@ -55,14 +63,17 @@ export const useQuizSession = () => {
       const quizTitle = `Quiz - ${sessionData.questoes.length} questões`;
       
       // Dados detalhados das questões para salvar
-      const questionsData = sessionData.questoes.map((questao, index) => ({
-        pergunta: questao.pergunta,
-        alternativas: questao.alternativas,
-        resposta_correta: questao.correta,
-        explicacao: questao.explicacao,
-        resposta_usuario: sessionData.respostas[index]?.resposta_selecionada,
-        acertou: sessionData.respostas[index]?.acertou || false
-      }));
+      const questionsData = sessionData.questoes.map((questao, index) => {
+        const userResponse = sessionData.respostas[index];
+        return {
+          pergunta: questao.pergunta,
+          alternativas: questao.alternativas,
+          resposta_correta: questao.correta || questao.resposta_correta,
+          explicacao: questao.explicacao,
+          resposta_usuario: userResponse?.resposta_selecionada ?? null,
+          acertou: userResponse?.acertou || false
+        };
+      });
 
       console.log('💾 Saving quiz session to database:', {
         user_id: user.id,
@@ -70,10 +81,11 @@ export const useQuizSession = () => {
         quiz_title: quizTitle,
         total_questions: sessionData.questoes.length,
         correct_answers: correctAnswers,
-        completion_time_seconds: completionTime
+        completion_time_seconds: completionTime,
+        questions_data: questionsData
       });
 
-      // Salvar sessão no banco em uma transação
+      // Salvar sessão no banco
       const { data: sessionRecord, error: sessionError } = await supabase
         .from('quiz_sessions')
         .insert({
@@ -104,6 +116,12 @@ export const useQuizSession = () => {
         // Não falhar a operação principal se o incremento falhar
       }
 
+      // Toast de sucesso
+      toast({
+        title: "Sucesso!",
+        description: `Quiz salvo! Você acertou ${correctAnswers} de ${sessionData.questoes.length} questões.`,
+      });
+
       // Resetar dados da sessão
       setSessionData(null);
 
@@ -120,7 +138,7 @@ export const useQuizSession = () => {
       console.error("❌ Error completing quiz session:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o resultado do quiz.",
+        description: "Não foi possível salvar o resultado do quiz. Tente novamente.",
         variant: "destructive",
       });
       return null;

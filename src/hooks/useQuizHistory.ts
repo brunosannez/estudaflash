@@ -39,6 +39,13 @@ export const useQuizHistory = () => {
       
       if (!user) {
         console.log('❌ User not authenticated for quiz history');
+        setHistory([]);
+        setStats({
+          totalQuizzes: 0,
+          totalAcertos: 0,
+          totalPerguntas: 0,
+          mediaAcertos: 0
+        });
         return;
       }
 
@@ -163,7 +170,7 @@ export const useQuizHistory = () => {
 
     // Configurar listener para updates em tempo real
     const channel = supabase
-      .channel('quiz-history-changes')
+      .channel('quiz-history-realtime')
       .on(
         'postgres_changes',
         {
@@ -177,7 +184,9 @@ export const useQuizHistory = () => {
           fetchQuizHistory();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Real-time subscription status:', status);
+      });
 
     return () => {
       console.log('🧹 Cleaning up quiz history real-time subscription');
