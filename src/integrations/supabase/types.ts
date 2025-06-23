@@ -309,6 +309,42 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_attempts: {
+        Row: {
+          answered_at: string | null
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          quiz_question_id: string
+          resumo_id: string
+          selected_answer: number | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          quiz_question_id: string
+          resumo_id: string
+          selected_answer?: number | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          quiz_question_id?: string
+          resumo_id?: string
+          selected_answer?: number | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       quiz_respostas: {
         Row: {
           acertou: boolean
@@ -349,10 +385,15 @@ export type Database = {
           completion_time_seconds: number | null
           correct_answers: number
           created_at: string
+          current_question_index: number | null
           id: string
+          last_activity_at: string | null
+          progress_percentage: number | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
+          started_at: string | null
+          status: string | null
           total_questions: number
           user_id: string
         }
@@ -360,10 +401,15 @@ export type Database = {
           completion_time_seconds?: number | null
           correct_answers: number
           created_at?: string
+          current_question_index?: number | null
           id?: string
+          last_activity_at?: string | null
+          progress_percentage?: number | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
+          started_at?: string | null
+          status?: string | null
           total_questions: number
           user_id: string
         }
@@ -371,10 +417,15 @@ export type Database = {
           completion_time_seconds?: number | null
           correct_answers?: number
           created_at?: string
+          current_question_index?: number | null
           id?: string
+          last_activity_at?: string | null
+          progress_percentage?: number | null
           questions_data?: Json
           quiz_title?: string
           resumo_id?: string
+          started_at?: string | null
+          status?: string | null
           total_questions?: number
           user_id?: string
         }
@@ -835,6 +886,23 @@ export type Database = {
           active_users_30_days: number
           largest_file_size_mb: number
           storage_by_plan: Json
+        }[]
+      }
+      get_enhanced_quiz_history: {
+        Args: { target_user_id?: string }
+        Returns: {
+          session_id: string
+          resumo_id: string
+          resumo_titulo: string
+          quiz_title: string
+          status: string
+          total_questions: number
+          correct_answers: number
+          progress_percentage: number
+          created_at: string
+          last_activity_at: string
+          completion_time_seconds: number
+          can_resume: boolean
         }[]
       }
       get_usage_analytics: {
