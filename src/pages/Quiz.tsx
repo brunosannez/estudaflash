@@ -26,13 +26,13 @@ const Quiz = () => {
   const sessionId = searchParams.get('session');
   const resumeMode = searchParams.get('resume') === 'true';
 
-  console.log('📍 Bulletproof Quiz page rendered:', { 
+  console.log('📍 Quiz page rendered:', { 
     id, 
     sessionId, 
     resumeMode 
   });
 
-  // Load summary and quiz data
+  // Load summary and quiz data with bulletproof checks
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
@@ -64,7 +64,22 @@ const Quiz = () => {
         console.log('📄 Summary loaded successfully');
         setResumo(resumoData);
 
-        // Load existing quizzes with bulletproof validation
+        // Check for existing quiz sessions first to prevent duplicates
+        const { data: existingSessions, error: sessionError } = await supabase
+          .from('quiz_sessions')
+          .select('id, status, progress_percentage, current_question_index')
+          .eq('resumo_id', id)
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (sessionError) {
+          console.error('❌ Error checking existing sessions:', sessionError);
+        }
+
+        console.log('📊 Existing sessions found:', existingSessions?.length || 0);
+
+        // Load existing quizzes with enhanced validation
         const { data: existingQuizzes, error: quizError } = await supabase
           .from('quizzes')
           .select('*')
@@ -80,7 +95,7 @@ const Quiz = () => {
           throw quizError;
         }
 
-        // Validate quiz structure
+        // Validate quiz structure with bulletproof checks
         const validQuizzes = (existingQuizzes || []).filter(quiz => {
           const isValid = quiz.pergunta && 
                          Array.isArray(quiz.alternativas) && 
@@ -90,13 +105,13 @@ const Quiz = () => {
                          quiz.correta <= 4;
           
           if (!isValid) {
-            console.warn('Invalid quiz found:', quiz.id);
+            console.warn('❌ Invalid quiz found and filtered out:', quiz.id);
           }
           
           return isValid;
         });
 
-        console.log('📊 Valid quizzes loaded:', {
+        console.log('📊 Quiz validation results:', {
           total: existingQuizzes?.length || 0,
           valid: validQuizzes.length,
           invalid: (existingQuizzes?.length || 0) - validQuizzes.length
@@ -123,10 +138,36 @@ const Quiz = () => {
       return;
     }
 
+    // Check if quiz already exists to prevent duplicates
+    if (quizzes.length > 0) {
+      console.warn('⚠️ Quiz already exists, preventing duplicate generation');
+      toast.warning('Este resumo já possui um quiz!');
+      return;
+    }
+
+    // Check for active generation to prevent multiple simultaneous requests
+    if (generating) {
+      console.warn('⚠️ Quiz generation already in progress');
+      return;
+    }
+
     setGenerating(true);
-    console.log('🚀 Starting bulletproof quiz generation...');
+    console.log('🚀 Starting controlled quiz generation...');
 
     try {
+      // Double-check for existing quizzes before generation
+      const { data: existingCheck } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('resumo_id', id)
+        .limit(1);
+
+      if (existingCheck && existingCheck.length > 0) {
+        console.warn('⚠️ Quiz found during final check, aborting generation');
+        toast.warning('Quiz já existe para este resumo!');
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-quiz', {
         body: { 
           resumoContent: resumo.resumo_gerado,
@@ -144,12 +185,12 @@ const Quiz = () => {
         throw new Error(data.error);
       }
 
-      console.log('✅ Bulletproof quiz generated successfully:', data);
-      toast.success(`Quiz gerado com ${data.questoes.length} questões consistentes!`);
+      console.log('✅ Quiz generated successfully:', data);
+      toast.success(`Quiz gerado com ${data.questoes.length} questões!`);
       
-      // Reload quizzes
+      // Reload quizzes after successful generation
       setQuizzes(data.questoes);
-      setHasCheckedData(false); // Force reload to get fresh data
+      setHasCheckedData(false); // Force data reload
       
     } catch (error) {
       console.error('❌ Quiz generation error:', error);
@@ -177,7 +218,7 @@ const Quiz = () => {
     console.log('⏳ Showing initial loading state');
     return (
       <QuizLoader 
-        message="🔍 Carregando dados..."
+        message="🔍 Carregando dados do quiz..."
         description="Verificando quiz e resumo disponível"
       />
     );
@@ -189,14 +230,14 @@ const Quiz = () => {
     return (
       <QuizLoader 
         message="🧠 Gerando quiz..."
-        description="Criando questões personalizadas no estilo ENEM e Colégio Ari de Sá"
+        description="Criando questões personalizadas (isso pode levar alguns segundos)"
       />
     );
   }
 
   // Show quiz if we have questions
   if (quizzes && quizzes.length > 0) {
-    console.log('✅ Showing bulletproof quiz with', quizzes.length, 'questions');
+    console.log('✅ Showing quiz with', quizzes.length, 'questions');
     const quizData = {
       resumo_id: id!,
       questoes: quizzes,
@@ -224,6 +265,7 @@ const Quiz = () => {
       onGenerateQuiz={handleGenerateQuiz}
       isGenerating={generating}
       onBack={handleBack}
+      hasExistingQuiz={false}
     />
   );
 };

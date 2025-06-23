@@ -27,6 +27,20 @@ export const useEnhancedQuizSession = () => {
         throw new Error("Usuário não autenticado");
       }
 
+      // Check for existing active session to prevent duplicates
+      const { data: existingSession } = await supabase
+        .from('quiz_sessions')
+        .select('id, status')
+        .eq('resumo_id', resumoId)
+        .eq('user_id', user.id)
+        .in('status', ['in_progress', 'paused'])
+        .single();
+
+      if (existingSession) {
+        console.log('📋 Found existing session, resuming instead of creating new:', existingSession.id);
+        return await resumeSession(existingSession.id);
+      }
+
       const quizTitle = `Quiz - ${questoes.length} questões`;
       
       // Prepare questions with bulletproof structure
@@ -35,16 +49,11 @@ export const useEnhancedQuizSession = () => {
         id: q.id || `q_${index}`,
         pergunta: q.pergunta,
         alternativas: Array.isArray(q.alternativas) ? q.alternativas : [],
-        correta: Number.isInteger(q.correta) ? q.correta : 0, // Bulletproof: always integer
+        correta: Number.isInteger(q.correta) ? q.correta : 0,
         explicacao: q.explicacao || 'Explicação não disponível'
       }));
 
-      console.log('🔒 Bulletproof questions structure:', questionsData.map(q => ({
-        id: q.id,
-        correta: q.correta,
-        type: typeof q.correta,
-        alternativasCount: q.alternativas.length
-      })));
+      console.log('🔒 Bulletproof questions structure validated:', questionsData.length, 'questions');
       
       // Create session with bulletproof data
       const { data: newSession, error: sessionError } = await supabase
@@ -68,7 +77,7 @@ export const useEnhancedQuizSession = () => {
         throw sessionError;
       }
 
-      console.log('✅ Bulletproof quiz session created:', newSession);
+      console.log('✅ Bulletproof quiz session created:', newSession.id);
 
       setSessionData({
         sessionId: newSession.id,
@@ -102,7 +111,7 @@ export const useEnhancedQuizSession = () => {
         throw new Error("Usuário não autenticado");
       }
 
-      // Get session data
+      // Get session data with enhanced validation
       const { data: session, error: sessionError } = await supabase
         .from('quiz_sessions')
         .select(`
@@ -119,10 +128,10 @@ export const useEnhancedQuizSession = () => {
 
       if (sessionError || !session) {
         console.error('❌ Error fetching session:', sessionError);
-        throw new Error('Sessão não encontrada');
+        throw new Error('Sessão não encontrada ou expirada');
       }
 
-      // Get existing attempts
+      // Get existing attempts with validation
       const { data: attempts, error: attemptsError } = await supabase
         .from('quiz_attempts')
         .select('*')
@@ -134,7 +143,7 @@ export const useEnhancedQuizSession = () => {
         throw attemptsError;
       }
 
-      // Parse questions with bulletproof structure
+      // Parse questions with bulletproof structure and fallbacks
       let questoes = [];
       try {
         if (typeof session.questions_data === 'string') {
@@ -143,27 +152,76 @@ export const useEnhancedQuizSession = () => {
           questoes = session.questions_data as any[];
         }
         
-        // Bulletproof structure validation
+        // Enhanced structure validation with auto-repair
         questoes = questoes.map((q, index) => ({
           ...q,
           id: q.id || `q_${index}`,
           correta: Number.isInteger(q.correta) ? q.correta : 0,
           alternativas: Array.isArray(q.alternativas) ? q.alternativas : []
         }));
+
+        // If no valid questions, try to get from quizzes table
+        if (questoes.length === 0) {
+          console.warn('⚠️ No questions in session data, fetching from quizzes table');
+          const { data: quizzesData } = await supabase
+            .from('quizzes')
+            .select('*')
+            .eq('resumo_id', session.resumo_id)
+            .order('data_criacao');
+
+          if (quizzesData && quizzesData.length > 0) {
+            questoes = quizzesData.map((q, index) => ({
+              index,
+              id: q.id,
+              pergunta: q.pergunta,
+              alternativas: q.alternativas,
+              correta: q.correta,
+              explicacao: q.explicacao
+            }));
+            console.log('✅ Recovered questions from quizzes table:', questoes.length);
+          }
+        }
       } catch (parseError) {
-        console.error('Error parsing questions_data:', parseError);
+        console.error('❌ Error parsing questions_data:', parseError);
         questoes = [];
       }
 
-      const resumoContent = session.resumos?.resumo_gerado || 'Conteúdo não disponível';
-      const currentIndex = Math.max(0, attempts?.length || 0);
+      if (questoes.length === 0) {
+        throw new Error('Não foi possível carregar as questões do quiz');
+      }
 
-      console.log('📊 Resuming with bulletproof data:', { 
+      const resumoContent = session.resumos?.resumo_gerado || 'Conteúdo não disponível';
+      
+      // Calculate correct current index based on attempts
+      const answeredCount = attempts?.length || 0;
+      const currentIndex = Math.min(answeredCount, questoes.length - 1);
+      
+      // Fix progress calculation
+      const progressPercentage = questoes.length > 0 
+        ? Math.round((answeredCount / questoes.length) * 100) 
+        : 0;
+
+      console.log('📊 Resuming with corrected data:', { 
         sessionId, 
         currentIndex, 
         totalQuestions: questoes.length,
-        attemptsCount: attempts?.length || 0
+        attemptsCount: answeredCount,
+        progressPercentage
       });
+
+      // Update session with corrected data if needed
+      if (session.current_question_index !== currentIndex || 
+          session.progress_percentage !== progressPercentage) {
+        console.log('🔧 Updating session with corrected progress data');
+        await supabase
+          .from('quiz_sessions')
+          .update({
+            current_question_index: currentIndex,
+            progress_percentage: progressPercentage,
+            last_activity_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+      }
 
       setSessionData({
         sessionId,
@@ -181,7 +239,7 @@ export const useEnhancedQuizSession = () => {
       console.error("❌ Error resuming enhanced quiz session:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível retomar o quiz.",
+        description: "Não foi possível retomar o quiz. Tente iniciar um novo.",
         variant: "destructive",
       });
       return null;
