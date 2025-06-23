@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { useEnhancedQuizSession } from '@/hooks/useEnhancedQuizSession';
 import { useGameification } from '@/hooks/useGameification';
 import { toast } from 'sonner';
@@ -48,58 +49,71 @@ const EnhancedQuizGameManager = ({
     gameFinished: false
   });
 
-  const [sessionInitialized, setSessionInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  // Initialize session with bulletproof logic and error handling
-  React.useEffect(() => {
-    const initializeSession = async () => {
-      if (sessionInitialized) return;
-
-      try {
-        console.log('🔄 Initializing quiz session...', { resumeMode, sessionId });
-        setInitializationError(null);
-
-        if (resumeMode && sessionId) {
-          console.log('🔄 Attempting to resume session:', sessionId);
-          const session = await resumeSession(sessionId);
-          
-          if (session && sessionData) {
-            const resumedIndex = sessionData.currentQuestionIndex || 0;
-            const resumedScore = sessionData.respostas.filter(r => r.is_correct).length;
-            
-            console.log('📊 Resume data loaded:', { resumedIndex, resumedScore, totalQuestions: sessionData.questoes.length });
-            
-            // Ensure we don't go beyond available questions
-            const safeIndex = Math.min(resumedIndex, sessionData.questoes.length - 1);
-            
-            setGameState(prev => ({
-              ...prev,
-              currentIndex: Math.max(0, safeIndex),
-              score: resumedScore
-            }));
-          } else {
-            throw new Error('Não foi possível retomar a sessão do quiz');
-          }
-        } else {
-          console.log('🚀 Starting new bulletproof session');
-          await startNewSession(quiz.resumo_id, '', quiz.questoes);
+  // Initialize session with improved logic
+  const initializeSession = useCallback(async () => {
+    if (isInitializing || sessionData) return;
+    
+    setIsInitializing(true);
+    setInitializationError(null);
+    
+    try {
+      console.log('🔄 Starting session initialization...', { resumeMode, sessionId, questionsCount: quiz.questoes.length });
+      
+      if (resumeMode && sessionId) {
+        console.log('🔄 Attempting to resume session:', sessionId);
+        const session = await resumeSession(sessionId);
+        
+        if (!session) {
+          throw new Error('Sessão não encontrada ou expirada');
         }
         
-        setSessionInitialized(true);
-      } catch (error) {
-        console.error('❌ Error initializing session:', error);
-        setInitializationError(error instanceof Error ? error.message : 'Erro ao inicializar quiz');
-        toast.error('Erro ao inicializar quiz. Tente novamente.');
+        console.log('✅ Session resumed successfully');
+      } else {
+        console.log('🚀 Starting new session');
+        const newSessionId = await startNewSession(quiz.resumo_id, '', quiz.questoes);
+        
+        if (!newSessionId) {
+          throw new Error('Não foi possível criar nova sessão');
+        }
+        
+        console.log('✅ New session created:', newSessionId);
       }
-    };
+    } catch (error) {
+      console.error('❌ Session initialization failed:', error);
+      setInitializationError(error instanceof Error ? error.message : 'Erro ao inicializar quiz');
+      toast.error('Erro ao inicializar quiz. Tente novamente.');
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [quiz.resumo_id, quiz.questoes, sessionId, resumeMode, startNewSession, resumeSession, sessionData, isInitializing]);
 
-    if (quiz.questoes && quiz.questoes.length > 0) {
+  // Initialize when component mounts
+  React.useEffect(() => {
+    if (quiz.questoes && quiz.questoes.length > 0 && !sessionData && !isInitializing) {
       initializeSession();
     }
-  }, [quiz, sessionId, resumeMode, sessionInitialized]);
+  }, [quiz.questoes, sessionData, isInitializing, initializeSession]);
 
-  // Show error state if initialization failed
+  // Update game state when session data changes
+  React.useEffect(() => {
+    if (sessionData && resumeMode) {
+      const resumedIndex = sessionData.currentQuestionIndex || 0;
+      const resumedScore = sessionData.respostas.filter(r => r.is_correct).length;
+      
+      console.log('📊 Updating game state from session data:', { resumedIndex, resumedScore });
+      
+      setGameState(prev => ({
+        ...prev,
+        currentIndex: Math.max(0, Math.min(resumedIndex, sessionData.questoes.length - 1)),
+        score: resumedScore
+      }));
+    }
+  }, [sessionData, resumeMode]);
+
+  // Show error state
   if (initializationError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
@@ -108,7 +122,10 @@ const EnhancedQuizGameManager = ({
           <h2 className="text-xl font-bold mb-2 text-gray-800">Erro ao Carregar Quiz</h2>
           <p className="text-gray-600 mb-4">{initializationError}</p>
           <button 
-            onClick={() => window.location.reload()} 
+            onClick={() => {
+              setInitializationError(null);
+              initializeSession();
+            }}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
           >
             Tentar Novamente
@@ -118,45 +135,56 @@ const EnhancedQuizGameManager = ({
     );
   }
 
-  // Show loading while session initializes
-  if (!sessionData || !sessionInitialized) {
+  // Show loading while initializing or waiting for session data
+  if (isInitializing || !sessionData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-lg text-gray-600">
-            {resumeMode ? 'Retomando quiz...' : 'Inicializando quiz...'}
+            {isInitializing 
+              ? (resumeMode ? 'Retomando quiz...' : 'Inicializando quiz...') 
+              : 'Carregando dados do quiz...'
+            }
           </p>
         </div>
       </div>
     );
   }
 
+  // Validate session data
+  if (!sessionData.questoes || sessionData.questoes.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❓</div>
+          <h2 className="text-xl font-bold mb-2 text-gray-800">Nenhuma Questão Encontrada</h2>
+          <p className="text-gray-600 mb-4">Não foi possível carregar as questões do quiz.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Recarregar Página
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Validate current question index
-  if (gameState.currentIndex >= sessionData.questoes.length) {
-    console.error('❌ Invalid question index, resetting to last valid question');
-    setGameState(prev => ({
-      ...prev,
-      currentIndex: Math.max(0, sessionData.questoes.length - 1)
-    }));
+  const safeCurrentIndex = Math.max(0, Math.min(gameState.currentIndex, sessionData.questoes.length - 1));
+  if (safeCurrentIndex !== gameState.currentIndex) {
+    setGameState(prev => ({ ...prev, currentIndex: safeCurrentIndex }));
     return null;
   }
 
   const currentQuestion = sessionData.questoes[gameState.currentIndex];
   const isLastQuestion = gameState.currentIndex === sessionData.questoes.length - 1;
 
-  console.log('🎯 BULLETPROOF Game State:', {
-    currentIndex: gameState.currentIndex,
-    selectedAnswer: gameState.selectedAnswer,
-    totalQuestions: sessionData.questoes.length,
-    currentQuestion: currentQuestion ? {
-      id: currentQuestion.id,
-      pergunta: currentQuestion.pergunta?.slice(0, 50) + '...',
-      correta: currentQuestion.correta,
-      correctAnswerType: typeof currentQuestion.correta,
-      alternativasCount: currentQuestion.alternativas?.length
-    } : null
-  });
+  if (!currentQuestion) {
+    console.error('❌ Current question not found:', gameState.currentIndex);
+    return null;
+  }
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (gameState.showResult) return;
@@ -164,23 +192,18 @@ const EnhancedQuizGameManager = ({
     setGameState(prev => ({ ...prev, selectedAnswer: answerIndex }));
   };
 
-  // BULLETPROOF answer verification with enhanced validation
   const handleConfirmAnswer = async () => {
     if (gameState.selectedAnswer === null || !currentQuestion) return;
 
-    console.log('🔍 BULLETPROOF VERIFICATION:', {
+    console.log('🔍 Processing answer:', {
       selectedAnswer: gameState.selectedAnswer,
-      selectedAnswerType: typeof gameState.selectedAnswer,
       correctAnswer: currentQuestion.correta,
-      correctAnswerType: typeof currentQuestion.correta,
-      question: currentQuestion.pergunta?.slice(0, 50) + '...'
+      questionId: currentQuestion.id
     });
 
-    // Bulletproof conversion to numbers with validation
     const selectedAnswerNum = Number(gameState.selectedAnswer);
     const correctAnswerNum = Number(currentQuestion.correta);
 
-    // Critical validation with detailed error logging
     if (!Number.isInteger(selectedAnswerNum) || selectedAnswerNum < 0 || selectedAnswerNum > 4) {
       console.error('❌ Invalid selected answer:', gameState.selectedAnswer);
       toast.error('Resposta inválida selecionada');
@@ -188,22 +211,14 @@ const EnhancedQuizGameManager = ({
     }
 
     if (!Number.isInteger(correctAnswerNum) || correctAnswerNum < 0 || correctAnswerNum > 4) {
-      console.error('❌ Invalid correct answer in question:', currentQuestion.correta);
+      console.error('❌ Invalid correct answer:', currentQuestion.correta);
       toast.error('Erro na estrutura da questão');
       return;
     }
 
-    // Bulletproof comparison
     const isAnswerCorrect = selectedAnswerNum === correctAnswerNum;
     
-    console.log('✅ BULLETPROOF RESULT:', {
-      selectedAnswer: selectedAnswerNum,
-      correctAnswer: correctAnswerNum,
-      isCorrect: isAnswerCorrect,
-      comparison: `${selectedAnswerNum} === ${correctAnswerNum} = ${isAnswerCorrect}`
-    });
-
-    // Save response to database with error handling
+    // Save response to database
     try {
       await saveQuestionResponse(
         currentQuestion.id || `q_${gameState.currentIndex}`, 
@@ -216,7 +231,7 @@ const EnhancedQuizGameManager = ({
       toast.error('Erro ao salvar resposta');
     }
     
-    // Add XP based on answer with error handling
+    // Add XP
     try {
       if (isAnswerCorrect) {
         await addXP(10, 'quiz_correct');
@@ -237,12 +252,6 @@ const EnhancedQuizGameManager = ({
       showResult: true,
       score: newScore
     }));
-    
-    console.log('🎯 Answer processed successfully:', {
-      isCorrect: isAnswerCorrect,
-      newScore: newScore,
-      previousScore: gameState.score
-    });
   };
 
   const handleNextQuestion = async () => {
@@ -252,26 +261,22 @@ const EnhancedQuizGameManager = ({
       const sessionResult = await completeSession();
       
       if (sessionResult) {
-        console.log('✅ Quiz session completed successfully:', sessionResult);
+        console.log('✅ Quiz session completed successfully');
         setGameState(prev => ({ ...prev, gameFinished: true }));
         onGameFinish(gameState.score);
         
-        // Bonus XP for completing quiz with error handling
+        // Bonus XP
         try {
           const accuracy = (gameState.score / sessionData.questoes.length) * 100;
-          let bonusXP = 0;
           
           if (accuracy === 100) {
-            bonusXP = 50;
-            await addXP(bonusXP, 'quiz_perfect');
+            await addXP(50, 'quiz_perfect');
             toast.success('🏆 Perfeito! +50 XP de bônus!', { duration: 4000 });
           } else if (accuracy >= 80) {
-            bonusXP = 25;
-            await addXP(bonusXP, 'quiz_excellent');
+            await addXP(25, 'quiz_excellent');
             toast.success('🎯 Excelente! +25 XP de bônus!', { duration: 4000 });
           } else if (accuracy >= 60) {
-            bonusXP = 15;
-            await addXP(bonusXP, 'quiz_good');
+            await addXP(15, 'quiz_good');
             toast.success('👍 Bom trabalho! +15 XP de bônus!', { duration: 4000 });
           }
         } catch (bonusError) {
@@ -285,7 +290,6 @@ const EnhancedQuizGameManager = ({
       console.log('➡️ Moving to next question');
       const nextIndex = gameState.currentIndex + 1;
       
-      // Validate next index before proceeding
       if (nextIndex < sessionData.questoes.length) {
         setGameState(prev => ({
           ...prev,

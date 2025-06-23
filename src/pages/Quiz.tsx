@@ -18,7 +18,6 @@ const Quiz = () => {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [hasCheckedData, setHasCheckedData] = useState(false);
   
   const { getResumoById } = useSummary();
 
@@ -32,18 +31,13 @@ const Quiz = () => {
     resumeMode 
   });
 
-  // Load summary and quiz data with bulletproof checks
+  // Load summary and quiz data
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
         console.error('❌ No summary ID provided');
         toast.error('ID do resumo não fornecido');
         navigate('/my-summaries');
-        return;
-      }
-
-      if (hasCheckedData && !resumeMode) {
-        console.log('ℹ️ Data already checked, skipping reload');
         return;
       }
 
@@ -64,21 +58,6 @@ const Quiz = () => {
         console.log('📄 Summary loaded successfully');
         setResumo(resumoData);
 
-        // Check for existing quiz sessions first to prevent duplicates
-        const { data: existingSessions, error: sessionError } = await supabase
-          .from('quiz_sessions')
-          .select('id, status, progress_percentage, current_question_index')
-          .eq('resumo_id', id)
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (sessionError) {
-          console.error('❌ Error checking existing sessions:', sessionError);
-        }
-
-        console.log('📊 Existing sessions found:', existingSessions?.length || 0);
-
         // Load existing quizzes with enhanced validation
         const { data: existingQuizzes, error: quizError } = await supabase
           .from('quizzes')
@@ -95,7 +74,7 @@ const Quiz = () => {
           throw quizError;
         }
 
-        // Validate quiz structure with bulletproof checks
+        // Validate quiz structure
         const validQuizzes = (existingQuizzes || []).filter(quiz => {
           const isValid = quiz.pergunta && 
                          Array.isArray(quiz.alternativas) && 
@@ -118,7 +97,6 @@ const Quiz = () => {
         });
 
         setQuizzes(validQuizzes);
-        setHasCheckedData(true);
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
@@ -129,7 +107,7 @@ const Quiz = () => {
     };
 
     loadData();
-  }, [id, getResumoById, navigate, hasCheckedData, resumeMode]);
+  }, [id, getResumoById, navigate]);
 
   const handleGenerateQuiz = async () => {
     if (!resumo?.resumo_gerado) {
@@ -138,24 +116,24 @@ const Quiz = () => {
       return;
     }
 
-    // Check if quiz already exists to prevent duplicates
+    // Check if quiz already exists
     if (quizzes.length > 0) {
       console.warn('⚠️ Quiz already exists, preventing duplicate generation');
       toast.warning('Este resumo já possui um quiz!');
       return;
     }
 
-    // Check for active generation to prevent multiple simultaneous requests
+    // Check for active generation
     if (generating) {
       console.warn('⚠️ Quiz generation already in progress');
       return;
     }
 
     setGenerating(true);
-    console.log('🚀 Starting controlled quiz generation...');
+    console.log('🚀 Starting quiz generation...');
 
     try {
-      // Double-check for existing quizzes before generation
+      // Double-check for existing quizzes
       const { data: existingCheck } = await supabase
         .from('quizzes')
         .select('id')
@@ -190,7 +168,6 @@ const Quiz = () => {
       
       // Reload quizzes after successful generation
       setQuizzes(data.questoes);
-      setHasCheckedData(false); // Force data reload
       
     } catch (error) {
       console.error('❌ Quiz generation error:', error);
@@ -213,9 +190,9 @@ const Quiz = () => {
     navigate('/quiz-history');
   };
 
-  // Show loading while initial data loads
-  if (isLoading || !hasCheckedData) {
-    console.log('⏳ Showing initial loading state');
+  // Show loading while data loads
+  if (isLoading) {
+    console.log('⏳ Showing loading state');
     return (
       <QuizLoader 
         message="🔍 Carregando dados do quiz..."

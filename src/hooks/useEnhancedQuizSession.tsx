@@ -20,30 +20,30 @@ export const useEnhancedQuizSession = () => {
 
   const startNewSession = async (resumoId: string, resumoContent: string, questoes: any[]) => {
     try {
-      console.log('🚀 Starting bulletproof quiz session:', { resumoId, questionsCount: questoes.length });
+      console.log('🚀 Starting new enhanced quiz session:', { resumoId, questionsCount: questoes.length });
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("Usuário não autenticado");
       }
 
-      // Check for existing active session to prevent duplicates
+      // Check for existing active session
       const { data: existingSession } = await supabase
         .from('quiz_sessions')
         .select('id, status')
         .eq('resumo_id', resumoId)
         .eq('user_id', user.id)
         .in('status', ['in_progress', 'paused'])
-        .single();
+        .maybeSingle();
 
       if (existingSession) {
-        console.log('📋 Found existing session, resuming instead of creating new:', existingSession.id);
+        console.log('📋 Found existing session, resuming:', existingSession.id);
         return await resumeSession(existingSession.id);
       }
 
       const quizTitle = `Quiz - ${questoes.length} questões`;
       
-      // Prepare questions with bulletproof structure
+      // Prepare questions with validation
       const questionsData = questoes.map((q, index) => ({
         index,
         id: q.id || `q_${index}`,
@@ -53,9 +53,9 @@ export const useEnhancedQuizSession = () => {
         explicacao: q.explicacao || 'Explicação não disponível'
       }));
 
-      console.log('🔒 Bulletproof questions structure validated:', questionsData.length, 'questions');
+      console.log('🔒 Creating session with validated data:', questionsData.length, 'questions');
       
-      // Create session with bulletproof data
+      // Create session
       const { data: newSession, error: sessionError } = await supabase
         .from('quiz_sessions')
         .insert({
@@ -77,8 +77,9 @@ export const useEnhancedQuizSession = () => {
         throw sessionError;
       }
 
-      console.log('✅ Bulletproof quiz session created:', newSession.id);
+      console.log('✅ Quiz session created successfully:', newSession.id);
 
+      // Set session data immediately
       setSessionData({
         sessionId: newSession.id,
         resumoId,
@@ -104,7 +105,7 @@ export const useEnhancedQuizSession = () => {
 
   const resumeSession = async (sessionId: string) => {
     try {
-      console.log('🔄 Resuming bulletproof session:', sessionId);
+      console.log('🔄 Resuming enhanced quiz session:', sessionId);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -131,7 +132,7 @@ export const useEnhancedQuizSession = () => {
         throw new Error('Sessão não encontrada ou expirada');
       }
 
-      // Get existing attempts with validation
+      // Get existing attempts
       const { data: attempts, error: attemptsError } = await supabase
         .from('quiz_attempts')
         .select('*')
@@ -143,7 +144,7 @@ export const useEnhancedQuizSession = () => {
         throw attemptsError;
       }
 
-      // Parse questions with bulletproof structure and fallbacks
+      // Parse questions with enhanced validation
       let questoes = [];
       try {
         if (typeof session.questions_data === 'string') {
@@ -152,7 +153,7 @@ export const useEnhancedQuizSession = () => {
           questoes = session.questions_data as any[];
         }
         
-        // Enhanced structure validation with auto-repair
+        // Validate and repair question structure
         questoes = questoes.map((q, index) => ({
           ...q,
           id: q.id || `q_${index}`,
@@ -223,6 +224,7 @@ export const useEnhancedQuizSession = () => {
           .eq('id', sessionId);
       }
 
+      // Set session data immediately
       setSessionData({
         sessionId,
         resumoId: session.resumo_id,
@@ -253,7 +255,7 @@ export const useEnhancedQuizSession = () => {
     }
 
     try {
-      console.log('💾 Saving bulletproof response:', { 
+      console.log('💾 Saving response:', { 
         questionId, 
         selectedAnswer, 
         isCorrect,
@@ -265,7 +267,7 @@ export const useEnhancedQuizSession = () => {
         throw new Error("Usuário não autenticado");
       }
 
-      // Save attempt with bulletproof validation
+      // Save attempt
       const { data: attempt, error: attemptError } = await supabase
         .from('quiz_attempts')
         .insert({
@@ -284,7 +286,7 @@ export const useEnhancedQuizSession = () => {
         throw attemptError;
       }
 
-      console.log('✅ Bulletproof response saved:', attempt);
+      console.log('✅ Response saved successfully:', attempt);
 
       // Update local session data
       setSessionData(prev => prev ? {
@@ -328,7 +330,7 @@ export const useEnhancedQuizSession = () => {
         throw updateError;
       }
 
-      console.log('✅ Bulletproof session completed successfully');
+      console.log('✅ Session completed successfully');
 
       const correctCount = sessionData.respostas.filter(r => r.is_correct).length;
       
