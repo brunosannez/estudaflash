@@ -23,7 +23,7 @@ export function useQuiz(resumoId: string) {
 
   const fetchQuizzes = async () => {
     if (!resumoId) {
-      console.log('❌ No resumoId provided');
+      console.log('❌ No resumoId provided for fetchQuizzes');
       return [];
     }
     
@@ -39,28 +39,39 @@ export function useQuiz(resumoId: string) {
 
       if (error) {
         console.error('❌ Error fetching quizzes:', error);
-        return [];
+        throw error;
       }
 
       if (data && data.length > 0) {
-        console.log('✅ Quizzes found:', data.length);
+        console.log('✅ Raw quizzes from database:', data);
+        
         const formattedQuizzes = data.map((q) => ({
-          ...q,
-          alternativas: Array.isArray(q.alternativas)
+          id: q.id,
+          resumo_id: q.resumo_id,
+          pergunta: q.pergunta,
+          alternativas: Array.isArray(q.alternativas) 
             ? q.alternativas.filter((alt) => typeof alt === "string")
             : [],
+          correta: q.correta,
+          explicacao: q.explicacao,
+          data_criacao: q.data_criacao
         })) as Quiz[];
         
         console.log('📊 Formatted quizzes:', formattedQuizzes);
         setQuizzes(formattedQuizzes);
         return formattedQuizzes;
       } else {
-        console.log('ℹ️ No quizzes found');
+        console.log('ℹ️ No quizzes found for resumo:', resumoId);
         setQuizzes([]);
         return [];
       }
     } catch (error) {
       console.error('❌ Error fetching quizzes:', error);
+      toast({
+        title: "Erro ao carregar quiz",
+        description: "Não foi possível carregar as questões do quiz",
+        variant: "destructive",
+      });
       setQuizzes([]);
       return [];
     } finally {
@@ -70,7 +81,7 @@ export function useQuiz(resumoId: string) {
 
   const generateQuiz = async (texto_resumo: string) => {
     if (!resumoId) {
-      console.error('❌ No resumoId provided');
+      console.error('❌ No resumoId provided for generateQuiz');
       toast({
         title: "Erro",
         description: "ID do resumo não encontrado",
@@ -80,7 +91,7 @@ export function useQuiz(resumoId: string) {
     }
 
     if (!texto_resumo || texto_resumo.trim().length < 50) {
-      console.error('❌ Invalid summary text');
+      console.error('❌ Invalid summary text for quiz generation');
       toast({
         title: "Erro",
         description: "Texto do resumo muito pequeno para gerar quiz",
@@ -96,7 +107,6 @@ export function useQuiz(resumoId: string) {
       const canProceed = await checkCanProceed('quizzes');
       if (!canProceed) {
         console.log('❌ Usage limit reached');
-        setGenerating(false);
         return false;
       }
 
@@ -105,7 +115,7 @@ export function useQuiz(resumoId: string) {
         throw new Error('User not authenticated');
       }
 
-      console.log('🚀 Calling quiz generation function...');
+      console.log('🚀 Calling quiz generation function for resumo:', resumoId);
       
       const { data, error } = await supabase.functions.invoke("generate-quiz", {
         body: { 
@@ -126,16 +136,18 @@ export function useQuiz(resumoId: string) {
         throw new Error(errorMessage);
       }
       
+      console.log('✅ Quiz generated successfully:', data);
+      
       // Increment usage after success
       await incrementUsage('quizzes');
-      console.log('✅ Quiz generated successfully');
       
-      // Refresh quizzes
-      await fetchQuizzes();
+      // Refresh quizzes immediately after generation
+      const newQuizzes = await fetchQuizzes();
+      console.log('🔄 Refreshed quizzes after generation:', newQuizzes.length);
       
       toast({
         title: "✅ Quiz gerado!",
-        description: "Quiz criado com sucesso. Você pode começar a responder agora!",
+        description: `Quiz criado com sucesso com ${newQuizzes.length} questões!`,
       });
       
       return true;
@@ -161,7 +173,7 @@ export function useQuiz(resumoId: string) {
       return { acertou: false, explicacao: '' };
     }
 
-    console.log('🎯 Quiz found:', {
+    console.log('🎯 Quiz found for answer submission:', {
       id: quiz.id,
       pergunta: quiz.pergunta,
       alternativas: quiz.alternativas,

@@ -24,24 +24,49 @@ serve(async (req) => {
     const { resumo_id, texto_resumo, userId } = await req.json();
 
     console.log('🎯 Generating quiz for resumo:', resumo_id);
+    console.log('📄 Content length:', texto_resumo?.length);
 
-    // Usar OpenAI para gerar quiz
+    if (!resumo_id || !texto_resumo || !userId) {
+      throw new Error('Parâmetros obrigatórios não fornecidos');
+    }
+
+    // Verificar se já existe quiz para este resumo
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: existingQuizzes } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('resumo_id', resumo_id);
+
+    if (existingQuizzes && existingQuizzes.length > 0) {
+      console.log('ℹ️ Quiz already exists for this resumo');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Quiz já existe para este resumo',
+        existing: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Gerar quiz usando OpenAI
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('🚀 Calling OpenAI to generate quiz...');
     const quizzes = await generateQuizWithOpenAI(texto_resumo, openaiKey);
 
     if (!quizzes || quizzes.length === 0) {
-      throw new Error('Nenhum quiz foi gerado');
+      throw new Error('Nenhum quiz foi gerado pela IA');
     }
 
-    // Salvar no Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Generated', quizzes.length, 'quiz questions');
 
+    // Salvar no Supabase
     const quizData = quizzes.map(quiz => ({
       resumo_id,
       pergunta: quiz.pergunta,
@@ -50,21 +75,23 @@ serve(async (req) => {
       explicacao: quiz.explicacao
     }));
 
+    console.log('💾 Saving quiz to database...');
     const { data, error } = await supabase
       .from('quizzes')
       .insert(quizData)
       .select();
 
     if (error) {
-      console.error('Error saving to database:', error);
-      throw error;
+      console.error('❌ Error saving to database:', error);
+      throw new Error(`Erro ao salvar no banco: ${error.message}`);
     }
 
-    console.log('✅ Quiz saved successfully, generated', data.length, 'questions');
+    console.log('✅ Quiz saved successfully:', data?.length, 'questions');
 
     return new Response(JSON.stringify({ 
       success: true, 
-      quizzes: data 
+      quizzes: data,
+      count: data?.length || 0
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -178,7 +205,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       quiz.explicacao
     );
     
-    console.log('✅ Generated', validQuizzes.length, 'valid quizzes');
+    console.log('✅ Generated', validQuizzes.length, 'valid quizzes from', quizzes.length, 'total');
     return validQuizzes;
     
   } catch (parseError) {
