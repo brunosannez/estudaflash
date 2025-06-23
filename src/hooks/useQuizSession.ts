@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { UsageIncrementService } from "@/services/usageIncrementService";
 
 interface QuizSessionData {
   resumoId: string;
@@ -72,8 +73,8 @@ export const useQuizSession = () => {
         completion_time_seconds: completionTime
       });
 
-      // Salvar sessão no banco
-      const { data: sessionRecord, error } = await supabase
+      // Salvar sessão no banco em uma transação
+      const { data: sessionRecord, error: sessionError } = await supabase
         .from('quiz_sessions')
         .insert({
           user_id: user.id,
@@ -87,12 +88,21 @@ export const useQuizSession = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Error saving quiz session:', error);
-        throw error;
+      if (sessionError) {
+        console.error('❌ Error saving quiz session:', sessionError);
+        throw sessionError;
       }
 
       console.log('✅ Quiz session saved successfully:', sessionRecord);
+
+      // Incrementar contador de uso após salvar com sucesso
+      try {
+        await UsageIncrementService.incrementUsage(user.id, 'quizzes');
+        console.log('✅ Usage counter incremented successfully');
+      } catch (usageError) {
+        console.error('⚠️ Warning: Failed to increment usage counter:', usageError);
+        // Não falhar a operação principal se o incremento falhar
+      }
 
       // Resetar dados da sessão
       setSessionData(null);

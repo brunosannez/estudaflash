@@ -18,6 +18,11 @@ const QuizHistory = () => {
     navigate(`/quiz/${resumoId}`);
   };
 
+  const handleViewQuiz = (quiz: any) => {
+    console.log('👁️ Visualizando quiz:', quiz.id);
+    navigate(`/quiz-history/${quiz.id}/view`);
+  };
+
   const handleGoBack = () => navigate('/');
   
   // Corrigir navegação do botão "Criar Quiz"
@@ -65,7 +70,7 @@ const QuizHistory = () => {
               <Trophy className="h-8 w-8 text-purple-600" />
               Histórico de Quizzes
             </h1>
-            <p className="text-gray-600">Veja seu progresso e refaça seus quizzes favoritos!</p>
+            <p className="text-gray-600">Veja seu progresso, visualize e refaça seus quizzes!</p>
           </div>
         </div>
 
@@ -116,6 +121,7 @@ const QuizHistory = () => {
                   <QuizHistoryItem
                     quiz={quiz}
                     onRefazerQuiz={handleRefazerQuiz}
+                    onViewQuiz={handleViewQuiz}
                     onDelete={handleQuizDeleted}
                   />
                 </div>
