@@ -51,6 +51,7 @@ export function useQuiz(resumoId: string) {
             : [],
         })) as Quiz[];
         
+        console.log('📊 Formatted quizzes:', formattedQuizzes);
         setQuizzes(formattedQuizzes);
         return formattedQuizzes;
       } else {
@@ -152,10 +153,29 @@ export function useQuiz(resumoId: string) {
   };
 
   const enviarResposta = async (quizId: string, resposta_selecionada: number) => {
+    console.log('📝 Enviando resposta:', { quizId, resposta_selecionada });
+    
     const quiz = quizzes.find((q) => q.id === quizId);
-    if (!quiz) return { acertou: false, explicacao: '' };
+    if (!quiz) {
+      console.error('❌ Quiz not found:', quizId);
+      return { acertou: false, explicacao: '' };
+    }
+
+    console.log('🎯 Quiz found:', {
+      id: quiz.id,
+      pergunta: quiz.pergunta,
+      alternativas: quiz.alternativas,
+      correta: quiz.correta,
+      resposta_selecionada
+    });
     
     const acertou = resposta_selecionada === quiz.correta;
+    console.log('✅ Answer verification:', {
+      resposta_selecionada,
+      correta: quiz.correta,
+      acertou
+    });
+
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -167,6 +187,7 @@ export function useQuiz(resumoId: string) {
     }
     
     try {
+      console.log('💾 Saving answer to database...');
       const { error } = await supabase
         .from("quiz_respostas")
         .insert({
@@ -177,12 +198,14 @@ export function useQuiz(resumoId: string) {
         });
       
       if (error) {
-        console.error("Error saving answer:", error);
+        console.error("❌ Error saving answer:", error);
+      } else {
+        console.log("✅ Answer saved successfully");
       }
       
       return { acertou, explicacao: quiz.explicacao };
     } catch (error) {
-      console.error("Error saving answer:", error);
+      console.error("❌ Error saving answer:", error);
       return { acertou, explicacao: quiz.explicacao };
     }
   };

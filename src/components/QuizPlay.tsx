@@ -33,20 +33,45 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const currentQuestion = quiz.questoes[currentIndex];
   const isLastQuestion = currentIndex === quiz.questoes.length - 1;
 
+  console.log('🎯 Current question:', {
+    index: currentIndex,
+    pergunta: currentQuestion?.pergunta,
+    alternativas: currentQuestion?.alternativas,
+    correta: currentQuestion?.correta,
+    selectedAnswer
+  });
+
   const handleAnswerSelect = (answerIndex: number) => {
     if (showResult) return;
+    console.log('📝 Answer selected:', answerIndex);
     setSelectedAnswer(answerIndex);
   };
 
   const handleConfirmAnswer = async () => {
     if (selectedAnswer === null) return;
 
+    console.log('✅ Confirming answer:', {
+      selectedAnswer,
+      correctAnswer: currentQuestion.correta,
+      isCorrect: selectedAnswer === currentQuestion.correta
+    });
+
+    // Verificar resposta localmente primeiro
+    const localIsCorrect = selectedAnswer === currentQuestion.correta;
+    console.log('🔍 Local verification:', localIsCorrect);
+
     const result = await enviarResposta(currentQuestion.id, selectedAnswer);
-    setIsCorrect(result.acertou);
+    console.log('📊 Server response:', result);
+    
+    // Usar verificação local como fonte da verdade
+    setIsCorrect(localIsCorrect);
     setShowResult(true);
     
-    if (result.acertou) {
+    if (localIsCorrect) {
       setScore(score + 1);
+      console.log('🎉 Correct answer! New score:', score + 1);
+    } else {
+      console.log('❌ Incorrect answer. Score remains:', score);
     }
   };
 
@@ -57,9 +82,11 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
         correctAnswers: score,
         accuracy: Math.round((score / quiz.questoes.length) * 100)
       };
+      console.log('🏆 Quiz completed:', finalResult);
       setGameFinished(true);
       onComplete(finalResult);
     } else {
+      console.log('➡️ Moving to next question');
       setCurrentIndex(currentIndex + 1);
       setSelectedAnswer(null);
       setShowResult(false);
