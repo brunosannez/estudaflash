@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
-import { useQuiz } from '@/hooks/useQuiz';
 import { useMindMap } from '@/hooks/useMindMap';
 import { toast } from 'sonner';
 import ResumoLoadingState from '@/components/resumo/ResumoLoadingState';
@@ -15,7 +14,6 @@ const Resumo = () => {
   const navigate = useNavigate();
   const { getResumoById } = useSummary();
   const { generateAutoFlashcards, isGenerating: isGeneratingFlashcards } = useAutoFlashcards();
-  const { generateQuiz, loading: isGeneratingQuiz } = useQuiz(id || '');
   const { generateMindMap, getMindMapByResumoId, loading: isGeneratingMindMap } = useMindMap();
   
   const [resumo, setResumo] = useState<any>(null);
@@ -23,8 +21,9 @@ const Resumo = () => {
   const [error, setError] = useState<string | null>(null);
   const [existingMindMap, setExistingMindMap] = useState<any>(null);
   const [mindMapLoading, setMindMapLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  // Carregar resumo
+  // Load summary
   useEffect(() => {
     if (!id) {
       setError('ID do resumo não fornecido');
@@ -35,24 +34,27 @@ const Resumo = () => {
     let isMounted = true;
 
     const fetchResumo = async () => {
+      if (initialized) return; // Prevent re-fetching
+      
       try {
         setLoading(true);
-        console.log('📖 Carregando resumo com ID:', id);
+        console.log('📖 Loading summary with ID:', id);
         const data = await getResumoById(id);
         
         if (isMounted) {
           if (data) {
-            console.log('✅ Resumo carregado:', data);
+            console.log('✅ Summary loaded:', data.id);
             setResumo(data);
             setError(null);
+            setInitialized(true);
           } else {
-            console.warn('⚠️ Resumo não encontrado');
+            console.warn('⚠️ Summary not found');
             setError('Resumo não encontrado');
           }
         }
       } catch (err) {
         if (isMounted) {
-          console.error('❌ Erro ao carregar resumo:', err);
+          console.error('❌ Error loading summary:', err);
           setError('Erro ao carregar resumo');
         }
       } finally {
@@ -67,27 +69,27 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, getResumoById]);
+  }, [id, getResumoById, initialized]);
 
-  // Carregar mapa mental existente
+  // Load existing mind map
   useEffect(() => {
-    if (!id) return;
+    if (!id || !initialized) return;
 
     let isMounted = true;
 
     const fetchMindMap = async () => {
       try {
         setMindMapLoading(true);
-        console.log('🧠 Verificando mapa mental existente...');
+        console.log('🧠 Checking existing mind map...');
         const mindMap = await getMindMapByResumoId(id);
         
         if (isMounted) {
           setExistingMindMap(mindMap);
-          console.log(mindMap ? '✅ Mapa mental encontrado' : 'ℹ️ Nenhum mapa mental encontrado');
+          console.log(mindMap ? '✅ Mind map found' : 'ℹ️ No mind map found');
         }
       } catch (err) {
         if (isMounted) {
-          console.error('❌ Erro ao buscar mapa mental:', err);
+          console.error('❌ Error fetching mind map:', err);
         }
       } finally {
         if (isMounted) {
@@ -101,7 +103,7 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, getMindMapByResumoId]);
+  }, [id, getMindMapByResumoId, initialized]);
 
   const handleGenerateFlashcards = async () => {
     if (!resumo?.id) return;
@@ -110,23 +112,22 @@ const Resumo = () => {
       await generateAutoFlashcards(resumo.id, resumo.resumo_gerado);
       navigate('/my-flashcards');
     } catch (error) {
-      console.error('Erro ao gerar flashcards:', error);
+      console.error('Error generating flashcards:', error);
     }
   };
 
   const handleGenerateQuiz = async () => {
     if (!resumo?.id) {
-      console.error('❌ ID do resumo não disponível');
+      console.error('❌ Summary ID not available');
       toast.error('ID do resumo não disponível');
       return;
     }
     
     try {
-      console.log('🚀 Navegando para página do quiz:', resumo.id);
-      // Navegar diretamente para a página do quiz
+      console.log('🚀 Navigating to quiz page:', resumo.id);
       navigate(`/quiz/${resumo.id}`);
     } catch (error) {
-      console.error('❌ Erro ao navegar para quiz:', error);
+      console.error('❌ Error navigating to quiz:', error);
       toast.error('Erro ao acessar quiz');
     }
   };
@@ -140,7 +141,7 @@ const Resumo = () => {
         navigate(`/mind-map/${mindMap.id}`);
       }
     } catch (error) {
-      console.error('Erro ao gerar mapa mental:', error);
+      console.error('Error generating mind map:', error);
     }
   };
 
@@ -167,7 +168,7 @@ const Resumo = () => {
       existingMindMap={existingMindMap}
       mindMapLoading={mindMapLoading}
       isGeneratingFlashcards={isGeneratingFlashcards}
-      isGeneratingQuiz={isGeneratingQuiz}
+      isGeneratingQuiz={false}
       isGeneratingMindMap={isGeneratingMindMap}
       onGenerateFlashcards={handleGenerateFlashcards}
       onGenerateQuiz={handleGenerateQuiz}

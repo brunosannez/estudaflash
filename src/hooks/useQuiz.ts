@@ -17,17 +17,19 @@ export interface Quiz {
 export function useQuiz(resumoId: string) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
   const { checkCanProceed, incrementUsage } = useUsageLimit();
 
   const fetchQuizzes = async () => {
     if (!resumoId) {
-      console.log('⚠️ Nenhum resumoId fornecido');
+      console.log('❌ No resumoId provided');
       return [];
     }
     
     try {
-      console.log('🔍 Buscando quizzes para resumo:', resumoId);
+      setLoading(true);
+      console.log('🔍 Fetching quizzes for resumo:', resumoId);
       
       const { data, error } = await supabase
         .from("quizzes")
@@ -36,12 +38,12 @@ export function useQuiz(resumoId: string) {
         .order("data_criacao", { ascending: true });
 
       if (error) {
-        console.error('❌ Erro ao buscar quizzes:', error);
+        console.error('❌ Error fetching quizzes:', error);
         return [];
       }
 
       if (data && data.length > 0) {
-        console.log('✅ Quizzes encontrados:', data.length);
+        console.log('✅ Quizzes found:', data.length);
         const formattedQuizzes = data.map((q) => ({
           ...q,
           alternativas: Array.isArray(q.alternativas)
@@ -52,78 +54,100 @@ export function useQuiz(resumoId: string) {
         setQuizzes(formattedQuizzes);
         return formattedQuizzes;
       } else {
-        console.log('ℹ️ Nenhum quiz encontrado');
+        console.log('ℹ️ No quizzes found');
         setQuizzes([]);
         return [];
       }
     } catch (error) {
-      console.error('❌ Erro ao buscar quizzes:', error);
+      console.error('❌ Error fetching quizzes:', error);
       setQuizzes([]);
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
   const generateQuiz = async (texto_resumo: string) => {
     if (!resumoId) {
-      console.error('❌ Nenhum resumoId fornecido');
+      console.error('❌ No resumoId provided');
+      toast({
+        title: "Erro",
+        description: "ID do resumo não encontrado",
+        variant: "destructive",
+      });
       return false;
     }
 
-    setLoading(true);
+    if (!texto_resumo || texto_resumo.trim().length < 50) {
+      console.error('❌ Invalid summary text');
+      toast({
+        title: "Erro",
+        description: "Texto do resumo muito pequeno para gerar quiz",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setGenerating(true);
     
-    // Verificar limite de uso
-    const canProceed = await checkCanProceed('quizzes');
-    if (!canProceed) {
-      console.log('❌ Limite de uso atingido');
-      setLoading(false);
-      return false;
-    }
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Usuário não autenticado');
+      // Check usage limits
+      const canProceed = await checkCanProceed('quizzes');
+      if (!canProceed) {
+        console.log('❌ Usage limit reached');
+        setGenerating(false);
+        return false;
       }
 
-      console.log('🚀 Chamando função de geração de quiz...');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('🚀 Calling quiz generation function...');
+      
       const { data, error } = await supabase.functions.invoke("generate-quiz", {
         body: { 
           resumo_id: resumoId, 
-          texto_resumo,
+          texto_resumo: texto_resumo.trim(),
           userId: user.id
         },
       });
       
       if (error) {
-        console.error('❌ Erro na função:', error);
-        throw error;
+        console.error('❌ Function error:', error);
+        throw new Error(error.message || 'Failed to generate quiz');
       }
       
       if (!data || !data.success) {
-        const errorMessage = data?.error || 'Erro desconhecido';
-        toast({
-          title: "Erro ao gerar quiz",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return false;
+        const errorMessage = data?.error || 'Unknown error occurred';
+        console.error('❌ Generation failed:', errorMessage);
+        throw new Error(errorMessage);
       }
       
-      // Incrementar uso apenas após sucesso
+      // Increment usage after success
       await incrementUsage('quizzes');
-      console.log('✅ Quiz gerado com sucesso');
+      console.log('✅ Quiz generated successfully');
+      
+      // Refresh quizzes
+      await fetchQuizzes();
+      
+      toast({
+        title: "✅ Quiz gerado!",
+        description: "Quiz criado com sucesso. Você pode começar a responder agora!",
+      });
       
       return true;
     } catch (error) {
-      console.error('❌ Erro ao gerar quiz:', error);
+      console.error('❌ Error generating quiz:', error);
       toast({
         title: "Erro ao gerar quiz",
-        description: error.message || "Erro inesperado",
+        description: error.message || "Erro inesperado ao gerar quiz",
         variant: "destructive",
       });
       return false;
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
   };
 
@@ -153,12 +177,12 @@ export function useQuiz(resumoId: string) {
         });
       
       if (error) {
-        console.error("Erro ao salvar resposta:", error);
+        console.error("Error saving answer:", error);
       }
       
       return { acertou, explicacao: quiz.explicacao };
     } catch (error) {
-      console.error("Erro ao salvar resposta:", error);
+      console.error("Error saving answer:", error);
       return { acertou, explicacao: quiz.explicacao };
     }
   };
@@ -166,6 +190,7 @@ export function useQuiz(resumoId: string) {
   return {
     quizzes,
     loading,
+    generating,
     fetchQuizzes,
     generateQuiz,
     enviarResposta,

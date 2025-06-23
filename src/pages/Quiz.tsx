@@ -15,54 +15,59 @@ const Quiz = () => {
   
   const [resumo, setResumo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   
   const { getResumoById } = useSummary();
-  const { quizzes, loading: quizLoading, fetchQuizzes, generateQuiz } = useQuiz(id || '');
+  const { quizzes, loading: quizLoading, generating, fetchQuizzes, generateQuiz } = useQuiz(id || '');
 
-  console.log('📍 Quiz page loaded with resumoId:', id);
+  console.log('📍 Quiz page - ID:', id);
 
-  // Carregar resumo e quiz
+  // Load summary and check for existing quiz
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
-        console.error('❌ ID do resumo não fornecido');
+        console.error('❌ No summary ID provided');
+        toast.error('ID do resumo não fornecido');
         navigate('/my-summaries');
         return;
       }
 
       try {
         setIsLoading(true);
-        console.log('🔍 Carregando resumo:', id);
+        console.log('🔍 Loading summary:', id);
         
-        // Carregar resumo
+        // Load summary
         const resumoData = await getResumoById(id);
         
         if (!resumoData) {
-          console.error('❌ Resumo não encontrado');
+          console.error('❌ Summary not found');
           toast.error('Resumo não encontrado');
           navigate('/my-summaries');
           return;
         }
         
-        console.log('📄 Resumo carregado:', resumoData);
+        console.log('📄 Summary loaded:', resumoData.id);
         setResumo(resumoData);
 
-        // Buscar quiz existente
-        console.log('🎯 Verificando quiz existente...');
+        // Check for existing quiz
+        console.log('🎯 Checking for existing quiz...');
         await fetchQuizzes();
         
+        setInitialized(true);
+        
       } catch (error) {
-        console.error('❌ Erro ao carregar dados:', error);
-        toast.error('Erro ao carregar resumo');
+        console.error('❌ Error loading data:', error);
+        toast.error('Erro ao carregar dados');
         navigate('/my-summaries');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, [id, getResumoById, fetchQuizzes, navigate]);
+    if (!initialized) {
+      loadData();
+    }
+  }, [id, getResumoById, fetchQuizzes, navigate, initialized]);
 
   const handleGenerateQuiz = async () => {
     if (!resumo?.resumo_gerado) {
@@ -70,45 +75,39 @@ const Quiz = () => {
       return;
     }
 
-    setIsGenerating(true);
-    try {
-      console.log('🚀 Gerando quiz...');
-      const success = await generateQuiz(resumo.resumo_gerado);
-      
-      if (success) {
-        console.log('✅ Quiz gerado, recarregando...');
-        // Aguardar um pouco e recarregar
-        setTimeout(async () => {
-          await fetchQuizzes();
-          setIsGenerating(false);
-          toast.success('Quiz gerado com sucesso!');
-        }, 2000);
-      } else {
-        toast.error('Erro ao gerar quiz');
-        setIsGenerating(false);
-      }
-    } catch (error) {
-      console.error('❌ Erro ao gerar quiz:', error);
-      toast.error('Erro ao gerar quiz');
-      setIsGenerating(false);
+    console.log('🚀 Generating quiz...');
+    const success = await generateQuiz(resumo.resumo_gerado);
+    
+    if (success) {
+      console.log('✅ Quiz generated successfully');
+      toast.success('Quiz gerado com sucesso!');
     }
   };
 
   const handleQuizComplete = (result: any) => {
-    console.log('🏆 Quiz completado:', result);
-    toast.success('Quiz concluído!');
+    console.log('🏆 Quiz completed:', result);
+    toast.success(`Quiz concluído! Você acertou ${result.correctAnswers} de ${result.totalQuestions} questões.`);
+  };
+
+  const handleBack = () => {
+    if (id) {
+      navigate(`/resumo/${id}`);
+    } else {
+      navigate('/my-summaries');
+    }
   };
 
   console.log('🎯 Quiz state:', { 
     hasQuizzes: quizzes.length > 0, 
     questionsCount: quizzes.length,
     isLoading, 
-    isGenerating,
-    quizLoading
+    generating,
+    quizLoading,
+    initialized
   });
 
   // Loading state
-  if (isLoading || quizLoading) {
+  if (isLoading || !initialized) {
     console.log('⏳ Showing loading state');
     return (
       <QuizLoader 
@@ -119,7 +118,7 @@ const Quiz = () => {
   }
 
   // Generating state
-  if (isGenerating) {
+  if (generating) {
     console.log('🔄 Showing generating state');
     return (
       <QuizLoader 
@@ -151,7 +150,8 @@ const Quiz = () => {
     <QuizGenerator 
       resumoId={id}
       onGenerateQuiz={handleGenerateQuiz}
-      isGenerating={isGenerating}
+      isGenerating={generating}
+      onBack={handleBack}
     />
   );
 };

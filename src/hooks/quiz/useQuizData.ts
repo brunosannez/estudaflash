@@ -1,17 +1,15 @@
-
-// Este arquivo não é mais necessário - funcionalidade movida para useQuiz.ts
-// Mantendo por compatibilidade, mas redirecionando para o hook principal
+// This file is deprecated - functionality moved to useQuiz.ts
+// Keeping for compatibility only
 
 import { useQuiz } from '@/hooks/useQuiz';
 import { useSummary } from '@/hooks/useSummary';
-import { useNavigate } from 'react-router-dom';
 
 export const useQuizData = (resumoId: string | undefined) => {
-  const navigate = useNavigate();
   const { getResumoById } = useSummary();
   const quiz = useQuiz(resumoId || '');
 
-  // Compatibilidade com a interface anterior
+  console.log('⚠️ useQuizData is deprecated, use useQuiz directly');
+
   return {
     resumo: null,
     quizData: quiz.quizzes.length > 0 ? {
@@ -20,9 +18,9 @@ export const useQuizData = (resumoId: string | undefined) => {
       titulo: `Quiz - ${quiz.quizzes.length} questões`
     } : null,
     isLoading: quiz.loading,
-    isGenerating: quiz.loading,
+    isGenerating: quiz.generating,
     handleGenerateQuiz: async () => {
-      if (!resumoId) return;
+      if (!resumoId) return false;
       const resumoData = await getResumoById(resumoId);
       if (resumoData?.resumo_gerado) {
         return await quiz.generateQuiz(resumoData.resumo_gerado);
@@ -30,7 +28,7 @@ export const useQuizData = (resumoId: string | undefined) => {
       return false;
     },
     handleQuizComplete: (result: any) => {
-      console.log('🏆 Quiz completado:', result);
+      console.log('🏆 Quiz completed:', result);
     }
   };
 };
