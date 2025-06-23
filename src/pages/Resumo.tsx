@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
@@ -23,7 +24,7 @@ const Resumo = () => {
   const [existingMindMap, setExistingMindMap] = useState<any>(null);
   const [mindMapLoading, setMindMapLoading] = useState(false);
 
-  // Carregar resumo - usando apenas 'id' como dependência
+  // Carregar resumo
   useEffect(() => {
     if (!id) {
       setError('ID do resumo não fornecido');
@@ -66,9 +67,9 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]); // APENAS 'id' como dependência
+  }, [id, getResumoById]);
 
-  // Carregar mapa mental existente - usando apenas 'id' como dependência
+  // Carregar mapa mental existente
   useEffect(() => {
     if (!id) return;
 
@@ -100,7 +101,7 @@ const Resumo = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]); // APENAS 'id' como dependência
+  }, [id, getMindMapByResumoId]);
 
   const handleGenerateFlashcards = async () => {
     if (!resumo?.id) return;
@@ -114,28 +115,19 @@ const Resumo = () => {
   };
 
   const handleGenerateQuiz = async () => {
-    if (!resumo?.resumo_gerado || !resumo?.id) {
-      console.error('❌ Dados do resumo não disponíveis');
-      toast.error('Dados do resumo não disponíveis');
+    if (!resumo?.id) {
+      console.error('❌ ID do resumo não disponível');
+      toast.error('ID do resumo não disponível');
       return;
     }
     
     try {
-      console.log('🚀 Iniciando geração de quiz para resumo:', resumo.id);
-      const success = await generateQuiz(resumo.resumo_gerado);
-      
-      if (success) {
-        console.log('✅ Quiz gerado com sucesso, navegando para quiz');
-        toast.success('Quiz gerado com sucesso!');
-        // Navegar para a página do quiz
-        navigate(`/quiz/${resumo.id}`);
-      } else {
-        console.error('❌ Falha ao gerar quiz');
-        toast.error('Erro ao gerar quiz');
-      }
+      console.log('🚀 Navegando para página do quiz:', resumo.id);
+      // Navegar diretamente para a página do quiz
+      navigate(`/quiz/${resumo.id}`);
     } catch (error) {
-      console.error('❌ Erro ao gerar quiz:', error);
-      toast.error('Erro ao gerar quiz');
+      console.error('❌ Erro ao navegar para quiz:', error);
+      toast.error('Erro ao acessar quiz');
     }
   };
 

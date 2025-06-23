@@ -47,7 +47,7 @@ const QuizGenerator = ({ resumoId, onGenerateQuiz, isGenerating }: QuizGenerator
                 className="w-full"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
+                Voltar ao Resumo
               </Button>
             </div>
           </CardContent>
