@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -29,7 +29,7 @@ export const useMindMap = () => {
   const [loading, setLoading] = useState(false);
   const [mindMaps, setMindMaps] = useState<MindMap[]>([]);
 
-  const generateMindMap = async (resumoId: string, content: string): Promise<MindMap | null> => {
+  const generateMindMap = useCallback(async (resumoId: string, content: string): Promise<MindMap | null> => {
     try {
       setLoading(true);
       console.log('🧠 Iniciando geração de mapa mental...');
@@ -87,8 +87,6 @@ export const useMindMap = () => {
 
       console.log('✅ Mapa mental gerado e salvo com sucesso');
       
-      toast.success('Mapa mental gerado com sucesso!');
-
       return {
         ...savedMindMap,
         content: savedMindMap.content as unknown as MindMapData
@@ -112,9 +110,9 @@ export const useMindMap = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getMindMapByResumoId = async (resumoId: string): Promise<MindMap | null> => {
+  const getMindMapByResumoId = useCallback(async (resumoId: string): Promise<MindMap | null> => {
     try {
       console.log('🔍 Buscando mapa mental para resumo:', resumoId);
       
@@ -124,9 +122,9 @@ export const useMindMap = () => {
         .eq('resumo_id', resumoId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('❌ Erro ao buscar mapa mental:', error);
         return null;
       }
@@ -145,9 +143,9 @@ export const useMindMap = () => {
       console.error('❌ Erro ao buscar mapa mental:', error);
       return null;
     }
-  };
+  }, []);
 
-  const getMindMapById = async (id: string): Promise<MindMap | null> => {
+  const getMindMapById = useCallback(async (id: string): Promise<MindMap | null> => {
     try {
       const { data, error } = await supabase
         .from('mind_maps')
@@ -168,7 +166,7 @@ export const useMindMap = () => {
       console.error('❌ Erro ao buscar mapa mental por ID:', error);
       return null;
     }
-  };
+  }, []);
 
   return {
     loading,

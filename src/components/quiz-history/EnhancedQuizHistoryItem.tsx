@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Eye, Play, Pause, CheckCircle, Clock, Brain, Trash2, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 interface EnhancedQuizHistoryItemProps {
   quiz: {
@@ -67,14 +67,16 @@ const EnhancedQuizHistoryItem = ({
     }
   };
 
-  const handleGenerateMindMap = async () => {
+  const handleGenerateMindMap = useCallback(async () => {
+    if (isGeneratingMindMap) return;
+    
     setIsGeneratingMindMap(true);
     try {
       await onGenerateMindMap(quiz.resumo_id, quiz.resumo_titulo);
     } finally {
       setIsGeneratingMindMap(false);
     }
-  };
+  }, [onGenerateMindMap, quiz.resumo_id, quiz.resumo_titulo, isGeneratingMindMap]);
 
   const statusInfo = getStatusInfo();
   const accuracy = quiz.total_questions > 0 ? Math.round((quiz.correct_answers / quiz.total_questions) * 100) : 0;
