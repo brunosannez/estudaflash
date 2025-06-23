@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,13 +76,14 @@ const QuizHistoryView = () => {
                           data.resumos?.uploads?.arquivo_original_nome || 
                           'Resumo sem título';
 
-      // Parse questions_data safely
+      // Parse questions_data safely with proper type handling
       let questionsData: QuizQuestion[] = [];
       try {
         if (typeof data.questions_data === 'string') {
           questionsData = JSON.parse(data.questions_data);
         } else if (Array.isArray(data.questions_data)) {
-          questionsData = data.questions_data as QuizQuestion[];
+          // Convert from Json type to QuizQuestion[] through unknown
+          questionsData = (data.questions_data as unknown) as QuizQuestion[];
         } else {
           console.warn('Invalid questions_data format:', data.questions_data);
           questionsData = [];
