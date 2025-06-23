@@ -1,7 +1,9 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Target, Trophy, Zap, Clock } from "lucide-react";
+import { Calendar, Target, Trophy, Zap, Clock, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface QuizHistoryItemProps {
   quiz: {
@@ -15,10 +17,11 @@ interface QuizHistoryItemProps {
     tempo_conclusao: number;
   };
   onRefazerQuiz: (resumoId: string) => void;
+  onDelete?: () => void;
 }
 
-const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
-  const percentage = Math.round((quiz.acertos / quiz.total_perguntas) * 100);
+const QuizHistoryItem = ({ quiz, onRefazerQuiz, onDelete }: QuizHistoryItemProps) => {
+  const percentage = quiz.total_perguntas > 0 ? Math.round((quiz.acertos / quiz.total_perguntas) * 100) : 0;
 
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 90) return "from-yellow-400 to-orange-500";
@@ -41,6 +44,37 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`;
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!confirm('Tem certeza que deseja excluir este quiz do histórico?')) {
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting quiz session:', quiz.id);
+      
+      const { error } = await supabase
+        .from('quiz_sessions')
+        .delete()
+        .eq('id', quiz.id);
+
+      if (error) {
+        console.error('❌ Error deleting quiz session:', error);
+        throw error;
+      }
+
+      console.log('✅ Quiz session deleted successfully');
+      toast.success('Quiz excluído do histórico com sucesso!');
+      
+      // Chamar callback se fornecido
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('❌ Error deleting quiz:', error);
+      toast.error('Erro ao excluir quiz do histórico');
+    }
   };
 
   return (
@@ -94,6 +128,15 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz }: QuizHistoryItemProps) => {
             >
               <Zap className="h-4 w-4 mr-2" />
               Refazer Quiz
+            </Button>
+            
+            <Button
+              onClick={handleDeleteQuiz}
+              variant="outline"
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
             </Button>
           </div>
         </div>

@@ -38,13 +38,13 @@ export const useQuizHistory = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('❌ User not authenticated');
+        console.log('❌ User not authenticated for quiz history');
         return;
       }
 
       console.log('🔍 Fetching quiz history for user:', user.id);
 
-      // Buscar histórico de sessões de quiz com informações dos resumos
+      // Buscar sessões de quiz com informações dos resumos
       const { data: sessionsData, error } = await supabase
         .from("quiz_sessions")
         .select(`
@@ -68,28 +68,57 @@ export const useQuizHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("❌ Error fetching quiz history:", error);
+        console.error("❌ Error fetching quiz sessions:", error);
         throw error;
       }
 
-      console.log('📊 Raw quiz sessions data:', sessionsData);
+      console.log('📊 Raw quiz sessions data from database:', {
+        count: sessionsData?.length || 0,
+        data: sessionsData
+      });
+
+      if (!sessionsData || sessionsData.length === 0) {
+        console.log('ℹ️ No quiz sessions found for user');
+        setHistory([]);
+        setStats({
+          totalQuizzes: 0,
+          totalAcertos: 0,
+          totalPerguntas: 0,
+          mediaAcertos: 0
+        });
+        return;
+      }
 
       // Transformar dados para o formato esperado
-      const historyArray: QuizHistoryItem[] = sessionsData?.map(session => ({
-        id: session.id,
-        resumo_titulo: session.resumos?.custom_name || 
-                      session.resumos?.uploads?.arquivo_original_nome || 
-                      session.quiz_title || 
-                      'Resumo sem título',
-        total_perguntas: session.total_questions || 0,
-        acertos: session.correct_answers || 0,
-        data_criacao: session.created_at,
-        resumo_id: session.resumo_id,
-        quiz_titulo: session.quiz_title || `Quiz - ${session.total_questions || 0} questões`,
-        tempo_conclusao: session.completion_time_seconds || 0
-      })) || [];
+      const historyArray: QuizHistoryItem[] = sessionsData.map(session => {
+        const resumoTitulo = session.resumos?.custom_name || 
+                           session.resumos?.uploads?.arquivo_original_nome || 
+                           'Resumo sem título';
+        
+        console.log('🔄 Processing session:', {
+          sessionId: session.id,
+          resumoTitulo,
+          totalQuestions: session.total_questions,
+          correctAnswers: session.correct_answers
+        });
 
-      console.log('✅ Processed quiz history:', historyArray);
+        return {
+          id: session.id,
+          resumo_titulo: resumoTitulo,
+          total_perguntas: session.total_questions || 0,
+          acertos: session.correct_answers || 0,
+          data_criacao: session.created_at,
+          resumo_id: session.resumo_id,
+          quiz_titulo: session.quiz_title || `Quiz - ${session.total_questions || 0} questões`,
+          tempo_conclusao: session.completion_time_seconds || 0
+        };
+      });
+
+      console.log('✅ Processed quiz history:', {
+        totalSessions: historyArray.length,
+        sessions: historyArray
+      });
+      
       setHistory(historyArray);
       
       // Calcular estatísticas gerais
@@ -105,7 +134,7 @@ export const useQuizHistory = () => {
         mediaAcertos
       };
 
-      console.log('📈 Calculated stats:', calculatedStats);
+      console.log('📈 Calculated statistics:', calculatedStats);
       setStats(calculatedStats);
 
     } catch (error) {
@@ -129,11 +158,12 @@ export const useQuizHistory = () => {
 
   // Configurar real-time updates
   useEffect(() => {
+    console.log('🔄 Setting up quiz history with real-time updates');
     fetchQuizHistory();
 
     // Configurar listener para updates em tempo real
     const channel = supabase
-      .channel('quiz-sessions-changes')
+      .channel('quiz-history-changes')
       .on(
         'postgres_changes',
         {
@@ -142,7 +172,7 @@ export const useQuizHistory = () => {
           table: 'quiz_sessions'
         },
         (payload) => {
-          console.log('🔄 Real-time update received:', payload);
+          console.log('🔄 Real-time quiz sessions update received:', payload);
           // Recarregar dados quando houver mudanças
           fetchQuizHistory();
         }
@@ -150,6 +180,7 @@ export const useQuizHistory = () => {
       .subscribe();
 
     return () => {
+      console.log('🧹 Cleaning up quiz history real-time subscription');
       supabase.removeChannel(channel);
     };
   }, []);

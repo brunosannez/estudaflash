@@ -11,14 +11,26 @@ import { ArrowLeft } from 'lucide-react';
 
 const QuizHistory = () => {
   const navigate = useNavigate();
-  const { history, stats, loading } = useQuizHistory();
+  const { history, stats, loading, fetchQuizHistory } = useQuizHistory();
 
   const handleRefazerQuiz = async (resumoId: string) => {
+    console.log('🔄 Refazendo quiz para resumo:', resumoId);
     navigate(`/quiz/${resumoId}`);
   };
 
   const handleGoBack = () => navigate('/');
-  const handleCreateFirstQuiz = () => navigate('/');
+  
+  // Corrigir navegação do botão "Criar Quiz"
+  const handleCreateFirstQuiz = () => {
+    console.log('🚀 Navegando para criar novo quiz');
+    navigate('/my-summaries');
+  };
+
+  // Função para recarregar dados após exclusão
+  const handleQuizDeleted = () => {
+    console.log('🔄 Quiz deleted, refreshing history...');
+    fetchQuizHistory();
+  };
 
   if (loading) {
     return (
@@ -69,30 +81,46 @@ const QuizHistory = () => {
                 🎯 Nenhum quiz encontrado
               </h3>
               <p className="text-gray-600 mb-6 text-lg">
-                Você ainda não fez nenhum quiz. Que tal começar agora?
+                Você ainda não fez nenhum quiz. Que tal começar agora escolhendo um dos seus resumos?
               </p>
               <Button 
                 onClick={handleCreateFirstQuiz}
                 className={`${designColors.buttons.primary} text-white font-bold py-3 px-6 rounded-xl shadow-lg`}
               >
-                ✨ Criar Primeiro Quiz
+                <Sparkles className="h-4 w-4 mr-2" />
+                ✨ Escolher Resumo para Quiz
               </Button>
             </div>
           </div>
         ) : (
-          <div className="grid gap-6">
-            {history.map((quiz, index) => (
-              <div 
-                key={quiz.id} 
-                className={`${designColors.animations.cardHover}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
+          <div className="space-y-4">
+            {/* Botão para criar novo quiz quando já existe histórico */}
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleCreateFirstQuiz}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-2 px-4 rounded-xl"
               >
-                <QuizHistoryItem
-                  quiz={quiz}
-                  onRefazerQuiz={handleRefazerQuiz}
-                />
-              </div>
-            ))}
+                <Sparkles className="h-4 w-4 mr-2" />
+                Criar Novo Quiz
+              </Button>
+            </div>
+            
+            {/* Lista de quizzes */}
+            <div className="grid gap-6">
+              {history.map((quiz, index) => (
+                <div 
+                  key={quiz.id} 
+                  className={`${designColors.animations.cardHover}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <QuizHistoryItem
+                    quiz={quiz}
+                    onRefazerQuiz={handleRefazerQuiz}
+                    onDelete={handleQuizDeleted}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

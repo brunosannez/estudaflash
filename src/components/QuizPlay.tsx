@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuiz } from "@/hooks/useQuiz";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuizSession } from "@/hooks/useQuizSession";
 import { toast } from "sonner";
 import QuizHeader from "@/components/quiz/QuizHeader";
 import QuizQuestion from "@/components/quiz/QuizQuestion";
@@ -24,6 +24,7 @@ interface QuizPlayProps {
 const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const navigate = useNavigate();
   const { enviarResposta } = useQuiz(quiz.resumo_id);
+  const { startSession, addResponse, completeSession } = useQuizSession();
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -31,19 +32,29 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
-  const [startTime] = useState(Date.now());
-  const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [sessionStarted, setSessionStarted] = useState(false);
 
   const currentQuestion = quiz.questoes[currentIndex];
   const isLastQuestion = currentIndex === quiz.questoes.length - 1;
 
-  console.log('🎯 Current question:', {
+  console.log('🎯 QuizPlay - Current state:', {
     index: currentIndex,
     pergunta: currentQuestion?.pergunta,
-    alternativas: currentQuestion?.alternativas,
-    correta: currentQuestion?.correta,
-    selectedAnswer
+    selectedAnswer,
+    score,
+    sessionStarted,
+    gameFinished
   });
+
+  // Inicializar sessão quando o componente carrega
+  React.useEffect(() => {
+    if (!sessionStarted && quiz.questoes.length > 0) {
+      console.log('🚀 Starting quiz session');
+      const resumoContent = quiz.titulo || `Quiz com ${quiz.questoes.length} questões`;
+      startSession(quiz.resumo_id, resumoContent, quiz.questoes);
+      setSessionStarted(true);
+    }
+  }, [quiz, sessionStarted, startSession]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showResult) return;
@@ -60,10 +71,11 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
       isCorrect: selectedAnswer === currentQuestion.correta
     });
 
-    // Verificar resposta localmente primeiro
+    // Verificar resposta localmente
     const localIsCorrect = selectedAnswer === currentQuestion.correta;
     console.log('🔍 Local verification:', localIsCorrect);
 
+    // Enviar resposta para o servidor (para manter compatibilidade)
     const result = await enviarResposta(currentQuestion.id, selectedAnswer);
     console.log('📊 Server response:', result);
     
@@ -71,18 +83,19 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     setIsCorrect(localIsCorrect);
     setShowResult(true);
     
-    // Salvar resposta do usuário para a sessão
-    const answerData = {
+    // Adicionar resposta à sessão
+    const responseData = {
       question_id: currentQuestion.id,
       pergunta: currentQuestion.pergunta,
       alternativas: currentQuestion.alternativas,
       resposta_correta: currentQuestion.correta,
-      resposta_usuario: selectedAnswer,
+      resposta_selecionada: selectedAnswer,
       acertou: localIsCorrect,
       explicacao: currentQuestion.explicacao
     };
     
-    setUserAnswers(prev => [...prev, answerData]);
+    console.log('💾 Adding response to session:', responseData);
+    addResponse(responseData);
     
     if (localIsCorrect) {
       setScore(score + 1);
@@ -92,85 +105,32 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     }
   };
 
-  const saveQuizSession = async (finalScore: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('❌ User not authenticated for saving session');
-        return;
-      }
-
-      const completionTime = Math.floor((Date.now() - startTime) / 1000);
-      
-      console.log('💾 Saving quiz session:', {
-        user_id: user.id,
-        resumo_id: quiz.resumo_id,
-        total_questions: quiz.questoes.length,
-        correct_answers: finalScore,
-        completion_time: completionTime
-      });
-
-      const { data, error } = await supabase
-        .from('quiz_sessions')
-        .insert({
-          user_id: user.id,
-          resumo_id: quiz.resumo_id,
-          quiz_title: quiz.titulo || `Quiz - ${quiz.questoes.length} questões`,
-          total_questions: quiz.questoes.length,
-          correct_answers: finalScore,
-          completion_time_seconds: completionTime,
-          questions_data: userAnswers
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Error saving quiz session:', error);
-        throw error;
-      }
-
-      console.log('✅ Quiz session saved successfully:', data);
-      
-      // Também incrementar o contador de uso
-      const { error: usageError } = await supabase.rpc('log_usage', {
-        target_user_id: user.id,
-        target_action_type: 'quiz',
-        target_credits_used: 1,
-        target_metadata: {
-          resumo_id: quiz.resumo_id,
-          questions_count: quiz.questoes.length,
-          score: finalScore,
-          completion_time: completionTime
-        }
-      });
-
-      if (usageError) {
-        console.error('⚠️ Error logging usage:', usageError);
-      }
-
-      toast.success(`Quiz concluído! Sessão salva com sucesso.`);
-      
-    } catch (error) {
-      console.error('❌ Error saving quiz session:', error);
-      toast.error('Erro ao salvar resultado do quiz');
-    }
-  };
-
   const handleNextQuestion = async () => {
     if (isLastQuestion) {
-      const finalResult = {
-        totalQuestions: quiz.questoes.length,
-        correctAnswers: score,
-        accuracy: Math.round((score / quiz.questoes.length) * 100)
-      };
+      console.log('🏆 Quiz completed, finalizing session...');
       
-      console.log('🏆 Quiz completed:', finalResult);
+      // Completar sessão no banco de dados
+      const sessionResult = await completeSession();
       
-      // Salvar sessão no banco antes de finalizar
-      await saveQuizSession(score);
-      
-      setGameFinished(true);
-      onComplete(finalResult);
+      if (sessionResult) {
+        console.log('✅ Quiz session saved successfully:', sessionResult);
+        
+        const finalResult = {
+          totalQuestions: quiz.questoes.length,
+          correctAnswers: score,
+          accuracy: Math.round((score / quiz.questoes.length) * 100),
+          sessionId: sessionResult.sessionId
+        };
+        
+        console.log('🏆 Quiz completed with final result:', finalResult);
+        toast.success(`Quiz concluído! Você acertou ${score} de ${quiz.questoes.length} questões.`);
+        
+        setGameFinished(true);
+        onComplete(finalResult);
+      } else {
+        console.error('❌ Failed to save quiz session');
+        toast.error('Erro ao salvar resultado do quiz');
+      }
     } else {
       console.log('➡️ Moving to next question');
       setCurrentIndex(currentIndex + 1);
