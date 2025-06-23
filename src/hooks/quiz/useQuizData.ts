@@ -92,31 +92,39 @@ export const useQuizData = (resumoId: string | undefined) => {
       const success = await generateQuiz(resumo.resumo_gerado);
       
       if (success) {
-        console.log('✅ Quiz gerado, recarregando...');
+        console.log('✅ Quiz gerado, recarregando dados...');
         
-        // Wait and reload
+        // Aguardar um pouco e recarregar
         setTimeout(async () => {
-          const newQuizzes = await fetchQuizzes();
-          console.log('🔄 Quizzes recarregados:', newQuizzes);
-          
-          if (newQuizzes && newQuizzes.length > 0) {
-            setQuizData({
-              resumo_id: resumoId,
-              questoes: newQuizzes,
-              titulo: `Quiz - ${newQuizzes.length} questões`
-            });
-            toast.success('Quiz gerado com sucesso!');
-          } else {
+          try {
+            const newQuizzes = await fetchQuizzes();
+            console.log('🔄 Quizzes recarregados:', newQuizzes?.length || 0);
+            
+            if (newQuizzes && newQuizzes.length > 0) {
+              setQuizData({
+                resumo_id: resumoId,
+                questoes: newQuizzes,
+                titulo: `Quiz - ${newQuizzes.length} questões`
+              });
+              toast.success('Quiz gerado com sucesso!');
+            } else {
+              console.error('❌ Nenhum quiz encontrado após geração');
+              toast.error('Quiz gerado mas não foi possível carregá-lo');
+            }
+          } catch (error) {
+            console.error('❌ Erro ao recarregar quiz:', error);
             toast.error('Erro ao carregar quiz gerado');
+          } finally {
+            setIsGenerating(false);
           }
-        }, 1000);
+        }, 2000);
       } else {
         toast.error('Erro ao gerar quiz');
+        setIsGenerating(false);
       }
     } catch (error) {
       console.error('❌ Erro ao gerar quiz:', error);
       toast.error('Erro ao gerar quiz');
-    } finally {
       setIsGenerating(false);
     }
   };

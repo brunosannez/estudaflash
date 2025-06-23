@@ -5,6 +5,7 @@ import { useSummary } from '@/hooks/useSummary';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useMindMap } from '@/hooks/useMindMap';
+import { toast } from 'sonner';
 import ResumoLoadingState from '@/components/resumo/ResumoLoadingState';
 import ResumoErrorState from '@/components/resumo/ResumoErrorState';
 import ResumoPageContent from '@/components/resumo/ResumoPageContent';
@@ -114,15 +115,30 @@ const Resumo = () => {
   };
 
   const handleGenerateQuiz = async () => {
-    if (!resumo?.resumo_gerado) return;
+    if (!resumo?.resumo_gerado || !resumo?.id) {
+      console.error('❌ Dados do resumo não disponíveis');
+      toast.error('Dados do resumo não disponíveis');
+      return;
+    }
     
     try {
+      console.log('🚀 Iniciando geração de quiz para resumo:', resumo.id);
       const success = await generateQuiz(resumo.resumo_gerado);
+      
       if (success) {
-        navigate(`/quiz/${resumo.id}`);
+        console.log('✅ Quiz gerado com sucesso, navegando para:', `/quiz/${resumo.id}`);
+        toast.success('Quiz gerado com sucesso!');
+        // Aguardar um pouco antes de navegar para garantir que o quiz foi salvo
+        setTimeout(() => {
+          navigate(`/quiz/${resumo.id}`);
+        }, 1000);
+      } else {
+        console.error('❌ Falha ao gerar quiz');
+        toast.error('Erro ao gerar quiz');
       }
     } catch (error) {
-      console.error('Erro ao gerar quiz:', error);
+      console.error('❌ Erro ao gerar quiz:', error);
+      toast.error('Erro ao gerar quiz');
     }
   };
 

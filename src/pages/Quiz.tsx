@@ -10,6 +10,8 @@ import { useQuizData } from '@/hooks/quiz/useQuizData';
 const Quiz = () => {
   const { resumoId } = useParams<{ resumoId: string }>();
   
+  console.log('📍 Quiz page loaded with resumoId:', resumoId);
+  
   const {
     quizData,
     isLoading,
@@ -18,8 +20,16 @@ const Quiz = () => {
     handleQuizComplete
   } = useQuizData(resumoId);
 
+  console.log('🎯 Quiz state:', { 
+    hasQuizData: !!quizData, 
+    questionsCount: quizData?.questoes?.length || 0,
+    isLoading, 
+    isGenerating 
+  });
+
   // Loading state
   if (isLoading) {
+    console.log('⏳ Showing loading state');
     return (
       <QuizLoader 
         message="🔍 Carregando..."
@@ -30,6 +40,7 @@ const Quiz = () => {
 
   // Generating state
   if (isGenerating) {
+    console.log('🔄 Showing generating state');
     return (
       <QuizLoader 
         message="🧠 Gerando quiz..."
@@ -40,6 +51,7 @@ const Quiz = () => {
 
   // Show quiz if available
   if (quizData && quizData.questoes && quizData.questoes.length > 0) {
+    console.log('✅ Showing quiz with', quizData.questoes.length, 'questions');
     return (
       <PageLayout>
         <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />
@@ -48,6 +60,7 @@ const Quiz = () => {
   }
 
   // No quiz - show generation option
+  console.log('❌ No quiz found, showing generator');
   return (
     <QuizGenerator 
       onGenerateQuiz={handleGenerateQuiz}
