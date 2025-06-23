@@ -8,9 +8,9 @@ import QuizGenerator from '@/components/quiz/QuizGenerator';
 import { useQuizData } from '@/hooks/quiz/useQuizData';
 
 const Quiz = () => {
-  const { resumoId } = useParams<{ resumoId: string }>();
+  const { id } = useParams<{ id: string }>();
   
-  console.log('📍 Quiz page loaded with resumoId:', resumoId);
+  console.log('📍 Quiz page loaded with resumoId:', id);
   
   const {
     quizData,
@@ -18,7 +18,7 @@ const Quiz = () => {
     isGenerating,
     handleGenerateQuiz,
     handleQuizComplete
-  } = useQuizData(resumoId);
+  } = useQuizData(id);
 
   console.log('🎯 Quiz state:', { 
     hasQuizData: !!quizData, 
@@ -63,6 +63,7 @@ const Quiz = () => {
   console.log('❌ No quiz found, showing generator');
   return (
     <QuizGenerator 
+      resumoId={id}
       onGenerateQuiz={handleGenerateQuiz}
       isGenerating={isGenerating}
     />

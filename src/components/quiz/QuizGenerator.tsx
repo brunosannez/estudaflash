@@ -7,12 +7,21 @@ import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/navigation/PageLayout';
 
 interface QuizGeneratorProps {
+  resumoId?: string;
   onGenerateQuiz: () => void;
   isGenerating: boolean;
 }
 
-const QuizGenerator = ({ onGenerateQuiz, isGenerating }: QuizGeneratorProps) => {
+const QuizGenerator = ({ resumoId, onGenerateQuiz, isGenerating }: QuizGeneratorProps) => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (resumoId) {
+      navigate(`/resumo/${resumoId}`);
+    } else {
+      navigate('/my-summaries');
+    }
+  };
 
   return (
     <PageLayout>
@@ -30,15 +39,15 @@ const QuizGenerator = ({ onGenerateQuiz, isGenerating }: QuizGeneratorProps) => 
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
                 disabled={isGenerating}
               >
-                ✨ Gerar Quiz
+                {isGenerating ? '🔄 Gerando...' : '✨ Gerar Quiz'}
               </Button>
               <Button 
-                onClick={() => navigate('/my-summaries')} 
+                onClick={handleBack}
                 variant="outline"
                 className="w-full"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar aos Resumos
+                Voltar
               </Button>
             </div>
           </CardContent>

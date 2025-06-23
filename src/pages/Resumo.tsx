@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
@@ -126,12 +125,10 @@ const Resumo = () => {
       const success = await generateQuiz(resumo.resumo_gerado);
       
       if (success) {
-        console.log('✅ Quiz gerado com sucesso, navegando para:', `/quiz/${resumo.id}`);
+        console.log('✅ Quiz gerado com sucesso, navegando para quiz');
         toast.success('Quiz gerado com sucesso!');
-        // Aguardar um pouco antes de navegar para garantir que o quiz foi salvo
-        setTimeout(() => {
-          navigate(`/quiz/${resumo.id}`);
-        }, 1000);
+        // Navegar para a página do quiz
+        navigate(`/quiz/${resumo.id}`);
       } else {
         console.error('❌ Falha ao gerar quiz');
         toast.error('Erro ao gerar quiz');

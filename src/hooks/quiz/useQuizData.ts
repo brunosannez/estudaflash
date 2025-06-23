@@ -15,9 +15,9 @@ export const useQuizData = (resumoId: string | undefined) => {
   const { getResumoById } = useSummary();
   const { fetchQuizzes, generateQuiz } = useQuiz(resumoId || '');
 
-  // Load resumo
+  // Load resumo and check for existing quiz
   useEffect(() => {
-    const loadResumo = async () => {
+    const loadData = async () => {
       if (!resumoId) {
         console.error('❌ ID do resumo não fornecido');
         navigate('/my-summaries');
@@ -25,7 +25,9 @@ export const useQuizData = (resumoId: string | undefined) => {
       }
 
       try {
+        setIsLoading(true);
         console.log('🔍 Carregando resumo:', resumoId);
+        
         const resumoData = await getResumoById(resumoId);
         
         if (!resumoData) {
@@ -37,25 +39,9 @@ export const useQuizData = (resumoId: string | undefined) => {
         
         console.log('📄 Resumo carregado:', resumoData);
         setResumo(resumoData);
-      } catch (error) {
-        console.error('❌ Erro ao carregar resumo:', error);
-        toast.error('Erro ao carregar resumo');
-        navigate('/my-summaries');
-      }
-    };
 
-    loadResumo();
-  }, [resumoId, getResumoById, navigate]);
-
-  // Check existing quiz after loading resumo
-  useEffect(() => {
-    const checkQuiz = async () => {
-      if (!resumo || !resumoId) {
-        return;
-      }
-
-      try {
-        console.log('🎯 Verificando quiz para resumo:', resumoId);
+        // Check for existing quiz
+        console.log('🎯 Verificando quiz existente para resumo:', resumoId);
         const quizzes = await fetchQuizzes();
         
         if (quizzes && quizzes.length > 0) {
@@ -70,15 +56,16 @@ export const useQuizData = (resumoId: string | undefined) => {
           setQuizData(null);
         }
       } catch (error) {
-        console.error('❌ Erro ao verificar quiz:', error);
-        setQuizData(null);
+        console.error('❌ Erro ao carregar dados:', error);
+        toast.error('Erro ao carregar resumo');
+        navigate('/my-summaries');
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkQuiz();
-  }, [resumo, resumoId, fetchQuizzes]);
+    loadData();
+  }, [resumoId, getResumoById, fetchQuizzes, navigate]);
 
   const handleGenerateQuiz = async () => {
     if (!resumo) {
