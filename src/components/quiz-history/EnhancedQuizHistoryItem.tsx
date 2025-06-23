@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Eye, Play, Pause, CheckCircle, Clock, Brain, Trash2 } from "lucide-react";
+import { Eye, Play, Pause, CheckCircle, Clock, Brain, Trash2, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 
 interface EnhancedQuizHistoryItemProps {
   quiz: {
@@ -35,6 +36,8 @@ const EnhancedQuizHistoryItem = ({
   onDelete,
   onGenerateMindMap 
 }: EnhancedQuizHistoryItemProps) => {
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false);
+
   const getStatusInfo = () => {
     switch (quiz.status) {
       case 'completed':
@@ -61,6 +64,15 @@ const EnhancedQuizHistoryItem = ({
           label: 'Pendente',
           color: 'bg-gray-500'
         };
+    }
+  };
+
+  const handleGenerateMindMap = async () => {
+    setIsGeneratingMindMap(true);
+    try {
+      await onGenerateMindMap(quiz.resumo_id, quiz.resumo_titulo);
+    } finally {
+      setIsGeneratingMindMap(false);
     }
   };
 
@@ -154,11 +166,21 @@ const EnhancedQuizHistoryItem = ({
               )}
               
               <Button
-                onClick={() => onGenerateMindMap(quiz.resumo_id, quiz.resumo_titulo)}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                onClick={handleGenerateMindMap}
+                disabled={isGeneratingMindMap}
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white disabled:opacity-70"
               >
-                <Brain className="h-4 w-4 mr-2" />
-                Mapa Mental
+                {isGeneratingMindMap ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="h-4 w-4 mr-2" />
+                    Mapa Mental
+                  </>
+                )}
               </Button>
               
               <Button

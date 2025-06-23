@@ -12,7 +12,7 @@ import MySummaries from "./pages/MySummaries";
 import Resumo from "./pages/Resumo";
 import MyFlashcards from "./pages/MyFlashcards";
 import Quiz from "./pages/Quiz";
-import QuizHistory from "./pages/QuizHistory";
+import EnhancedQuizHistory from "./pages/EnhancedQuizHistory";
 import QuizHistoryView from "./pages/QuizHistoryView";
 import MyProgress from "./pages/MyProgress";
 import Login from "./pages/Login";
@@ -100,7 +100,7 @@ function App() {
                 path="/quiz-history" 
                 element={
                   <ProtectedRoute>
-                    <QuizHistory />
+                    <EnhancedQuizHistory />
                   </ProtectedRoute>
                 } 
               />

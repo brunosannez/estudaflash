@@ -27,11 +27,103 @@ serve(async (req) => {
 
   try {
     const { content, resumoId } = await req.json();
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+
+    if (!anthropicApiKey) {
+      throw new Error('ANTHROPIC_API_KEY não configurada');
+    }
 
     console.log('🧠 Generating mind map for resumo:', resumoId);
 
-    // Extrair conceitos principais e subtópicos do conteúdo
-    const mindMapData = generateMindMapFromContent(content);
+    // Usar Anthropic Claude para gerar um mapa mental estruturado
+    const prompt = `
+Crie um mapa mental estruturado baseado no seguinte conteúdo:
+
+${content}
+
+Retorne APENAS um JSON válido no seguinte formato exato:
+{
+  "title": "Título principal do conteúdo",
+  "nodes": [
+    {
+      "id": "central",
+      "text": "Conceito Central",
+      "level": 0,
+      "color": "#3B82F6",
+      "children": ["topic1", "topic2"]
+    },
+    {
+      "id": "topic1",
+      "text": "Tópico Principal 1",
+      "level": 1,
+      "color": "#10B981",
+      "children": ["sub1_1", "sub1_2"]
+    },
+    {
+      "id": "sub1_1",
+      "text": "Subtópico 1.1",
+      "level": 2,
+      "color": "#F59E0B",
+      "children": []
+    }
+  ]
+}
+
+Regras:
+- Máximo 15 nós total
+- Use cores diferentes para cada nível
+- Nível 0: conceito central (1 nó)
+- Nível 1: tópicos principais (3-5 nós)
+- Nível 2: subtópicos (máximo 2-3 por tópico principal)
+- Texto conciso (máximo 50 caracteres por nó)
+- IDs únicos e descritivos
+- Cores em formato hex
+
+Não inclua explicações, apenas o JSON válido.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Anthropic API error:', errorText);
+      throw new Error(`Erro da API Anthropic: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const mindMapText = data.content[0].text;
+
+    // Tentar fazer parse do JSON retornado pelo Claude
+    let mindMapData: MindMapData;
+    try {
+      mindMapData = JSON.parse(mindMapText);
+    } catch (parseError) {
+      console.error('❌ Error parsing Claude response:', parseError);
+      console.log('Raw response:', mindMapText);
+      
+      // Fallback: criar mapa mental básico
+      mindMapData = generateBasicMindMap(content);
+    }
+
+    // Validar estrutura do mapa mental
+    if (!mindMapData.title || !mindMapData.nodes || !Array.isArray(mindMapData.nodes)) {
+      console.warn('⚠️ Invalid mind map structure, using fallback');
+      mindMapData = generateBasicMindMap(content);
+    }
 
     console.log('✅ Mind map generated successfully');
 
@@ -53,282 +145,76 @@ serve(async (req) => {
   }
 });
 
-function generateMindMapFromContent(content: string): MindMapData {
-  // Dividir o conteúdo em seções
-  const sections = content.split(/\n\s*\n/).filter(section => section.trim().length > 0);
+function generateBasicMindMap(content: string): MindMapData {
+  console.log('🔧 Generating basic fallback mind map');
   
-  // Extrair título principal
-  const title = extractMainTitle(content);
+  // Extrair título do conteúdo
+  const lines = content.split('\n').filter(line => line.trim().length > 0);
+  const title = lines[0]?.substring(0, 50) || 'Resumo';
+  
+  // Cores para os níveis
+  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
   
   const nodes: MindMapNode[] = [];
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
   
   // Nó central
   const centralNode: MindMapNode = {
     id: 'central',
     text: title,
     level: 0,
-    color: '#3B82F6',
+    color: colors[0],
     children: []
   };
   nodes.push(centralNode);
-
-  // Extrair tópicos principais
-  const mainTopics = extractMainTopics(content);
   
-  mainTopics.forEach((topic, index) => {
-    const topicId = `topic_${index}`;
-    const topicNode: MindMapNode = {
-      id: topicId,
-      text: topic.title,
-      level: 1,
-      color: colors[index % colors.length],
-      children: []
-    };
+  // Dividir conteúdo em seções
+  const sections = content.split(/\n\s*\n/).filter(section => section.trim().length > 20);
+  
+  // Criar tópicos principais (máximo 4)
+  const maxTopics = Math.min(4, sections.length);
+  for (let i = 0; i < maxTopics; i++) {
+    const section = sections[i];
+    const sentences = section.split(/[.!?]+/).filter(s => s.trim().length > 10);
     
-    nodes.push(topicNode);
-    centralNode.children!.push(topicId);
-    
-    // Extrair subtópicos
-    const subtopics = extractSubtopics(topic.content);
-    
-    subtopics.forEach((subtopic, subIndex) => {
-      const subtopicId = `subtopic_${index}_${subIndex}`;
-      const subtopicNode: MindMapNode = {
-        id: subtopicId,
-        text: subtopic.title,
-        level: 2,
-        color: colors[(index + subIndex + 2) % colors.length],
+    if (sentences.length > 0) {
+      const topicId = `topic_${i}`;
+      const topicText = sentences[0].trim().substring(0, 40);
+      
+      const topicNode: MindMapNode = {
+        id: topicId,
+        text: topicText,
+        level: 1,
+        color: colors[(i + 1) % colors.length],
         children: []
       };
       
-      nodes.push(subtopicNode);
-      topicNode.children!.push(subtopicId);
+      nodes.push(topicNode);
+      centralNode.children!.push(topicId);
       
-      // Extrair detalhes específicos
-      const details = extractDetails(subtopic.content);
-      
-      details.forEach((detail, detailIndex) => {
-        const detailId = `detail_${index}_${subIndex}_${detailIndex}`;
-        const detailNode: MindMapNode = {
-          id: detailId,
-          text: detail,
-          level: 3,
-          color: colors[(index + subIndex + detailIndex + 4) % colors.length]
-        };
-        
-        nodes.push(detailNode);
-        subtopicNode.children!.push(detailId);
-      });
-    });
-  });
-
+      // Criar subtópicos (máximo 2 por tópico)
+      const maxSubtopics = Math.min(2, sentences.length - 1);
+      for (let j = 1; j <= maxSubtopics; j++) {
+        if (sentences[j]) {
+          const subtopicId = `sub_${i}_${j}`;
+          const subtopicText = sentences[j].trim().substring(0, 30);
+          
+          const subtopicNode: MindMapNode = {
+            id: subtopicId,
+            text: subtopicText,
+            level: 2,
+            color: colors[(i + j + 2) % colors.length],
+            children: []
+          };
+          
+          nodes.push(subtopicNode);
+          topicNode.children!.push(subtopicId);
+        }
+      }
+    }
+  }
+  
   return {
     title,
     nodes
   };
-}
-
-function extractMainTitle(content: string): string {
-  // Procurar por títulos em maiúscula ou formatados
-  const lines = content.split('\n');
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.length > 5 && trimmed.length < 100) {
-      // Se está em maiúscula ou tem formatação de título
-      if (trimmed === trimmed.toUpperCase() || 
-          trimmed.match(/^[A-Z][^.]*[^.]$/) ||
-          trimmed.includes(':') ||
-          trimmed.match(/^\d+\.?\s*[A-Z]/)) {
-        return trimmed.replace(/^\d+\.?\s*/, '').replace(/[:\-–]/g, '').trim();
-      }
-    }
-  }
-  
-  // Fallback: usar as primeiras palavras significativas
-  const words = content.trim().split(/\s+/).slice(0, 6);
-  return words.join(' ') + (words.length === 6 ? '...' : '');
-}
-
-function extractMainTopics(content: string): Array<{title: string, content: string}> {
-  const topics: Array<{title: string, content: string}> = [];
-  const sections = content.split(/\n\s*\n/);
-  
-  let currentTopic = '';
-  let currentContent = '';
-  
-  for (const section of sections) {
-    const trimmed = section.trim();
-    if (!trimmed) continue;
-    
-    // Identificar se é um novo tópico (título)
-    const lines = trimmed.split('\n');
-    const firstLine = lines[0].trim();
-    
-    if (isLikelyTitle(firstLine) && trimmed.length < 1000) {
-      // Salvar tópico anterior se existir
-      if (currentTopic && currentContent) {
-        topics.push({
-          title: currentTopic,
-          content: currentContent
-        });
-      }
-      
-      // Iniciar novo tópico
-      currentTopic = firstLine.replace(/^\d+\.?\s*/, '').replace(/[:\-–]/g, '').trim();
-      currentContent = lines.slice(1).join('\n');
-    } else {
-      // Adicionar ao conteúdo do tópico atual
-      if (currentContent) {
-        currentContent += '\n\n' + trimmed;
-      } else {
-        currentContent = trimmed;
-      }
-    }
-  }
-  
-  // Adicionar último tópico
-  if (currentTopic && currentContent) {
-    topics.push({
-      title: currentTopic,
-      content: currentContent
-    });
-  }
-  
-  // Se não encontrou tópicos claros, dividir por conceitos-chave
-  if (topics.length === 0) {
-    return extractTopicsByKeywords(content);
-  }
-  
-  return topics.slice(0, 8); // Limitar a 8 tópicos principais
-}
-
-function extractSubtopics(content: string): Array<{title: string, content: string}> {
-  const subtopics: Array<{title: string, content: string}> = [];
-  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  
-  let currentGroup = '';
-  
-  for (let i = 0; i < sentences.length; i += 2) {
-    const sentence1 = sentences[i]?.trim();
-    const sentence2 = sentences[i + 1]?.trim() || '';
-    
-    if (sentence1) {
-      // Extrair conceito principal da frase
-      const concept = extractMainConcept(sentence1);
-      if (concept.length > 3 && concept.length < 50) {
-        subtopics.push({
-          title: concept,
-          content: sentence1 + (sentence2 ? '. ' + sentence2 : '')
-        });
-      }
-    }
-  }
-  
-  return subtopics.slice(0, 4); // Limitar a 4 subtópicos por tópico
-}
-
-function extractDetails(content: string): string[] {
-  const details: string[] = [];
-  
-  // Procurar por listas, exemplos e definições
-  const bullets = content.match(/[-•*]\s*([^.\n]+)/g);
-  if (bullets) {
-    bullets.forEach(bullet => {
-      const detail = bullet.replace(/^[-•*]\s*/, '').trim();
-      if (detail.length > 5 && detail.length < 80) {
-        details.push(detail);
-      }
-    });
-  }
-  
-  // Procurar por frases entre parênteses ou com dois pontos
-  const parentheses = content.match(/\(([^)]+)\)/g);
-  if (parentheses) {
-    parentheses.forEach(item => {
-      const detail = item.replace(/[()]/g, '').trim();
-      if (detail.length > 5 && detail.length < 60) {
-        details.push(detail);
-      }
-    });
-  }
-  
-  // Procurar por definições com dois pontos
-  const definitions = content.match(/:\s*([^.!\n]+)/g);
-  if (definitions) {
-    definitions.forEach(def => {
-      const detail = def.replace(/^:\s*/, '').trim();
-      if (detail.length > 10 && detail.length < 100) {
-        details.push(detail);
-      }
-    });
-  }
-  
-  return details.slice(0, 3); // Limitar a 3 detalhes por subtópico
-}
-
-function extractMainConcept(sentence: string): string {
-  // Remover artigos e preposições comuns
-  const words = sentence.split(/\s+/)
-    .filter(word => !['o', 'a', 'os', 'as', 'um', 'uma', 'de', 'da', 'do', 'das', 'dos', 'para', 'por', 'com', 'em', 'na', 'no', 'nas', 'nos'].includes(word.toLowerCase()))
-    .slice(0, 4);
-  
-  return words.join(' ');
-}
-
-function isLikelyTitle(text: string): boolean {
-  return (
-    text.length < 100 &&
-    text.length > 5 &&
-    (text === text.toUpperCase() || 
-     text.match(/^[A-Z][^.]*[^.]$/) ||
-     text.includes(':') ||
-     text.match(/^\d+\.?\s*[A-Z]/) ||
-     text.split(' ').length <= 8)
-  );
-}
-
-function extractTopicsByKeywords(content: string): Array<{title: string, content: string}> {
-  const topics: Array<{title: string, content: string}> = [];
-  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
-  
-  // Agrupar sentenças por conceitos similares
-  let currentTopic = '';
-  let currentContent = '';
-  let sentenceCount = 0;
-  
-  for (const sentence of sentences) {
-    if (sentenceCount === 0) {
-      currentTopic = extractMainConcept(sentence);
-      currentContent = sentence.trim();
-    } else {
-      currentContent += '. ' + sentence.trim();
-    }
-    
-    sentenceCount++;
-    
-    // Criar novo tópico a cada 3-4 sentenças
-    if (sentenceCount >= 3) {
-      if (currentTopic && currentContent) {
-        topics.push({
-          title: currentTopic,
-          content: currentContent
-        });
-      }
-      sentenceCount = 0;
-      currentTopic = '';
-      currentContent = '';
-    }
-  }
-  
-  // Adicionar último tópico se houver
-  if (currentTopic && currentContent) {
-    topics.push({
-      title: currentTopic,
-      content: currentContent
-    });
-  }
-  
-  return topics.slice(0, 6);
 }
