@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Loader2, Sparkles, Trophy, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, Trophy, ArrowLeft, Play } from "lucide-react";
 import { useEnhancedQuizHistory } from "@/hooks/useEnhancedQuizHistory";
 import { useMindMap } from "@/hooks/useMindMap";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const EnhancedQuizHistory = () => {
     if (resumeData) {
       // Navigate to quiz with resume context
       navigate(`/quiz/${resumeData.resumoId}?session=${sessionId}&resume=true`);
+      toast.success('Continuando quiz de onde você parou!');
     }
   };
 
@@ -86,6 +87,11 @@ const EnhancedQuizHistory = () => {
     navigate('/my-summaries');
   };
 
+  // Check for quizzes in progress to show resume button
+  const quizzesInProgress = history.filter(quiz => 
+    quiz.status === 'in_progress' && quiz.can_resume
+  );
+
   if (loading) {
     return (
       <PageLayout>
@@ -123,6 +129,31 @@ const EnhancedQuizHistory = () => {
           </div>
         </div>
 
+        {/* Resume Quiz Section */}
+        {quizzesInProgress.length > 0 && (
+          <div className={`${designColors.cards.primary} p-6 border-l-4 border-orange-400`}>
+            <h2 className="text-xl font-bold text-orange-700 mb-4 flex items-center gap-2">
+              <Play className="h-5 w-5" />
+              Quizzes em Progresso
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Você tem {quizzesInProgress.length} quiz{quizzesInProgress.length > 1 ? 'zes' : ''} em progresso. Continue de onde parou!
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {quizzesInProgress.map((quiz) => (
+                <Button
+                  key={quiz.session_id}
+                  onClick={() => handleResumeQuiz(quiz.session_id)}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Continuar: {quiz.resumo_titulo.slice(0, 30)}...
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Stats */}
         <EnhancedQuizHistoryStats stats={stats} />
 
@@ -148,7 +179,7 @@ const EnhancedQuizHistory = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Botão para criar novo quiz quando já existe histórico */}
+            {/* Button to create new quiz when history exists */}
             <div className="flex justify-end">
               <Button 
                 onClick={handleCreateFirstQuiz}
@@ -159,7 +190,7 @@ const EnhancedQuizHistory = () => {
               </Button>
             </div>
             
-            {/* Lista de quizzes */}
+            {/* Quiz list */}
             <div className="grid gap-6">
               {history.map((quiz, index) => (
                 <div 

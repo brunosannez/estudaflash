@@ -61,6 +61,7 @@ const EnhancedQuizGameManager = ({
           console.log('🔄 Initializing resume session:', sessionId);
           const session = await resumeSession(sessionId);
           if (session && sessionData) {
+            console.log('📊 Resuming session with data:', sessionData);
             setGameState(prev => ({
               ...prev,
               currentIndex: sessionData.currentQuestionIndex,
@@ -95,6 +96,7 @@ const EnhancedQuizGameManager = ({
   const currentQuestion = sessionData.questoes[gameState.currentIndex];
   const isLastQuestion = gameState.currentIndex === sessionData.questoes.length - 1;
 
+  // Detailed logging for debugging answer verification
   console.log('🎯 Enhanced QuizGameManager - Current state:', {
     index: gameState.currentIndex,
     pergunta: currentQuestion?.pergunta,
@@ -102,39 +104,91 @@ const EnhancedQuizGameManager = ({
     score: gameState.score,
     gameFinished: gameState.gameFinished,
     sessionId: sessionData.sessionId,
-    correctAnswer: currentQuestion?.correta
+    correctAnswer: currentQuestion?.correta,
+    questionStructure: currentQuestion
   });
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (gameState.showResult) return;
-    console.log('📝 Answer selected:', answerIndex);
+    console.log('📝 Answer selected:', {
+      answerIndex,
+      currentQuestion: currentQuestion?.pergunta,
+      currentQuestionStructure: currentQuestion
+    });
     setGameState(prev => ({ ...prev, selectedAnswer: answerIndex }));
   };
 
   const handleConfirmAnswer = async () => {
     if (gameState.selectedAnswer === null || !currentQuestion) return;
 
-    // Verificar se a resposta está correta comparando com o índice correto
-    const correctAnswerIndex = currentQuestion.correta;
+    // Enhanced logging for answer verification
+    console.log('🔍 DEBUGGING ANSWER VERIFICATION:', {
+      selectedAnswer: gameState.selectedAnswer,
+      currentQuestion: {
+        id: currentQuestion.id,
+        pergunta: currentQuestion.pergunta,
+        alternativas: currentQuestion.alternativas,
+        correta: currentQuestion.correta,
+        resposta_correta: currentQuestion.resposta_correta,
+        fullStructure: currentQuestion
+      }
+    });
+
+    // Multiple ways to get correct answer - more robust approach
+    let correctAnswerIndex = null;
+    
+    // Try different possible field names for correct answer
+    if (typeof currentQuestion.correta === 'number') {
+      correctAnswerIndex = currentQuestion.correta;
+      console.log('✅ Using correta field:', correctAnswerIndex);
+    } else if (typeof currentQuestion.resposta_correta === 'number') {
+      correctAnswerIndex = currentQuestion.resposta_correta;
+      console.log('✅ Using resposta_correta field:', correctAnswerIndex);
+    } else if (typeof currentQuestion.correct === 'number') {
+      correctAnswerIndex = currentQuestion.correct;
+      console.log('✅ Using correct field:', correctAnswerIndex);
+    } else {
+      console.error('❌ Could not find correct answer index in question:', currentQuestion);
+      // Try to extract from any available field
+      const possibleKeys = ['correta', 'resposta_correta', 'correct', 'answer', 'correctAnswer'];
+      for (const key of possibleKeys) {
+        if (currentQuestion[key] !== undefined && currentQuestion[key] !== null) {
+          correctAnswerIndex = Number(currentQuestion[key]);
+          console.log(`✅ Found correct answer using ${key}:`, correctAnswerIndex);
+          break;
+        }
+      }
+    }
+
+    if (correctAnswerIndex === null) {
+      console.error('❌ CRITICAL: Could not determine correct answer index');
+      toast.error('Erro: não foi possível verificar a resposta');
+      return;
+    }
+
     const isAnswerCorrect = gameState.selectedAnswer === correctAnswerIndex;
     
-    console.log('✅ Confirming answer:', {
+    console.log('✅ Final answer verification:', {
       selectedAnswer: gameState.selectedAnswer,
       correctAnswerIndex: correctAnswerIndex,
       isCorrect: isAnswerCorrect,
-      question: currentQuestion.pergunta
+      comparison: `${gameState.selectedAnswer} === ${correctAnswerIndex} = ${isAnswerCorrect}`
     });
 
     // Save response to database
     try {
-      await saveQuestionResponse(currentQuestion.id, gameState.selectedAnswer, isAnswerCorrect);
-      console.log('💾 Response saved to database');
+      await saveQuestionResponse(
+        currentQuestion.id || `q_${gameState.currentIndex}`, 
+        gameState.selectedAnswer, 
+        isAnswerCorrect
+      );
+      console.log('💾 Response saved to database successfully');
     } catch (error) {
       console.error('⚠️ Error saving response to database:', error);
       toast.error('Erro ao salvar resposta');
     }
     
-    // Adicionar XP baseado na resposta
+    // Add XP based on answer
     try {
       if (isAnswerCorrect) {
         await addXP(10, 'quiz_correct');
@@ -148,16 +202,18 @@ const EnhancedQuizGameManager = ({
     }
     
     // Update game state
+    const newScore = isAnswerCorrect ? gameState.score + 1 : gameState.score;
     setGameState(prev => ({
       ...prev,
       isCorrect: isAnswerCorrect,
       showResult: true,
-      score: isAnswerCorrect ? prev.score + 1 : prev.score
+      score: newScore
     }));
     
-    console.log('🎯 Answer processed:', {
+    console.log('🎯 Answer processed successfully:', {
       isCorrect: isAnswerCorrect,
-      newScore: isAnswerCorrect ? gameState.score + 1 : gameState.score
+      newScore: newScore,
+      previousScore: gameState.score
     });
   };
 
@@ -172,22 +228,22 @@ const EnhancedQuizGameManager = ({
         setGameState(prev => ({ ...prev, gameFinished: true }));
         onGameFinish(gameState.score);
         
-        // Bônus XP para completar o quiz
+        // Bonus XP for completing quiz
         try {
           const accuracy = (gameState.score / sessionData.questoes.length) * 100;
           let bonusXP = 0;
           
           if (accuracy === 100) {
             bonusXP = 50;
-            await addXP(bonusXP, 'quiz_correct');
+            await addXP(bonusXP, 'quiz_perfect');
             toast.success('🏆 Perfeito! +50 XP de bônus!', { duration: 4000 });
           } else if (accuracy >= 80) {
             bonusXP = 25;
-            await addXP(bonusXP, 'quiz_correct');
+            await addXP(bonusXP, 'quiz_excellent');
             toast.success('🎯 Excelente! +25 XP de bônus!', { duration: 4000 });
           } else if (accuracy >= 60) {
             bonusXP = 15;
-            await addXP(bonusXP, 'quiz_correct');
+            await addXP(bonusXP, 'quiz_good');
             toast.success('👍 Bom trabalho! +15 XP de bônus!', { duration: 4000 });
           }
         } catch (bonusError) {
