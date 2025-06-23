@@ -51,7 +51,7 @@ const EnhancedQuizGameManager = ({
 
   const [sessionInitialized, setSessionInitialized] = useState(false);
 
-  // Initialize session
+  // Initialize session with bulletproof logic
   React.useEffect(() => {
     const initializeSession = async () => {
       if (sessionInitialized) return;
@@ -61,15 +61,19 @@ const EnhancedQuizGameManager = ({
           console.log('🔄 Initializing resume session:', sessionId);
           const session = await resumeSession(sessionId);
           if (session && sessionData) {
-            console.log('📊 Resuming session with data:', sessionData);
+            const resumedIndex = sessionData.currentQuestionIndex;
+            const resumedScore = sessionData.respostas.filter(r => r.is_correct).length;
+            
+            console.log('📊 Resume data:', { resumedIndex, resumedScore });
+            
             setGameState(prev => ({
               ...prev,
-              currentIndex: sessionData.currentQuestionIndex,
-              score: sessionData.respostas.filter(r => r.is_correct).length
+              currentIndex: resumedIndex,
+              score: resumedScore
             }));
           }
         } else {
-          console.log('🚀 Starting new session');
+          console.log('🚀 Starting new bulletproof session');
           await startNewSession(quiz.resumo_id, '', quiz.questoes);
         }
         setSessionInitialized(true);
@@ -96,25 +100,21 @@ const EnhancedQuizGameManager = ({
   const currentQuestion = sessionData.questoes[gameState.currentIndex];
   const isLastQuestion = gameState.currentIndex === sessionData.questoes.length - 1;
 
-  console.log('🎯 Enhanced QuizGameManager - Current state:', {
-    index: gameState.currentIndex,
-    pergunta: currentQuestion?.pergunta?.slice(0, 50),
+  console.log('🎯 BULLETPROOF Game State:', {
+    currentIndex: gameState.currentIndex,
     selectedAnswer: gameState.selectedAnswer,
-    score: gameState.score,
-    correctAnswer: currentQuestion?.correta,
-    questionStructure: {
-      id: currentQuestion?.id,
-      correta: currentQuestion?.correta,
-      alternativasCount: currentQuestion?.alternativas?.length
-    }
+    currentQuestion: currentQuestion ? {
+      id: currentQuestion.id,
+      pergunta: currentQuestion.pergunta?.slice(0, 50) + '...',
+      correta: currentQuestion.correta,
+      correctAnswerType: typeof currentQuestion.correta,
+      alternativasCount: currentQuestion.alternativas?.length
+    } : null
   });
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (gameState.showResult) return;
-    console.log('📝 Answer selected:', {
-      answerIndex,
-      currentQuestion: currentQuestion?.pergunta?.slice(0, 50)
-    });
+    console.log('📝 Answer selected:', answerIndex);
     setGameState(prev => ({ ...prev, selectedAnswer: answerIndex }));
   };
 
@@ -122,36 +122,35 @@ const EnhancedQuizGameManager = ({
   const handleConfirmAnswer = async () => {
     if (gameState.selectedAnswer === null || !currentQuestion) return;
 
-    console.log('🔍 BULLETPROOF ANSWER VERIFICATION:', {
+    console.log('🔍 BULLETPROOF VERIFICATION:', {
       selectedAnswer: gameState.selectedAnswer,
-      currentQuestion: {
-        id: currentQuestion.id,
-        pergunta: currentQuestion.pergunta?.slice(0, 50),
-        correta: currentQuestion.correta,
-        correctAnswerType: typeof currentQuestion.correta,
-        selectedAnswerType: typeof gameState.selectedAnswer
-      }
+      selectedAnswerType: typeof gameState.selectedAnswer,
+      correctAnswer: currentQuestion.correta,
+      correctAnswerType: typeof currentQuestion.correta,
+      question: currentQuestion.pergunta?.slice(0, 50) + '...'
     });
 
-    // Get correct answer with multiple fallbacks
-    let correctAnswerIndex: number;
-    
-    if (typeof currentQuestion.correta === 'number') {
-      correctAnswerIndex = currentQuestion.correta;
-    } else if (typeof currentQuestion.correta === 'string') {
-      correctAnswerIndex = parseInt(currentQuestion.correta);
-    } else {
-      console.error('❌ CRITICAL: Invalid correct answer format:', currentQuestion.correta);
-      correctAnswerIndex = 0; // Default fallback
+    // Bulletproof conversion to numbers
+    const selectedAnswerNum = Number(gameState.selectedAnswer);
+    const correctAnswerNum = Number(currentQuestion.correta);
+
+    // Critical validation
+    if (!Number.isInteger(selectedAnswerNum) || selectedAnswerNum < 0 || selectedAnswerNum > 4) {
+      console.error('❌ Invalid selected answer:', gameState.selectedAnswer);
+      toast.error('Resposta inválida selecionada');
+      return;
     }
 
-    // Ensure both values are numbers for comparison
-    const selectedAnswerNum = Number(gameState.selectedAnswer);
-    const correctAnswerNum = Number(correctAnswerIndex);
+    if (!Number.isInteger(correctAnswerNum) || correctAnswerNum < 0 || correctAnswerNum > 4) {
+      console.error('❌ Invalid correct answer:', currentQuestion.correta);
+      toast.error('Erro na estrutura da questão');
+      return;
+    }
 
+    // Bulletproof comparison
     const isAnswerCorrect = selectedAnswerNum === correctAnswerNum;
     
-    console.log('✅ FINAL ANSWER VERIFICATION:', {
+    console.log('✅ BULLETPROOF RESULT:', {
       selectedAnswer: selectedAnswerNum,
       correctAnswer: correctAnswerNum,
       isCorrect: isAnswerCorrect,

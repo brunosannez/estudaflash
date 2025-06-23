@@ -20,14 +20,7 @@ export const useEnhancedQuizSession = () => {
 
   const startNewSession = async (resumoId: string, resumoContent: string, questoes: any[]) => {
     try {
-      console.log('🚀 Starting new enhanced quiz session:', { resumoId, questionsCount: questoes.length });
-      console.log('📋 Questions structure:', questoes.map((q, i) => ({
-        index: i,
-        id: q.id,
-        pergunta: q.pergunta?.slice(0, 50) + '...',
-        correta: q.correta,
-        alternativas_count: q.alternativas?.length
-      })));
+      console.log('🚀 Starting bulletproof quiz session:', { resumoId, questionsCount: questoes.length });
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -36,19 +29,24 @@ export const useEnhancedQuizSession = () => {
 
       const quizTitle = `Quiz - ${questoes.length} questões`;
       
-      // Prepare questions with standardized structure
+      // Prepare questions with bulletproof structure
       const questionsData = questoes.map((q, index) => ({
         index,
         id: q.id || `q_${index}`,
         pergunta: q.pergunta,
-        alternativas: q.alternativas,
-        correta: typeof q.correta === 'number' ? q.correta : 0,
-        explicacao: q.explicacao
+        alternativas: Array.isArray(q.alternativas) ? q.alternativas : [],
+        correta: Number.isInteger(q.correta) ? q.correta : 0, // Bulletproof: always integer
+        explicacao: q.explicacao || 'Explicação não disponível'
       }));
 
-      console.log('💾 Prepared questions data:', questionsData);
+      console.log('🔒 Bulletproof questions structure:', questionsData.map(q => ({
+        id: q.id,
+        correta: q.correta,
+        type: typeof q.correta,
+        alternativasCount: q.alternativas.length
+      })));
       
-      // Create new session in database
+      // Create session with bulletproof data
       const { data: newSession, error: sessionError } = await supabase
         .from('quiz_sessions')
         .insert({
@@ -70,7 +68,7 @@ export const useEnhancedQuizSession = () => {
         throw sessionError;
       }
 
-      console.log('✅ New quiz session created:', newSession);
+      console.log('✅ Bulletproof quiz session created:', newSession);
 
       setSessionData({
         sessionId: newSession.id,
@@ -97,7 +95,7 @@ export const useEnhancedQuizSession = () => {
 
   const resumeSession = async (sessionId: string) => {
     try {
-      console.log('🔄 Resuming enhanced quiz session:', sessionId);
+      console.log('🔄 Resuming bulletproof session:', sessionId);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -136,9 +134,7 @@ export const useEnhancedQuizSession = () => {
         throw attemptsError;
       }
 
-      console.log('📊 Resuming session with data:', { session, attempts });
-
-      // Parse questions data safely
+      // Parse questions with bulletproof structure
       let questoes = [];
       try {
         if (typeof session.questions_data === 'string') {
@@ -147,11 +143,12 @@ export const useEnhancedQuizSession = () => {
           questoes = session.questions_data as any[];
         }
         
-        // Ensure questions have proper structure
+        // Bulletproof structure validation
         questoes = questoes.map((q, index) => ({
           ...q,
           id: q.id || `q_${index}`,
-          correta: typeof q.correta === 'number' ? q.correta : 0
+          correta: Number.isInteger(q.correta) ? q.correta : 0,
+          alternativas: Array.isArray(q.alternativas) ? q.alternativas : []
         }));
       } catch (parseError) {
         console.error('Error parsing questions_data:', parseError);
@@ -159,13 +156,21 @@ export const useEnhancedQuizSession = () => {
       }
 
       const resumoContent = session.resumos?.resumo_gerado || 'Conteúdo não disponível';
+      const currentIndex = Math.max(0, attempts?.length || 0);
+
+      console.log('📊 Resuming with bulletproof data:', { 
+        sessionId, 
+        currentIndex, 
+        totalQuestions: questoes.length,
+        attemptsCount: attempts?.length || 0
+      });
 
       setSessionData({
         sessionId,
         resumoId: session.resumo_id,
         resumoContent,
         questoes,
-        currentQuestionIndex: session.current_question_index || 0,
+        currentQuestionIndex: currentIndex,
         respostas: attempts || [],
         startTime: new Date(session.started_at || session.created_at).getTime(),
         status: session.status as 'in_progress' | 'completed' | 'paused'
@@ -190,22 +195,27 @@ export const useEnhancedQuizSession = () => {
     }
 
     try {
-      console.log('💾 Saving question response:', { questionId, selectedAnswer, isCorrect });
+      console.log('💾 Saving bulletproof response:', { 
+        questionId, 
+        selectedAnswer, 
+        isCorrect,
+        sessionId: sessionData.sessionId
+      });
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("Usuário não autenticado");
       }
 
-      // Save individual attempt
+      // Save attempt with bulletproof validation
       const { data: attempt, error: attemptError } = await supabase
         .from('quiz_attempts')
         .insert({
           user_id: user.id,
           resumo_id: sessionData.resumoId,
           quiz_question_id: questionId,
-          selected_answer: selectedAnswer,
-          is_correct: isCorrect,
+          selected_answer: Number(selectedAnswer),
+          is_correct: Boolean(isCorrect),
           session_id: sessionData.sessionId
         })
         .select()
@@ -216,7 +226,7 @@ export const useEnhancedQuizSession = () => {
         throw attemptError;
       }
 
-      console.log('✅ Question response saved:', attempt);
+      console.log('✅ Bulletproof response saved:', attempt);
 
       // Update local session data
       setSessionData(prev => prev ? {
@@ -233,29 +243,6 @@ export const useEnhancedQuizSession = () => {
         variant: "destructive",
       });
       return null;
-    }
-  };
-
-  const updateSessionProgress = async () => {
-    if (!sessionData) return;
-
-    try {
-      const { error } = await supabase
-        .from('quiz_sessions')
-        .update({
-          current_question_index: sessionData.currentQuestionIndex,
-          last_activity_at: new Date().toISOString()
-        })
-        .eq('id', sessionData.sessionId);
-
-      if (error) {
-        console.error('❌ Error updating session progress:', error);
-        throw error;
-      }
-
-      console.log('✅ Session progress updated automatically');
-    } catch (error) {
-      console.error("❌ Error updating session progress:", error);
     }
   };
 
@@ -283,11 +270,13 @@ export const useEnhancedQuizSession = () => {
         throw updateError;
       }
 
-      console.log('✅ Quiz session completed successfully');
+      console.log('✅ Bulletproof session completed successfully');
 
+      const correctCount = sessionData.respostas.filter(r => r.is_correct).length;
+      
       toast({
         title: "Sucesso!",
-        description: `Quiz concluído! Você acertou ${sessionData.respostas.filter(r => r.is_correct).length} de ${sessionData.questoes.length} questões.`,
+        description: `Quiz concluído! Você acertou ${correctCount} de ${sessionData.questoes.length} questões.`,
       });
 
       // Reset session data
@@ -295,7 +284,7 @@ export const useEnhancedQuizSession = () => {
 
       return {
         sessionId: sessionData.sessionId,
-        correctAnswers: sessionData.respostas.filter(r => r.is_correct).length,
+        correctAnswers: correctCount,
         totalQuestions: sessionData.questoes.length,
         completionTime
       };
@@ -315,7 +304,6 @@ export const useEnhancedQuizSession = () => {
     startNewSession,
     resumeSession,
     saveQuestionResponse,
-    updateSessionProgress,
     completeSession
   };
 };

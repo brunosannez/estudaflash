@@ -32,51 +32,48 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured')
     }
 
-    // Create high-quality ENEM/Colégio Ari de Sá style quiz prompt
+    // Enhanced prompt for consistent quiz generation
     const prompt = `
 Você é um especialista em criação de questões para vestibulares brasileiros, especialmente ENEM e Colégio Ari de Sá.
 
-Baseado no conteúdo abaixo, crie exatamente 10 questões de múltipla escolha seguindo estes padrões:
+Baseado no conteúdo abaixo, crie exatamente 10 questões de múltipla escolha seguindo estes padrões OBRIGATÓRIOS:
 
-PADRÕES OBRIGATÓRIOS:
+ESTRUTURA CRÍTICA:
 1. Questões contextualizadas com situações reais
-2. 5 alternativas por questão (A, B, C, D, E)
-3. Nível de dificuldade médio-alto
-4. Linguagem formal e acadêmica
-5. Questões que exijam interpretação e análise, não apenas memorização
-6. Explicações detalhadas para cada resposta
-
-ESTRUTURA OBRIGATÓRIA para cada questão:
-- Contexto introdutório (situação problema)
-- Pergunta clara e objetiva
-- 5 alternativas plausíveis
-- Explicação detalhada da resposta correta
+2. Exatamente 5 alternativas por questão (A, B, C, D, E)
+3. Resposta correta deve ser um número inteiro de 0 a 4 (0=A, 1=B, 2=C, 3=D, 4=E)
+4. Explicações detalhadas e precisas
+5. Linguagem formal e acadêmica
 
 CONTEÚDO DO RESUMO:
 ${resumoContent}
 
-IMPORTANTE: Retorne apenas um JSON válido com o array de questões, sem texto adicional.
+IMPORTANTE: Retorne APENAS um JSON válido com exatamente esta estrutura:
 
-Formato de retorno:
 {
   "questoes": [
     {
-      "pergunta": "Contexto da situação problema seguido da pergunta específica...",
+      "pergunta": "Contexto + pergunta específica",
       "alternativas": [
-        "Primeira alternativa completa",
-        "Segunda alternativa completa", 
-        "Terceira alternativa completa",
-        "Quarta alternativa completa",
-        "Quinta alternativa completa"
+        "Alternativa A completa",
+        "Alternativa B completa", 
+        "Alternativa C completa",
+        "Alternativa D completa",
+        "Alternativa E completa"
       ],
       "correta": 0,
-      "explicacao": "Explicação detalhada sobre por que esta é a resposta correta, incluindo conceitos teóricos e aplicação prática."
+      "explicacao": "Explicação detalhada sobre por que a alternativa A (índice 0) é a correta."
     }
   ]
 }
+
+VALIDAÇÃO CRÍTICA:
+- Campo "correta" deve ser SEMPRE um número inteiro de 0 a 4
+- Exatamente 5 alternativas por questão
+- Explicação deve referenciar a alternativa correta
 `
 
-    // Call OpenAI API
+    // Call OpenAI API with enhanced parameters
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -88,14 +85,14 @@ Formato de retorno:
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista em criação de questões para vestibulares brasileiros. Retorne apenas JSON válido.'
+            content: 'Você é um especialista em criação de questões para vestibulares brasileiros. Retorne APENAS JSON válido com estrutura consistente.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.3, // Reduced for more consistent output
         max_tokens: 4000,
       }),
     })
@@ -111,7 +108,7 @@ Formato de retorno:
 
     console.log('📝 Raw OpenAI response:', content)
 
-    // Parse the JSON response
+    // Enhanced JSON parsing with validation
     let quizData
     try {
       quizData = JSON.parse(content)
@@ -125,13 +122,19 @@ Formato de retorno:
       throw new Error('Invalid quiz format from AI')
     }
 
-    // Validate and clean the questions
+    // Rigorous validation and cleaning
     const validQuestions = []
     for (let i = 0; i < quizData.questoes.length; i++) {
       const questao = quizData.questoes[i]
       
-      if (!questao.pergunta || !questao.alternativas || !Array.isArray(questao.alternativas)) {
-        console.warn(`Skipping invalid question ${i}:`, questao)
+      // Validate question structure
+      if (!questao.pergunta || typeof questao.pergunta !== 'string') {
+        console.warn(`Question ${i} has invalid pergunta:`, questao)
+        continue
+      }
+
+      if (!questao.alternativas || !Array.isArray(questao.alternativas)) {
+        console.warn(`Question ${i} has invalid alternativas:`, questao)
         continue
       }
 
@@ -140,16 +143,31 @@ Formato de retorno:
         continue
       }
 
-      if (questao.correta === undefined || questao.correta < 0 || questao.correta >= 5) {
-        console.warn(`Question ${i} has invalid correct answer index:`, questao)
-        continue
+      // Critical: Ensure correct answer is valid integer
+      let correctAnswer = questao.correta
+      if (typeof correctAnswer === 'string') {
+        correctAnswer = parseInt(correctAnswer)
       }
+      
+      if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer > 4) {
+        console.warn(`Question ${i} has invalid correct answer:`, questao.correta)
+        correctAnswer = 0 // Default to first alternative
+      }
+
+      // Validate alternatives are strings
+      const cleanAlternatives = questao.alternativas.map((alt, idx) => {
+        if (typeof alt !== 'string') {
+          console.warn(`Question ${i}, alternative ${idx} is not a string:`, alt)
+          return `Alternativa ${String.fromCharCode(65 + idx)}`
+        }
+        return alt.trim()
+      })
 
       validQuestions.push({
         pergunta: questao.pergunta.trim(),
-        alternativas: questao.alternativas.map(alt => alt.trim()),
-        correta: parseInt(questao.correta),
-        explicacao: questao.explicacao?.trim() || 'Explicação não disponível'
+        alternativas: cleanAlternatives,
+        correta: correctAnswer,
+        explicacao: (questao.explicacao || 'Explicação não disponível').trim()
       })
     }
 
@@ -157,20 +175,20 @@ Formato de retorno:
       throw new Error('No valid questions generated')
     }
 
-    console.log(`✅ Generated ${validQuestions.length} valid questions`)
+    console.log(`✅ Generated ${validQuestions.length} valid questions with consistent structure`)
 
-    // Save questions to database
+    // Save questions to database with enhanced validation
+    const questionsToInsert = validQuestions.map(questao => ({
+      resumo_id: resumoId,
+      pergunta: questao.pergunta,
+      alternativas: questao.alternativas,
+      correta: questao.correta, // Guaranteed to be integer 0-4
+      explicacao: questao.explicacao
+    }))
+
     const { data: insertedQuestions, error: insertError } = await supabase
       .from('quizzes')
-      .insert(
-        validQuestions.map(questao => ({
-          resumo_id: resumoId,
-          pergunta: questao.pergunta,
-          alternativas: questao.alternativas,
-          correta: questao.correta,
-          explicacao: questao.explicacao
-        }))
-      )
+      .insert(questionsToInsert)
       .select()
 
     if (insertError) {
@@ -178,13 +196,13 @@ Formato de retorno:
       throw new Error(`Failed to save questions: ${insertError.message}`)
     }
 
-    console.log(`💾 Saved ${insertedQuestions.length} questions to database`)
+    console.log(`💾 Saved ${insertedQuestions.length} questions to database with consistent format`)
 
     return new Response(
       JSON.stringify({
         success: true,
         questoes: insertedQuestions,
-        message: `Quiz gerado com ${insertedQuestions.length} questões`
+        message: `Quiz gerado com ${insertedQuestions.length} questões consistentes`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

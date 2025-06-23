@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 import QuizPlay from '@/components/QuizPlay';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [resumo, setResumo] = useState<any>(null);
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -21,7 +22,15 @@ const Quiz = () => {
   
   const { getResumoById } = useSummary();
 
-  console.log('📍 Quiz page rendered - ID:', id);
+  // Check if this is a resume operation
+  const sessionId = searchParams.get('session');
+  const resumeMode = searchParams.get('resume') === 'true';
+
+  console.log('📍 Bulletproof Quiz page rendered:', { 
+    id, 
+    sessionId, 
+    resumeMode 
+  });
 
   // Load summary and quiz data
   useEffect(() => {
@@ -33,7 +42,7 @@ const Quiz = () => {
         return;
       }
 
-      if (hasCheckedData) {
+      if (hasCheckedData && !resumeMode) {
         console.log('ℹ️ Data already checked, skipping reload');
         return;
       }
@@ -55,11 +64,15 @@ const Quiz = () => {
         console.log('📄 Summary loaded successfully');
         setResumo(resumoData);
 
-        // Load existing quizzes
+        // Load existing quizzes with bulletproof validation
         const { data: existingQuizzes, error: quizError } = await supabase
           .from('quizzes')
           .select('*')
           .eq('resumo_id', id)
+          .not('pergunta', 'is', null)
+          .not('alternativas', 'is', null)
+          .gte('correta', 0)
+          .lte('correta', 4)
           .order('data_criacao', { ascending: true });
 
         if (quizError) {
@@ -67,9 +80,29 @@ const Quiz = () => {
           throw quizError;
         }
 
-        console.log('📊 Existing quizzes loaded:', existingQuizzes?.length || 0);
-        setQuizzes(existingQuizzes || []);
-        
+        // Validate quiz structure
+        const validQuizzes = (existingQuizzes || []).filter(quiz => {
+          const isValid = quiz.pergunta && 
+                         Array.isArray(quiz.alternativas) && 
+                         quiz.alternativas.length === 5 &&
+                         Number.isInteger(quiz.correta) &&
+                         quiz.correta >= 0 && 
+                         quiz.correta <= 4;
+          
+          if (!isValid) {
+            console.warn('Invalid quiz found:', quiz.id);
+          }
+          
+          return isValid;
+        });
+
+        console.log('📊 Valid quizzes loaded:', {
+          total: existingQuizzes?.length || 0,
+          valid: validQuizzes.length,
+          invalid: (existingQuizzes?.length || 0) - validQuizzes.length
+        });
+
+        setQuizzes(validQuizzes);
         setHasCheckedData(true);
         
       } catch (error) {
@@ -81,7 +114,7 @@ const Quiz = () => {
     };
 
     loadData();
-  }, [id, getResumoById, navigate, hasCheckedData]);
+  }, [id, getResumoById, navigate, hasCheckedData, resumeMode]);
 
   const handleGenerateQuiz = async () => {
     if (!resumo?.resumo_gerado) {
@@ -91,7 +124,7 @@ const Quiz = () => {
     }
 
     setGenerating(true);
-    console.log('🚀 Starting quiz generation with edge function...');
+    console.log('🚀 Starting bulletproof quiz generation...');
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-quiz', {
@@ -111,11 +144,12 @@ const Quiz = () => {
         throw new Error(data.error);
       }
 
-      console.log('✅ Quiz generated successfully:', data);
-      toast.success(`Quiz gerado com ${data.questoes.length} questões!`);
+      console.log('✅ Bulletproof quiz generated successfully:', data);
+      toast.success(`Quiz gerado com ${data.questoes.length} questões consistentes!`);
       
       // Reload quizzes
       setQuizzes(data.questoes);
+      setHasCheckedData(false); // Force reload to get fresh data
       
     } catch (error) {
       console.error('❌ Quiz generation error:', error);
@@ -128,16 +162,14 @@ const Quiz = () => {
   const handleQuizComplete = (result: any) => {
     console.log('🏆 Quiz completed with result:', result);
     toast.success(`Quiz concluído! Você acertou ${result.correctAnswers} de ${result.totalQuestions} questões.`);
+    
+    // Navigate to quiz history
+    navigate('/quiz-history');
   };
 
   const handleBack = () => {
-    if (id) {
-      console.log('⬅️ Navigating back to summary:', id);
-      navigate(`/resumo/${id}`);
-    } else {
-      console.log('⬅️ Navigating back to summaries');
-      navigate('/my-summaries');
-    }
+    console.log('⬅️ Navigating back to quiz history');
+    navigate('/quiz-history');
   };
 
   // Show loading while initial data loads
@@ -164,7 +196,7 @@ const Quiz = () => {
 
   // Show quiz if we have questions
   if (quizzes && quizzes.length > 0) {
-    console.log('✅ Showing quiz with', quizzes.length, 'questions');
+    console.log('✅ Showing bulletproof quiz with', quizzes.length, 'questions');
     const quizData = {
       resumo_id: id!,
       questoes: quizzes,
@@ -173,7 +205,12 @@ const Quiz = () => {
     
     return (
       <PageLayout>
-        <QuizPlay quiz={quizData} onComplete={handleQuizComplete} />
+        <QuizPlay 
+          quiz={quizData} 
+          onComplete={handleQuizComplete}
+          sessionId={sessionId}
+          resumeMode={resumeMode}
+        />
       </PageLayout>
     );
   }
