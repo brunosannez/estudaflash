@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useEnhancedQuizSession } from '@/hooks/useEnhancedQuizSession';
+import { useGameification } from '@/hooks/useGameification';
 import { toast } from 'sonner';
 
 interface EnhancedQuizGameState {
@@ -37,6 +38,7 @@ const EnhancedQuizGameManager = ({
   children
 }: EnhancedQuizGameManagerProps) => {
   const { sessionData, startNewSession, resumeSession, saveQuestionResponse, completeSession } = useEnhancedQuizSession();
+  const { addXP } = useGameification();
   
   const [gameState, setGameState] = useState<EnhancedQuizGameState>({
     currentIndex: 0,
@@ -99,7 +101,8 @@ const EnhancedQuizGameManager = ({
     selectedAnswer: gameState.selectedAnswer,
     score: gameState.score,
     gameFinished: gameState.gameFinished,
-    sessionId: sessionData.sessionId
+    sessionId: sessionData.sessionId,
+    correctAnswer: currentQuestion?.correta
   });
 
   const handleAnswerSelect = (answerIndex: number) => {
@@ -111,37 +114,51 @@ const EnhancedQuizGameManager = ({
   const handleConfirmAnswer = async () => {
     if (gameState.selectedAnswer === null || !currentQuestion) return;
 
+    // Verificar se a resposta está correta comparando com o índice correto
+    const correctAnswerIndex = currentQuestion.correta;
+    const isAnswerCorrect = gameState.selectedAnswer === correctAnswerIndex;
+    
     console.log('✅ Confirming answer:', {
       selectedAnswer: gameState.selectedAnswer,
-      correctAnswer: currentQuestion.correta,
-      isCorrect: gameState.selectedAnswer === currentQuestion.correta
+      correctAnswerIndex: correctAnswerIndex,
+      isCorrect: isAnswerCorrect,
+      question: currentQuestion.pergunta
     });
-
-    const localIsCorrect = gameState.selectedAnswer === currentQuestion.correta;
-    console.log('🔍 Local verification:', localIsCorrect);
 
     // Save response to database
     try {
-      await saveQuestionResponse(currentQuestion.id, gameState.selectedAnswer, localIsCorrect);
+      await saveQuestionResponse(currentQuestion.id, gameState.selectedAnswer, isAnswerCorrect);
       console.log('💾 Response saved to database');
     } catch (error) {
       console.error('⚠️ Error saving response to database:', error);
       toast.error('Erro ao salvar resposta');
     }
     
+    // Adicionar XP baseado na resposta
+    try {
+      if (isAnswerCorrect) {
+        await addXP(10, 'quiz_correct');
+        toast.success('🎉 Correto! +10 XP', { duration: 2000 });
+      } else {
+        await addXP(2, 'quiz_incorrect');
+        toast('💪 Continue tentando! +2 XP', { duration: 2000 });
+      }
+    } catch (xpError) {
+      console.error('⚠️ Error adding XP:', xpError);
+    }
+    
     // Update game state
     setGameState(prev => ({
       ...prev,
-      isCorrect: localIsCorrect,
+      isCorrect: isAnswerCorrect,
       showResult: true,
-      score: localIsCorrect ? prev.score + 1 : prev.score
+      score: isAnswerCorrect ? prev.score + 1 : prev.score
     }));
     
-    if (localIsCorrect) {
-      console.log('🎉 Correct answer! New score:', gameState.score + 1);
-    } else {
-      console.log('❌ Incorrect answer. Score remains:', gameState.score);
-    }
+    console.log('🎯 Answer processed:', {
+      isCorrect: isAnswerCorrect,
+      newScore: isAnswerCorrect ? gameState.score + 1 : gameState.score
+    });
   };
 
   const handleNextQuestion = async () => {
@@ -154,6 +171,28 @@ const EnhancedQuizGameManager = ({
         console.log('✅ Quiz session completed successfully:', sessionResult);
         setGameState(prev => ({ ...prev, gameFinished: true }));
         onGameFinish(gameState.score);
+        
+        // Bônus XP para completar o quiz
+        try {
+          const accuracy = (gameState.score / sessionData.questoes.length) * 100;
+          let bonusXP = 0;
+          
+          if (accuracy === 100) {
+            bonusXP = 50;
+            await addXP(bonusXP, 'quiz_correct');
+            toast.success('🏆 Perfeito! +50 XP de bônus!', { duration: 4000 });
+          } else if (accuracy >= 80) {
+            bonusXP = 25;
+            await addXP(bonusXP, 'quiz_correct');
+            toast.success('🎯 Excelente! +25 XP de bônus!', { duration: 4000 });
+          } else if (accuracy >= 60) {
+            bonusXP = 15;
+            await addXP(bonusXP, 'quiz_correct');
+            toast.success('👍 Bom trabalho! +15 XP de bônus!', { duration: 4000 });
+          }
+        } catch (bonusError) {
+          console.error('⚠️ Error adding bonus XP:', bonusError);
+        }
       } else {
         console.error('❌ Failed to complete quiz session');
         toast.error('Erro ao finalizar quiz');

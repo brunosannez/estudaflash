@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { designColors } from '@/utils/designSystem';
-import { Sparkles, Trophy, Target, Clock, BookOpen } from 'lucide-react';
+import { Trophy, Target, BookOpen, X, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useGameification } from '@/hooks/useGameification';
+import { toast } from 'sonner';
 import EnhancedQuizGameManager from '@/components/quiz/EnhancedQuizGameManager';
 
 interface QuizPlayProps {
@@ -18,11 +20,15 @@ interface QuizPlayProps {
 const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const sessionId = searchParams.get('session');
   const resumeMode = searchParams.get('resume') === 'true';
   
   const [gameFinished, setGameFinished] = useState(false);
   const [finalResult, setFinalResult] = useState<any>(null);
+  const [isExiting, setIsExiting] = useState(false);
+  
+  const { addXP, getStats } = useGameification();
 
   console.log('🎯 QuizPlay initialized with:', {
     resumoId: quiz.resumo_id,
@@ -46,6 +52,26 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     
     if (onComplete) {
       onComplete(result);
+    }
+  };
+
+  const handleExitQuiz = async () => {
+    setIsExiting(true);
+    try {
+      // O progresso já é salvo automaticamente pelo EnhancedQuizGameManager
+      toast.success('Progresso salvo! Você pode continuar mais tarde.');
+      
+      // Navegar de volta para o resumo
+      if (quiz.resumo_id) {
+        navigate(`/resumo/${quiz.resumo_id}`);
+      } else {
+        navigate('/quiz-history');
+      }
+    } catch (error) {
+      console.error('Erro ao sair do quiz:', error);
+      toast.error('Erro ao salvar progresso');
+    } finally {
+      setIsExiting(false);
     }
   };
 
@@ -80,7 +106,7 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => window.location.href = `/resumo/${quiz.resumo_id}`}
+              onClick={() => navigate(`/resumo/${quiz.resumo_id}`)}
               className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
             >
               <BookOpen className="h-4 w-4 mr-2" />
@@ -88,7 +114,7 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
             </Button>
             
             <Button 
-              onClick={() => window.location.href = '/quiz-history'}
+              onClick={() => navigate('/quiz-history')}
               className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
             >
               <Trophy className="h-4 w-4 mr-2" />
@@ -121,19 +147,33 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
       }) => (
         <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4">
           <div className="max-w-4xl mx-auto">
-            {/* Header com progresso */}
+            {/* Header com progresso e botão de sair */}
             <div className={`${designColors.cards.primary} mb-6 p-6`}>
               <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-gray-800">
-                  Quiz - {quiz.titulo || `${quiz.questoes.length} questões`}
+                  {quiz.titulo || `Quiz - ${quiz.questoes.length} questões`}
                 </h1>
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-gray-600">
                     Questão {currentIndex + 1} de {quiz.questoes.length}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm font-semibold text-purple-600">
                     Score: {score}/{quiz.questoes.length}
                   </div>
+                  <Button
+                    onClick={handleExitQuiz}
+                    disabled={isExiting}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                  >
+                    {isExiting ? (
+                      <Pause className="h-4 w-4 mr-2" />
+                    ) : (
+                      <X className="h-4 w-4 mr-2" />
+                    )}
+                    {isExiting ? 'Salvando...' : 'Sair'}
+                  </Button>
                 </div>
               </div>
               
@@ -144,6 +184,21 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
                   style={{ width: `${((currentIndex + 1) / quiz.questoes.length) * 100}%` }}
                 ></div>
               </div>
+              
+              {/* Stats de gamificação */}
+              {getStats() && (
+                <div className="flex justify-center gap-4 mt-4 text-sm">
+                  <div className="bg-yellow-50 px-3 py-1 rounded-full border border-yellow-200">
+                    <span className="text-yellow-700">XP: {getStats()?.currentXp || 0}</span>
+                  </div>
+                  <div className="bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+                    <span className="text-purple-700">Nível: {getStats()?.currentLevel || 1}</span>
+                  </div>
+                  <div className="bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                    <span className="text-green-700">Streak: {getStats()?.currentStreak || 0}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Questão */}
@@ -154,31 +209,46 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
 
               {/* Alternativas */}
               <div className="space-y-4">
-                {currentQuestion?.alternativas?.map((alternativa: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => handleAnswerSelect(index)}
-                    disabled={showResult}
-                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                      selectedAnswer === index
-                        ? showResult
-                          ? isCorrect
-                            ? 'border-green-500 bg-green-50 text-green-800'
-                            : 'border-red-500 bg-red-50 text-red-800'
-                          : 'border-purple-500 bg-purple-50 text-purple-800'
-                        : showResult && index === currentQuestion.correta
-                        ? 'border-green-500 bg-green-50 text-green-800'
-                        : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="font-semibold mr-3 text-gray-500">
-                        {String.fromCharCode(65 + index)}.
-                      </span>
-                      {alternativa}
-                    </div>
-                  </button>
-                ))}
+                {currentQuestion?.alternativas?.map((alternativa: string, index: number) => {
+                  let buttonClass = 'w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ';
+                  
+                  if (showResult) {
+                    // Mostrar resultado após confirmar
+                    if (index === currentQuestion.correta) {
+                      // Resposta correta sempre em verde
+                      buttonClass += 'border-green-500 bg-green-50 text-green-800 ';
+                    } else if (selectedAnswer === index) {
+                      // Resposta selecionada (se incorreta) em vermelho
+                      buttonClass += 'border-red-500 bg-red-50 text-red-800 ';
+                    } else {
+                      // Outras alternativas neutras
+                      buttonClass += 'border-gray-200 bg-gray-50 text-gray-600 ';
+                    }
+                  } else {
+                    // Antes de confirmar
+                    if (selectedAnswer === index) {
+                      buttonClass += 'border-purple-500 bg-purple-50 text-purple-800 ';
+                    } else {
+                      buttonClass += 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50 ';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelect(index)}
+                      disabled={showResult}
+                      className={buttonClass}
+                    >
+                      <div className="flex items-center">
+                        <span className="font-semibold mr-3 text-gray-500">
+                          {String.fromCharCode(65 + index)}.
+                        </span>
+                        {alternativa}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Explicação */}
@@ -192,10 +262,10 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
 
             {/* Botões de ação */}
             <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm">
                 {showResult && (
-                  <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
-                    {isCorrect ? '✅ Correto!' : '❌ Incorreto'}
+                  <span className={`font-semibold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                    {isCorrect ? '✅ Correto! +10 XP' : '❌ Incorreto +2 XP'}
                   </span>
                 )}
               </div>
