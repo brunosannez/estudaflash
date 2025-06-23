@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuiz } from "@/hooks/useQuiz";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import QuizHeader from "@/components/quiz/QuizHeader";
 import QuizQuestion from "@/components/quiz/QuizQuestion";
 import QuizAlternatives from "@/components/quiz/QuizAlternatives";
@@ -29,6 +31,8 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
+  const [startTime] = useState(Date.now());
+  const [userAnswers, setUserAnswers] = useState<any[]>([]);
 
   const currentQuestion = quiz.questoes[currentIndex];
   const isLastQuestion = currentIndex === quiz.questoes.length - 1;
@@ -67,6 +71,19 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     setIsCorrect(localIsCorrect);
     setShowResult(true);
     
+    // Salvar resposta do usuário para a sessão
+    const answerData = {
+      question_id: currentQuestion.id,
+      pergunta: currentQuestion.pergunta,
+      alternativas: currentQuestion.alternativas,
+      resposta_correta: currentQuestion.correta,
+      resposta_usuario: selectedAnswer,
+      acertou: localIsCorrect,
+      explicacao: currentQuestion.explicacao
+    };
+    
+    setUserAnswers(prev => [...prev, answerData]);
+    
     if (localIsCorrect) {
       setScore(score + 1);
       console.log('🎉 Correct answer! New score:', score + 1);
@@ -75,14 +92,83 @@ const QuizPlay = ({ quiz, onComplete }: QuizPlayProps) => {
     }
   };
 
-  const handleNextQuestion = () => {
+  const saveQuizSession = async (finalScore: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ User not authenticated for saving session');
+        return;
+      }
+
+      const completionTime = Math.floor((Date.now() - startTime) / 1000);
+      
+      console.log('💾 Saving quiz session:', {
+        user_id: user.id,
+        resumo_id: quiz.resumo_id,
+        total_questions: quiz.questoes.length,
+        correct_answers: finalScore,
+        completion_time: completionTime
+      });
+
+      const { data, error } = await supabase
+        .from('quiz_sessions')
+        .insert({
+          user_id: user.id,
+          resumo_id: quiz.resumo_id,
+          quiz_title: quiz.titulo || `Quiz - ${quiz.questoes.length} questões`,
+          total_questions: quiz.questoes.length,
+          correct_answers: finalScore,
+          completion_time_seconds: completionTime,
+          questions_data: userAnswers
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error saving quiz session:', error);
+        throw error;
+      }
+
+      console.log('✅ Quiz session saved successfully:', data);
+      
+      // Também incrementar o contador de uso
+      const { error: usageError } = await supabase.rpc('log_usage', {
+        target_user_id: user.id,
+        target_action_type: 'quiz',
+        target_credits_used: 1,
+        target_metadata: {
+          resumo_id: quiz.resumo_id,
+          questions_count: quiz.questoes.length,
+          score: finalScore,
+          completion_time: completionTime
+        }
+      });
+
+      if (usageError) {
+        console.error('⚠️ Error logging usage:', usageError);
+      }
+
+      toast.success(`Quiz concluído! Sessão salva com sucesso.`);
+      
+    } catch (error) {
+      console.error('❌ Error saving quiz session:', error);
+      toast.error('Erro ao salvar resultado do quiz');
+    }
+  };
+
+  const handleNextQuestion = async () => {
     if (isLastQuestion) {
       const finalResult = {
         totalQuestions: quiz.questoes.length,
         correctAnswers: score,
         accuracy: Math.round((score / quiz.questoes.length) * 100)
       };
+      
       console.log('🏆 Quiz completed:', finalResult);
+      
+      // Salvar sessão no banco antes de finalizar
+      await saveQuizSession(score);
+      
       setGameFinished(true);
       onComplete(finalResult);
     } else {

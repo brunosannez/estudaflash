@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, BookOpen, Brain, Target, TrendingUp, Zap, Lightbulb } from 'lucide-react';
+import { Upload, BookOpen, Brain, Target, TrendingUp, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const QuickActions = () => {
@@ -33,12 +33,12 @@ const QuickActions = () => {
       onClick: () => navigate('/my-flashcards')
     },
     {
-      title: "Ver Progresso",
-      description: "Acompanhe sua evolução",
-      icon: TrendingUp,
+      title: "Histórico Quiz",
+      description: "Veja seus quizzes feitos",
+      icon: Target,
       color: "from-purple-500 to-pink-600",
       textColor: "text-white",
-      onClick: () => navigate('/progress')
+      onClick: () => navigate('/quiz-history')
     }
   ];
 

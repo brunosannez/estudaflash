@@ -37,7 +37,12 @@ export const useQuizHistory = () => {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.log('❌ User not authenticated');
+        return;
+      }
+
+      console.log('🔍 Fetching quiz history for user:', user.id);
 
       // Buscar histórico de sessões de quiz com informações dos resumos
       const { data: sessionsData, error } = await supabase
@@ -53,6 +58,7 @@ export const useQuizHistory = () => {
           resumos!inner(
             id,
             upload_id,
+            custom_name,
             uploads!inner(
               arquivo_original_nome
             )
@@ -62,51 +68,90 @@ export const useQuizHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Erro ao buscar histórico:", error);
-        return;
+        console.error("❌ Error fetching quiz history:", error);
+        throw error;
       }
+
+      console.log('📊 Raw quiz sessions data:', sessionsData);
 
       // Transformar dados para o formato esperado
       const historyArray: QuizHistoryItem[] = sessionsData?.map(session => ({
         id: session.id,
-        resumo_titulo: session.resumos.uploads.arquivo_original_nome || session.quiz_title,
-        total_perguntas: session.total_questions,
-        acertos: session.correct_answers,
+        resumo_titulo: session.resumos?.custom_name || 
+                      session.resumos?.uploads?.arquivo_original_nome || 
+                      session.quiz_title || 
+                      'Resumo sem título',
+        total_perguntas: session.total_questions || 0,
+        acertos: session.correct_answers || 0,
         data_criacao: session.created_at,
         resumo_id: session.resumo_id,
-        quiz_titulo: session.quiz_title,
+        quiz_titulo: session.quiz_title || `Quiz - ${session.total_questions || 0} questões`,
         tempo_conclusao: session.completion_time_seconds || 0
       })) || [];
 
+      console.log('✅ Processed quiz history:', historyArray);
       setHistory(historyArray);
       
       // Calcular estatísticas gerais
       const totalQuizzes = historyArray.length;
-      const totalAcertos = historyArray.reduce((acc, quiz) => acc + quiz.acertos, 0);
-      const totalPerguntas = historyArray.reduce((acc, quiz) => acc + quiz.total_perguntas, 0);
+      const totalAcertos = historyArray.reduce((acc, quiz) => acc + (quiz.acertos || 0), 0);
+      const totalPerguntas = historyArray.reduce((acc, quiz) => acc + (quiz.total_perguntas || 0), 0);
       const mediaAcertos = totalPerguntas > 0 ? Math.round((totalAcertos / totalPerguntas) * 100) : 0;
 
-      setStats({
+      const calculatedStats = {
         totalQuizzes,
         totalAcertos,
         totalPerguntas,
         mediaAcertos
-      });
+      };
+
+      console.log('📈 Calculated stats:', calculatedStats);
+      setStats(calculatedStats);
 
     } catch (error) {
-      console.error("Erro ao carregar histórico:", error);
+      console.error("❌ Error loading quiz history:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar seu histórico de quizzes.",
         variant: "destructive",
+      });
+      setHistory([]);
+      setStats({
+        totalQuizzes: 0,
+        totalAcertos: 0,
+        totalPerguntas: 0,
+        mediaAcertos: 0
       });
     } finally {
       setLoading(false);
     }
   };
 
+  // Configurar real-time updates
   useEffect(() => {
     fetchQuizHistory();
+
+    // Configurar listener para updates em tempo real
+    const channel = supabase
+      .channel('quiz-sessions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_sessions'
+        },
+        (payload) => {
+          console.log('🔄 Real-time update received:', payload);
+          // Recarregar dados quando houver mudanças
+          fetchQuizHistory();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
