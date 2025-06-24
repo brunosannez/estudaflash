@@ -57,43 +57,47 @@ export const useRealTimeQuizHistory = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    console.log('🔄 Setting up quiz history real-time subscription...');
+      console.log('🔄 Setting up quiz history real-time subscription...');
 
-    const channel = supabase
-      .channel('quiz_history_realtime')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'quiz_sessions',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('📡 Quiz session updated via realtime:', payload);
-          fetchQuizHistory();
-        }
-      )
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'quiz_attempts',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('📡 Quiz attempt updated via realtime:', payload);
-          fetchQuizHistory();
-        }
-      )
-      .subscribe();
+      const channel = supabase
+        .channel('quiz_history_realtime')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'quiz_sessions',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('📡 Quiz session updated via realtime:', payload);
+            fetchQuizHistory();
+          }
+        )
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'quiz_attempts',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('📡 Quiz attempt updated via realtime:', payload);
+            fetchQuizHistory();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      console.log('🔌 Cleaning up quiz history subscription');
-      supabase.removeChannel(channel);
+      return () => {
+        console.log('🔌 Cleaning up quiz history subscription');
+        supabase.removeChannel(channel);
+      };
     };
+
+    setupSubscription();
   }, [fetchQuizHistory]);
 
   const deleteQuizSession = useCallback(async (sessionId: string) => {

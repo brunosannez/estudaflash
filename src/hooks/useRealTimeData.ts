@@ -93,66 +93,70 @@ export const useRealTimeData = () => {
 
   // Set up real-time subscriptions
   useEffect(() => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    const setupSubscriptions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    console.log('🔄 Setting up real-time subscriptions...');
+      console.log('🔄 Setting up real-time subscriptions...');
 
-    // Subscribe to quiz sessions changes
-    const quizChannel = supabase
-      .channel('quiz_sessions_realtime')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'quiz_sessions',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('📡 Quiz session changed via realtime:', payload);
-          fetchStats();
-        }
-      )
-      .subscribe();
+      // Subscribe to quiz sessions changes
+      const quizChannel = supabase
+        .channel('quiz_sessions_realtime')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'quiz_sessions',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            console.log('📡 Quiz session changed via realtime:', payload);
+            fetchStats();
+          }
+        )
+        .subscribe();
 
-    // Subscribe to resumos changes
-    const resumoChannel = supabase
-      .channel('resumos_realtime')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'resumos'
-        }, 
-        (payload) => {
-          console.log('📡 Resumo changed via realtime:', payload);
-          fetchStats();
-        }
-      )
-      .subscribe();
+      // Subscribe to resumos changes
+      const resumoChannel = supabase
+        .channel('resumos_realtime')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'resumos'
+          }, 
+          (payload) => {
+            console.log('📡 Resumo changed via realtime:', payload);
+            fetchStats();
+          }
+        )
+        .subscribe();
 
-    // Subscribe to flashcards changes
-    const flashcardChannel = supabase
-      .channel('flashcards_realtime')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'flashcards'
-        }, 
-        (payload) => {
-          console.log('📡 Flashcard changed via realtime:', payload);
-          fetchStats();
-        }
-      )
-      .subscribe();
+      // Subscribe to flashcards changes
+      const flashcardChannel = supabase
+        .channel('flashcards_realtime')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'flashcards'
+          }, 
+          (payload) => {
+            console.log('📡 Flashcard changed via realtime:', payload);
+            fetchStats();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      console.log('🔌 Cleaning up real-time subscriptions');
-      supabase.removeChannel(quizChannel);
-      supabase.removeChannel(resumoChannel);
-      supabase.removeChannel(flashcardChannel);
+      return () => {
+        console.log('🔌 Cleaning up real-time subscriptions');
+        supabase.removeChannel(quizChannel);
+        supabase.removeChannel(resumoChannel);
+        supabase.removeChannel(flashcardChannel);
+      };
     };
+
+    setupSubscriptions();
   }, [fetchStats]);
 
   return {
