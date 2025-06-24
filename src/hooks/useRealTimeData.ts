@@ -26,62 +26,42 @@ export const useRealTimeData = () => {
       console.log('📊 Fetching real-time stats...');
       
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setStats(prev => ({ ...prev, loading: false }));
+        return;
+      }
 
-      // Get summary count
-      const { data: summaries, error: summaryError } = await supabase
-        .from('resumos')
-        .select('id', { count: 'exact' })
-        .eq('upload_id', user.id);
+      // Safe parallel queries with error handling
+      const [summariesResult, quizSessionsResult, flashcardsResult, recentResult] = await Promise.allSettled([
+        supabase.from('resumos').select('id', { count: 'exact' }).eq('upload_id', user.id),
+        supabase.from('quiz_sessions').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'completed'),
+        supabase.from('flashcard_reviews').select('id', { count: 'exact' }).eq('user_id', user.id),
+        supabase.from('quiz_sessions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
+      ]);
 
-      if (summaryError) throw summaryError;
-
-      // Get completed quiz sessions count
-      const { data: quizSessions, error: quizError } = await supabase
-        .from('quiz_sessions')
-        .select('id', { count: 'exact' })
-        .eq('user_id', user.id)
-        .eq('status', 'completed');
-
-      if (quizError) throw quizError;
-
-      // Get flashcard count
-      const { data: flashcards, error: flashcardError } = await supabase
-        .from('flashcards')
-        .select('id', { count: 'exact' })
-        .in('resumo_id', summaries?.map(s => s.id) || []);
-
-      if (flashcardError) throw flashcardError;
-
-      // Get recent activity
-      const { data: recentQuizzes } = await supabase
-        .from('quiz_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Extract data safely
+      const summariesCount = summariesResult.status === 'fulfilled' ? summariesResult.value.count || 0 : 0;
+      const quizSessionsCount = quizSessionsResult.status === 'fulfilled' ? quizSessionsResult.value.count || 0 : 0;
+      const flashcardsCount = flashcardsResult.status === 'fulfilled' ? flashcardsResult.value.count || 0 : 0;
+      const recentActivity = recentResult.status === 'fulfilled' ? recentResult.value.data || [] : [];
 
       setStats({
-        totalSummaries: summaries?.length || 0,
-        totalQuizzes: quizSessions?.length || 0,
-        totalFlashcards: flashcards?.length || 0,
-        recentActivity: recentQuizzes || [],
+        totalSummaries: summariesCount,
+        totalQuizzes: quizSessionsCount,
+        totalFlashcards: flashcardsCount,
+        recentActivity,
         loading: false,
         error: null
       });
 
-      console.log('✅ Real-time stats updated:', {
-        summaries: summaries?.length || 0,
-        quizzes: quizSessions?.length || 0,
-        flashcards: flashcards?.length || 0
-      });
+      console.log('✅ Real-time stats updated successfully');
 
     } catch (error) {
       console.error('❌ Error fetching stats:', error);
       setStats(prev => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Erro ao carregar dados'
+        error: 'Erro ao carregar dados'
       }));
     }
   }, []);
@@ -99,9 +79,8 @@ export const useRealTimeData = () => {
 
       console.log('🔄 Setting up real-time subscriptions...');
 
-      // Subscribe to quiz sessions changes
-      const quizChannel = supabase
-        .channel('quiz_sessions_realtime')
+      const channel = supabase
+        .channel('dashboard_stats_realtime')
         .on('postgres_changes', 
           { 
             event: '*', 
@@ -109,50 +88,39 @@ export const useRealTimeData = () => {
             table: 'quiz_sessions',
             filter: `user_id=eq.${user.id}`
           }, 
-          (payload) => {
-            console.log('📡 Quiz session changed via realtime:', payload);
-            fetchStats();
+          () => {
+            console.log('📡 Quiz session changed, refreshing stats...');
+            setTimeout(fetchStats, 1000);
           }
         )
-        .subscribe();
-
-      // Subscribe to resumos changes
-      const resumoChannel = supabase
-        .channel('resumos_realtime')
         .on('postgres_changes', 
           { 
             event: '*', 
             schema: 'public', 
             table: 'resumos'
           }, 
-          (payload) => {
-            console.log('📡 Resumo changed via realtime:', payload);
-            fetchStats();
+          () => {
+            console.log('📡 Resumo changed, refreshing stats...');
+            setTimeout(fetchStats, 1000);
           }
         )
-        .subscribe();
-
-      // Subscribe to flashcards changes
-      const flashcardChannel = supabase
-        .channel('flashcards_realtime')
         .on('postgres_changes', 
           { 
             event: '*', 
             schema: 'public', 
-            table: 'flashcards'
+            table: 'flashcard_reviews',
+            filter: `user_id=eq.${user.id}`
           }, 
-          (payload) => {
-            console.log('📡 Flashcard changed via realtime:', payload);
-            fetchStats();
+          () => {
+            console.log('📡 Flashcard review changed, refreshing stats...');
+            setTimeout(fetchStats, 1000);
           }
         )
         .subscribe();
 
       return () => {
         console.log('🔌 Cleaning up real-time subscriptions');
-        supabase.removeChannel(quizChannel);
-        supabase.removeChannel(resumoChannel);
-        supabase.removeChannel(flashcardChannel);
+        supabase.removeChannel(channel);
       };
     };
 

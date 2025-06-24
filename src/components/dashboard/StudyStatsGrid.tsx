@@ -1,12 +1,12 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Target, TrendingUp, Calendar, Clock, Star } from 'lucide-react';
-import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
+import { Brain, Target, TrendingUp, Star } from 'lucide-react';
+import { useUnifiedProgress } from '@/hooks/useUnifiedProgress';
 import { useUsageData } from '@/hooks/useUsageData';
 
 const StudyStatsGrid = () => {
-  const { getStats } = useRealTimeProgress();
+  const { getStats } = useUnifiedProgress();
   const { usageData } = useUsageData();
   const stats = getStats();
 
@@ -92,7 +92,7 @@ const StudyStatsGrid = () => {
         </CardContent>
       </Card>
 
-      {/* Plano Atual */}
+      {/* XP Atual */}
       <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-orange-500">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -100,11 +100,14 @@ const StudyStatsGrid = () => {
               <Star className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-lg font-bold text-orange-600 capitalize">
-                {usageData.plan_name || usageData.plano}
-              </p>
-              <p className="text-xs text-gray-600">Plano</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.currentXp}</p>
+              <p className="text-xs text-gray-600">XP Total</p>
             </div>
+          </div>
+          <div className="mt-2">
+            <Badge variant="outline" className="text-xs">
+              Nível {stats.currentLevel}
+            </Badge>
           </div>
         </CardContent>
       </Card>

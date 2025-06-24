@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useGameification } from "@/hooks/useGameification";
+import { useUnifiedProgress } from "@/hooks/useUnifiedProgress";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import AuthGuard from "@/components/AuthGuard";
 import { Loader2, Sparkles, Star, Trophy } from "lucide-react";
@@ -11,15 +11,14 @@ import ProgressActionsCard from "@/components/progress/ProgressActionsCard";
 import ProgressStreakCard from "@/components/progress/ProgressStreakCard";
 import ProgressActivitiesCard from "@/components/progress/ProgressActivitiesCard";
 import PageLayout from "@/components/navigation/PageLayout";
-import { designColors } from '@/utils/designSystem';
 
 const MyProgress = () => {
-  const { loading, getStats, fetchUserProgress } = useGameification();
-  const { getDisplayName, getFullName } = useUserProfile();
+  const { loading, getStats, refreshProgress } = useUnifiedProgress();
+  const { getDisplayName } = useUserProfile();
 
   useEffect(() => {
-    fetchUserProgress();
-  }, []);
+    refreshProgress();
+  }, [refreshProgress]);
 
   const stats = getStats();
 

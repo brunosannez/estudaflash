@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
+import { useUnifiedProgress } from '@/hooks/useUnifiedProgress';
 import ProgressLoading from './progress/ProgressLoading';
 import ProgressEmpty from './progress/ProgressEmpty';
 import ProgressSyncHeader from './progress/ProgressSyncHeader';
@@ -9,23 +9,23 @@ import ProgressLevelDetails from './progress/ProgressLevelDetails';
 import ProgressStreakDetails from './progress/ProgressStreakDetails';
 
 const ProgressOverview = () => {
-  const { progress, todayActivity, loading, isInitialized, getStats, refreshProgress } = useRealTimeProgress();
+  const { progress, todayActivity, loading, isInitialized, getStats, refreshProgress, error } = useUnifiedProgress();
 
   useEffect(() => {
     if (!isInitialized) {
       refreshProgress();
     }
-  }, [isInitialized]);
+  }, [isInitialized, refreshProgress]);
 
   const stats = getStats();
 
-  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats, progress, todayActivity });
+  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats, error });
 
   if (loading || !isInitialized) {
     return <ProgressLoading />;
   }
 
-  if (!stats) {
+  if (error || !stats) {
     return <ProgressEmpty onRefresh={refreshProgress} />;
   }
 
