@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useSimplifiedQuizSession } from '@/hooks/useSimplifiedQuizSession';
+import { useSimpleQuizSession } from '@/hooks/quiz/useSimpleQuizSession';
 import { useGameification } from '@/hooks/useGameification';
 import { toast } from 'sonner';
 
@@ -21,48 +21,37 @@ interface SimplifiedQuizPlayProps {
 const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }: SimplifiedQuizPlayProps) => {
   const navigate = useNavigate();
   const { addXP } = useGameification();
+  
   const { 
-    sessionData, 
-    loading, 
-    error, 
-    createSession, 
-    resumeSession, 
-    saveProgress, 
-    completeSession,
+    sessionId: activeSessionId,
+    loading: sessionLoading,
+    error: sessionError,
+    createOrResumeSession,
     resetSession
-  } = useSimplifiedQuizSession();
+  } = useSimpleQuizSession();
 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
 
-  // Initialize session
+  // Initialize session once
   useEffect(() => {
-    const initializeSession = async () => {
-      if (gameFinished || sessionData) return;
+    if (!quiz.questoes || quiz.questoes.length === 0) return;
+    if (activeSessionId || sessionLoading) return;
 
-      if (resumeMode && sessionId) {
-        console.log('🔄 Resuming existing session:', sessionId);
-        await resumeSession(sessionId);
-      } else {
-        console.log('🚀 Creating new session for resumo:', quiz.resumo_id);
-        await createSession(quiz.resumo_id, quiz.questoes);
-      }
-    };
-
-    if (quiz.questoes && quiz.questoes.length > 0) {
-      initializeSession();
-    }
+    createOrResumeSession(quiz.resumo_id, quiz.questoes, sessionId || undefined);
 
     return () => {
       if (!gameFinished) {
         resetSession();
       }
     };
-  }, [quiz.resumo_id, quiz.questoes, sessionId, resumeMode, gameFinished]);
+  }, [quiz.resumo_id, quiz.questoes, sessionId, activeSessionId, sessionLoading, gameFinished]);
 
-  if (loading) {
+  if (sessionLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
         <div className="text-center">
@@ -75,13 +64,13 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     );
   }
 
-  if (error) {
+  if (sessionError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">😔</div>
           <h2 className="text-xl font-bold mb-2 text-gray-800">Erro no Quiz</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">{sessionError}</p>
           <Button onClick={() => navigate('/quiz-history')}>
             Voltar ao Histórico
           </Button>
@@ -90,7 +79,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     );
   }
 
-  if (!sessionData || !sessionData.questoes || sessionData.questoes.length === 0) {
+  if (!quiz.questoes || quiz.questoes.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-4 flex items-center justify-center">
         <div className="text-center">
@@ -112,11 +101,11 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
             Quiz Concluído!
           </h2>
           <p className="text-xl text-gray-600 mb-6">
-            Você acertou <span className="font-bold text-green-600">{sessionData.correctAnswers}</span> de{' '}
-            <span className="font-bold">{sessionData.totalQuestions}</span> questões
+            Você acertou <span className="font-bold text-green-600">{correctAnswers}</span> de{' '}
+            <span className="font-bold">{quiz.questoes.length}</span> questões
           </p>
           <div className="text-lg text-gray-500 mb-8">
-            Precisão: {Math.round((sessionData.correctAnswers / sessionData.totalQuestions) * 100)}%
+            Precisão: {Math.round((correctAnswers / quiz.questoes.length) * 100)}%
           </div>
           <Button
             onClick={() => navigate('/quiz-history')}
@@ -129,14 +118,14 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     );
   }
 
-  const currentQuestion = sessionData.questoes[sessionData.currentQuestionIndex];
+  const currentQuestion = quiz.questoes[currentQuestionIndex];
   if (!currentQuestion) {
-    console.error('❌ Current question not found at index:', sessionData.currentQuestionIndex);
+    console.error('❌ Current question not found at index:', currentQuestionIndex);
     return null;
   }
 
-  const isLastQuestion = sessionData.currentQuestionIndex === sessionData.totalQuestions - 1;
-  const progressPercentage = ((sessionData.currentQuestionIndex + 1) / sessionData.totalQuestions) * 100;
+  const isLastQuestion = currentQuestionIndex === quiz.questoes.length - 1;
+  const progressPercentage = ((currentQuestionIndex + 1) / quiz.questoes.length) * 100;
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showResult) return;
@@ -152,9 +141,9 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     setIsCorrect(isAnswerCorrect);
     setShowResult(true);
 
-    // Save progress
-    const questionId = currentQuestion.id || `q_${sessionData.currentQuestionIndex}`;
-    await saveProgress(questionId, selectedAnswer, isAnswerCorrect);
+    if (isAnswerCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+    }
 
     // Add XP
     try {
@@ -174,31 +163,37 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     if (isLastQuestion) {
       console.log('🏆 Quiz completed, finalizing...');
       
-      const result = await completeSession();
-      if (result) {
-        setGameFinished(true);
-        onComplete(result);
+      setGameFinished(true);
+      
+      const result = {
+        sessionId: activeSessionId,
+        correctAnswers,
+        totalQuestions: quiz.questoes.length,
+        accuracy: Math.round((correctAnswers / quiz.questoes.length) * 100)
+      };
+      
+      onComplete(result);
+      
+      // Bonus XP
+      try {
+        const accuracy = (correctAnswers / quiz.questoes.length) * 100;
         
-        // Bonus XP
-        try {
-          const accuracy = (sessionData.correctAnswers / sessionData.totalQuestions) * 100;
-          
-          if (accuracy === 100) {
-            await addXP(50, 'quiz_perfect');
-            toast.success('🏆 Perfeito! +50 XP de bônus!', { duration: 4000 });
-          } else if (accuracy >= 80) {
-            await addXP(25, 'quiz_excellent');
-            toast.success('🎯 Excelente! +25 XP de bônus!', { duration: 4000 });
-          } else if (accuracy >= 60) {
-            await addXP(15, 'quiz_good');
-            toast.success('👍 Bom trabalho! +15 XP de bônus!', { duration: 4000 });
-          }
-        } catch (bonusError) {
-          console.error('⚠️ Error adding bonus XP:', bonusError);
+        if (accuracy === 100) {
+          await addXP(50, 'quiz_perfect');
+          toast.success('🏆 Perfeito! +50 XP de bônus!', { duration: 4000 });
+        } else if (accuracy >= 80) {
+          await addXP(25, 'quiz_excellent');
+          toast.success('🎯 Excelente! +25 XP de bônus!', { duration: 4000 });
+        } else if (accuracy >= 60) {
+          await addXP(15, 'quiz_good');
+          toast.success('👍 Bom trabalho! +15 XP de bônus!', { duration: 4000 });
         }
+      } catch (bonusError) {
+        console.error('⚠️ Error adding bonus XP:', bonusError);
       }
     } else {
       console.log('➡️ Moving to next question');
+      setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowResult(false);
       setIsCorrect(false);
@@ -231,7 +226,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
         
         <div className="text-center">
           <div className="text-sm text-gray-600 mb-1">
-            Questão {sessionData.currentQuestionIndex + 1} de {sessionData.totalQuestions}
+            Questão {currentQuestionIndex + 1} de {quiz.questoes.length}
           </div>
           <div className="w-48 bg-gray-200 rounded-full h-2">
             <div
@@ -244,7 +239,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
         <div className="text-right">
           <div className="text-sm text-gray-600">Pontuação</div>
           <div className="text-lg font-bold text-purple-600">
-            {sessionData.correctAnswers}/{sessionData.totalQuestions}
+            {correctAnswers}/{quiz.questoes.length}
           </div>
         </div>
       </div>

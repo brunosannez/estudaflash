@@ -1,25 +1,35 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 import SimplifiedQuizPlay from '@/components/quiz/SimplifiedQuizPlay';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
-import { useSummary } from '@/hooks/useSummary';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuizPageState } from '@/hooks/quiz/useQuizPageState';
+import { useQuizDataLoader } from '@/hooks/quiz/useQuizDataLoader';
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  const [resumo, setResumo] = useState<any>(null);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  
-  const { getResumoById } = useSummary();
+  const {
+    resumo,
+    quizzes,
+    isLoading,
+    generating,
+    error,
+    initialized,
+    setResumo,
+    setQuizzes,
+    setLoading,
+    setGenerating,
+    setError,
+    setInitialized
+  } = useQuizPageState();
+
+  const { loadQuizData, generateQuiz } = useQuizDataLoader();
 
   // Check if this is a resume operation
   const sessionId = searchParams.get('session');
@@ -28,93 +38,54 @@ const Quiz = () => {
   console.log('📍 Quiz page rendered:', { 
     id, 
     sessionId, 
-    resumeMode 
+    resumeMode,
+    initialized,
+    isLoading
   });
 
-  // Load summary and quiz data
+  // Load data once on mount
   useEffect(() => {
+    if (!id) {
+      console.error('❌ No summary ID provided');
+      toast.error('ID do resumo não fornecido');
+      navigate('/my-summaries');
+      return;
+    }
+
+    if (initialized) return;
+
     const loadData = async () => {
-      if (!id) {
-        console.error('❌ No summary ID provided');
-        toast.error('ID do resumo não fornecido');
-        navigate('/my-summaries');
-        return;
-      }
-
       try {
-        setIsLoading(true);
-        console.log('🔍 Loading summary and quiz data for ID:', id);
+        setLoading(true);
+        setError(null);
         
-        // Load summary first
-        const resumoData = await getResumoById(id);
+        const data = await loadQuizData(id);
         
-        if (!resumoData) {
-          console.error('❌ Summary not found');
-          toast.error('Resumo não encontrado');
-          navigate('/my-summaries');
-          return;
-        }
-        
-        console.log('📄 Summary loaded successfully');
-        setResumo(resumoData);
-
-        // Load existing quizzes with validation
-        const { data: existingQuizzes, error: quizError } = await supabase
-          .from('quizzes')
-          .select('*')
-          .eq('resumo_id', id)
-          .not('pergunta', 'is', null)
-          .not('alternativas', 'is', null)
-          .gte('correta', 0)
-          .lte('correta', 4)
-          .order('data_criacao', { ascending: true });
-
-        if (quizError) {
-          console.error('❌ Error loading quizzes:', quizError);
-          throw quizError;
-        }
-
-        // Validate quiz structure
-        const validQuizzes = (existingQuizzes || []).filter(quiz => {
-          const isValid = quiz.pergunta && 
-                         Array.isArray(quiz.alternativas) && 
-                         quiz.alternativas.length === 5 &&
-                         Number.isInteger(quiz.correta) &&
-                         quiz.correta >= 0 && 
-                         quiz.correta <= 4;
-          
-          if (!isValid) {
-            console.warn('❌ Invalid quiz found and filtered out:', quiz.id);
-          }
-          
-          return isValid;
-        });
-
-        console.log('📊 Quiz validation results:', {
-          total: existingQuizzes?.length || 0,
-          valid: validQuizzes.length,
-          invalid: (existingQuizzes?.length || 0) - validQuizzes.length
-        });
-
-        setQuizzes(validQuizzes);
+        setResumo(data.resumo);
+        setQuizzes(data.quizzes);
+        setInitialized(true);
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
-        toast.error('Erro ao carregar dados do quiz');
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar dados do quiz';
+        
+        if (errorMessage.includes('não encontrado')) {
+          toast.error('Resumo não encontrado');
+          navigate('/my-summaries');
+        } else {
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, getResumoById, navigate]);
+  }, [id, initialized, loadQuizData, navigate, setResumo, setQuizzes, setLoading, setError, setInitialized]);
 
   const handleGenerateQuiz = async () => {
-    if (!resumo?.resumo_gerado) {
-      console.error('❌ No summary content available for quiz generation');
-      toast.error('Conteúdo do resumo não disponível');
-      return;
-    }
+    if (!resumo || !id) return;
 
     // Check if quiz already exists
     if (quizzes.length > 0) {
@@ -123,55 +94,16 @@ const Quiz = () => {
       return;
     }
 
-    // Check for active generation
-    if (generating) {
-      console.warn('⚠️ Quiz generation already in progress');
-      return;
-    }
-
-    setGenerating(true);
-    console.log('🚀 Starting quiz generation...');
+    if (generating) return;
 
     try {
-      // Double-check for existing quizzes
-      const { data: existingCheck } = await supabase
-        .from('quizzes')
-        .select('id')
-        .eq('resumo_id', id)
-        .limit(1);
-
-      if (existingCheck && existingCheck.length > 0) {
-        console.warn('⚠️ Quiz found during final check, aborting generation');
-        toast.warning('Quiz já existe para este resumo!');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-quiz', {
-        body: { 
-          resumoContent: resumo.resumo_gerado,
-          resumoId: id 
-        }
-      });
-
-      if (error) {
-        console.error('❌ Edge function error:', error);
-        throw error;
-      }
-
-      if (!data.success) {
-        console.error('❌ Quiz generation failed:', data.error);
-        throw new Error(data.error);
-      }
-
-      console.log('✅ Quiz generated successfully:', data);
-      toast.success(`Quiz gerado com ${data.questoes.length} questões!`);
-      
-      // Reload quizzes after successful generation
-      setQuizzes(data.questoes);
-      
+      setGenerating(true);
+      const newQuizzes = await generateQuiz(resumo, id);
+      setQuizzes(newQuizzes);
     } catch (error) {
       console.error('❌ Quiz generation error:', error);
-      toast.error('Erro ao gerar quiz. Tente novamente.');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar quiz. Tente novamente.';
+      toast.error(errorMessage);
     } finally {
       setGenerating(false);
     }
@@ -180,8 +112,6 @@ const Quiz = () => {
   const handleQuizComplete = (result: any) => {
     console.log('🏆 Quiz completed with result:', result);
     toast.success(`Quiz concluído! Você acertou ${result.correctAnswers} de ${result.totalQuestions} questões.`);
-    
-    // Navigate to quiz history
     navigate('/quiz-history');
   };
 
@@ -198,6 +128,27 @@ const Quiz = () => {
         message="🔍 Carregando dados do quiz..."
         description="Verificando quiz e resumo disponível"
       />
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center max-w-md">
+            <div className="text-6xl mb-4">😔</div>
+            <h2 className="text-xl font-bold mb-2 text-gray-800">Erro</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={handleBack}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Voltar ao Histórico
+            </button>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 
