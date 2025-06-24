@@ -239,8 +239,8 @@ export const useUnifiedProgress = () => {
   useEffect(() => {
     if (!data.isInitialized) return;
 
-    const { data: { user } } = supabase.auth.getUser();
-    user.then(({ user }) => {
+    const setupSubscriptions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const channel = supabase
@@ -268,7 +268,9 @@ export const useUnifiedProgress = () => {
       return () => {
         supabase.removeChannel(channel);
       };
-    });
+    };
+
+    setupSubscriptions();
   }, [data.isInitialized, fetchProgressData]);
 
   return {
