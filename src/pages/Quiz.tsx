@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
-import QuizPlay from '@/components/QuizPlay';
+import SimplifiedQuizPlay from '@/components/quiz/SimplifiedQuizPlay';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
 import { useSummary } from '@/hooks/useSummary';
@@ -58,7 +58,7 @@ const Quiz = () => {
         console.log('📄 Summary loaded successfully');
         setResumo(resumoData);
 
-        // Load existing quizzes with enhanced validation
+        // Load existing quizzes with validation
         const { data: existingQuizzes, error: quizError } = await supabase
           .from('quizzes')
           .select('*')
@@ -223,7 +223,7 @@ const Quiz = () => {
     
     return (
       <PageLayout>
-        <QuizPlay 
+        <SimplifiedQuizPlay 
           quiz={quizData} 
           onComplete={handleQuizComplete}
           sessionId={sessionId}
