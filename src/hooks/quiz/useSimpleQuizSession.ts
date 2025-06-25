@@ -13,6 +13,8 @@ export const useSimpleQuizSession = () => {
     loading,
     error,
     totalQuestions,
+    currentQuestionIndex: sessionQuestionIndex,
+    correctAnswers: sessionCorrectAnswers,
     createOrResumeSession,
     resetSession
   } = useQuizSessionManager();
@@ -23,33 +25,50 @@ export const useSimpleQuizSession = () => {
     onCorrectAnswersUpdate: setCorrectAnswers
   });
 
-  const { advanceToNextQuestion } = useQuizProgressTracker({
+  const { advanceToNextQuestion, saveCurrentProgress } = useQuizProgressTracker({
     sessionId,
     currentQuestionIndex,
     totalQuestions,
     onQuestionIndexUpdate: setCurrentQuestionIndex
   });
 
+  // Sync local state with session state when session loads
+  useEffect(() => {
+    if (sessionId && !loading) {
+      console.log('🔄 Syncing local state with session:', { sessionQuestionIndex, sessionCorrectAnswers });
+      setCurrentQuestionIndex(sessionQuestionIndex);
+      setCorrectAnswers(sessionCorrectAnswers);
+    }
+  }, [sessionId, loading, sessionQuestionIndex, sessionCorrectAnswers]);
+
   // Legacy function for backward compatibility (now just calls saveAnswer)
   const saveProgress = useCallback(async (questionIndex: number, selectedAnswer: number, isCorrect: boolean) => {
     return await saveAnswer(questionIndex, selectedAnswer, isCorrect);
   }, [saveAnswer]);
 
-  // Auto-save on page unload
+  // Enhanced auto-save on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (sessionId) {
-        navigator.sendBeacon('/api/save-quiz-progress', JSON.stringify({
-          sessionId: sessionId,
-          currentIndex: currentQuestionIndex,
-          correctAnswers: correctAnswers
-        }));
+        // Use synchronous approach for better reliability
+        saveCurrentProgress();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && sessionId) {
+        saveCurrentProgress();
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [sessionId, currentQuestionIndex, correctAnswers]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sessionId, saveCurrentProgress]);
 
   // Reset local state when session resets
   useEffect(() => {

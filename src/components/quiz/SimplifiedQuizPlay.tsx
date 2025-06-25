@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimpleQuizSession } from '@/hooks/quiz/useSimpleQuizSession';
@@ -33,8 +34,8 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     sessionId: activeSessionId,
     loading: sessionLoading,
     error: sessionError,
-    currentQuestionIndex: sessionQuestionIndex,
-    correctAnswers: sessionCorrectAnswers,
+    currentQuestionIndex,
+    correctAnswers,
     createOrResumeSession,
     saveAnswer,
     advanceToNextQuestion,
@@ -42,24 +43,26 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
   } = useSimpleQuizSession();
 
   // Local UI states
-  const [localQuestionIndex, setLocalQuestionIndex] = useState(0);
-  const [localCorrectAnswers, setLocalCorrectAnswers] = useState(0);
-  const [questionsCompleted, setQuestionsCompleted] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
 
+  // Calculate questions completed based on current question index
+  const questionsCompleted = useMemo(() => {
+    return currentQuestionIndex;
+  }, [currentQuestionIndex]);
+
   // Memoize current question to prevent recalculation
   const currentQuestion = useMemo(() => {
     if (!quiz.questoes || quiz.questoes.length === 0) return null;
-    const index = Math.min(localQuestionIndex, quiz.questoes.length - 1);
+    const index = Math.min(currentQuestionIndex, quiz.questoes.length - 1);
     return quiz.questoes[index];
-  }, [quiz.questoes, localQuestionIndex]);
+  }, [quiz.questoes, currentQuestionIndex]);
 
   const isLastQuestion = useMemo(() => {
-    return localQuestionIndex === quiz.questoes.length - 1;
-  }, [localQuestionIndex, quiz.questoes.length]);
+    return currentQuestionIndex === quiz.questoes.length - 1;
+  }, [currentQuestionIndex, quiz.questoes.length]);
 
   // Initialize session once
   useEffect(() => {
@@ -67,30 +70,22 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     if (activeSessionId || sessionLoading) return;
 
     const initSession = async () => {
+      console.log('🔄 Initializing session with:', { resumeMode, sessionId, questionsCount: quiz.questoes.length });
       await createOrResumeSession(quiz.resumo_id, quiz.questoes, sessionId);
     };
 
     initSession();
   }, [quiz.resumo_id, quiz.questoes, sessionId, activeSessionId, sessionLoading, createOrResumeSession]);
 
-  // Sync local state with session state when session loads
-  useEffect(() => {
-    if (activeSessionId && !sessionLoading) {
-      console.log('🔄 Syncing local state with session:', { sessionQuestionIndex, sessionCorrectAnswers });
-      setLocalQuestionIndex(sessionQuestionIndex);
-      setLocalCorrectAnswers(sessionCorrectAnswers);
-      setQuestionsCompleted(sessionQuestionIndex);
-    }
-  }, [activeSessionId, sessionLoading, sessionQuestionIndex, sessionCorrectAnswers]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (!gameFinished && activeSessionId) {
-        resetSession();
+        console.log('🧹 Component unmounting, preserving session for later continuation');
+        // Don't reset session - allow user to continue later
       }
     };
-  }, [gameFinished, activeSessionId, resetSession]);
+  }, [gameFinished, activeSessionId]);
 
   const handleAnswerSelect = useCallback((answerIndex: number) => {
     if (showResult) return;
@@ -106,13 +101,8 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     setIsCorrect(isAnswerCorrect);
     setShowResult(true);
 
-    // Update local correct answers count
-    if (isAnswerCorrect) {
-      setLocalCorrectAnswers(prev => prev + 1);
-    }
-
-    // Save answer to database (without advancing question)
-    const saved = await saveAnswer(localQuestionIndex, selectedAnswer, isAnswerCorrect);
+    // Save answer to database
+    const saved = await saveAnswer(currentQuestionIndex, selectedAnswer, isAnswerCorrect);
     
     if (saved) {
       console.log('✅ Answer saved to database');
@@ -130,7 +120,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     } catch (xpError) {
       console.error('⚠️ Error adding XP:', xpError);
     }
-  }, [selectedAnswer, currentQuestion, localQuestionIndex, saveAnswer, addXP]);
+  }, [selectedAnswer, currentQuestion, currentQuestionIndex, saveAnswer, addXP]);
 
   const handleNextQuestion = useCallback(async () => {
     if (isLastQuestion) {
@@ -138,7 +128,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       
       setGameFinished(true);
       
-      const finalCorrectAnswers = isCorrect ? localCorrectAnswers : localCorrectAnswers;
+      const finalCorrectAnswers = isCorrect ? correctAnswers + 1 : correctAnswers;
       
       const result = {
         sessionId: activeSessionId,
@@ -172,14 +162,12 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       // Advance to next question in database
       await advanceToNextQuestion();
       
-      // Update local UI state
-      setLocalQuestionIndex(prev => prev + 1);
-      setQuestionsCompleted(prev => prev + 1);
+      // Reset UI state for next question
       setSelectedAnswer(null);
       setShowResult(false);
       setIsCorrect(false);
     }
-  }, [isLastQuestion, localCorrectAnswers, activeSessionId, quiz.questoes.length, onComplete, addXP, advanceToNextQuestion]);
+  }, [isLastQuestion, correctAnswers, isCorrect, activeSessionId, quiz.questoes.length, onComplete, addXP, advanceToNextQuestion]);
 
   const handleExit = useCallback(() => {
     const confirmExit = window.confirm(
@@ -215,7 +203,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
   if (gameFinished) {
     return (
       <QuizCompletionScreen 
-        correctAnswers={localCorrectAnswers}
+        correctAnswers={correctAnswers}
         totalQuestions={quiz.questoes.length}
       />
     );
@@ -223,7 +211,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
 
   // No current question
   if (!currentQuestion) {
-    console.error('❌ Current question not found at index:', localQuestionIndex);
+    console.error('❌ Current question not found at index:', currentQuestionIndex);
     return <QuizLoadingScreen message="Carregando questão..." />;
   }
 
@@ -231,10 +219,10 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100">
       <QuizProgressHeader
-        currentQuestionIndex={localQuestionIndex}
+        currentQuestionIndex={currentQuestionIndex}
         totalQuestions={quiz.questoes.length}
         questionsCompleted={questionsCompleted}
-        correctAnswers={localCorrectAnswers}
+        correctAnswers={correctAnswers}
         onExit={handleExit}
       />
 

@@ -54,5 +54,28 @@ export const useQuizProgressTracker = ({
     }
   }, [sessionId, currentQuestionIndex, totalQuestions, onQuestionIndexUpdate]);
 
-  return { advanceToNextQuestion };
+  // Auto-save current progress function
+  const saveCurrentProgress = useCallback(async () => {
+    if (!sessionId) return false;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      await supabase
+        .from('quiz_sessions')
+        .update({
+          last_activity_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      console.log('💾 Progress auto-saved');
+      return true;
+    } catch (err) {
+      console.error('❌ Auto-save error:', err);
+      return false;
+    }
+  }, [sessionId]);
+
+  return { advanceToNextQuestion, saveCurrentProgress };
 };

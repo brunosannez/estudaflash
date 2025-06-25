@@ -26,7 +26,19 @@ export const useQuizAnswerSaver = ({
 
       const newCorrectAnswers = isCorrect ? correctAnswers + 1 : correctAnswers;
 
-      // Just update correct answers count, don't advance question
+      // Save individual attempt record
+      await supabase
+        .from('quiz_attempts')
+        .insert({
+          user_id: user.id,
+          session_id: sessionId,
+          resumo_id: '', // Will be filled by trigger or separate query
+          quiz_question_id: `question_${questionIndex}`, // Using index as ID
+          selected_answer: selectedAnswer,
+          is_correct: isCorrect
+        });
+
+      // Update session with new correct answers count
       const { error: updateError } = await supabase
         .from('quiz_sessions')
         .update({
