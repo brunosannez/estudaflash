@@ -1,19 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Brain, ArrowLeft } from 'lucide-react';
-import { useFlashcardStudy } from '@/hooks/useFlashcardStudy';
-import FlashcardStats from './flashcard-study/FlashcardStats';
-import FlashcardProgress from './flashcard-study/FlashcardProgress';
-import FlashcardContainer from './flashcard-study/FlashcardContainer';
-import FlashcardControls from './flashcard-study/FlashcardControls';
-import FlashcardSessionStatus from './flashcard-study/FlashcardSessionStatus';
-import FlashcardKeyboardHints from './flashcard-study/FlashcardKeyboardHints';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { useFlashcardKeyboard } from '@/hooks/useFlashcardKeyboard';
+import { useFlashcardStudy } from '@/hooks/useFlashcardStudy';
+import FlashcardLoadingState from './flashcard-study/FlashcardLoadingState';
+import FlashcardContinueDialog from './flashcard-study/FlashcardContinueDialog';
+import FlashcardEmptyState from './flashcard-study/FlashcardEmptyState';
+import FlashcardStudyContainer from './flashcard-study/FlashcardStudyContainer';
 import './FlashcardAnimations.css';
 
 interface FlashcardStudyModeImprovedProps {
@@ -143,110 +138,42 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-lg font-medium text-gray-600">🧠 Carregando flashcards mágicos...</p>
-        </div>
-      </div>
-    );
+    return <FlashcardLoadingState />;
   }
 
   if (showContinueDialog) {
     return (
-      <Card className="max-w-2xl mx-auto border-4 border-blue-200 shadow-xl">
-        <CardContent className="text-center py-12">
-          <Brain className="h-16 w-16 text-blue-500 mx-auto mb-6" />
-          <h3 className="text-2xl font-bold text-gray-700 mb-4">
-            📚 Sessão em Andamento Encontrada!
-          </h3>
-          <p className="text-gray-600 mb-8">
-            Você tem uma sessão de flashcards em andamento. Deseja continuar de onde parou ou começar uma nova sessão?
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={handleContinueSession}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
-            >
-              ✅ Continuar Sessão
-            </Button>
-            <Button 
-              onClick={handleStartNew}
-              variant="outline"
-              className="border-2 border-blue-300 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl shadow-lg"
-            >
-              🆕 Nova Sessão
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <FlashcardContinueDialog
+        onContinue={handleContinueSession}
+        onStartNew={handleStartNew}
+      />
     );
   }
 
   if (flashcards.length === 0) {
-    return (
-      <Card className="border-4 border-blue-200 shadow-xl overflow-hidden">
-        <CardContent className="text-center py-12">
-          <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-gray-700 mb-2">
-            📚 Nenhum flashcard disponível
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Este resumo ainda não possui flashcards. Gere alguns para começar a estudar!
-          </p>
-          <Button onClick={onBack} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return <FlashcardEmptyState onBack={onBack} />;
   }
 
-  const currentCard = getCurrentCard();
-
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <FlashcardStats 
-        studyStats={studyStats} 
-        score={score} 
-        realGamificationData={realGamificationData}
-      />
-      
-      <FlashcardProgress 
-        currentIndex={currentIndex}
-        totalCards={flashcards.length}
-        completedCards={completedCards}
-        studyStats={studyStats}
-        score={score}
-      />
-
-      <FlashcardContainer
-        currentCard={currentCard}
-        currentIndex={currentIndex}
-        showAnswer={showAnswer}
-        isFlipped={isFlipped}
-        onFlip={handleFlip}
-        onAnswer={handleAnswer}
-        isAnimating={isAnimating}
-      />
-
-      <FlashcardControls
-        onBack={onBack}
-        onShuffle={handleShuffle}
-        onFlip={handleFlip}
-        isAnimating={isAnimating}
-      />
-      
-      <FlashcardSessionStatus
-        sessionId={activeSessionId}
-        lastSaved={lastSaved}
-        isOnline={isOnline}
-      />
-      
-      <FlashcardKeyboardHints />
-    </div>
+    <FlashcardStudyContainer
+      flashcards={flashcards}
+      currentIndex={currentIndex}
+      showAnswer={showAnswer}
+      score={score}
+      studyStats={studyStats}
+      isFlipped={isFlipped}
+      completedCards={completedCards}
+      isAnimating={isAnimating}
+      realGamificationData={realGamificationData}
+      sessionId={activeSessionId}
+      lastSaved={lastSaved}
+      isOnline={isOnline}
+      onBack={onBack}
+      onShuffle={handleShuffle}
+      onFlip={handleFlip}
+      onAnswer={handleAnswer}
+      getCurrentCard={getCurrentCard}
+    />
   );
 };
 
