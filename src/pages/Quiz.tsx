@@ -136,13 +136,13 @@ const Quiz = () => {
     return (
       <PageLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center max-w-md">
-            <div className="text-6xl mb-4">😔</div>
-            <h2 className="text-xl font-bold mb-2 text-gray-800">Erro</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-center max-w-md mx-4">
+            <div className="text-4xl md:text-6xl mb-4">😔</div>
+            <h2 className="text-lg md:text-xl font-bold mb-2 text-gray-800">Erro</h2>
+            <p className="text-sm md:text-base text-gray-600 mb-4">{error}</p>
             <button 
               onClick={handleBack}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm md:text-base"
             >
               Voltar ao Histórico
             </button>
@@ -173,14 +173,12 @@ const Quiz = () => {
     };
     
     return (
-      <PageLayout>
-        <SimplifiedQuizPlay 
-          quiz={quizData} 
-          onComplete={handleQuizComplete}
-          sessionId={sessionId}
-          resumeMode={resumeMode}
-        />
-      </PageLayout>
+      <SimplifiedQuizPlay 
+        quiz={quizData} 
+        onComplete={handleQuizComplete}
+        sessionId={sessionId}
+        resumeMode={resumeMode}
+      />
     );
   }
 
