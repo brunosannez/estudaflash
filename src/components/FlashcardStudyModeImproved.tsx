@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,11 +61,14 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
 
   // Enhanced save tracking
   const enhancedSaveProgress = async () => {
-    const result = await saveCurrentProgress();
-    if (result) {
+    try {
+      await saveCurrentProgress();
       setLastSaved(new Date());
+      return true;
+    } catch (error) {
+      console.error('❌ Error saving progress:', error);
+      return false;
     }
-    return result;
   };
 
   // Check for existing active session on mount
