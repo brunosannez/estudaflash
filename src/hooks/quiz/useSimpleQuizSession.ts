@@ -117,25 +117,62 @@ export const useSimpleQuizSession = () => {
     }
   }, [state.loading, state.sessionId]);
 
-  const saveProgress = useCallback(async (questionIndex: number, selectedAnswer: number, isCorrect: boolean) => {
+  // Separate function to save answer (without advancing question)
+  const saveAnswer = useCallback(async (questionIndex: number, selectedAnswer: number, isCorrect: boolean) => {
     if (!state.sessionId) return false;
 
     try {
-      console.log('💾 Saving progress:', { questionIndex, selectedAnswer, isCorrect });
+      console.log('💾 Saving answer:', { questionIndex, selectedAnswer, isCorrect });
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       const newCorrectAnswers = isCorrect ? state.correctAnswers + 1 : state.correctAnswers;
-      const newQuestionIndex = questionIndex + 1;
+
+      // Just update correct answers count, don't advance question
+      const { error: updateError } = await supabase
+        .from('quiz_sessions')
+        .update({
+          correct_answers: newCorrectAnswers,
+          last_activity_at: new Date().toISOString()
+        })
+        .eq('id', state.sessionId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setState(prev => ({
+        ...prev,
+        correctAnswers: newCorrectAnswers
+      }));
+
+      console.log('✅ Answer saved successfully');
+      return true;
+    } catch (err) {
+      console.error('❌ Save answer error:', err);
+      toast.error('Erro ao salvar resposta');
+      return false;
+    }
+  }, [state.sessionId, state.correctAnswers]);
+
+  // Separate function to advance to next question
+  const advanceToNextQuestion = useCallback(async () => {
+    if (!state.sessionId) return false;
+
+    try {
+      console.log('➡️ Advancing to next question');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const newQuestionIndex = state.currentQuestionIndex + 1;
       const progressPercentage = Math.round((newQuestionIndex / state.totalQuestions) * 100);
 
-      // Update session progress
+      // Update session progress to next question
       const { error: updateError } = await supabase
         .from('quiz_sessions')
         .update({
           current_question_index: newQuestionIndex,
-          correct_answers: newCorrectAnswers,
           progress_percentage: progressPercentage,
           last_activity_at: new Date().toISOString(),
           status: progressPercentage >= 100 ? 'completed' : 'in_progress'
@@ -147,18 +184,22 @@ export const useSimpleQuizSession = () => {
       // Update local state
       setState(prev => ({
         ...prev,
-        currentQuestionIndex: newQuestionIndex,
-        correctAnswers: newCorrectAnswers
+        currentQuestionIndex: newQuestionIndex
       }));
 
-      console.log('✅ Progress saved successfully');
+      console.log('✅ Advanced to next question successfully');
       return true;
     } catch (err) {
-      console.error('❌ Save progress error:', err);
-      toast.error('Erro ao salvar progresso');
+      console.error('❌ Advance question error:', err);
+      toast.error('Erro ao avançar questão');
       return false;
     }
-  }, [state.sessionId, state.correctAnswers, state.totalQuestions]);
+  }, [state.sessionId, state.currentQuestionIndex, state.totalQuestions]);
+
+  // Legacy function for backward compatibility (now just calls saveAnswer)
+  const saveProgress = useCallback(async (questionIndex: number, selectedAnswer: number, isCorrect: boolean) => {
+    return await saveAnswer(questionIndex, selectedAnswer, isCorrect);
+  }, [saveAnswer]);
 
   const resetSession = useCallback(() => {
     console.log('🔄 Resetting session state');
@@ -194,6 +235,8 @@ export const useSimpleQuizSession = () => {
     ...state,
     createOrResumeSession,
     saveProgress,
+    saveAnswer,
+    advanceToNextQuestion,
     resetSession
   };
 };
