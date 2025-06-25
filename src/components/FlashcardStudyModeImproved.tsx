@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,8 +68,11 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
 
       if (existingSession && !error) {
         // Check if there's meaningful progress to continue
-        const hasProgress = existingSession.current_card_index > 0 || 
-                           (existingSession.completed_cards && existingSession.completed_cards.length > 0);
+        const completedCardsArray = Array.isArray(existingSession.completed_cards) 
+          ? existingSession.completed_cards as string[]
+          : [];
+        
+        const hasProgress = existingSession.current_card_index > 0 || completedCardsArray.length > 0;
         
         if (hasProgress) {
           console.log('📍 Found existing flashcard session with progress:', existingSession);
@@ -216,3 +220,4 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
 };
 
 export default FlashcardStudyModeImproved;
+

@@ -1,4 +1,5 @@
 
+
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -78,8 +79,25 @@ export const useFlashcardSession = () => {
         } else {
           console.log('✅ Loading existing session data:', existingSession);
           currentIndex = existingSession.current_card_index || 0;
-          completedCards = existingSession.completed_cards || [];
-          sessionStats = existingSession.session_stats || sessionStats;
+          
+          // Safely parse completed_cards
+          if (Array.isArray(existingSession.completed_cards)) {
+            completedCards = existingSession.completed_cards as string[];
+          } else {
+            completedCards = [];
+          }
+          
+          // Safely parse session_stats
+          if (existingSession.session_stats && typeof existingSession.session_stats === 'object') {
+            const stats = existingSession.session_stats as any;
+            sessionStats = {
+              streak: stats.streak || 0,
+              totalReviewed: stats.totalReviewed || 0,
+              xpEarned: stats.xpEarned || 0,
+              correct: stats.correct || 0,
+              incorrect: stats.incorrect || 0
+            };
+          }
         }
       }
 
@@ -211,3 +229,4 @@ export const useFlashcardSession = () => {
     resetSession
   };
 };
+
