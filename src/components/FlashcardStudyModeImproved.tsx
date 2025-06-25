@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +7,12 @@ import FlashcardStats from './flashcard-study/FlashcardStats';
 import FlashcardProgress from './flashcard-study/FlashcardProgress';
 import FlashcardContainer from './flashcard-study/FlashcardContainer';
 import FlashcardControls from './flashcard-study/FlashcardControls';
+import FlashcardSessionStatus from './flashcard-study/FlashcardSessionStatus';
+import FlashcardKeyboardHints from './flashcard-study/FlashcardKeyboardHints';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useFlashcardKeyboard } from '@/hooks/useFlashcardKeyboard';
 import './FlashcardAnimations.css';
 
 interface FlashcardStudyModeImprovedProps {
@@ -22,7 +24,9 @@ interface FlashcardStudyModeImprovedProps {
 const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardStudyModeImprovedProps) => {
   const [showContinueDialog, setShowContinueDialog] = useState(false);
   const [existingSessionId, setExistingSessionId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | undefined>();
   const { toast } = useToast();
+  const isOnline = useConnectionStatus();
 
   const {
     flashcards,
@@ -43,6 +47,25 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
     saveCurrentProgress,
     completeSession
   } = useFlashcardStudy(resumoId, sessionId || existingSessionId || undefined);
+
+  // Setup keyboard shortcuts
+  useFlashcardKeyboard({
+    onFlip: handleFlip,
+    onCorrect: () => handleAnswer(true),
+    onIncorrect: () => handleAnswer(false),
+    onShuffle: handleShuffle,
+    showAnswer,
+    isAnimating
+  });
+
+  // Enhanced save tracking
+  const enhancedSaveProgress = async () => {
+    const result = await saveCurrentProgress();
+    if (result) {
+      setLastSaved(new Date());
+    }
+    return result;
+  };
 
   // Check for existing active session on mount
   useEffect(() => {
@@ -191,6 +214,8 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
         currentIndex={currentIndex}
         totalCards={flashcards.length}
         completedCards={completedCards}
+        studyStats={studyStats}
+        score={score}
       />
 
       <FlashcardContainer
@@ -210,14 +235,15 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
         isAnimating={isAnimating}
       />
       
-      {activeSessionId && (
-        <div className="text-center text-sm text-gray-500">
-          💾 Progresso salvo automaticamente • Sessão: {activeSessionId.slice(0, 8)}...
-        </div>
-      )}
+      <FlashcardSessionStatus
+        sessionId={activeSessionId}
+        lastSaved={lastSaved}
+        isOnline={isOnline}
+      />
+      
+      <FlashcardKeyboardHints />
     </div>
   );
 };
 
 export default FlashcardStudyModeImproved;
-
