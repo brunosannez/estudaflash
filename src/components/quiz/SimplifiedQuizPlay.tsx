@@ -36,6 +36,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
   // Local UI states
   const [localQuestionIndex, setLocalQuestionIndex] = useState(0);
   const [localCorrectAnswers, setLocalCorrectAnswers] = useState(0);
+  const [questionsCompleted, setQuestionsCompleted] = useState(0); // New state for completed questions
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -52,9 +53,10 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     return localQuestionIndex === quiz.questoes.length - 1;
   }, [localQuestionIndex, quiz.questoes.length]);
 
+  // Progress based on completed questions, not current question
   const progressPercentage = useMemo(() => {
-    return ((localQuestionIndex + 1) / quiz.questoes.length) * 100;
-  }, [localQuestionIndex, quiz.questoes.length]);
+    return (questionsCompleted / quiz.questoes.length) * 100;
+  }, [questionsCompleted, quiz.questoes.length]);
 
   // Initialize session once
   useEffect(() => {
@@ -74,6 +76,8 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       console.log('🔄 Syncing local state with session:', { sessionQuestionIndex, sessionCorrectAnswers });
       setLocalQuestionIndex(sessionQuestionIndex);
       setLocalCorrectAnswers(sessionCorrectAnswers);
+      // Set completed questions based on session progress
+      setQuestionsCompleted(sessionQuestionIndex);
     }
   }, [activeSessionId, sessionLoading, sessionQuestionIndex, sessionCorrectAnswers]);
 
@@ -162,6 +166,10 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       }
     } else {
       console.log('➡️ Moving to next question');
+      
+      // Update completed questions count ONLY when moving to next question
+      setQuestionsCompleted(prev => prev + 1);
+      
       setLocalQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowResult(false);
@@ -284,11 +292,14 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
             <div className="text-sm text-gray-600 mb-2">
               Questão {localQuestionIndex + 1} de {quiz.questoes.length}
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
               <div
                 className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}
               />
+            </div>
+            <div className="text-xs text-gray-500">
+              {questionsCompleted} de {quiz.questoes.length} questões respondidas
             </div>
           </div>
 
