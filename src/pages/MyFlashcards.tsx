@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ const MyFlashcards = () => {
   const [flashcards, setFlashcards] = useState<FlashcardSet[]>([]);
   const [selectedSet, setSelectedSet] = useState<FlashcardSet | null>(null);
   const [studyMode, setStudyMode] = useState(false);
+  const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFlashcards();
@@ -58,14 +58,16 @@ const MyFlashcards = () => {
     }
   };
 
-  const handleStartStudy = (flashcardSet: FlashcardSet) => {
+  const handleStartStudy = (flashcardSet: FlashcardSet, sessionId?: string) => {
     setSelectedSet(flashcardSet);
+    setResumeSessionId(sessionId || null);
     setStudyMode(true);
   };
 
   const handleBackToList = () => {
     setStudyMode(false);
     setSelectedSet(null);
+    setResumeSessionId(null);
   };
 
   if (loading) {
@@ -99,6 +101,11 @@ const MyFlashcards = () => {
               </h1>
               <p className="text-gray-600">
                 {selectedSet.flashcards.length} flashcards disponíveis
+                {resumeSessionId && (
+                  <span className="ml-2 text-blue-600 font-medium">
+                    • Continuando sessão anterior
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -106,6 +113,7 @@ const MyFlashcards = () => {
           <FlashcardStudyModeImproved 
             resumoId={selectedSet.resumo_id}
             onBack={handleBackToList}
+            sessionId={resumeSessionId || undefined}
           />
         </div>
       </PageLayout>

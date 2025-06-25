@@ -140,6 +140,50 @@ export type Database = {
           },
         ]
       }
+      flashcard_sessions: {
+        Row: {
+          completed_cards: Json
+          created_at: string
+          current_card_index: number
+          id: string
+          last_activity_at: string
+          resumo_id: string
+          session_stats: Json
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_cards?: Json
+          created_at?: string
+          current_card_index?: number
+          id?: string
+          last_activity_at?: string
+          resumo_id: string
+          session_stats?: Json
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_cards?: Json
+          created_at?: string
+          current_card_index?: number
+          id?: string
+          last_activity_at?: string
+          resumo_id?: string
+          session_stats?: Json
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_sessions_resumo_id_fkey"
+            columns: ["resumo_id"]
+            isOneToOne: false
+            referencedRelation: "resumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flashcards: {
         Row: {
           data_criacao: string

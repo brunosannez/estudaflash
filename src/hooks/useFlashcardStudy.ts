@@ -1,8 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGameification } from '@/hooks/useGameification';
+import { useFlashcardSession } from '@/hooks/useFlashcardSession';
+import { useRealGamificationData } from '@/hooks/useRealGamificationData';
 
 interface Flashcard {
   id: string;
@@ -22,7 +24,7 @@ interface Score {
   incorrect: number;
 }
 
-export const useFlashcardStudy = (resumoId: string) => {
+export const useFlashcardStudy = (resumoId: string, sessionId?: string) => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -32,12 +34,79 @@ export const useFlashcardStudy = (resumoId: string) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
+  
   const { toast } = useToast();
   const { addXP } = useGameification();
+  const realGamificationData = useRealGamificationData();
+  
+  const {
+    sessionId: activeSessionId,
+    loading: sessionLoading,
+    currentCardIndex: sessionCurrentIndex,
+    completedCards: sessionCompletedCards,
+    sessionStats,
+    createOrResumeSession,
+    saveProgress,
+    completeSession,
+    resetSession
+  } = useFlashcardSession();
 
   useEffect(() => {
     fetchFlashcards();
   }, [resumoId]);
+
+  // Initialize session once flashcards are loaded
+  useEffect(() => {
+    if (flashcards.length > 0 && !activeSessionId && !sessionLoading) {
+      initializeSession();
+    }
+  }, [flashcards.length, activeSessionId, sessionLoading]);
+
+  // Sync with session state
+  useEffect(() => {
+    if (activeSessionId && !sessionLoading) {
+      console.log('🔄 Syncing with session state:', { sessionCurrentIndex, sessionStats });
+      setCurrentIndex(sessionCurrentIndex);
+      setCompletedCards(new Set(sessionCompletedCards));
+      setStudyStats({
+        streak: sessionStats.streak,
+        totalReviewed: sessionStats.totalReviewed,
+        xpEarned: sessionStats.xpEarned
+      });
+      setScore({
+        correct: sessionStats.correct,
+        incorrect: sessionStats.incorrect
+      });
+    }
+  }, [activeSessionId, sessionLoading, sessionCurrentIndex, sessionCompletedCards, sessionStats]);
+
+  // Auto-save on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (activeSessionId) {
+        saveCurrentProgress();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && activeSessionId) {
+        saveCurrentProgress();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeSessionId]);
+
+  const initializeSession = async () => {
+    console.log('🔄 Initializing flashcard session:', { resumoId, sessionId });
+    await createOrResumeSession(resumoId, sessionId);
+  };
 
   const fetchFlashcards = async () => {
     try {
@@ -72,6 +141,20 @@ export const useFlashcardStudy = (resumoId: string) => {
       setLoading(false);
     }
   };
+
+  const saveCurrentProgress = useCallback(async () => {
+    if (!activeSessionId) return;
+
+    const updatedStats = {
+      streak: studyStats.streak,
+      totalReviewed: studyStats.totalReviewed,
+      xpEarned: studyStats.xpEarned,
+      correct: score.correct,
+      incorrect: score.incorrect
+    };
+
+    await saveProgress(currentIndex, Array.from(completedCards), updatedStats);
+  }, [activeSessionId, currentIndex, completedCards, studyStats, score, saveProgress]);
 
   const handleFlip = () => {
     if (isAnimating) return;
@@ -113,6 +196,7 @@ export const useFlashcardStudy = (resumoId: string) => {
         try {
           await addXP(xpToAdd, 'flashcard');
           console.log('✅ XP adicionado:', xpToAdd);
+          realGamificationData.refreshData(); // Atualizar dados reais
         } catch (xpError) {
           console.error('❌ Erro ao adicionar XP:', xpError);
         }
@@ -126,13 +210,21 @@ export const useFlashcardStudy = (resumoId: string) => {
         xpEarned: studyStats.xpEarned + xpToAdd
       };
 
-      setStudyStats(newStats);
-      setScore(prev => ({
-        correct: remembered ? prev.correct + 1 : prev.correct,
-        incorrect: remembered ? prev.incorrect : prev.incorrect + 1
-      }));
+      const newScore = {
+        correct: remembered ? score.correct + 1 : score.correct,
+        incorrect: remembered ? score.incorrect : score.incorrect + 1
+      };
 
+      setStudyStats(newStats);
+      setScore(newScore);
       setCompletedCards(prev => new Set([...prev, currentCard.id]));
+
+      // Salvar progresso na sessão
+      await saveProgress(
+        currentIndex, 
+        Array.from(new Set([...completedCards, currentCard.id])), 
+        { ...newStats, correct: newScore.correct, incorrect: newScore.incorrect }
+      );
 
       // Feedback visual melhorado
       toast({
@@ -144,14 +236,10 @@ export const useFlashcardStudy = (resumoId: string) => {
 
       // Avançar para próximo card automaticamente após resposta
       setTimeout(() => {
-        if (currentIndex < flashcards.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-          console.log('➡️ Avançando para próximo card:', currentIndex + 1);
-        } else {
-          // Reiniciar do começo se chegou ao fim
-          setCurrentIndex(0);
-          console.log('🔄 Reiniciando do primeiro card');
-        }
+        const nextIndex = currentIndex < flashcards.length - 1 ? currentIndex + 1 : 0;
+        setCurrentIndex(nextIndex);
+        console.log('➡️ Avançando para card:', nextIndex);
+        
         setShowAnswer(false);
         setIsFlipped(false);
       }, 1500);
@@ -178,19 +266,32 @@ export const useFlashcardStudy = (resumoId: string) => {
     });
   };
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (activeSessionId) {
+        saveCurrentProgress();
+      }
+    };
+  }, []);
+
   return {
     flashcards,
     currentIndex,
     showAnswer,
-    loading,
+    loading: loading || sessionLoading,
     score,
     studyStats,
     isFlipped,
     completedCards,
     isAnimating,
+    realGamificationData, // Dados reais de gamificação
+    sessionId: activeSessionId,
     handleFlip,
     handleAnswer,
     handleShuffle,
-    getCurrentCard: () => flashcards[currentIndex]
+    getCurrentCard: () => flashcards[currentIndex],
+    saveCurrentProgress,
+    completeSession
   };
 };
