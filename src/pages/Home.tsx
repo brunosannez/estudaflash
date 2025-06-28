@@ -16,13 +16,15 @@ const Home = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Só redireciona se o usuário estiver logado
     if (!loading && user) {
       console.log('User is logged in, redirecting to dashboard');
-      navigate('/', { replace: true }); // Corrigido: redirecionar para '/' em vez de '/dashboard'
+      navigate('/dashboard', { replace: true });
     }
   }, [user, loading, navigate]);
 
-  if (loading || (!loading && user)) {
+  // Mostrar loading apenas quando está carregando
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
@@ -31,6 +33,7 @@ const Home = () => {
     );
   }
 
+  // Se não está logado, mostra a página inicial
   return (
     <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
       <FloatingElements />

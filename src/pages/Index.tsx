@@ -10,7 +10,7 @@ import EnhancedRecentActivity from '@/components/dashboard/EnhancedRecentActivit
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 
 const Index = () => {
-  console.log('🏠 Index page rendering...');
+  console.log('🏠 Dashboard Index page rendering...');
 
   return (
     <ProtectedRoute>

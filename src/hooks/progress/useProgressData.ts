@@ -29,13 +29,14 @@ export const useProgressData = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.log('🔒 No user found, setting initialized');
         setData(prev => ({ ...prev, loading: false, isInitialized: true }));
         return;
       }
 
-      console.log('🔄 Fetching real progress data from Supabase...');
+      console.log('🔄 Fetching progress data from Supabase for user:', user.id);
 
-      // Fetch historical activity data with safe queries
+      // Fetch historical activity data with better queries
       const [flashcardResult, quizResult, sessionResult] = await Promise.allSettled([
         supabase.from('flashcard_reviews').select('*').eq('user_id', user.id),
         supabase.from('quiz_respostas').select('*').eq('user_id', user.id),
@@ -77,25 +78,40 @@ export const useProgressData = () => {
       const sortedDates = Array.from(activityDates).sort().reverse();
       let currentStreak = 0;
       let longestStreak = 0;
-      let streakCount = 0;
       
       // Calculate current streak
-      const currentDate = new Date();
-      for (let i = 0; i < sortedDates.length; i++) {
-        const date = new Date(sortedDates[i]);
-        const expectedDate = new Date(currentDate);
-        expectedDate.setDate(expectedDate.getDate() - i);
+      if (sortedDates.length > 0) {
+        const currentDate = new Date();
+        currentStreak = 1; // At least 1 if there's any activity
         
-        if (date.toDateString() === expectedDate.toDateString()) {
-          streakCount++;
-          if (i === 0) currentStreak = streakCount;
-        } else {
-          longestStreak = Math.max(longestStreak, streakCount);
-          if (i === 0) currentStreak = 0; // Streak broken
-          streakCount = 0;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = new Date(sortedDates[i - 1]);
+          const currentDateCheck = new Date(sortedDates[i]);
+          const diffDays = Math.floor((prevDate.getTime() - currentDateCheck.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            currentStreak++;
+          } else {
+            break;
+          }
         }
+        
+        // Calculate longest streak
+        let tempStreak = 1;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = new Date(sortedDates[i - 1]);
+          const currentDateCheck = new Date(sortedDates[i]);
+          const diffDays = Math.floor((prevDate.getTime() - currentDateCheck.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            tempStreak++;
+          } else {
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+        }
+        longestStreak = Math.max(longestStreak, tempStreak);
       }
-      longestStreak = Math.max(longestStreak, streakCount);
 
       console.log('🎯 Calculated stats:', {
         totalXP,
@@ -159,14 +175,14 @@ export const useProgressData = () => {
         isInitialized: true
       });
 
-      console.log('✅ Real progress data loaded and synced successfully');
+      console.log('✅ Progress data loaded and synced successfully');
 
     } catch (error) {
-      console.error('❌ Error loading real progress data:', error);
+      console.error('❌ Error loading progress data:', error);
       setData(prev => ({
         ...prev,
         loading: false,
-        error: 'Erro ao carregar dados de progresso real',
+        error: 'Erro ao carregar dados de progresso',
         isInitialized: true
       }));
     }

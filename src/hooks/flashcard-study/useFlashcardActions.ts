@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useGameification } from '@/hooks/useGameification';
+import { useProgressUpdater } from '@/hooks/progress/useProgressUpdater';
 
 interface Flashcard {
   id: string;
@@ -51,7 +51,7 @@ export const useFlashcardActions = ({
   realGamificationData
 }: UseFlashcardActionsProps) => {
   const { toast } = useToast();
-  const { addXP } = useGameification();
+  const { updateProgressAfterActivity } = useProgressUpdater();
 
   const handleFlip = () => {
     if (isAnimating) return;
@@ -71,7 +71,7 @@ export const useFlashcardActions = ({
     const currentCard = flashcards[currentIndex];
     const xpToAdd = remembered ? 5 : 1;
     
-    console.log('📝 Registrando resposta:', { remembered, xpToAdd, cardId: currentCard.id });
+    console.log('📝 Registrando resposta flashcard:', { remembered, xpToAdd, cardId: currentCard.id });
     
     try {
       // Registrar review no banco
@@ -86,16 +86,16 @@ export const useFlashcardActions = ({
         if (reviewError) {
           console.error('❌ Erro ao registrar review:', reviewError);
         } else {
-          console.log('✅ Review registrado com sucesso');
+          console.log('✅ Flashcard review registrado com sucesso');
         }
 
-        // Adicionar XP através do sistema de gamificação
+        // Atualizar sistema de progresso
         try {
-          await addXP(xpToAdd, 'flashcard');
-          console.log('✅ XP adicionado:', xpToAdd);
+          await updateProgressAfterActivity('flashcard');
+          console.log('🎯 Progress updated for flashcard activity');
           realGamificationData.refreshData(); // Atualizar dados reais
         } catch (xpError) {
-          console.error('❌ Erro ao adicionar XP:', xpError);
+          console.error('❌ Erro ao atualizar progresso:', xpError);
         }
       }
 
