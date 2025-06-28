@@ -17,6 +17,8 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log('🔐 Login page rendering');
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -32,26 +34,30 @@ const Login = () => {
     setLoading(true);
     
     try {
+      console.log('🔄 Attempting login for:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('❌ Login error:', error);
         toast({
           title: "Erro no login",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log('✅ Login successful');
         toast({
           title: "Sucesso!",
           description: "Login realizado com sucesso.",
         });
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente em alguns instantes.",
@@ -77,8 +83,7 @@ const Login = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/home')}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 relative z-20"
-            style={{ pointerEvents: 'auto' }}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Voltar</span>
@@ -108,7 +113,7 @@ const Login = () => {
             </p>
           </div>
 
-          <Card className="shadow-xl border-2 border-purple-200 relative z-20">
+          <Card className="shadow-xl border-2 border-purple-200">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-gray-800">Fazer Login</CardTitle>
               <CardDescription>
@@ -150,9 +155,8 @@ const Login = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white font-medium py-2.5 relative z-20"
+                  className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white font-medium py-2.5"
                   disabled={loading || !email || !password}
-                  style={{ pointerEvents: 'auto' }}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   {loading ? 'Entrando...' : 'Entrar'}
@@ -164,8 +168,7 @@ const Login = () => {
                   Não tem uma conta?{' '}
                   <Link
                     to="/signup"
-                    className="text-purple-600 hover:text-purple-700 font-medium relative z-20"
-                    style={{ pointerEvents: 'auto' }}
+                    className="text-purple-600 hover:text-purple-700 font-medium"
                   >
                     Criar conta grátis
                   </Link>

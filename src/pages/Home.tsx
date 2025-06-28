@@ -1,6 +1,4 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { designColors } from '@/utils/designSystem';
 import HomeHeader from '@/components/home/HomeHeader';
@@ -12,16 +10,9 @@ import HomeFooter from '@/components/home/HomeFooter';
 import { Loader2 } from 'lucide-react';
 
 const Home = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const { loading } = useAuth();
 
-  useEffect(() => {
-    // Só redireciona se o usuário estiver logado
-    if (!loading && user) {
-      console.log('User is logged in, redirecting to dashboard');
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, loading, navigate]);
+  console.log('🏠 Home page rendering - Loading:', loading);
 
   // Mostrar loading apenas quando está carregando
   if (loading) {
@@ -33,7 +24,7 @@ const Home = () => {
     );
   }
 
-  // Se não está logado, mostra a página inicial
+  // Sempre mostrar a página inicial (landing page)
   return (
     <div className={`min-h-screen ${designColors.backgrounds.main} relative overflow-hidden`}>
       <FloatingElements />

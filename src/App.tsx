@@ -24,12 +24,13 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AuthGuard from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
 
 function App() {
   const { user, loading } = useAuth();
+
+  console.log('🚀 App rendering - User:', !!user, 'Loading:', loading);
 
   if (loading) {
     return (
@@ -48,105 +49,113 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthGuard>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/new-signup" element={<NewSignup />} />
-              
-              <Route 
-                path="/upload" 
-                element={
-                  <ProtectedRoute>
-                    <Upload />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-summaries" 
-                element={
-                  <ProtectedRoute>
-                    <MySummaries />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/resumo/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Resumo />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-flashcards" 
-                element={
-                  <ProtectedRoute>
-                    <MyFlashcards />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/quiz/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Quiz />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/quiz-history" 
-                element={
-                  <ProtectedRoute>
-                    <EnhancedQuizHistory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/quiz-history/:sessionId/view" 
-                element={
-                  <ProtectedRoute>
-                    <QuizHistoryView />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-progress" 
-                element={
-                  <ProtectedRoute>
-                    <MyProgress />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/mind-map/:id" 
-                element={
-                  <ProtectedRoute>
-                    <MindMap />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/analytics" 
-                element={
-                  <ProtectedRoute>
-                    <AdminAnalytics />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthGuard>
+          <Routes>
+            {/* Rota principal - Home para não autenticados, Dashboard para autenticados */}
+            <Route path="/" element={user ? <Index /> : <Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/new-signup" element={<NewSignup />} />
+            
+            {/* Rotas protegidas */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/upload" 
+              element={
+                <ProtectedRoute>
+                  <Upload />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-summaries" 
+              element={
+                <ProtectedRoute>
+                  <MySummaries />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resumo/:id" 
+              element={
+                <ProtectedRoute>
+                  <Resumo />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-flashcards" 
+              element={
+                <ProtectedRoute>
+                  <MyFlashcards />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/quiz/:id" 
+              element={
+                <ProtectedRoute>
+                  <Quiz />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/quiz-history" 
+              element={
+                <ProtectedRoute>
+                  <EnhancedQuizHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/quiz-history/:sessionId/view" 
+              element={
+                <ProtectedRoute>
+                  <QuizHistoryView />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-progress" 
+              element={
+                <ProtectedRoute>
+                  <MyProgress />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mind-map/:id" 
+              element={
+                <ProtectedRoute>
+                  <MindMap />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <AdminPanel />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/analytics" 
+              element={
+                <ProtectedRoute>
+                  <AdminAnalytics />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -21,14 +21,33 @@ export const useAuth = () => {
   useEffect(() => {
     let isMounted = true;
 
+    console.log('🔐 useAuth - Setting up auth state...');
+
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state change:', event, session?.user?.email);
+      
+      if (isMounted) {
+        setAuthState({
+          user: session?.user || null,
+          session: session || null,
+          loading: false,
+          error: null,
+        });
+      }
+    });
+
+    // THEN check for existing session
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Erro ao obter sessão:', error);
+          console.error('❌ Error getting session:', error);
           throw error;
         }
+
+        console.log('📋 Initial session check:', session?.user?.email || 'No user');
 
         if (isMounted) {
           setAuthState({
@@ -39,7 +58,7 @@ export const useAuth = () => {
           });
         }
       } catch (error: any) {
-        console.error('Erro na autenticação:', error);
+        console.error('❌ Auth initialization error:', error);
         if (isMounted) {
           setAuthState({
             user: null,
@@ -53,20 +72,8 @@ export const useAuth = () => {
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.email);
-      
-      if (isMounted) {
-        setAuthState({
-          user: session?.user || null,
-          session: session || null,
-          loading: false,
-          error: null,
-        });
-      }
-    });
-
     return () => {
+      console.log('🧹 Cleaning up auth subscription');
       isMounted = false;
       subscription.unsubscribe();
     };
@@ -74,6 +81,7 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('🔑 Signing in user:', email);
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -82,7 +90,7 @@ export const useAuth = () => {
       });
 
       if (error) {
-        console.error('Erro no login:', error);
+        console.error('❌ Sign in error:', error);
         setAuthState(prev => ({ 
           ...prev, 
           loading: false, 
@@ -91,16 +99,17 @@ export const useAuth = () => {
         throw error;
       }
 
-      console.log('Login realizado com sucesso:', data.user?.email);
+      console.log('✅ Sign in successful:', data.user?.email);
       return data;
     } catch (error: any) {
-      console.error('Erro no signIn:', error);
+      console.error('❌ signIn error:', error);
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
+      console.log('📝 Signing up user:', email);
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
       const { data, error } = await supabase.auth.signUp({
@@ -113,7 +122,7 @@ export const useAuth = () => {
       });
 
       if (error) {
-        console.error('Erro no cadastro:', error);
+        console.error('❌ Sign up error:', error);
         setAuthState(prev => ({ 
           ...prev, 
           loading: false, 
@@ -122,25 +131,27 @@ export const useAuth = () => {
         throw error;
       }
 
-      console.log('Cadastro realizado:', data.user?.email);
+      console.log('✅ Sign up successful:', data.user?.email);
       return data;
     } catch (error: any) {
-      console.error('Erro no signUp:', error);
+      console.error('❌ signUp error:', error);
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
+      console.log('🚪 Signing out user');
       setAuthState(prev => ({ ...prev, loading: true }));
       
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('Erro no logout:', error);
+        console.error('❌ Sign out error:', error);
         throw error;
       }
 
+      console.log('✅ Sign out successful');
       setAuthState({
         user: null,
         session: null,
@@ -148,7 +159,7 @@ export const useAuth = () => {
         error: null,
       });
     } catch (error: any) {
-      console.error('Erro no signOut:', error);
+      console.error('❌ signOut error:', error);
       setAuthState(prev => ({ 
         ...prev, 
         loading: false, 
