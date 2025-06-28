@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
@@ -51,10 +52,8 @@ const Upload = () => {
     }
 
     if (!selectedFiles.length) {
-      toast({
-        title: "Nenhuma imagem selecionada",
+      toast.error("Nenhuma imagem selecionada", {
         description: "Por favor, selecione pelo menos uma imagem.",
-        variant: "destructive",
       });
       return;
     }
@@ -98,8 +97,7 @@ const Upload = () => {
       await incrementUsage('uploads');
       console.log('✅ Upload usage incremented');
 
-      toast({
-        title: "Imagens enviadas com sucesso!",
+      toast.success("Imagens enviadas com sucesso!", {
         description: "Redirecionando para a página de resumo...",
       });
       
@@ -109,10 +107,8 @@ const Upload = () => {
       }, 2000);
     } catch (error) {
       console.error('❌ Error processing images:', error);
-      toast({
-        title: "Erro ao enviar imagens",
+      toast.error("Erro ao enviar imagens", {
         description: "Por favor, tente novamente.",
-        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);

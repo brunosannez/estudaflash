@@ -9,6 +9,7 @@ import QuickStatsLoading from './QuickStatsLoading';
 import QuickStatsEmpty from './QuickStatsEmpty';
 import QuickStatsUsageItem from './QuickStatsUsageItem';
 import QuickStatsActions from './QuickStatsActions';
+import { PlanType } from '@/types/plans';
 
 const QuickStats = () => {
   const { usageData, loading: usageLoading, refreshUsage } = useUsageData();
@@ -73,6 +74,11 @@ const QuickStats = () => {
     },
   ];
 
+  // Convert plan string to PlanType with fallback
+  const planType = (usageData.plano === 'free' || usageData.plano === 'pro' || usageData.plano === 'edu') 
+    ? usageData.plano as PlanType 
+    : 'free' as PlanType;
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -95,7 +101,7 @@ const QuickStats = () => {
         <QuickStatsActions 
           onRefresh={handleRefresh}
           syncing={syncing}
-          plan={usageData.plano}
+          plan={planType}
           currentLevel={progress?.current_level || 1}
         />
       </CardContent>
