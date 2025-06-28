@@ -58,8 +58,9 @@ const MainNavigation = () => {
 
   const handleSignOut = async () => {
     try {
+      console.log('🚪 Signing out and redirecting to home');
       await signOut();
-      navigate('/home');
+      navigate('/home', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
     }

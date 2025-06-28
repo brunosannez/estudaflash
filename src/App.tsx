@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Upload from "./pages/Upload";
@@ -50,22 +50,19 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Rota principal - Home para não autenticados, Dashboard para autenticados */}
+            {/* Rota principal - Dashboard para autenticados, Home para não autenticados */}
             <Route path="/" element={user ? <Index /> : <Home />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/new-signup" element={<NewSignup />} />
+            
+            {/* Redirecionamentos para garantir que sempre use a interface atual */}
+            <Route path="/home" element={user ? <Navigate to="/" replace /> : <Home />} />
+            <Route path="/dashboard" element={user ? <Index /> : <Navigate to="/login" replace />} />
+            
+            {/* Rotas de autenticação */}
+            <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+            <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
+            <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
             
             {/* Rotas protegidas */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } 
-            />
             <Route 
               path="/upload" 
               element={
@@ -154,6 +151,8 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Rota 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
