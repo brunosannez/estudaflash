@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { RefreshCw, RotateCcw } from 'lucide-react';
+import { RefreshCw, BookOpen, Brain, Target } from 'lucide-react';
 
 interface ProgressEmptyProps {
   onRefresh: () => void;
@@ -8,31 +8,46 @@ interface ProgressEmptyProps {
 
 const ProgressEmpty = ({ onRefresh }: ProgressEmptyProps) => {
   return (
-    <div className="flex items-center justify-center py-8">
-      <div className="text-center space-y-4">
-        <div className="text-6xl">🎮</div>
-        <p className="text-lg font-semibold text-gray-600">Comece a estudar para ver seu progresso!</p>
-        <div className="text-sm text-gray-500 mb-4">
-          Complete flashcards ou quizzes para ganhar XP e começar seu streak
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center space-y-6 max-w-md mx-auto">
+        <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto">
+          <Target className="h-10 w-10 text-purple-600" />
         </div>
-        <div className="flex gap-2 justify-center">
-          <Button 
-            onClick={onRefresh}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Sincronizar
-          </Button>
-          <Button 
-            onClick={onRefresh}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
+        
+        <div className="space-y-3">
+          <h3 className="text-2xl font-bold text-gray-800">
+            Comece sua jornada de aprendizado! 🚀
+          </h3>
+          <p className="text-gray-600 text-lg">
+            Seu progresso será exibido aqui assim que você começar a usar o Estuda Flash.
+          </p>
         </div>
+
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
+          <h4 className="font-semibold text-gray-800 mb-3">Como ganhar XP:</h4>
+          <div className="space-y-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-blue-500" />
+              <span>📚 +5 XP por cada flashcard estudado</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-green-500" />
+              <span>✅ +10 XP por resposta correta em quiz</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-orange-500" />
+              <span>📝 +2 XP por tentativa em quiz</span>
+            </div>
+          </div>
+        </div>
+
+        <Button 
+          onClick={onRefresh}
+          className="bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar Progresso
+        </Button>
       </div>
     </div>
   );

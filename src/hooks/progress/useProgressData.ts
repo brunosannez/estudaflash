@@ -33,7 +33,7 @@ export const useProgressData = () => {
         return;
       }
 
-      console.log('🔄 Fetching unified progress data...');
+      console.log('🔄 Fetching real progress data from Supabase...');
 
       // Fetch historical activity data with safe queries
       const [flashcardResult, quizResult, sessionResult] = await Promise.allSettled([
@@ -47,7 +47,13 @@ export const useProgressData = () => {
       const quizAnswers = quizResult.status === 'fulfilled' ? quizResult.value.data || [] : [];
       const completedSessions = sessionResult.status === 'fulfilled' ? sessionResult.value.data || [] : [];
 
-      // Calculate totals
+      console.log('📊 Real data fetched:', {
+        flashcards: flashcardReviews.length,
+        quizAnswers: quizAnswers.length,
+        sessions: completedSessions.length
+      });
+
+      // Calculate totals based on real data
       const totalFlashcards = flashcardReviews.length;
       const correctAnswers = quizAnswers.filter(a => a.acertou).length;
       const incorrectAnswers = quizAnswers.length - correctAnswers;
@@ -59,9 +65,10 @@ export const useProgressData = () => {
       const todayFlashcards = flashcardReviews.filter(r => r.data_review?.startsWith(today)).length;
       const todayQuizAnswers = quizAnswers.filter(a => a.data_resposta?.startsWith(today));
       const todayCorrect = todayQuizAnswers.filter(a => a.acertou).length;
-      const todayXP = calculateXP(todayFlashcards, todayCorrect, todayQuizAnswers.length - todayCorrect);
+      const todayIncorrect = todayQuizAnswers.length - todayCorrect;
+      const todayXP = calculateXP(todayFlashcards, todayCorrect, todayIncorrect);
 
-      // Calculate streak (simplified - consecutive days with activity)
+      // Calculate streak based on consecutive days with activity
       const activityDates = new Set([
         ...flashcardReviews.map(r => r.data_review?.split('T')[0]).filter(Boolean),
         ...quizAnswers.map(a => a.data_resposta?.split('T')[0]).filter(Boolean)
@@ -72,9 +79,11 @@ export const useProgressData = () => {
       let longestStreak = 0;
       let streakCount = 0;
       
+      // Calculate current streak
+      const currentDate = new Date();
       for (let i = 0; i < sortedDates.length; i++) {
         const date = new Date(sortedDates[i]);
-        const expectedDate = new Date();
+        const expectedDate = new Date(currentDate);
         expectedDate.setDate(expectedDate.getDate() - i);
         
         if (date.toDateString() === expectedDate.toDateString()) {
@@ -82,12 +91,23 @@ export const useProgressData = () => {
           if (i === 0) currentStreak = streakCount;
         } else {
           longestStreak = Math.max(longestStreak, streakCount);
+          if (i === 0) currentStreak = 0; // Streak broken
           streakCount = 0;
         }
       }
       longestStreak = Math.max(longestStreak, streakCount);
 
-      // Upsert user progress
+      console.log('🎯 Calculated stats:', {
+        totalXP,
+        currentLevel,
+        currentStreak,
+        longestStreak,
+        todayXP,
+        todayFlashcards,
+        todayQuizAnswers: todayQuizAnswers.length
+      });
+
+      // Upsert user progress with real calculated data
       const progressData = {
         user_id: user.id,
         total_xp: totalXP,
@@ -98,13 +118,18 @@ export const useProgressData = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { data: progress } = await supabase
+      const { data: progress, error: progressError } = await supabase
         .from('user_progress')
         .upsert(progressData, { onConflict: 'user_id' })
         .select()
         .single();
 
-      // Upsert daily activity
+      if (progressError) {
+        console.error('❌ Error upserting progress:', progressError);
+        throw progressError;
+      }
+
+      // Upsert daily activity with real data
       const activityData = {
         user_id: user.id,
         activity_date: today,
@@ -115,11 +140,16 @@ export const useProgressData = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { data: activity } = await supabase
+      const { data: activity, error: activityError } = await supabase
         .from('daily_activities')
         .upsert(activityData, { onConflict: 'user_id,activity_date' })
         .select()
         .single();
+
+      if (activityError) {
+        console.error('❌ Error upserting activity:', activityError);
+        throw activityError;
+      }
 
       setData({
         progress,
@@ -129,14 +159,14 @@ export const useProgressData = () => {
         isInitialized: true
       });
 
-      console.log('✅ Unified progress data loaded successfully');
+      console.log('✅ Real progress data loaded and synced successfully');
 
     } catch (error) {
-      console.error('❌ Error loading progress data:', error);
+      console.error('❌ Error loading real progress data:', error);
       setData(prev => ({
         ...prev,
         loading: false,
-        error: 'Erro ao carregar dados de progresso',
+        error: 'Erro ao carregar dados de progresso real',
         isInitialized: true
       }));
     }

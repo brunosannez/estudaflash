@@ -13,13 +13,21 @@ const ProgressOverview = () => {
 
   useEffect(() => {
     if (!isInitialized) {
+      console.log('🔄 Initializing progress data...');
       refreshProgress();
     }
   }, [isInitialized, refreshProgress]);
 
   const stats = getStats();
 
-  console.log('🎯 ProgressOverview render:', { loading, isInitialized, stats, error });
+  console.log('🎯 ProgressOverview render:', { 
+    loading, 
+    isInitialized, 
+    hasStats: !!stats, 
+    error,
+    progress: !!progress,
+    todayActivity: !!todayActivity
+  });
 
   if (loading || !isInitialized) {
     return <ProgressLoading />;

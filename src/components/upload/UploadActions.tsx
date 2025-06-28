@@ -57,14 +57,14 @@ const UploadActions = ({
               <div className="flex items-center justify-center space-x-2 sm:space-x-4">
                 <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin" />
                 <span className="text-base sm:text-lg md:text-xl">
-                  🔮 Criando Magia... {selectedFiles.length} foto{selectedFiles.length > 1 ? 's' : ''}
+                  📚 Criando Resumo... {selectedFiles.length} foto{selectedFiles.length > 1 ? 's' : ''}
                 </span>
               </div>
             ) : (
               <div className="flex items-center justify-center space-x-2 sm:space-x-4 relative z-10">
+                <span className="text-2xl sm:text-3xl md:text-4xl">📚</span>
+                <span>Criar Resumo!</span>
                 <span className="text-2xl sm:text-3xl md:text-4xl">✨</span>
-                <span>Criar Jogos Divertidos!</span>
-                <span className="text-2xl sm:text-3xl md:text-4xl">🎮</span>
               </div>
             )}
             
