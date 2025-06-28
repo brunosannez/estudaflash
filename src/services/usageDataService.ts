@@ -2,85 +2,87 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UsageData {
-  id: string;
   user_id: string;
   uploads_realizados: number;
   flashcards_gerados: number;
   quizzes_realizados: number;
-  data_ultimo_reset: string;
   plano: string;
-  plan_id: string;
   plan_name?: string;
-  uploads_limit?: number;
-  summaries_limit?: number;
-  flashcards_limit?: number;
-  quizzes_limit?: number;
-  quiz_model?: string;
-  summary_model?: string;
-  flashcard_model?: string;
+  uploads_limit: number;
+  summaries_limit: number;
+  flashcards_limit: number;
+  quizzes_limit: number;
+  is_admin: boolean;
+  data_ultimo_reset: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export class UsageDataService {
   static async getUserUsage(userId: string): Promise<UsageData | null> {
     try {
-      console.log('🔍 Buscando dados de uso para usuário:', userId);
+      console.log('🔍 Fetching user usage for:', userId);
       
       const { data, error } = await supabase
         .from('uso_usuarios')
         .select(`
           *,
-          plans:plan_id (
+          plans!inner(
             name,
             uploads_limit,
             summaries_limit,
             flashcards_limit,
-            quizzes_limit,
-            quiz_model,
-            summary_model,
-            flashcard_model
+            quizzes_limit
           )
         `)
         .eq('user_id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
-        console.error('❌ Erro ao buscar dados de uso:', error);
+        console.error('❌ Error fetching user usage:', error);
+        
+        // Se usuário não existe, tentar criar
+        if (error.code === 'PGRST116') {
+          return await this.initializeUserUsage(userId);
+        }
         throw error;
       }
 
-      if (!data) {
-        console.log('📝 Usuário não encontrado, inicializando...');
-        return await this.initializeUserUsage(userId);
-      }
-
-      console.log('✅ Dados de uso encontrados:', data);
+      console.log('✅ User usage fetched:', data);
       
-      const planData = data.plans as any;
+      // Mapear dados do plano
+      const planData = Array.isArray(data.plans) ? data.plans[0] : data.plans;
+      
       return {
-        ...data,
-        plano: planData?.name?.toLowerCase() || 'free',
-        plan_name: planData?.name,
+        user_id: data.user_id,
+        uploads_realizados: data.uploads_realizados,
+        flashcards_gerados: data.flashcards_gerados,
+        quizzes_realizados: data.quizzes_realizados,
+        plano: data.plano,
+        plan_name: planData?.name || data.plano,
         uploads_limit: planData?.uploads_limit || 10,
         summaries_limit: planData?.summaries_limit || 10,
         flashcards_limit: planData?.flashcards_limit || 10,
         quizzes_limit: planData?.quizzes_limit || 10,
-        quiz_model: planData?.quiz_model,
-        summary_model: planData?.summary_model,
-        flashcard_model: planData?.flashcard_model,
+        is_admin: data.is_admin,
+        data_ultimo_reset: data.data_ultimo_reset,
+        created_at: data.created_at,
+        updated_at: data.updated_at
       };
     } catch (error) {
-      console.error('❌ Erro no getUserUsage:', error);
+      console.error('❌ Error in getUserUsage:', error);
       throw error;
     }
   }
 
-  static async initializeUserUsage(userId: string): Promise<UsageData> {
+  static async initializeUserUsage(userId: string): Promise<UsageData | null> {
     try {
-      console.log('📝 Inicializando dados de uso para:', userId);
+      console.log('🔄 Initializing user usage for:', userId);
       
+      // Buscar plano Free padrão
       const { data: freePlan } = await supabase
         .from('plans')
-        .select('id')
+        .select('*')
         .eq('name', 'Free')
         .eq('is_active', true)
         .single();
@@ -93,49 +95,52 @@ export class UsageDataService {
         .from('uso_usuarios')
         .insert({
           user_id: userId,
+          plan_id: freePlan.id,
+          plano: 'free',
           uploads_realizados: 0,
           flashcards_gerados: 0,
           quizzes_realizados: 0,
-          plan_id: freePlan.id,
-          plano: 'free'
+          is_admin: false
         })
         .select(`
           *,
-          plans:plan_id (
+          plans!inner(
             name,
             uploads_limit,
             summaries_limit,
             flashcards_limit,
-            quizzes_limit,
-            quiz_model,
-            summary_model,
-            flashcard_model
+            quizzes_limit
           )
         `)
         .single();
 
       if (error) {
-        console.error('❌ Erro ao inicializar uso do usuário:', error);
+        console.error('❌ Error initializing user usage:', error);
         throw error;
       }
 
-      console.log('✅ Registro de uso inicializado:', data);
+      console.log('✅ User usage initialized:', data);
       
-      const planData = data.plans as any;
+      const planData = Array.isArray(data.plans) ? data.plans[0] : data.plans;
+      
       return {
-        ...data,
-        plano: planData?.name?.toLowerCase() || 'free',
-        plan_name: planData?.name,
+        user_id: data.user_id,
+        uploads_realizados: data.uploads_realizados,
+        flashcards_gerados: data.flashcards_gerados,
+        quizzes_realizados: data.quizzes_realizados,
+        plano: data.plano,
+        plan_name: planData?.name || data.plano,
         uploads_limit: planData?.uploads_limit || 10,
         summaries_limit: planData?.summaries_limit || 10,
         flashcards_limit: planData?.flashcards_limit || 10,
         quizzes_limit: planData?.quizzes_limit || 10,
-        quiz_model: planData?.quiz_model,
-        summary_model: planData?.summary_model,
-        flashcard_model: planData?.flashcard_model,
+        is_admin: data.is_admin,
+        data_ultimo_reset: data.data_ultimo_reset,
+        created_at: data.created_at,
+        updated_at: data.updated_at
       };
     } catch (error) {
-      console.error('❌ Erro no initializeUserUsage:', error);
+      console.error('❌ Error initializing user usage:', error);
       throw error;
     }
   }

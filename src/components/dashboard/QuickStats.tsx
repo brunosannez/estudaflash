@@ -1,10 +1,9 @@
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Upload, Brain, TestTube, Trophy } from 'lucide-react';
-import { useUsageLimit } from '@/hooks/useUsageLimit';
+import { useUsageData } from '@/hooks/useUsageData';
 import { useRealTimeProgress } from '@/hooks/useRealTimeProgress';
 import { useDataSync } from '@/hooks/useDataSync';
-import { PLAN_CONFIGS, PlanType } from '@/types/plans';
 import QuickStatsHeader from './QuickStatsHeader';
 import QuickStatsLoading from './QuickStatsLoading';
 import QuickStatsEmpty from './QuickStatsEmpty';
@@ -12,7 +11,7 @@ import QuickStatsUsageItem from './QuickStatsUsageItem';
 import QuickStatsActions from './QuickStatsActions';
 
 const QuickStats = () => {
-  const { usageData, loading: usageLoading, refreshUsage } = useUsageLimit();
+  const { usageData, loading: usageLoading, refreshUsage } = useUsageData();
   const { progress, loading: progressLoading } = useRealTimeProgress();
   const { forceSyncUserData, syncing, hasInitialized } = useDataSync();
 
@@ -23,7 +22,7 @@ const QuickStats = () => {
   };
 
   const isLoading = usageLoading || progressLoading || syncing;
-  const hasNoData = !usageData || (!usageData.uploads_realizados && !usageData.flashcards_gerados && !usageData.quizzes_realizados);
+  const hasNoData = !usageData;
 
   if (isLoading && !hasInitialized) {
     return <QuickStatsLoading />;
@@ -37,34 +36,31 @@ const QuickStats = () => {
     return <QuickStatsEmpty onRefresh={handleRefresh} syncing={syncing} hasInitialized={hasInitialized} />;
   }
 
-  // Safely convert plano string to PlanType
-  const planType = (usageData.plano as PlanType) || 'free';
-  const planConfig = PLAN_CONFIGS[planType];
-  const isUnlimited = planType === 'edu';
+  const isUnlimited = (limit: number) => limit === -1 || limit === Infinity;
 
   const usageItems = [
     {
       icon: Upload,
       label: 'Uploads',
       current: usageData.uploads_realizados,
-      limit: planConfig.uploads,
-      percentage: isUnlimited ? 0 : (usageData.uploads_realizados / planConfig.uploads) * 100,
+      limit: usageData.uploads_limit,
+      percentage: isUnlimited(usageData.uploads_limit) ? 0 : (usageData.uploads_realizados / usageData.uploads_limit) * 100,
       color: 'text-blue-600',
     },
     {
       icon: Brain,
       label: 'Flashcards',
       current: usageData.flashcards_gerados,
-      limit: planConfig.flashcards,
-      percentage: isUnlimited ? 0 : (usageData.flashcards_gerados / planConfig.flashcards) * 100,
+      limit: usageData.flashcards_limit,
+      percentage: isUnlimited(usageData.flashcards_limit) ? 0 : (usageData.flashcards_gerados / usageData.flashcards_limit) * 100,
       color: 'text-green-600',
     },
     {
       icon: TestTube,
       label: 'Quizzes',
       current: usageData.quizzes_realizados,
-      limit: planConfig.quizzes,
-      percentage: isUnlimited ? 0 : (usageData.quizzes_realizados / planConfig.quizzes) * 100,
+      limit: usageData.quizzes_limit,
+      percentage: isUnlimited(usageData.quizzes_limit) ? 0 : (usageData.quizzes_realizados / usageData.quizzes_limit) * 100,
       color: 'text-purple-600',
     },
     {
@@ -92,14 +88,14 @@ const QuickStats = () => {
             limit={item.limit}
             percentage={item.percentage}
             color={item.color}
-            isUnlimited={isUnlimited}
+            isUnlimited={isUnlimited(item.limit || 0)}
           />
         ))}
         
         <QuickStatsActions 
           onRefresh={handleRefresh}
           syncing={syncing}
-          plan={planType}
+          plan={usageData.plano}
           currentLevel={progress?.current_level || 1}
         />
       </CardContent>

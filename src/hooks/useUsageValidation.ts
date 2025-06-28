@@ -1,81 +1,139 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { UsageLimitService } from '@/services/usageLimitService';
-import type { ActionType } from '@/services/usageLimitsConfig';
+import { UsageDataService } from '@/services/usageDataService';
+import { UsageIncrementService } from '@/services/usageIncrementService';
 import { useToast } from '@/hooks/use-toast';
-import { PlanType } from '@/types/plans';
+import { ActionType } from '@/services/usageLimitsConfig';
 
 export const useUsageValidation = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [checking, setChecking] = useState(false);
+  const [validating, setValidating] = useState(false);
 
-  const checkCanProceed = async (actionType: ActionType): Promise<boolean> => {
+  const checkCanProceed = useCallback(async (actionType: ActionType): Promise<boolean> => {
     if (!user) {
-      console.log('❌ Usuário não autenticado');
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para realizar esta ação.",
+        variant: "destructive"
+      });
       return false;
     }
 
-    setChecking(true);
+    setValidating(true);
+    
     try {
-      const result = await UsageLimitService.checkLimit(user.id, actionType);
+      console.log(`🔍 Verificando limite para ${actionType}...`);
       
-      if (!result.canProceed) {
-        const planType = result.plan as PlanType;
-        const limitMessage = UsageLimitService.getLimitMessage(actionType, planType);
-        const upgradeMessage = UsageLimitService.getUpgradeMessage(planType);
-        
+      const usageData = await UsageDataService.getUserUsage(user.id);
+      if (!usageData) {
+        throw new Error('Não foi possível obter dados de uso');
+      }
+
+      // Verificar se é admin (sem limitações)
+      if (usageData.is_admin) {
+        console.log('👑 Usuário admin - sem limitações');
+        return true;
+      }
+
+      // Verificar limites específicos
+      let current: number;
+      let limit: number;
+      let actionName: string;
+
+      switch (actionType) {
+        case 'uploads':
+          current = usageData.uploads_realizados;
+          limit = usageData.uploads_limit;
+          actionName = 'uploads';
+          break;
+        case 'summaries':
+          current = usageData.uploads_realizados; // Summaries são baseados em uploads
+          limit = usageData.summaries_limit;
+          actionName = 'resumos';
+          break;
+        case 'flashcards':
+          current = usageData.flashcards_gerados;
+          limit = usageData.flashcards_limit;
+          actionName = 'flashcards';
+          break;
+        case 'quizzes':
+          current = usageData.quizzes_realizados;
+          limit = usageData.quizzes_limit;
+          actionName = 'quizzes';
+          break;
+        default:
+          return true;
+      }
+
+      // Verificar se o limite foi atingido
+      const isUnlimited = limit === -1 || limit === Infinity;
+      const canProceed = isUnlimited || current < limit;
+
+      console.log(`📊 Verificação de limite:`, {
+        actionType,
+        current,
+        limit,
+        canProceed,
+        plan: usageData.plan_name
+      });
+
+      if (!canProceed) {
+        const planName = usageData.plan_name || usageData.plano.toUpperCase();
         toast({
-          title: "❌ Limite Atingido",
-          description: `${limitMessage} ${upgradeMessage}`,
-          variant: "destructive",
-          duration: 5000,
+          title: "Limite do Plano Atingido",
+          description: `Você atingiu o limite de ${actionName} do plano ${planName} (${current}/${limit}). Faça upgrade para continuar!`,
+          variant: "destructive"
         });
-        
-        console.log(`🚫 Limite atingido para ${actionType}:`, result);
         return false;
       }
 
-      if (result.isNearLimit) {
+      // Aviso quando próximo do limite (90%)
+      if (!isUnlimited && current >= limit * 0.9) {
         toast({
-          title: "⚠️ Próximo do Limite",
-          description: `Você está próximo do limite de ${actionType}. Considere fazer upgrade do seu plano.`,
-          duration: 4000,
+          title: "Próximo do Limite",
+          description: `Você está próximo do limite de ${actionName} (${current}/${limit}). Considere fazer upgrade!`,
+          variant: "default"
         });
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Erro ao verificar limite:', error);
+      console.error('❌ Erro na validação de uso:', error);
       toast({
-        title: "⚠️ Erro de Verificação",
+        title: "Erro de Validação",
         description: "Não foi possível verificar os limites do seu plano. Tente novamente.",
-        variant: "destructive",
-        duration: 3000,
+        variant: "destructive"
       });
       return false;
     } finally {
-      setChecking(false);
+      setValidating(false);
     }
-  };
+  }, [user, toast]);
 
-  const incrementUsage = async (actionType: ActionType): Promise<boolean> => {
+  const incrementUsage = useCallback(async (actionType: ActionType): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      await UsageLimitService.incrementUsage(user.id, actionType);
-      console.log(`✅ Uso incrementado para ${actionType}`);
+      console.log(`📈 Incrementando uso: ${actionType}`);
+      await UsageIncrementService.incrementUsage(user.id, actionType);
+      console.log(`✅ Uso incrementado com sucesso: ${actionType}`);
       return true;
     } catch (error) {
-      console.error(`❌ Erro ao incrementar uso para ${actionType}:`, error);
+      console.error('❌ Erro ao incrementar uso:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar seu uso. A ação foi realizada, mas o contador pode estar desatualizado.",
+        variant: "destructive"
+      });
       return false;
     }
-  };
+  }, [user, toast]);
 
   return {
     checkCanProceed,
     incrementUsage,
-    checking
+    validating
   };
 };
