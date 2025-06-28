@@ -7,6 +7,7 @@ import FormStepIndicator from './FormStepIndicator';
 import StudentInfoSection from './StudentInfoSection';
 import GuardianInfoSection from './GuardianInfoSection';
 import PlanSelection from './PlanSelection';
+import { Zap } from 'lucide-react';
 
 const NewSignupForm = () => {
   const navigate = useNavigate();
@@ -96,14 +97,24 @@ const NewSignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 py-4 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-purple-50 to-pink-50 py-4 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Bem-vindo ao EstudoFácil AI! 🚀
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 animate-pulse rounded-2xl"></div>
+                <Zap className="text-2xl text-white relative z-10 animate-bounce" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-ping"></div>
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Bem-vindo ao Estuda Flash! 
+            </h1>
+            <span className="text-3xl animate-bounce">⚡</span>
+          </div>
           <p className="text-base text-gray-600">
-            Crie sua conta e transforme seus estudos com inteligência artificial
+            Crie sua conta e transforme seus estudos com velocidade e inteligência artificial
           </p>
         </div>
 
@@ -138,15 +149,15 @@ const NewSignupForm = () => {
                 <Button
                   onClick={handleSubmit}
                   disabled={!canProceed() || loading}
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white min-w-[120px] text-sm"
+                  className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white min-w-[120px] text-sm"
                 >
-                  {loading ? 'Criando...' : 'Criar Conta 🎉'}
+                  {loading ? 'Criando...' : 'Criar Conta ⚡'}
                 </Button>
               ) : (
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white min-w-[100px] text-sm"
+                  className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white min-w-[100px] text-sm"
                 >
                   Continuar →
                 </Button>

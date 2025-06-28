@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield } from 'lucide-react';
+import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
@@ -46,16 +46,21 @@ const Header = () => {
             className="flex items-center space-x-2 sm:space-x-3 cursor-pointer"
             onClick={() => navigate('/')}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              <span className="text-sm sm:text-lg">🎓</span>
+            <div className="relative">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg animate-pulse">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 via-purple-500/30 to-pink-500/30 animate-ping"></div>
+                <Zap className="text-sm sm:text-lg text-white relative z-10 animate-bounce" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-ping"></div>
             </div>
-            <div>
-              <h1 className={`${designColors.responsive.cardTitle} font-bold text-gray-700`}>
-                EstudoFácil AI
+            <div className="relative">
+              <h1 className={`${designColors.responsive.cardTitle} font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent`}>
+                Estuda Flash
               </h1>
-              <p className={`${designColors.responsive.captionText} text-gray-600 hidden sm:block`}>
-                ✨ Aprender nunca foi tão divertido!
+              <p className={`${designColors.responsive.captionText} bg-gradient-to-r from-cyan-500 to-purple-500 bg-clip-text text-transparent hidden sm:block font-medium`}>
+                ⚡ Aprender nunca foi tão rápido!
               </p>
+              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-50 hidden sm:block"></div>
             </div>
           </div>
 
@@ -71,7 +76,7 @@ const Header = () => {
                 key={item.path}
                 variant="ghost"
                 onClick={() => navigate(item.path)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-all ${designColors.animations.buttonHover}`}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-purple-50 hover:text-purple-700 transition-all ${designColors.animations.buttonHover}`}
               >
                 <item.icon className="h-4 w-4" />
                 <span className="text-sm font-medium">{item.emoji} {item.label}</span>

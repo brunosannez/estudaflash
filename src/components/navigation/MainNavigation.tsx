@@ -30,7 +30,8 @@ import {
   Menu,
   Shield,
   History,
-  Target
+  Target,
+  Zap
 } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 
@@ -73,11 +74,20 @@ const MainNavigation = () => {
   const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <div className="flex flex-col h-full bg-white">
       <div className="p-6 border-b border-gray-200 bg-white">
-        <Link to="/" className="flex items-center gap-2" onClick={onItemClick}>
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+        <Link to="/" className="flex items-center gap-3" onClick={onItemClick}>
+          <div className="relative">
+            <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 animate-pulse"></div>
+              <Zap className="h-6 w-6 text-white relative z-10 animate-bounce" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-ping"></div>
           </div>
-          <span className="font-bold text-xl text-gray-900">StudyAI</span>
+          <div className="relative">
+            <span className="font-bold text-xl bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Estuda Flash
+            </span>
+            <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-50"></div>
+          </div>
         </Link>
       </div>
 
@@ -90,8 +100,8 @@ const MainNavigation = () => {
                 onClick={onItemClick}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   isActiveRoute(item.href)
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-cyan-50 to-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-purple-50 hover:text-purple-600'
                 }`}
               >
                 <item.icon className="h-5 w-5" />
@@ -108,7 +118,7 @@ const MainNavigation = () => {
             <Button variant="ghost" className="w-full justify-start p-2 h-auto">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-100 text-blue-700">
+                  <AvatarFallback className="bg-gradient-to-r from-cyan-100 to-purple-100 text-purple-700">
                     {getDisplayName().charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -146,10 +156,15 @@ const MainNavigation = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 h-16">
         <div className="flex items-center justify-between h-full px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
+            <div className="relative">
+              <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 animate-pulse"></div>
+                <Zap className="h-5 w-5 text-white relative z-10" />
+              </div>
             </div>
-            <span className="font-bold text-xl text-gray-900">StudyAI</span>
+            <span className="font-bold text-lg bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Estuda Flash
+            </span>
           </Link>
 
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
