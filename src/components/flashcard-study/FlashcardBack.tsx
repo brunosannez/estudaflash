@@ -14,7 +14,7 @@ interface FlashcardBackProps {
 
 const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBackProps) => {
   return (
-    <Card className="flashcard-back absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50">
+    <Card className="w-full h-full border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50 min-h-[500px]">
       <CardContent className="h-full flex flex-col justify-between p-6 min-h-[500px]">
         <div className="flex-1">
           <div className="flex items-center justify-center gap-3 mb-6">

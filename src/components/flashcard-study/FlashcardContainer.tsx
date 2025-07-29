@@ -30,21 +30,25 @@ const FlashcardContainer = ({
   isAnimating 
 }: FlashcardContainerProps) => {
   return (
-    <div className="relative perspective-1000">
-      <div className={`flashcard-container ${isFlipped ? 'flipped' : ''} mx-auto max-w-2xl`}>
-        <FlashcardFront
-          question={currentCard.pergunta}
-          currentIndex={currentIndex}
-          onFlip={onFlip}
-          isAnimating={isAnimating}
-        />
+    <div className="relative max-w-2xl mx-auto">
+      <div className={`flashcard-simple transition-all duration-300 ${!showAnswer ? 'cursor-pointer hover:scale-105' : ''}`} onClick={showAnswer ? undefined : onFlip}>
+        {!showAnswer && (
+          <FlashcardFront
+            question={currentCard.pergunta}
+            currentIndex={currentIndex}
+            onFlip={onFlip}
+            isAnimating={isAnimating}
+          />
+        )}
         
-        <FlashcardBack
-          answer={currentCard.resposta}
-          example={currentCard.exemplo}
-          onAnswer={onAnswer}
-          isAnimating={isAnimating}
-        />
+        {showAnswer && (
+          <FlashcardBack
+            answer={currentCard.resposta}
+            example={currentCard.exemplo}
+            onAnswer={onAnswer}
+            isAnimating={isAnimating}
+          />
+        )}
       </div>
     </div>
   );

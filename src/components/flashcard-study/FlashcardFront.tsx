@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, RotateCcw } from 'lucide-react';
+import { Brain } from 'lucide-react';
 
 interface FlashcardFrontProps {
   question: string;
@@ -14,7 +13,7 @@ interface FlashcardFrontProps {
 
 const FlashcardFront = ({ question, currentIndex, onFlip, isAnimating }: FlashcardFrontProps) => {
   return (
-    <Card className="flashcard-front absolute inset-0 w-full h-full border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <Card className="w-full h-full border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-[500px]">
       <CardContent className="h-full flex flex-col justify-between p-8 min-h-[500px]">
         <div className="flex-1 flex flex-col justify-center text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
@@ -31,15 +30,11 @@ const FlashcardFront = ({ question, currentIndex, onFlip, isAnimating }: Flashca
           </h2>
         </div>
         
-        <Button 
-          onClick={onFlip}
-          disabled={isAnimating}
-          size="lg"
-          className="mx-auto bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transform hover:scale-105 transition-all disabled:opacity-50"
-        >
-          <RotateCcw className="h-5 w-5 mr-2" />
-          🔄 Ver Resposta
-        </Button>
+        <div className="text-center">
+          <p className="text-gray-600 text-sm mb-4">
+            💡 Clique no card ou pressione Espaço para ver a resposta
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

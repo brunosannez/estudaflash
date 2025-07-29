@@ -95,7 +95,6 @@ const FlashcardStudyContainer = ({
       <FlashcardControls
         onBack={onBack}
         onShuffle={onShuffle}
-        onFlip={onFlip}
         isAnimating={isAnimating}
       />
       

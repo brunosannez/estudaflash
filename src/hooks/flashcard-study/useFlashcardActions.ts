@@ -57,12 +57,13 @@ export const useFlashcardActions = ({
     if (isAnimating) return;
     
     setIsAnimating(true);
-    setIsFlipped(!isFlipped);
     
+    // Simples toggle da resposta sem animação complexa
     setTimeout(() => {
       setShowAnswer(!showAnswer);
+      setIsFlipped(!isFlipped);
       setIsAnimating(false);
-    }, 300);
+    }, 150);
   };
 
   const handleAnswer = async (remembered: boolean) => {
