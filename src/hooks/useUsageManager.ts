@@ -17,7 +17,7 @@ export const useUsageManager = () => {
       console.log('❌ Usuário não autenticado para verificação de limite');
       toast({
         title: "Erro de Autenticação",
-        description: "Usuário não autenticado",
+        description: "Você precisa estar logado para usar esta funcionalidade",
         variant: "destructive"
       });
       return false;
