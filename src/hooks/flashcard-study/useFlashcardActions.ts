@@ -69,7 +69,7 @@ export const useFlashcardActions = ({
     if (flashcards.length === 0 || isAnimating) return;
 
     const currentCard = flashcards[currentIndex];
-    const xpToAdd = remembered ? 5 : 1;
+    const xpToAdd = remembered ? 10 : 2;
     
     console.log('📝 Registrando resposta flashcard:', { remembered, xpToAdd, cardId: currentCard.id });
     
@@ -89,10 +89,10 @@ export const useFlashcardActions = ({
           console.log('✅ Flashcard review registrado com sucesso');
         }
 
-        // Atualizar sistema de progresso
+        // Atualizar sistema de progresso com XP correto
         try {
-          await updateProgressAfterActivity('flashcard');
-          console.log('🎯 Progress updated for flashcard activity');
+          await updateProgressAfterActivity('flashcard', xpToAdd);
+          console.log('🎯 Progress updated for flashcard activity with XP:', xpToAdd);
           realGamificationData.refreshData(); // Atualizar dados reais
         } catch (xpError) {
           console.error('❌ Erro ao atualizar progresso:', xpError);
@@ -139,7 +139,7 @@ export const useFlashcardActions = ({
         
         setShowAnswer(false);
         setIsFlipped(false);
-      }, 1500);
+      }, 1000);
 
     } catch (error) {
       console.error('❌ Erro ao registrar review:', error);

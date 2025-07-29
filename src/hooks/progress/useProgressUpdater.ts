@@ -7,7 +7,8 @@ export const useProgressUpdater = () => {
   const { calculateXP, calculateLevel } = useProgressCalculations();
 
   const updateProgressAfterActivity = useCallback(async (
-    activityType: 'flashcard' | 'quiz_correct' | 'quiz_incorrect'
+    activityType: 'flashcard' | 'quiz_correct' | 'quiz_incorrect',
+    customXp?: number
   ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,16 +57,16 @@ export const useProgressUpdater = () => {
 
       switch (activityType) {
         case 'flashcard':
-          xpGained = 5;
+          xpGained = customXp || 10; // Usar XP customizado ou padrão 10
           updatedActivity.flashcards_reviewed += 1;
           break;
         case 'quiz_correct':
-          xpGained = 10;
+          xpGained = customXp || 10;
           updatedActivity.quizzes_completed += 1;
           updatedActivity.quiz_correct_answers += 1;
           break;
         case 'quiz_incorrect':
-          xpGained = 2;
+          xpGained = customXp || 2;
           updatedActivity.quizzes_completed += 1;
           break;
       }

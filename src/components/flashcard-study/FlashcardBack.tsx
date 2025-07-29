@@ -55,7 +55,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             <XCircle className="h-5 w-5 mr-2" />
             <div className="text-center">
               <div className="text-sm">😅 Não Lembrei</div>
-              <div className="text-xs opacity-75">(+1 XP)</div>
+              <div className="text-xs opacity-75">(+2 XP)</div>
             </div>
           </Button>
           <Button
@@ -67,7 +67,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             <CheckCircle className="h-5 w-5 mr-2" />
             <div className="text-center">
               <div className="text-sm">🎉 Acertei!</div>
-              <div className="text-xs opacity-90">(+5 XP)</div>
+              <div className="text-xs opacity-90">(+10 XP)</div>
             </div>
           </Button>
         </div>
