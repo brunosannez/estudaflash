@@ -28,12 +28,28 @@ export const useQuizAnswerSaver = ({
 
       const newCorrectAnswers = isCorrect ? correctAnswers + 1 : correctAnswers;
 
-      // Save individual quiz response
+      // Get the actual quiz question ID from the session
+      const { data: sessionData } = await supabase
+        .from('quiz_sessions')
+        .select('questions_data')
+        .eq('id', sessionId)
+        .single();
+
+      // Save individual quiz response with proper UUID
+      let quizId = crypto.randomUUID(); // Generate a proper UUID
+      if (sessionData?.questions_data && Array.isArray(sessionData.questions_data) && sessionData.questions_data[questionIndex]) {
+        // If we have the actual quiz question data, try to get the real quiz ID
+        const questionData = sessionData.questions_data[questionIndex] as any;
+        if (questionData && typeof questionData === 'object' && questionData.id && typeof questionData.id === 'string') {
+          quizId = questionData.id;
+        }
+      }
+
       const { error: responseError } = await supabase
         .from('quiz_respostas')
         .insert({
           user_id: user.id,
-          quiz_id: `${sessionId}_${questionIndex}`, // Using session + question as unique ID
+          quiz_id: quizId,
           acertou: isCorrect,
           resposta_selecionada: selectedAnswer
         });
