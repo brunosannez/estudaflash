@@ -116,7 +116,7 @@ export const useAuth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `https://estudaflash.com/`,
           data: metadata || {}
         }
       });
