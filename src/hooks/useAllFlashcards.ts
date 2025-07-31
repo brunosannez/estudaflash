@@ -10,6 +10,7 @@ export interface FlashcardWithResumo {
   exemplo?: string | null;
   data_criacao: string;
   resumo_id: string;
+  category?: string | null;
   resumos?: {
     custom_name?: string;
     data_criacao: string;
@@ -32,7 +33,13 @@ export const useAllFlashcards = () => {
       const { data, error } = await supabase
         .from('flashcards')
         .select(`
-          *,
+          id,
+          pergunta,
+          resposta,
+          exemplo,
+          data_criacao,
+          resumo_id,
+          category,
           resumos!inner(
             custom_name,
             data_criacao,
