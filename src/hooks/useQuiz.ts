@@ -1,3 +1,5 @@
+// Compatibility hook - provides basic quiz functionality
+// This maintains backward compatibility while we migrate to the enhanced system
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,7 +153,7 @@ export function useQuiz(resumoId: string) {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error generating quiz:', error);
       toast({
         title: "Erro ao gerar quiz",

@@ -6,8 +6,12 @@ import PageLayout from '@/components/navigation/PageLayout';
 import SimplifiedQuizPlay from '@/components/quiz/SimplifiedQuizPlay';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
+import EnhancedQuizDashboard from '@/components/quiz/EnhancedQuizDashboard';
 import { useQuizPageState } from '@/hooks/quiz/useQuizPageState';
 import { useQuizDataLoader } from '@/hooks/quiz/useQuizDataLoader';
+import { useEnhancedQuizSystem } from '@/hooks/useEnhancedQuizSystem';
+import { Button } from '@/components/ui/button';
+import { Settings, BarChart3 } from 'lucide-react';
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,10 +34,18 @@ const Quiz = () => {
   } = useQuizPageState();
 
   const { loadQuizData, generateQuiz } = useQuizDataLoader();
+  const { 
+    configurations, 
+    badges, 
+    analytics, 
+    todayStats,
+    isLoading: enhancedLoading 
+  } = useEnhancedQuizSystem();
 
   // Check if this is a resume operation
   const sessionId = searchParams.get('session');
   const resumeMode = searchParams.get('resume') === 'true';
+  const showDashboard = searchParams.get('dashboard') === 'true';
 
   console.log('📍 Quiz page rendered:', { 
     id, 
@@ -163,6 +175,26 @@ const Quiz = () => {
     );
   }
 
+  // Show enhanced dashboard if requested
+  if (showDashboard) {
+    return (
+      <PageLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Dashboard de Quiz</h1>
+            <Button onClick={handleBack} variant="outline">
+              Voltar
+            </Button>
+          </div>
+          {/* Placeholder for enhanced dashboard - will be implemented later */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">Dashboard avançado em desenvolvimento...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   // Show quiz if we have questions
   if (quizzes && quizzes.length > 0) {
     console.log('✅ Showing quiz with', quizzes.length, 'questions');
@@ -173,12 +205,59 @@ const Quiz = () => {
     };
     
     return (
-      <SimplifiedQuizPlay 
-        quiz={quizData} 
-        onComplete={handleQuizComplete}
-        sessionId={sessionId}
-        resumeMode={resumeMode}
-      />
+      <>
+        {/* Enhanced Stats Header */}
+        {(badges.length > 0 || todayStats) && (
+          <div className="mb-4 bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {todayStats && (
+                  <div className="text-sm">
+                    <span className="font-medium">Hoje: </span>
+                    <span className="text-green-600">{todayStats.total_quizzes_completed} quizzes</span>
+                    {todayStats.average_accuracy > 0 && (
+                      <span className="ml-2 text-blue-600">
+                        {Math.round(todayStats.average_accuracy)}% precisão
+                      </span>
+                    )}
+                  </div>
+                )}
+                {badges.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium">Badges: </span>
+                    <span className="text-yellow-600">{badges.length} conquistados</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/quiz/${id}?dashboard=true`)}
+                >
+                  <BarChart3 className="h-4 w-4 mr-1" />
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/quiz/${id}?config=true`)}
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Configurar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <SimplifiedQuizPlay 
+          quiz={quizData} 
+          onComplete={handleQuizComplete}
+          sessionId={sessionId}
+          resumeMode={resumeMode}
+        />
+      </>
     );
   }
 

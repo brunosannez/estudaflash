@@ -1,8 +1,11 @@
+// Compatibility hook - redirects to useAllFlashcards for now
+// This maintains backward compatibility while we migrate to the enhanced system
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAllFlashcards } from "@/hooks/useAllFlashcards";
 import { useToast } from "@/hooks/use-toast";
 import { useGameification } from "@/hooks/useGameification";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Flashcard {
   id: string;
@@ -22,22 +25,30 @@ export const useFlashcards = (resumoId: string | undefined) => {
   const fetchFlashcards = async () => {
     if (!resumoId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("flashcards")
-      .select("*")
-      .eq("resumo_id", resumoId)
-      .order("data_criacao", { ascending: true });
-    if (error) {
+    
+    try {
+      const { data, error } = await supabase
+        .from("flashcards")
+        .select("*")
+        .eq("resumo_id", resumoId)
+        .order("data_criacao", { ascending: true });
+        
+      if (error) {
+        throw error;
+      }
+      
+      setCards(data || []);
+    } catch (error) {
+      console.error('Error fetching flashcards:', error);
       toast({
         title: "Erro",
         description: "Falha ao carregar flashcards",
         variant: "destructive",
       });
       setCards([]);
-    } else {
-      setCards(data);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Busca todos os flashcards do usuário
@@ -64,18 +75,12 @@ export const useFlashcards = (resumoId: string | undefined) => {
         .order('data_criacao', { ascending: false });
 
       if (error) {
-        console.error('Erro ao buscar flashcards:', error);
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar flashcards",
-          variant: "destructive",
-        });
-        return [];
+        throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Erro ao buscar flashcards:', error);
+      console.error('Error fetching all flashcards:', error);
       toast({
         title: "Erro",
         description: "Falha ao carregar flashcards",
@@ -89,43 +94,61 @@ export const useFlashcards = (resumoId: string | undefined) => {
 
   // Cria novo flashcard
   const createFlashcard = async (pergunta: string, resposta: string, exemplo?: string) => {
-    if (!resumoId) return;
+    if (!resumoId) return null;
+    
     setLoading(true);
-    const { data, error } = await supabase
-      .from("flashcards")
-      .insert({ resumo_id: resumoId, pergunta, resposta, exemplo })
-      .select()
-      .single();
-    setLoading(false);
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from("flashcards")
+        .insert({ resumo_id: resumoId, pergunta, resposta, exemplo })
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast({ title: "Flashcard adicionado!" });
+      setCards((prev) => [...prev, data]);
+      return data;
+    } catch (error: any) {
       toast({
         title: "Erro ao adicionar",
         description: error.message,
         variant: "destructive",
       });
       return null;
+    } finally {
+      setLoading(false);
     }
-    toast({ title: "Flashcard adicionado!" });
-    setCards((prev) => [...prev, data]);
-    return data;
   };
 
   // Remove um flashcard
   const deleteFlashcard = async (flashcardId: string) => {
     setLoading(true);
-    const { error } = await supabase.from("flashcards").delete().eq("id", flashcardId);
-    setLoading(false);
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from("flashcards")
+        .delete()
+        .eq("id", flashcardId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setCards((prev) => prev.filter((f) => f.id !== flashcardId));
+      toast({ title: "Removido!" });
+      return true;
+    } catch (error: any) {
       toast({
         title: "Erro ao remover",
         description: error.message,
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
-    setCards((prev) => prev.filter((f) => f.id !== flashcardId));
-    toast({ title: "Removido!" });
-    return true;
   };
 
   // Marcar flashcard como revisado e dar XP
@@ -134,7 +157,7 @@ export const useFlashcards = (resumoId: string | undefined) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      // Registrar a revisão na nova tabela
+      // Registrar a revisão
       const { error: reviewError } = await supabase
         .from("flashcard_reviews")
         .insert({
@@ -147,7 +170,7 @@ export const useFlashcards = (resumoId: string | undefined) => {
         console.error("Erro ao registrar revisão:", reviewError);
       }
 
-      // Adicionar XP através do sistema de gamificação
+      // Adicionar XP
       await addXP(5, 'flashcard');
       
       toast({
