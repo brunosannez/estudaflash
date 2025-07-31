@@ -191,26 +191,71 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flashcard_reviews: {
         Row: {
           data_review: string
+          difficulty_rating: number | null
           flashcard_id: string
           id: string
           lembrou: boolean
+          notes: string | null
+          response_time_ms: number | null
+          review_quality: number | null
           user_id: string
         }
         Insert: {
           data_review?: string
+          difficulty_rating?: number | null
           flashcard_id: string
           id?: string
           lembrou: boolean
+          notes?: string | null
+          response_time_ms?: number | null
+          review_quality?: number | null
           user_id: string
         }
         Update: {
           data_review?: string
+          difficulty_rating?: number | null
           flashcard_id?: string
           id?: string
           lembrou?: boolean
+          notes?: string | null
+          response_time_ms?: number | null
+          review_quality?: number | null
           user_id?: string
         }
         Relationships: [
@@ -267,30 +312,144 @@ export type Database = {
           },
         ]
       }
-      flashcards: {
+      flashcard_study_goals: {
         Row: {
-          data_criacao: string
-          exemplo: string | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          end_date: string | null
+          goal_type: string
           id: string
-          pergunta: string
-          resposta: string
-          resumo_id: string
+          is_active: boolean
+          start_date: string
+          target_value: number
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          data_criacao?: string
-          exemplo?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          end_date?: string | null
+          goal_type: string
           id?: string
-          pergunta: string
-          resposta: string
-          resumo_id: string
+          is_active?: boolean
+          start_date?: string
+          target_value: number
+          updated_at?: string
+          user_id: string
         }
         Update: {
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          end_date?: string | null
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          target_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcard_study_stats: {
+        Row: {
+          average_response_time_ms: number
+          cards_remembered: number
+          cards_reviewed: number
+          category: string | null
+          created_at: string
+          id: string
+          streak_count: number
+          study_date: string
+          total_study_time_minutes: number
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          average_response_time_ms?: number
+          cards_remembered?: number
+          cards_reviewed?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          streak_count?: number
+          study_date?: string
+          total_study_time_minutes?: number
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          average_response_time_ms?: number
+          cards_remembered?: number
+          cards_reviewed?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          streak_count?: number
+          study_date?: string
+          total_study_time_minutes?: number
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          category: string | null
+          data_criacao: string
+          difficulty: number
+          ef_factor: number
+          exemplo: string | null
+          id: string
+          is_favorite: boolean
+          last_reviewed_at: string | null
+          next_review_date: string | null
+          pergunta: string
+          repetition_count: number
+          resposta: string
+          resumo_id: string
+          tags: string[] | null
+        }
+        Insert: {
+          category?: string | null
           data_criacao?: string
+          difficulty?: number
+          ef_factor?: number
           exemplo?: string | null
           id?: string
+          is_favorite?: boolean
+          last_reviewed_at?: string | null
+          next_review_date?: string | null
+          pergunta: string
+          repetition_count?: number
+          resposta: string
+          resumo_id: string
+          tags?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          data_criacao?: string
+          difficulty?: number
+          ef_factor?: number
+          exemplo?: string | null
+          id?: string
+          is_favorite?: boolean
+          last_reviewed_at?: string | null
+          next_review_date?: string | null
           pergunta?: string
+          repetition_count?: number
           resposta?: string
           resumo_id?: string
+          tags?: string[] | null
         }
         Relationships: [
           {
@@ -1090,6 +1249,18 @@ export type Database = {
             }
         Returns: boolean
       }
+      calculate_next_review_date: {
+        Args: {
+          current_ef_factor: number
+          repetition_count: number
+          quality: number
+        }
+        Returns: {
+          next_date: string
+          new_ef_factor: number
+          new_repetition_count: number
+        }[]
+      }
       check_user_is_admin: {
         Args: { user_uuid?: string }
         Returns: boolean
@@ -1174,6 +1345,19 @@ export type Database = {
           last_activity_at: string
           completion_time_seconds: number
           can_resume: boolean
+        }[]
+      }
+      get_flashcards_due_for_review: {
+        Args: { target_user_id: string }
+        Returns: {
+          flashcard_id: string
+          pergunta: string
+          resposta: string
+          exemplo: string
+          category: string
+          difficulty: number
+          next_review_date: string
+          days_overdue: number
         }[]
       }
       get_usage_analytics: {
