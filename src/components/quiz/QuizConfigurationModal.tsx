@@ -24,7 +24,8 @@ const QuizConfigurationModal = ({ open, onOpenChange, onConfigCreate }: QuizConf
     randomize_questions: true,
     randomize_answers: true,
     show_explanations: true,
-    allow_hints: false
+    allow_hints: false,
+    category_filters: []
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +43,8 @@ const QuizConfigurationModal = ({ open, onOpenChange, onConfigCreate }: QuizConf
         randomize_questions: true,
         randomize_answers: true,
         show_explanations: true,
-        allow_hints: false
+        allow_hints: false,
+        category_filters: []
       });
     } catch (error) {
       console.error('Error creating configuration:', error);
