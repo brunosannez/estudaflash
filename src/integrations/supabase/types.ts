@@ -664,36 +664,195 @@ export type Database = {
       quiz_attempts: {
         Row: {
           answered_at: string | null
+          confidence_level: number | null
           created_at: string | null
+          difficulty_perceived: number | null
+          explanation_viewed: boolean | null
+          hint_used: boolean | null
           id: string
           is_correct: boolean | null
           quiz_question_id: string
           resumo_id: string
           selected_answer: number | null
           session_id: string
+          time_taken_seconds: number | null
           user_id: string
         }
         Insert: {
           answered_at?: string | null
+          confidence_level?: number | null
           created_at?: string | null
+          difficulty_perceived?: number | null
+          explanation_viewed?: boolean | null
+          hint_used?: boolean | null
           id?: string
           is_correct?: boolean | null
           quiz_question_id: string
           resumo_id: string
           selected_answer?: number | null
           session_id: string
+          time_taken_seconds?: number | null
           user_id: string
         }
         Update: {
           answered_at?: string | null
+          confidence_level?: number | null
           created_at?: string | null
+          difficulty_perceived?: number | null
+          explanation_viewed?: boolean | null
+          hint_used?: boolean | null
           id?: string
           is_correct?: boolean | null
           quiz_question_id?: string
           resumo_id?: string
           selected_answer?: number | null
           session_id?: string
+          time_taken_seconds?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_badges: {
+        Row: {
+          badge_description: string
+          badge_icon: string | null
+          badge_name: string
+          badge_type: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          badge_description: string
+          badge_icon?: string | null
+          badge_name: string
+          badge_type: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          badge_description?: string
+          badge_icon?: string | null
+          badge_name?: string
+          badge_type?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_configurations: {
+        Row: {
+          allow_hints: boolean | null
+          category_filters: string[] | null
+          created_at: string
+          description: string | null
+          difficulty_level: number | null
+          id: string
+          name: string
+          questions_count: number | null
+          randomize_answers: boolean | null
+          randomize_questions: boolean | null
+          show_explanations: boolean | null
+          time_limit_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_hints?: boolean | null
+          category_filters?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          id?: string
+          name: string
+          questions_count?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          show_explanations?: boolean | null
+          time_limit_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_hints?: boolean | null
+          category_filters?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          id?: string
+          name?: string
+          questions_count?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          show_explanations?: boolean | null
+          time_limit_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_performance_stats: {
+        Row: {
+          average_accuracy: number | null
+          average_time_per_question: number | null
+          created_at: string
+          current_streak: number | null
+          date: string
+          fastest_completion_time: number | null
+          id: string
+          longest_streak: number | null
+          topics_mastered: string[] | null
+          topics_struggling: string[] | null
+          total_correct_answers: number | null
+          total_questions_answered: number | null
+          total_quizzes_attempted: number | null
+          total_quizzes_completed: number | null
+          updated_at: string
+          user_id: string
+          xp_earned_from_quizzes: number | null
+        }
+        Insert: {
+          average_accuracy?: number | null
+          average_time_per_question?: number | null
+          created_at?: string
+          current_streak?: number | null
+          date?: string
+          fastest_completion_time?: number | null
+          id?: string
+          longest_streak?: number | null
+          topics_mastered?: string[] | null
+          topics_struggling?: string[] | null
+          total_correct_answers?: number | null
+          total_questions_answered?: number | null
+          total_quizzes_attempted?: number | null
+          total_quizzes_completed?: number | null
+          updated_at?: string
+          user_id: string
+          xp_earned_from_quizzes?: number | null
+        }
+        Update: {
+          average_accuracy?: number | null
+          average_time_per_question?: number | null
+          created_at?: string
+          current_streak?: number | null
+          date?: string
+          fastest_completion_time?: number | null
+          id?: string
+          longest_streak?: number | null
+          topics_mastered?: string[] | null
+          topics_struggling?: string[] | null
+          total_correct_answers?: number | null
+          total_questions_answered?: number | null
+          total_quizzes_attempted?: number | null
+          total_quizzes_completed?: number | null
+          updated_at?: string
+          user_id?: string
+          xp_earned_from_quizzes?: number | null
         }
         Relationships: []
       }
@@ -738,48 +897,72 @@ export type Database = {
           correct_answers: number
           created_at: string
           current_question_index: number | null
+          difficulty_level: number | null
+          hints_used: number | null
           id: string
           last_activity_at: string | null
+          performance_score: number | null
           progress_percentage: number | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
+          session_type: string | null
           started_at: string | null
           status: string | null
+          study_recommendations: Json | null
+          tags: string[] | null
+          time_per_question_seconds: number | null
           total_questions: number
           user_id: string
+          weak_topics: Json | null
         }
         Insert: {
           completion_time_seconds?: number | null
           correct_answers: number
           created_at?: string
           current_question_index?: number | null
+          difficulty_level?: number | null
+          hints_used?: number | null
           id?: string
           last_activity_at?: string | null
+          performance_score?: number | null
           progress_percentage?: number | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
+          session_type?: string | null
           started_at?: string | null
           status?: string | null
+          study_recommendations?: Json | null
+          tags?: string[] | null
+          time_per_question_seconds?: number | null
           total_questions: number
           user_id: string
+          weak_topics?: Json | null
         }
         Update: {
           completion_time_seconds?: number | null
           correct_answers?: number
           created_at?: string
           current_question_index?: number | null
+          difficulty_level?: number | null
+          hints_used?: number | null
           id?: string
           last_activity_at?: string | null
+          performance_score?: number | null
           progress_percentage?: number | null
           questions_data?: Json
           quiz_title?: string
           resumo_id?: string
+          session_type?: string | null
           started_at?: string | null
           status?: string | null
+          study_recommendations?: Json | null
+          tags?: string[] | null
+          time_per_question_seconds?: number | null
           total_questions?: number
           user_id?: string
+          weak_topics?: Json | null
         }
         Relationships: [
           {
@@ -1249,6 +1432,16 @@ export type Database = {
             }
         Returns: boolean
       }
+      analyze_quiz_weak_topics: {
+        Args: { user_uuid: string; last_sessions_count?: number }
+        Returns: {
+          topic: string
+          total_questions: number
+          correct_answers: number
+          accuracy_percentage: number
+          recommendation: string
+        }[]
+      }
       calculate_next_review_date: {
         Args: {
           current_ef_factor: number
@@ -1260,6 +1453,20 @@ export type Database = {
           new_ef_factor: number
           new_repetition_count: number
         }[]
+      }
+      calculate_quiz_performance_score: {
+        Args: {
+          correct_answers: number
+          total_questions: number
+          completion_time_seconds: number
+          hints_used: number
+          difficulty_level?: number
+        }
+        Returns: number
+      }
+      check_and_award_quiz_badges: {
+        Args: { target_user_id: string }
+        Returns: number
       }
       check_user_is_admin: {
         Args: { user_uuid?: string }
@@ -1421,6 +1628,10 @@ export type Database = {
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      update_daily_quiz_stats: {
+        Args: { target_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
