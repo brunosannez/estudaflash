@@ -77,6 +77,84 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participations: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          badge_reward: string | null
+          category: string
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          is_active: boolean
+          start_date: string
+          target_value: number
+          title: string
+          type: string
+          xp_reward: number
+        }
+        Insert: {
+          badge_reward?: string | null
+          category: string
+          created_at?: string
+          description: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          start_date: string
+          target_value: number
+          title: string
+          type: string
+          xp_reward?: number
+        }
+        Update: {
+          badge_reward?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          target_value?: number
+          title?: string
+          type?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       daily_activities: {
         Row: {
           activity_date: string
@@ -224,6 +302,33 @@ export type Database = {
           },
         ]
       }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guardians: {
         Row: {
           cpf: string | null
@@ -257,6 +362,45 @@ export type Database = {
           relation_to_student?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      leaderboards: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          period_type: string
+          rank_position: number
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          period_type: string
+          rank_position?: number
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          rank_position?: number
+          updated_at?: string
+          user_id?: string
+          value?: number
         }
         Relationships: []
       }
@@ -558,6 +702,39 @@ export type Database = {
           },
         ]
       }
+      social_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          metadata: Json
+          title: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          metadata?: Json
+          title: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          metadata?: Json
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount_paid_brl: number
@@ -728,6 +905,51 @@ export type Database = {
           id?: string
           last_activity_date?: string | null
           longest_streak?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_social_profiles: {
+        Row: {
+          avatar_url: string | null
+          badges: Json
+          bio: string | null
+          created_at: string
+          current_level: number
+          display_name: string
+          id: string
+          is_public: boolean
+          stats: Json
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          badges?: Json
+          bio?: string | null
+          created_at?: string
+          current_level?: number
+          display_name: string
+          id?: string
+          is_public?: boolean
+          stats?: Json
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          badges?: Json
+          bio?: string | null
+          created_at?: string
+          current_level?: number
+          display_name?: string
+          id?: string
+          is_public?: boolean
+          stats?: Json
           total_xp?: number
           updated_at?: string
           user_id?: string

@@ -23,6 +23,7 @@ import AdminPanel from "./pages/AdminPanel";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
+import Social from "./pages/Social";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -124,6 +125,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyProgress />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/social" 
+              element={
+                <ProtectedRoute>
+                  <Social />
                 </ProtectedRoute>
               } 
             />
