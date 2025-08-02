@@ -38,37 +38,61 @@ export class DataSeederService {
   private static async seedChallenges() {
     const challenges = [
       {
-        title: 'Quiz Master',
-        description: 'Complete 10 quizzes com pelo menos 80% de acerto',
+        title: 'Sequência de Estudos',
+        description: 'Estude por 3 dias consecutivos',
+        type: 'daily',
+        category: 'streak',
+        target_value: 3,
+        xp_reward: 150,
+        badge_reward: '🔥 Consistência',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        is_active: true
+      },
+      {
+        title: 'Mestre dos Flashcards',
+        description: 'Estude 100 flashcards esta semana',
+        type: 'weekly',
+        category: 'flashcards',
+        target_value: 100,
+        xp_reward: 200,
+        badge_reward: '🧠 Flashcard Expert',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        is_active: true
+      },
+      {
+        title: 'Quiz Champion',
+        description: 'Complete 10 quizzes com 80%+ de acerto',
         type: 'weekly',
         category: 'quiz',
         target_value: 10,
-        xp_reward: 500,
+        xp_reward: 300,
         badge_reward: '🏆 Quiz Master',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         is_active: true
       },
       {
-        title: 'Flashcard Hero',
-        description: 'Revise 50 flashcards esta semana',
-        type: 'weekly',
-        category: 'flashcards',
-        target_value: 50,
-        xp_reward: 300,
-        badge_reward: '🧠 Flashcard Hero',
+        title: 'Explorador do Conhecimento',
+        description: 'Crie resumos de 5 materiais diferentes',
+        type: 'monthly',
+        category: 'summary',
+        target_value: 5,
+        xp_reward: 250,
+        badge_reward: '🗺️ Explorador',
         start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         is_active: true
       },
       {
-        title: 'Streak Warrior',
-        description: 'Mantenha uma sequência de 7 dias consecutivos estudando',
-        type: 'weekly',
-        category: 'streak',
-        target_value: 7,
-        xp_reward: 750,
-        badge_reward: '🔥 Streak Warrior',
+        title: 'Maratonista dos Estudos',
+        description: 'Acumule 2 horas de estudo hoje',
+        type: 'daily',
+        category: 'time',
+        target_value: 120,
+        xp_reward: 100,
+        badge_reward: '⏱️ Maratonista',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         is_active: true
@@ -166,49 +190,70 @@ export class DataSeederService {
     const { data: users } = await supabase
       .from('uso_usuarios')
       .select('user_id')
-      .limit(5);
+      .limit(10);
 
     if (!users || users.length === 0) return;
 
     const activities = [
       {
         user_id: users[0]?.user_id,
-        activity_type: 'level_up',
-        title: 'Subiu para o nível 3!',
-        description: 'Alcançou 300 pontos de XP',
-        metadata: { level: 3, xp: 300 },
+        activity_type: 'achievement',
+        title: 'Subiu de Nível!',
+        description: 'Alcançou o nível 5 nos estudos!',
+        metadata: {
+          type: 'level_up',
+          level: 5
+        },
         is_public: true
       },
       {
-        user_id: users[1]?.user_id,
+        user_id: users[1]?.user_id || users[0]?.user_id,
         activity_type: 'badge_earned',
-        title: 'Conquistou um novo badge!',
-        description: 'Quiz Master - 10 quizzes completados',
-        metadata: { badge: 'Quiz Master', type: 'quiz' },
+        title: 'Novo Badge!',
+        description: 'Conquistou o badge Quiz Master!',
+        metadata: {
+          badge: 'Quiz Master',
+          accuracy: 95
+        },
         is_public: true
       },
       {
-        user_id: users[2]?.user_id,
+        user_id: users[2]?.user_id || users[0]?.user_id,
         activity_type: 'streak_milestone',
-        title: 'Sequência de 7 dias!',
-        description: 'Manteve consistência por uma semana inteira',
-        metadata: { streak: 7 },
+        title: 'Sequência Incrível!',
+        description: 'Completou 7 dias de estudos consecutivos!',
+        metadata: {
+          streak: 7
+        },
         is_public: true
       },
       {
-        user_id: users[0]?.user_id,
-        activity_type: 'quiz_perfect',
-        title: 'Quiz perfeito!',
-        description: 'Acertou 100% das questões em Matemática',
-        metadata: { accuracy: 100, subject: 'Matemática' },
+        user_id: users[3]?.user_id || users[0]?.user_id,
+        activity_type: 'challenge_completed',
+        title: 'Desafio Completado!',
+        description: 'Completou o desafio Mestre dos Flashcards!',
+        metadata: {
+          challenge: 'Mestre dos Flashcards'
+        },
+        is_public: true
+      },
+      {
+        user_id: users[4]?.user_id || users[0]?.user_id,
+        activity_type: 'quiz_achievement',
+        title: 'Quiz Perfeito!',
+        description: 'Acertou 100% no quiz de Matemática!',
+        metadata: {
+          score: 100,
+          subject: 'Matemática'
+        },
         is_public: true
       }
-    ].filter(activity => activity.user_id); // Remove atividades sem user_id
+    ].filter(activity => activity.user_id);
 
     if (activities.length > 0) {
       const { error } = await supabase
         .from('social_activities')
-        .insert(activities);
+        .upsert(activities, { onConflict: 'id' });
 
       if (error) console.warn('Warning: Could not seed activities:', error);
       else console.log('📱 Sample activities seeded');
