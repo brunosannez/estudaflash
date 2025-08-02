@@ -9,11 +9,3 @@ export const LazyMySummaries = lazy(() => import('@/pages/MySummaries'));
 export const LazyMyProgress = lazy(() => import('@/pages/MyProgress'));
 export const LazySocial = lazy(() => import('@/pages/Social'));
 export const LazyAdminPanel = lazy(() => import('@/pages/AdminPanel'));
-
-export const withSuspense = (Component: React.ComponentType<any>) => {
-  return (props: any) => (
-    <Suspense fallback={<PageLoading title="Carregando página..." />}>
-      <Component {...props} />
-    </Suspense>
-  );
-};

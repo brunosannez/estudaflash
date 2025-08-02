@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 class OfflineManager {
   private static instance: OfflineManager;
   private isOnline = navigator.onLine;
@@ -138,10 +140,12 @@ export const useOfflineManager = () => {
   const offlineManager = OfflineManager.getInstance();
   const [isOnline, setIsOnline] = useState(offlineManager.getOnlineStatus());
 
-  useState(() => {
+  useEffect(() => {
     const unsubscribe = offlineManager.addListener(setIsOnline);
-    return unsubscribe;
-  });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   return {
     isOnline,

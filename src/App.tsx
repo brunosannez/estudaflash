@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { DataSeederService } from "@/services/dataSeederService";
-import { withSuspense, LazyUpload, LazyMyFlashcards, LazyQuizHistory, LazyMySummaries, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
+import { LazyUpload, LazyMyFlashcards, LazyQuizHistory, LazyMySummaries, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
 import Index from "./pages/Index";
 import Resumo from "./pages/Resumo";
 import Quiz from "./pages/Quiz";
@@ -98,7 +98,7 @@ function App() {
               path="/my-flashcards" 
               element={
                 <ProtectedRoute>
-                  <MyFlashcards />
+                  <LazyMyFlashcards />
                 </ProtectedRoute>
               } 
             />
@@ -114,7 +114,7 @@ function App() {
               path="/quiz-history" 
               element={
                 <ProtectedRoute>
-                  <EnhancedQuizHistory />
+                  <LazyQuizHistory />
                 </ProtectedRoute>
               } 
             />
@@ -130,7 +130,7 @@ function App() {
               path="/my-progress" 
               element={
                 <ProtectedRoute>
-                  <MyProgress />
+                  <LazyMyProgress />
                 </ProtectedRoute>
               } 
             />
@@ -138,7 +138,7 @@ function App() {
               path="/social" 
               element={
                 <ProtectedRoute>
-                  <Social />
+                  <LazySocial />
                 </ProtectedRoute>
               } 
             />
@@ -154,7 +154,7 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute>
-                  <AdminPanel />
+                  <LazyAdminPanel />
                 </ProtectedRoute>
               } 
             />
