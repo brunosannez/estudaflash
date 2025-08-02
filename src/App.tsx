@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { DataSeederService } from "@/services/dataSeederService";
 import Index from "./pages/Index";
 import Upload from "./pages/Upload";
 import MySummaries from "./pages/MySummaries";
@@ -33,6 +35,15 @@ function App() {
 
   console.log('🚀 App rendering - User:', !!user, 'Loading:', loading);
 
+  useEffect(() => {
+    // Initialize data seeding and user setup
+    DataSeederService.seedInitialData();
+    
+    if (user?.id) {
+      DataSeederService.seedUserInitialData(user.id);
+    }
+  }, [user?.id]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -45,11 +56,12 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <Routes>
             {/* Rota principal - Dashboard para autenticados, Home para não autenticados */}
             <Route path="/" element={user ? <Index /> : <Home />} />
@@ -167,6 +179,7 @@ function App() {
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

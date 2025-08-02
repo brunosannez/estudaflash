@@ -32,8 +32,11 @@ import {
   History,
   Target,
   Zap,
-  Users
+  Users,
+  Bell
 } from 'lucide-react';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 const MainNavigation = () => {
@@ -170,19 +173,33 @@ const MainNavigation = () => {
             </span>
           </Link>
 
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-white border-r border-gray-200">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Menu de navegação</SheetTitle>
-              </SheetHeader>
-              <SidebarContent onItemClick={() => setIsMobileMenuOpen(false)} />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <NotificationCenter />
+              </PopoverContent>
+            </Popover>
+
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0 bg-white border-r border-gray-200">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Menu de navegação</SheetTitle>
+                </SheetHeader>
+                <SidebarContent onItemClick={() => setIsMobileMenuOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 

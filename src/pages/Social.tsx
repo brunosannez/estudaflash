@@ -7,6 +7,7 @@ import { SocialFeed } from '@/components/social/SocialFeed';
 import { useSocialFeatures } from '@/hooks/useSocialFeatures';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SocialLoading, EmptyState } from '@/components/common/LoadingStates';
 import { Users, Target, Trophy, Activity, Home } from 'lucide-react';
 
 export default function Social() {
@@ -28,13 +29,7 @@ export default function Social() {
       <PageLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Social</h1>
-          <div className="animate-pulse">
-            <div className="h-64 bg-muted rounded-lg mb-6" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-96 bg-muted rounded-lg" />
-              <div className="h-96 bg-muted rounded-lg" />
-            </div>
-          </div>
+          <SocialLoading />
         </div>
       </PageLayout>
     );
@@ -45,14 +40,11 @@ export default function Social() {
       <PageLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Social</h1>
-          <Card>
-            <CardContent className="py-8 text-center">
-              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                Erro ao carregar perfil social. Tente novamente mais tarde.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title="Erro ao carregar perfil social"
+            description="Tente novamente mais tarde ou entre em contato com o suporte."
+          />
         </div>
       </PageLayout>
     );
