@@ -181,15 +181,12 @@ const Quiz = () => {
       <PageLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Dashboard de Quiz</h1>
+            <h1 className="text-2xl font-bold">Dashboard de Quiz Avançado</h1>
             <Button onClick={handleBack} variant="outline">
               Voltar
             </Button>
           </div>
-          {/* Placeholder for enhanced dashboard - will be implemented later */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">Dashboard avançado em desenvolvimento...</p>
-          </div>
+          <EnhancedQuizDashboard />
         </div>
       </PageLayout>
     );
