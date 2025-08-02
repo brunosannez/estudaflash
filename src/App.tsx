@@ -8,24 +8,18 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { DataSeederService } from "@/services/dataSeederService";
+import { withSuspense, LazyUpload, LazyMyFlashcards, LazyQuizHistory, LazyMySummaries, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
 import Index from "./pages/Index";
-import Upload from "./pages/Upload";
-import MySummaries from "./pages/MySummaries";
 import Resumo from "./pages/Resumo";
-import MyFlashcards from "./pages/MyFlashcards";
 import Quiz from "./pages/Quiz";
-import EnhancedQuizHistory from "./pages/EnhancedQuizHistory";
 import QuizHistoryView from "./pages/QuizHistoryView";
-import MyProgress from "./pages/MyProgress";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NewSignup from "./pages/NewSignup";
 import Home from "./pages/Home";
-import AdminPanel from "./pages/AdminPanel";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
-import Social from "./pages/Social";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -80,7 +74,7 @@ function App() {
               path="/upload" 
               element={
                 <ProtectedRoute>
-                  <Upload />
+                  <LazyUpload />
                 </ProtectedRoute>
               } 
             />
@@ -88,7 +82,7 @@ function App() {
               path="/my-summaries" 
               element={
                 <ProtectedRoute>
-                  <MySummaries />
+                  <LazyMySummaries />
                 </ProtectedRoute>
               } 
             />
