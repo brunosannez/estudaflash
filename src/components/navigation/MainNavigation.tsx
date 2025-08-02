@@ -31,7 +31,8 @@ import {
   Shield,
   History,
   Target,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 
@@ -50,6 +51,7 @@ const MainNavigation = () => {
     { href: '/my-flashcards', icon: Brain, label: 'Flashcards' },
     { href: '/quiz-history', icon: History, label: 'Histórico Quiz' },
     { href: '/my-progress', icon: Target, label: 'Progresso' },
+    { href: '/social', icon: Users, label: 'Social' },
   ];
 
   if (isAdmin) {
