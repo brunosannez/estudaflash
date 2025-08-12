@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield, Loader2, BarChart3, Activity, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import GuardianAccessAudit from '@/components/admin/GuardianAccessAudit';
 
 const AdminPanel = () => {
   const { isAdmin, loading, makeCurrentUserAdmin } = useIsAdmin();
@@ -108,13 +109,14 @@ const AdminPanel = () => {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 min-w-fit gap-1">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7 min-w-fit gap-1">
               <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Usuários</TabsTrigger>
               <TabsTrigger value="plans" className="text-xs sm:text-sm">Planos</TabsTrigger>
               <TabsTrigger value="apis" className="text-xs sm:text-sm">APIs</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
               <TabsTrigger value="data" className="text-xs sm:text-sm">Dados</TabsTrigger>
+              <TabsTrigger value="audit" className="text-xs sm:text-sm">Auditoria</TabsTrigger>
             </TabsList>
           </div>
           
@@ -140,6 +142,10 @@ const AdminPanel = () => {
 
           <TabsContent value="data" className="space-y-6 mt-6">
             <DataManagement />
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-6 mt-6">
+            <GuardianAccessAudit />
           </TabsContent>
         </Tabs>
       </div>
