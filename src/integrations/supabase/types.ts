@@ -515,10 +515,38 @@ export type Database = {
         }
         Relationships: []
       }
+      guardian_encryption_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key_text: string
+          key_version: number
+          rotated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_text: string
+          key_version: number
+          rotated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_text?: string
+          key_version?: number
+          rotated_at?: string | null
+        }
+        Relationships: []
+      }
       guardians: {
         Row: {
           cpf: string | null
           cpf_encrypted: string | null
+          cpf_key_version: number | null
           created_at: string
           email: string
           full_name: string
@@ -531,6 +559,7 @@ export type Database = {
         Insert: {
           cpf?: string | null
           cpf_encrypted?: string | null
+          cpf_key_version?: number | null
           created_at?: string
           email: string
           full_name: string
@@ -543,6 +572,7 @@ export type Database = {
         Update: {
           cpf?: string | null
           cpf_encrypted?: string | null
+          cpf_key_version?: number | null
           created_at?: string
           email?: string
           full_name?: string
@@ -1513,6 +1543,10 @@ export type Database = {
           freed_storage_mb: number
         }[]
       }
+      get_active_guardian_key_version: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_active_plans: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1602,7 +1636,9 @@ export type Database = {
         }[]
       }
       get_guardian_by_user: {
-        Args: { target_user_id: string }
+        Args:
+          | { target_user_id: string }
+          | { target_user_id: string; access_reason?: string }
         Returns: {
           full_name: string
           email: string
@@ -1672,6 +1708,10 @@ export type Database = {
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      rotate_guardian_cpf_key: {
+        Args: { new_key: string; new_key_version?: number }
+        Returns: boolean
       }
       update_daily_quiz_stats: {
         Args: { target_user_id: string }
