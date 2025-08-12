@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { User, Calendar, School, Shield, Mail, Phone, UserCheck } from 'lucide-react';
 
 interface UserDetailsModalProps {
@@ -56,6 +57,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
     }
     return age;
   };
+
+  const [showCPF, setShowCPF] = React.useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -169,7 +172,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                 {user.guardian.cpf && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">CPF</label>
-                    <p className="text-sm text-gray-800">{user.guardian.cpf}</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm text-gray-800">
+                        {showCPF ? user.guardian.cpf : '***.***.***-**'}
+                      </p>
+                      <Button variant="outline" size="sm" onClick={() => setShowCPF((v) => !v)}>
+                        {showCPF ? 'Ocultar' : 'Revelar'}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
