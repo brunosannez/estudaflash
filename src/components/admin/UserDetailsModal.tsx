@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { User, Calendar, School, Shield, Mail, Phone, UserCheck } from 'lucide-react';
+import { User, Calendar, School, Shield, Mail, Phone, UserCheck, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -59,6 +61,33 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
   };
 
   const [showCPF, setShowCPF] = React.useState(false);
+  const [decryptedCPF, setDecryptedCPF] = React.useState<string | null>(null);
+  const [cpfLoading, setCpfLoading] = React.useState(false);
+
+  const handleToggleCPF = async () => {
+    if (!showCPF) {
+      try {
+        setCpfLoading(true);
+        const { data, error } = await supabase.rpc('get_guardian_by_user', {
+          target_user_id: user.user_id,
+        });
+        if (error) throw error;
+        if (data && Array.isArray(data) && data.length > 0) {
+          setDecryptedCPF(data[0].cpf as string);
+          setShowCPF(true);
+        } else {
+          toast({ title: 'CPF indisponível', description: 'Nenhum dado encontrado.' });
+        }
+      } catch (err) {
+        console.error('Erro ao obter CPF descriptografado:', err);
+        toast({ title: 'Erro ao carregar CPF', description: 'Verifique suas permissões.' });
+      } finally {
+        setCpfLoading(false);
+      }
+    } else {
+      setShowCPF(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -169,15 +198,20 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                   </p>
                 </div>
 
-                {user.guardian.cpf && (
+                {(
+                  // Exibe o bloco mesmo se cpf vier nulo do backend, permitindo "Revelar" sob demanda
+                  user.guardian.cpf !== undefined || user.guardian.cpf === undefined
+                ) && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">CPF</label>
                     <div className="flex items-center gap-3">
                       <p className="text-sm text-gray-800">
-                        {showCPF ? user.guardian.cpf : '***.***.***-**'}
+                        {showCPF ? (decryptedCPF ?? '—') : '***.***.***-**'}
                       </p>
-                      <Button variant="outline" size="sm" onClick={() => setShowCPF((v) => !v)}>
-                        {showCPF ? 'Ocultar' : 'Revelar'}
+                      <Button variant="outline" size="sm" onClick={handleToggleCPF} disabled={cpfLoading}>
+                        {cpfLoading ? (
+                          <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Carregando</span>
+                        ) : showCPF ? 'Ocultar' : 'Revelar'}
                       </Button>
                     </div>
                   </div>

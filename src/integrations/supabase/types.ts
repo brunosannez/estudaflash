@@ -488,9 +488,37 @@ export type Database = {
         }
         Relationships: []
       }
+      guardian_access_audit: {
+        Row: {
+          accessed_at: string
+          accessed_fields: string[]
+          accessor_user_id: string
+          id: string
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          accessed_fields?: string[]
+          accessor_user_id: string
+          id?: string
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          accessed_fields?: string[]
+          accessor_user_id?: string
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       guardians: {
         Row: {
           cpf: string | null
+          cpf_encrypted: string | null
           created_at: string
           email: string
           full_name: string
@@ -502,6 +530,7 @@ export type Database = {
         }
         Insert: {
           cpf?: string | null
+          cpf_encrypted?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -513,6 +542,7 @@ export type Database = {
         }
         Update: {
           cpf?: string | null
+          cpf_encrypted?: string | null
           created_at?: string
           email?: string
           full_name?: string
@@ -1523,6 +1553,10 @@ export type Database = {
           storage_mb: number
         }[]
       }
+      get_cpf_encryption_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_data_management_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1565,6 +1599,16 @@ export type Database = {
           difficulty: number
           next_review_date: string
           days_overdue: number
+        }[]
+      }
+      get_guardian_by_user: {
+        Args: { target_user_id: string }
+        Returns: {
+          full_name: string
+          email: string
+          phone: string
+          cpf: string
+          relation_to_student: string
         }[]
       }
       get_usage_analytics: {
