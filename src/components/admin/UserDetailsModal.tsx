@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { User, Calendar, School, Shield, Mail, Phone, UserCheck, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -75,13 +76,19 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
   const [showCPF, setShowCPF] = React.useState(false);
   const [decryptedCPF, setDecryptedCPF] = React.useState<string | null>(null);
   const [cpfLoading, setCpfLoading] = React.useState(false);
+  const [accessReason, setAccessReason] = React.useState('');
 
-  const handleToggleCPF = async () => {
+  const handleRevealCPF = async () => {
     if (!showCPF) {
       try {
+        if (!accessReason.trim()) {
+          toast({ title: 'Motivo obrigatório', description: 'Informe o motivo do acesso antes de revelar o CPF.' });
+          return;
+        }
         setCpfLoading(true);
         const { data, error } = await supabase.rpc('get_guardian_by_user', {
           target_user_id: user.user_id,
+          access_reason: accessReason.trim(),
         });
         if (error) throw error;
         if (data && Array.isArray(data) && data.length > 0) {
@@ -244,10 +251,20 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                                 Esta ação será registrada na auditoria de acessos. Revele apenas quando necessário.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
+                            <div className="space-y-2 mt-2">
+                              <label className="text-sm font-medium text-gray-700">Motivo do acesso</label>
+                              <Input
+                                placeholder="Ex.: Verificação de identidade para suporte"
+                                value={accessReason}
+                                onChange={(e) => setAccessReason(e.target.value)}
+                                disabled={cpfLoading}
+                              />
+                              <p className="text-xs text-gray-500">Obrigatório. Será salvo no registro de auditoria.</p>
+                            </div>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleToggleCPF}>
-                                Confirmar
+                              <AlertDialogCancel disabled={cpfLoading}>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleRevealCPF} disabled={cpfLoading || !accessReason.trim()}>
+                                {cpfLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando</span> : 'Confirmar'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

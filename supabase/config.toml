@@ -54,3 +54,6 @@ verify_jwt = true
 
 [functions.reset-usage-counters]
 verify_jwt = false
+
+[functions.admin-rotate-guardian-key]
+verify_jwt = true
