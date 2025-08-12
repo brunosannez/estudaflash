@@ -21,6 +21,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -154,7 +155,9 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute>
-                  <LazyAdminPanel />
+                  <AdminRoute>
+                    <LazyAdminPanel />
+                  </AdminRoute>
                 </ProtectedRoute>
               } 
             />
@@ -162,7 +165,9 @@ function App() {
               path="/admin/analytics" 
               element={
                 <ProtectedRoute>
-                  <AdminAnalytics />
+                  <AdminRoute>
+                    <AdminAnalytics />
+                  </AdminRoute>
                 </ProtectedRoute>
               } 
             />
