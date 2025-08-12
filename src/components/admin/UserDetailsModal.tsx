@@ -13,6 +13,18 @@ import { Button } from '@/components/ui/button';
 import { User, Calendar, School, Shield, Mail, Phone, UserCheck, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { formatCPF } from '@/utils/signupValidation';
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -199,23 +211,52 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                 </div>
 
                 {(
-                  // Exibe o bloco mesmo se cpf vier nulo do backend, permitindo "Revelar" sob demanda
                   user.guardian.cpf !== undefined || user.guardian.cpf === undefined
                 ) && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">CPF</label>
                     <div className="flex items-center gap-3">
                       <p className="text-sm text-gray-800">
-                        {showCPF ? (decryptedCPF ?? '—') : '***.***.***-**'}
+                        {showCPF ? (decryptedCPF ? formatCPF(decryptedCPF) : '—') : '***.***.***-**'}
                       </p>
-                      <Button variant="outline" size="sm" onClick={handleToggleCPF} disabled={cpfLoading}>
-                        {cpfLoading ? (
-                          <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Carregando</span>
-                        ) : showCPF ? 'Ocultar' : 'Revelar'}
-                      </Button>
+                      {showCPF ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCPF(false)}
+                          disabled={cpfLoading}
+                        >
+                          Ocultar
+                        </Button>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={cpfLoading}>
+                              {cpfLoading ? (
+                                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Carregando</span>
+                              ) : 'Revelar'}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Revelar CPF do responsável?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação será registrada na auditoria de acessos. Revele apenas quando necessário.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleToggleCPF}>
+                                Confirmar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 )}
+
               </CardContent>
             </Card>
           )}
