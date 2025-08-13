@@ -1230,6 +1230,73 @@ export type Database = {
         }
         Relationships: []
       }
+      social_comments: {
+        Row: {
+          activity_id: string
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "social_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_reactions: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_reactions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "social_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_analytics: {
         Row: {
           created_at: string
@@ -1275,6 +1342,74 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weak_topics?: Json | null
+        }
+        Relationships: []
+      }
+      study_group_memberships: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string | null
+          group_type: string
+          id: string
+          is_public: boolean
+          max_members: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          group_type?: string
+          id?: string
+          is_public?: boolean
+          max_members?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          group_type?: string
+          id?: string
+          is_public?: boolean
+          max_members?: number | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1388,6 +1523,50 @@ export type Database = {
           },
         ]
       }
+      team_challenges: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          id: string
+          team_members: string[]
+          team_name: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          team_members: string[]
+          team_name: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          team_members?: string[]
+          team_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploads: {
         Row: {
           arquivo_original_nome: string
@@ -1441,6 +1620,45 @@ export type Database = {
           id?: string
           metadata?: Json | null
           timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_category: string
+          badge_description: string
+          badge_icon: string | null
+          badge_name: string
+          badge_rarity: string
+          badge_type: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          badge_category?: string
+          badge_description: string
+          badge_icon?: string | null
+          badge_name: string
+          badge_rarity?: string
+          badge_type: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          badge_category?: string
+          badge_description?: string
+          badge_icon?: string | null
+          badge_name?: string
+          badge_rarity?: string
+          badge_type?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
           user_id?: string
         }
         Relationships: []
