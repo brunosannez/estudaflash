@@ -191,6 +191,96 @@ export type Database = {
         }
         Relationships: []
       }
+      enhanced_flashcard_reviews: {
+        Row: {
+          confidence_level: number | null
+          created_at: string
+          flashcard_id: string
+          id: string
+          new_ef_factor: number | null
+          new_repetition_count: number | null
+          next_review_date: string | null
+          previous_ef_factor: number | null
+          previous_repetition_count: number | null
+          previous_review_date: string | null
+          response_time_ms: number
+          review_quality: number
+          study_context: Json | null
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: number | null
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          new_ef_factor?: number | null
+          new_repetition_count?: number | null
+          next_review_date?: string | null
+          previous_ef_factor?: number | null
+          previous_repetition_count?: number | null
+          previous_review_date?: string | null
+          response_time_ms?: number
+          review_quality: number
+          study_context?: Json | null
+          user_id: string
+        }
+        Update: {
+          confidence_level?: number | null
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          new_ef_factor?: number | null
+          new_repetition_count?: number | null
+          next_review_date?: string | null
+          previous_ef_factor?: number | null
+          previous_repetition_count?: number | null
+          previous_review_date?: string | null
+          response_time_ms?: number
+          review_quality?: number
+          study_context?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      file_processing_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted_text: string | null
+          file_path: string
+          file_type: string
+          id: string
+          metadata: Json | null
+          processing_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_path: string
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          processing_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_path?: string
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          processing_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flashcard_categories: {
         Row: {
           color: string | null
@@ -1140,6 +1230,117 @@ export type Database = {
         }
         Relationships: []
       }
+      study_analytics: {
+        Row: {
+          created_at: string
+          date: string
+          flashcards_mastered: number
+          id: string
+          learning_velocity: number | null
+          quiz_accuracy_percentage: number | null
+          retention_rate: number | null
+          strong_topics: Json | null
+          subject_area: string | null
+          total_study_time_minutes: number
+          updated_at: string
+          user_id: string
+          weak_topics: Json | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          flashcards_mastered?: number
+          id?: string
+          learning_velocity?: number | null
+          quiz_accuracy_percentage?: number | null
+          retention_rate?: number | null
+          strong_topics?: Json | null
+          subject_area?: string | null
+          total_study_time_minutes?: number
+          updated_at?: string
+          user_id: string
+          weak_topics?: Json | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          flashcards_mastered?: number
+          id?: string
+          learning_velocity?: number | null
+          quiz_accuracy_percentage?: number | null
+          retention_rate?: number | null
+          strong_topics?: Json | null
+          subject_area?: string | null
+          total_study_time_minutes?: number
+          updated_at?: string
+          user_id?: string
+          weak_topics?: Json | null
+        }
+        Relationships: []
+      }
+      study_objectives: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          description: string | null
+          difficulty_level: number | null
+          end_date: string | null
+          id: string
+          is_active: boolean
+          objective_type: string
+          reward_xp: number | null
+          start_date: string
+          streak_bonus_multiplier: number | null
+          subject_area: string | null
+          target_metric: string
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          description?: string | null
+          difficulty_level?: number | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          objective_type: string
+          reward_xp?: number | null
+          start_date?: string
+          streak_bonus_multiplier?: number | null
+          subject_area?: string | null
+          target_metric: string
+          target_value: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          description?: string | null
+          difficulty_level?: number | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          objective_type?: string
+          reward_xp?: number | null
+          start_date?: string
+          streak_bonus_multiplier?: number | null
+          subject_area?: string | null
+          target_metric?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount_paid_brl: number
@@ -1505,6 +1706,21 @@ export type Database = {
           recommendation: string
         }[]
       }
+      calculate_enhanced_spaced_repetition: {
+        Args: {
+          current_ef_factor: number
+          repetition_count: number
+          quality: number
+          response_time_ms?: number
+          confidence_level?: number
+        }
+        Returns: {
+          next_date: string
+          new_ef_factor: number
+          new_repetition_count: number
+          difficulty_adjustment: number
+        }[]
+      }
       calculate_next_review_date: {
         Args: {
           current_ef_factor: number
@@ -1648,6 +1864,18 @@ export type Database = {
           phone: string
           cpf: string
           relation_to_student: string
+        }[]
+      }
+      get_study_recommendations: {
+        Args: { target_user_id: string }
+        Returns: {
+          recommendation_type: string
+          title: string
+          description: string
+          priority: number
+          estimated_time_minutes: number
+          target_cards: number
+          subject_area: string
         }[]
       }
       get_usage_analytics: {
