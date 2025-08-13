@@ -13,13 +13,25 @@ serve(async (req) => {
   }
 
   try {
-    const { resumoContent, resumoId } = await req.json()
+    const { resumoContent, resumoId, userId } = await req.json()
     
     if (!resumoContent || !resumoId) {
       throw new Error('Conteúdo do resumo e ID são obrigatórios')
     }
 
     console.log('🚀 Generating quiz for resumo:', resumoId)
+
+    // Get user profile for difficulty adaptation
+    let userProfile = null
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('school_year, date_of_birth')
+        .eq('user_id', userId)
+        .single()
+      userProfile = profile
+      console.log('👤 User profile found:', userProfile)
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -32,18 +44,34 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured')
     }
 
+    // Get difficulty level based on user profile
+    const getDifficultyPrompt = () => {
+      if (!userProfile?.school_year) return "nível médio (ENEM)"
+      
+      const year = userProfile.school_year.toLowerCase()
+      if (year.includes('fundamental')) return "nível fundamental (8º-9º ano)"
+      if (year.includes('1º') || year.includes('primeiro')) return "nível 1º ano do ensino médio"
+      if (year.includes('2º') || year.includes('segundo')) return "nível 2º ano do ensino médio" 
+      if (year.includes('3º') || year.includes('terceiro')) return "nível 3º ano do ensino médio (ENEM)"
+      return "nível médio (ENEM)"
+    }
+
     // Enhanced prompt for consistent quiz generation
     const prompt = `
 Você é um especialista em criação de questões para vestibulares brasileiros, especialmente ENEM e Colégio Ari de Sá.
 
-Baseado no conteúdo abaixo, crie exatamente 10 questões de múltipla escolha seguindo estes padrões OBRIGATÓRIOS:
+Baseado no conteúdo abaixo, crie exatamente 8 questões seguindo estes padrões OBRIGATÓRIOS:
+
+NÍVEL DE DIFICULDADE: ${getDifficultyPrompt()}
+TIPOS DE QUESTÃO: 6 questões de múltipla escolha + 2 questões verdadeiro/falso
 
 ESTRUTURA CRÍTICA:
 1. Questões contextualizadas com situações reais
-2. Exatamente 5 alternativas por questão (A, B, C, D, E)
-3. Resposta correta deve ser um número inteiro de 0 a 4 (0=A, 1=B, 2=C, 3=D, 4=E)
-4. Explicações detalhadas e precisas
-5. Linguagem formal e acadêmica
+2. Para múltipla escolha: exatamente 5 alternativas (A, B, C, D, E)
+3. Para V/F: exatamente 2 alternativas ("Verdadeiro", "Falso")
+4. Resposta correta como número inteiro (0-4 para múltipla escolha, 0-1 para V/F)
+5. Explicações detalhadas e precisas
+6. Linguagem apropriada para ${getDifficultyPrompt()}
 
 CONTEÚDO DO RESUMO:
 ${resumoContent}
@@ -53,6 +81,7 @@ IMPORTANTE: Retorne APENAS um JSON válido com exatamente esta estrutura:
 {
   "questoes": [
     {
+      "tipo": "multipla_escolha",
       "pergunta": "Contexto + pergunta específica",
       "alternativas": [
         "Alternativa A completa",
@@ -63,14 +92,23 @@ IMPORTANTE: Retorne APENAS um JSON válido com exatamente esta estrutura:
       ],
       "correta": 0,
       "explicacao": "Explicação detalhada sobre por que a alternativa A (índice 0) é a correta."
+    },
+    {
+      "tipo": "verdadeiro_falso",
+      "pergunta": "Afirmação para avaliar se é verdadeira ou falsa",
+      "alternativas": ["Verdadeiro", "Falso"],
+      "correta": 0,
+      "explicacao": "Explicação detalhada sobre por que a afirmação é verdadeira (índice 0) ou falsa (índice 1)."
     }
   ]
 }
 
 VALIDAÇÃO CRÍTICA:
-- Campo "correta" deve ser SEMPRE um número inteiro de 0 a 4
-- Exatamente 5 alternativas por questão
+- Campo "correta" deve ser SEMPRE um número inteiro (0-4 para múltipla escolha, 0-1 para V/F)
+- Múltipla escolha: exatamente 5 alternativas
+- Verdadeiro/Falso: exatamente 2 alternativas ("Verdadeiro", "Falso")
 - Explicação deve referenciar a alternativa correta
+- Campo "tipo" obrigatório ("multipla_escolha" ou "verdadeiro_falso")
 `
 
     // Call OpenAI API with enhanced parameters
@@ -138,8 +176,12 @@ VALIDAÇÃO CRÍTICA:
         continue
       }
 
-      if (questao.alternativas.length !== 5) {
-        console.warn(`Question ${i} doesn't have exactly 5 alternatives:`, questao)
+      // Validate question type and alternatives count
+      const questionType = questao.tipo || 'multipla_escolha'
+      const expectedAlternatives = questionType === 'verdadeiro_falso' ? 2 : 5
+      
+      if (questao.alternativas.length !== expectedAlternatives) {
+        console.warn(`Question ${i} doesn't have exactly ${expectedAlternatives} alternatives for type ${questionType}:`, questao)
         continue
       }
 
@@ -149,7 +191,8 @@ VALIDAÇÃO CRÍTICA:
         correctAnswer = parseInt(correctAnswer)
       }
       
-      if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer > 4) {
+      const maxCorrectAnswer = expectedAlternatives - 1
+      if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer > maxCorrectAnswer) {
         console.warn(`Question ${i} has invalid correct answer:`, questao.correta)
         correctAnswer = 0 // Default to first alternative
       }
@@ -167,7 +210,8 @@ VALIDAÇÃO CRÍTICA:
         pergunta: questao.pergunta.trim(),
         alternativas: cleanAlternatives,
         correta: correctAnswer,
-        explicacao: (questao.explicacao || 'Explicação não disponível').trim()
+        explicacao: (questao.explicacao || 'Explicação não disponível').trim(),
+        tipo: questionType
       })
     }
 
@@ -182,8 +226,9 @@ VALIDAÇÃO CRÍTICA:
       resumo_id: resumoId,
       pergunta: questao.pergunta,
       alternativas: questao.alternativas,
-      correta: questao.correta, // Guaranteed to be integer 0-4
-      explicacao: questao.explicacao
+      correta: questao.correta, // Guaranteed to be integer
+      explicacao: questao.explicacao,
+      tipo: questao.tipo || 'multipla_escolha'
     }))
 
     const { data: insertedQuestions, error: insertError } = await supabase
