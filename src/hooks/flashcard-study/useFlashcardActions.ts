@@ -69,8 +69,6 @@ export const useFlashcardActions = ({
   const handleAnswer = async (remembered: boolean) => {
     if (flashcards.length === 0 || isAnimating) return;
     
-    setIsAnimating(true);
-
     const currentCard = flashcards[currentIndex];
     const xpToAdd = remembered ? 10 : 2;
     
@@ -134,7 +132,7 @@ export const useFlashcardActions = ({
           : `+${xpToAdd} XP por tentar! Você está aprendendo!`,
       });
 
-      // Avançar para próximo card automaticamente após resposta
+      // Avançar para próximo card imediatamente
       setTimeout(() => {
         const nextIndex = currentIndex < flashcards.length - 1 ? currentIndex + 1 : 0;
         setCurrentIndex(nextIndex);
@@ -142,8 +140,7 @@ export const useFlashcardActions = ({
         
         setShowAnswer(false);
         setIsFlipped(false);
-        setIsAnimating(false);
-      }, 800);
+      }, 300);
 
     } catch (error) {
       console.error('❌ Erro ao registrar review:', error);

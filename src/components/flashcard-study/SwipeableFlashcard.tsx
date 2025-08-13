@@ -164,34 +164,26 @@ const SwipeableFlashcard = ({
                   {/* Mobile buttons - visible on small screens */}
                   <div className="flex md:hidden space-x-3">
                     <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔴 Clicked Não Lembrei - isAnimating:', isAnimating);
-                        if (!isAnimating) {
-                          onAnswer(false);
-                        }
+                      onClick={() => {
+                        console.log('🔴 Clicked Não Lembrei');
+                        onAnswer(false);
                       }}
                       disabled={isAnimating}
                       variant="outline"
-                      className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
                       <ChevronLeft className="h-5 w-5 mr-2" />
-                      {isAnimating ? "..." : "Não Lembrei"}
+                      Não Lembrei
                     </Button>
                     <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🟢 Clicked Lembrei - isAnimating:', isAnimating);
-                        if (!isAnimating) {
-                          onAnswer(true);
-                        }
+                      onClick={() => {
+                        console.log('🟢 Clicked Lembrei');
+                        onAnswer(true);
                       }}
                       disabled={isAnimating}
                       className="flex-1 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
-                      {isAnimating ? "..." : "Lembrei"}
+                      Lembrei
                       <ChevronRight className="h-5 w-5 ml-2" />
                     </Button>
                   </div>
