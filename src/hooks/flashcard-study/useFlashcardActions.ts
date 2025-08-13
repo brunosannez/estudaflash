@@ -143,7 +143,7 @@ export const useFlashcardActions = ({
         setShowAnswer(false);
         setIsFlipped(false);
         setIsAnimating(false);
-      }, 1500);
+      }, 800);
 
     } catch (error) {
       console.error('❌ Erro ao registrar review:', error);

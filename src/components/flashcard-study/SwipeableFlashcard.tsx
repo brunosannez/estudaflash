@@ -165,17 +165,19 @@ const SwipeableFlashcard = ({
                   <div className="flex md:hidden space-x-3">
                     <Button
                       onClick={() => onAnswer(false)}
+                      disabled={isAnimating}
                       variant="outline"
-                      className="flex-1 h-12 text-base border-destructive/30 hover:bg-destructive/10"
+                      className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
                       <ChevronLeft className="h-5 w-5 mr-2" />
-                      Não Lembrei
+                      {isAnimating ? "..." : "Não Lembrei"}
                     </Button>
                     <Button
                       onClick={() => onAnswer(true)}
-                      className="flex-1 h-12 text-base bg-success hover:bg-success/90"
+                      disabled={isAnimating}
+                      className="flex-1 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
-                      Lembrei
+                      {isAnimating ? "..." : "Lembrei"}
                       <ChevronRight className="h-5 w-5 ml-2" />
                     </Button>
                   </div>
