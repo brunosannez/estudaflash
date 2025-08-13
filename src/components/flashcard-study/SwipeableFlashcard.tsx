@@ -164,7 +164,14 @@ const SwipeableFlashcard = ({
                   {/* Mobile buttons - visible on small screens */}
                   <div className="flex md:hidden space-x-3">
                     <Button
-                      onClick={() => onAnswer(false)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔴 Clicked Não Lembrei - isAnimating:', isAnimating);
+                        if (!isAnimating) {
+                          onAnswer(false);
+                        }
+                      }}
                       disabled={isAnimating}
                       variant="outline"
                       className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
@@ -173,7 +180,14 @@ const SwipeableFlashcard = ({
                       {isAnimating ? "..." : "Não Lembrei"}
                     </Button>
                     <Button
-                      onClick={() => onAnswer(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🟢 Clicked Lembrei - isAnimating:', isAnimating);
+                        if (!isAnimating) {
+                          onAnswer(true);
+                        }
+                      }}
                       disabled={isAnimating}
                       className="flex-1 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
