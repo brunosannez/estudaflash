@@ -35,7 +35,7 @@ import {
   Users,
   Bell
 } from 'lucide-react';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 
