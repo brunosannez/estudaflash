@@ -50,24 +50,24 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             disabled={isAnimating}
             variant="outline"
             size="lg"
-            className="border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 font-bold py-4 px-4 rounded-xl shadow-md disabled:opacity-50 transition-all"
+            className="border-3 border-red-400 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-500 font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95"
           >
             <XCircle className="h-5 w-5 mr-2" />
             <div className="text-center">
-              <div className="text-sm">😅 Não Lembrei</div>
-              <div className="text-xs opacity-75">(+2 XP)</div>
+              <div className="text-sm font-semibold">😅 Não Lembrei</div>
+              <div className="text-xs opacity-80 font-medium">(+2 XP)</div>
             </div>
           </Button>
           <Button
             onClick={() => onAnswer(true)}
             disabled={isAnimating}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-4 rounded-xl shadow-md disabled:opacity-50 transition-all"
+            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95 border-2 border-green-400"
           >
             <CheckCircle className="h-5 w-5 mr-2" />
             <div className="text-center">
-              <div className="text-sm">🎉 Acertei!</div>
-              <div className="text-xs opacity-90">(+10 XP)</div>
+              <div className="text-sm font-semibold">🎉 Acertei!</div>
+              <div className="text-xs opacity-90 font-medium">(+10 XP)</div>
             </div>
           </Button>
         </div>

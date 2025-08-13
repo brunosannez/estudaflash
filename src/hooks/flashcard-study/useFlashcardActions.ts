@@ -68,6 +68,8 @@ export const useFlashcardActions = ({
 
   const handleAnswer = async (remembered: boolean) => {
     if (flashcards.length === 0 || isAnimating) return;
+    
+    setIsAnimating(true);
 
     const currentCard = flashcards[currentIndex];
     const xpToAdd = remembered ? 10 : 2;
@@ -140,7 +142,8 @@ export const useFlashcardActions = ({
         
         setShowAnswer(false);
         setIsFlipped(false);
-      }, 1000);
+        setIsAnimating(false);
+      }, 1500);
 
     } catch (error) {
       console.error('❌ Erro ao registrar review:', error);

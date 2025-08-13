@@ -30,16 +30,16 @@ const QuizAlternativesList = ({
         
         if (showResult) {
           if (index === correctAnswer) {
-            buttonClass += "bg-success/10 border-success text-success-foreground";
+            buttonClass += "bg-green-500 border-green-600 text-white font-semibold shadow-lg";
           } else if (index === selectedAnswer && !isCorrect) {
-            buttonClass += "bg-destructive/10 border-destructive text-destructive-foreground";
+            buttonClass += "bg-red-500 border-red-600 text-white font-semibold shadow-lg";
           } else {
-            buttonClass += "bg-muted border-border text-muted-foreground";
+            buttonClass += "bg-gray-100 border-gray-300 text-gray-500";
           }
         } else if (selectedAnswer === index) {
-          buttonClass += "bg-primary/10 border-primary text-primary-foreground scale-[1.02] shadow-lg";
+          buttonClass += "bg-blue-50 border-blue-500 text-blue-700 scale-[1.02] shadow-lg font-medium";
         } else {
-          buttonClass += "bg-card border-border text-card-foreground hover:bg-primary/5 hover:border-primary/30 hover:shadow-md active:scale-[0.98]";
+          buttonClass += "bg-white border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md active:scale-[0.98]";
         }
 
         return (
@@ -64,10 +64,14 @@ const QuizAlternativesList = ({
                 ) : alternativa}
               </span>
               {showResult && index === correctAnswer && (
-                <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+                  <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
+                </div>
               )}
               {showResult && index === selectedAnswer && !isCorrect && (
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+                  <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+                </div>
               )}
             </div>
           </button>
