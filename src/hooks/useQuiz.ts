@@ -121,8 +121,8 @@ export function useQuiz(resumoId: string) {
       
       const { data, error } = await supabase.functions.invoke("generate-quiz", {
         body: { 
-          resumo_id: resumoId, 
-          texto_resumo: texto_resumo.trim(),
+          resumoContent: texto_resumo.trim(),
+          resumoId: resumoId,
           userId: user.id
         },
       });

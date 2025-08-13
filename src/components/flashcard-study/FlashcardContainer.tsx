@@ -1,7 +1,7 @@
 
 import React from 'react';
-import FlashcardFront from './FlashcardFront';
-import FlashcardBack from './FlashcardBack';
+import SwipeableFlashcard from './SwipeableFlashcard';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Flashcard {
   id: string;
@@ -29,28 +29,18 @@ const FlashcardContainer = ({
   onAnswer, 
   isAnimating 
 }: FlashcardContainerProps) => {
+  const isMobile = useIsMobile();
+
+  // Use swipeable version for all devices but optimize for mobile
   return (
-    <div className="relative max-w-2xl mx-auto">
-      <div className={`flashcard-simple transition-all duration-300 ${!showAnswer ? 'cursor-pointer hover:scale-105' : ''}`} onClick={showAnswer ? undefined : onFlip}>
-        {!showAnswer && (
-          <FlashcardFront
-            question={currentCard.pergunta}
-            currentIndex={currentIndex}
-            onFlip={onFlip}
-            isAnimating={isAnimating}
-          />
-        )}
-        
-        {showAnswer && (
-          <FlashcardBack
-            answer={currentCard.resposta}
-            example={currentCard.exemplo}
-            onAnswer={onAnswer}
-            isAnimating={isAnimating}
-          />
-        )}
-      </div>
-    </div>
+    <SwipeableFlashcard
+      currentCard={currentCard}
+      currentIndex={currentIndex}
+      showAnswer={showAnswer}
+      onFlip={onFlip}
+      onAnswer={onAnswer}
+      isAnimating={isAnimating}
+    />
   );
 };
 

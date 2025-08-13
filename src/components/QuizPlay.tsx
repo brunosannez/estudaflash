@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import EnhancedQuizGameManager from '@/components/quiz/EnhancedQuizGameManager';
+import QuizAlternativesList from '@/components/quiz/components/QuizAlternativesList';
+import QuizTypeIndicator from '@/components/quiz/components/QuizTypeIndicator';
 import { toast } from 'sonner';
 
 interface QuizPlayProps {
@@ -160,51 +162,33 @@ const QuizPlay = ({ quiz, onComplete, sessionId, resumeMode = false }: QuizPlayP
 
             {/* Question Card */}
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+              <div className="bg-card rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                <QuizTypeIndicator 
+                  questionType={currentQuestion.tipo}
+                  questionNumber={currentIndex + 1}
+                  totalQuestions={quiz.questoes.length}
+                />
+                
+                <h2 className="text-xl md:text-2xl font-bold text-card-foreground mb-6 md:mb-8 leading-relaxed">
                   {currentQuestion.pergunta}
                 </h2>
 
                 {/* Alternatives */}
-                <div className="space-y-4 mb-8">
-                  {currentQuestion.alternativas?.map((alternativa: string, index: number) => {
-                    let buttonClass = "w-full p-4 text-left rounded-xl border-2 transition-all duration-200 font-medium ";
-                    
-                    if (showResult) {
-                      if (index === currentQuestion.correta) {
-                        buttonClass += "bg-green-100 border-green-500 text-green-800";
-                      } else if (index === selectedAnswer && !isCorrect) {
-                        buttonClass += "bg-red-100 border-red-500 text-red-800";
-                      } else {
-                        buttonClass += "bg-gray-100 border-gray-300 text-gray-600";
-                      }
-                    } else if (selectedAnswer === index) {
-                      buttonClass += "bg-purple-100 border-purple-500 text-purple-800";
-                    } else {
-                      buttonClass += "bg-gray-50 border-gray-200 text-gray-700 hover:bg-purple-50 hover:border-purple-300";
-                    }
-
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(index)}
-                        disabled={showResult}
-                        className={buttonClass}
-                      >
-                        <span className="font-bold mr-3">
-                          {String.fromCharCode(65 + index)})
-                        </span>
-                        {alternativa}
-                      </button>
-                    );
-                  })}
-                </div>
+                <QuizAlternativesList
+                  alternatives={currentQuestion.alternativas}
+                  selectedAnswer={selectedAnswer}
+                  showResult={showResult}
+                  correctAnswer={currentQuestion.correta}
+                  isCorrect={isCorrect}
+                  onAnswerSelect={handleAnswerSelect}
+                  questionType={currentQuestion.tipo}
+                />
 
                 {/* Explanation (shown after answer) */}
                 {showResult && currentQuestion.explicacao && (
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg mb-6">
-                    <h3 className="font-bold text-blue-800 mb-2">Explicação:</h3>
-                    <p className="text-blue-700 leading-relaxed">
+                  <div className="bg-info/10 border-l-4 border-info p-4 md:p-6 rounded-lg mb-6">
+                    <h3 className="font-bold text-info-foreground mb-2">Explicação:</h3>
+                    <p className="text-info-foreground/80 leading-relaxed">
                       {currentQuestion.explicacao}
                     </p>
                   </div>
@@ -216,14 +200,14 @@ const QuizPlay = ({ quiz, onComplete, sessionId, resumeMode = false }: QuizPlayP
                     <Button
                       onClick={handleConfirmAnswer}
                       disabled={selectedAnswer === null}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-bold text-lg"
+                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg w-full md:w-auto min-h-[50px] md:min-h-[60px]"
                     >
                       Confirmar Resposta
                     </Button>
                   ) : (
                     <Button
                       onClick={handleNextQuestion}
-                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg"
+                      className="bg-gradient-to-r from-success to-primary hover:from-success/90 hover:to-primary/80 text-primary-foreground px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg w-full md:w-auto min-h-[50px] md:min-h-[60px]"
                     >
                       {isLastQuestion ? 'Finalizar Quiz' : 'Próxima Questão'}
                     </Button>

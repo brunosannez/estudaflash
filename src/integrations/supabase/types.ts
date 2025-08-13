@@ -1043,6 +1043,7 @@ export type Database = {
           id: string
           pergunta: string
           resumo_id: string
+          tipo: string | null
         }
         Insert: {
           alternativas: Json
@@ -1052,6 +1053,7 @@ export type Database = {
           id?: string
           pergunta: string
           resumo_id: string
+          tipo?: string | null
         }
         Update: {
           alternativas?: Json
@@ -1061,6 +1063,7 @@ export type Database = {
           id?: string
           pergunta?: string
           resumo_id?: string
+          tipo?: string | null
         }
         Relationships: [
           {
