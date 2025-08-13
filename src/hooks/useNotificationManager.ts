@@ -1,112 +1,88 @@
 import { useState, useEffect } from 'react';
+import { NotificationService, NotificationPreferences } from '@/services/notificationService';
 import { useAuth } from './useAuth';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'success' | 'info' | 'warning' | 'error';
-  timestamp: Date;
-  read: boolean;
-  action?: {
-    label: string;
-    url: string;
-  };
-}
-
-export function useNotificationManager() {
+export const useNotificationManager = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Simular notificações baseadas em atividades do usuário
   useEffect(() => {
-    if (!user) return;
-
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Novo Desafio Disponível!',
-        message: 'O desafio "Mestre dos Flashcards" está disponível. Complete 100 flashcards esta semana!',
-        type: 'info',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
-        read: false,
-        action: {
-          label: 'Ver Desafios',
-          url: '/social'
-        }
-      },
-      {
-        id: '2',
-        title: 'Parabéns! 🎉',
-        message: 'Você alcançou uma sequência de 3 dias de estudos consecutivos!',
-        type: 'success',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        read: false
-      },
-      {
-        id: '3',
-        title: 'Lembrete de Estudo',
-        message: 'Que tal revisar seus flashcards de hoje? Você tem 15 cartões aguardando.',
-        type: 'warning',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-        read: true,
-        action: {
-          label: 'Estudar Agora',
-          url: '/my-flashcards'
-        }
-      }
-    ];
-
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
-  }, [user]);
-
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    setUnreadCount(0);
-  };
-
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: crypto.randomUUID(),
-      timestamp: new Date()
-    };
+    // Check if notifications are supported
+    setIsSupported('Notification' in window && 'serviceWorker' in navigator);
     
-    setNotifications(prev => [newNotification, ...prev]);
-    if (!newNotification.read) {
-      setUnreadCount(prev => prev + 1);
+    // Initialize push notifications
+    NotificationService.initializePushNotifications();
+    
+    // Load user preferences
+    if (user?.id) {
+      loadPreferences();
+    }
+  }, [user?.id]);
+
+  const loadPreferences = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      const prefs = await NotificationService.getNotificationPreferences(user.id);
+      setPreferences(prefs || {
+        email_notifications: true,
+        push_notifications: true,
+        study_reminders: true,
+        achievement_alerts: true,
+        social_updates: true,
+        marketing_emails: false
+      });
+    } catch (error) {
+      console.error('Failed to load notification preferences:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const removeNotification = (notificationId: string) => {
-    const notification = notifications.find(n => n.id === notificationId);
-    if (notification && !notification.read) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
+  const updatePreferences = async (newPreferences: Partial<NotificationPreferences>) => {
+    if (!user?.id) return false;
+
+    setLoading(true);
+    try {
+      const success = await NotificationService.updateNotificationPreferences(user.id, newPreferences);
+      if (success) {
+        setPreferences(prev => prev ? { ...prev, ...newPreferences } : null);
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to update notification preferences:', error);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  };
+
+  const sendNotification = async (title: string, message: string, data?: Record<string, any>) => {
+    if (!preferences?.push_notifications) return;
+    
+    await NotificationService.sendPushNotification({
+      title,
+      message,
+      data
+    });
+  };
+
+  const scheduleStudyReminder = async (reminderTime: Date, message: string) => {
+    if (!user?.id || !preferences?.study_reminders) return;
+    
+    await NotificationService.scheduleStudyReminder(user.id, reminderTime, message);
   };
 
   return {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    addNotification,
-    removeNotification
+    preferences,
+    isSupported,
+    loading,
+    updatePreferences,
+    sendNotification,
+    scheduleStudyReminder,
+    refreshPreferences: loadPreferences
   };
-}
+};

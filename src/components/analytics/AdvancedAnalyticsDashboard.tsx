@@ -1,202 +1,234 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  TrendingUp, 
-  Brain, 
-  Target, 
-  Clock, 
-  BarChart3, 
-  AlertTriangle,
-  CheckCircle,
-  Zap
-} from 'lucide-react';
-import { useStudyAnalytics } from '@/hooks/useStudyAnalytics';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAdvancedAnalytics } from '@/hooks/useAdvancedAnalytics';
+import { CalendarIcon, Download, TrendingUp, Users, Clock, Target } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const AdvancedAnalyticsDashboard = () => {
-  const { 
-    analytics, 
-    recommendations, 
-    loading,
-    getWeeklyProgress,
-    getSubjectPerformance 
-  } = useStudyAnalytics();
+  const { metrics, loading, getDashboardMetrics, exportReport } = useAdvancedAnalytics();
+  const [dateRange, setDateRange] = useState({
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+    to: new Date()
+  });
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
 
-  const weeklyProgress = getWeeklyProgress();
-  const subjectPerformance = getSubjectPerformance();
-  
-  const totalStudyTime = weeklyProgress.reduce((sum, day) => sum + day.total_study_time_minutes, 0);
-  const totalCards = weeklyProgress.reduce((sum, day) => sum + day.flashcards_mastered, 0);
-  const avgAccuracy = weeklyProgress.length > 0 
-    ? weeklyProgress.reduce((sum, day) => sum + day.quiz_accuracy_percentage, 0) / weeklyProgress.length 
-    : 0;
+  useEffect(() => {
+    if (dateRange.from && dateRange.to) {
+      getDashboardMetrics(dateRange.from, dateRange.to);
+    }
+  }, [dateRange]);
+
+  const handleExport = async () => {
+    if (dateRange.from && dateRange.to) {
+      await exportReport(dateRange.from, dateRange.to, exportFormat);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-20 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Weekly Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              Tempo de Estudo
-            </CardTitle>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Analytics Avançados</h1>
+          <p className="text-muted-foreground">
+            Insights detalhados sobre o uso da plataforma
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {dateRange.from && dateRange.to ? (
+                  <>
+                    {format(dateRange.from, 'dd/MM', { locale: ptBR })} -{' '}
+                    {format(dateRange.to, 'dd/MM', { locale: ptBR })}
+                  </>
+                ) : (
+                  'Selecionar período'
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => range?.from && range?.to && setDateRange({ from: range.from, to: range.to })}
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Select value={exportFormat} onValueChange={(value: 'csv' | 'json') => setExportFormat(value)}>
+            <SelectTrigger className="w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="json">JSON</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            Exportar
+          </Button>
+        </div>
+      </div>
+
+      {/* Métricas principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {Math.round(totalStudyTime / 60)}h {totalStudyTime % 60}m
-            </div>
-            <p className="text-xs text-muted-foreground">Esta semana</p>
+            <div className="text-2xl font-bold">{metrics?.totalUsers || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +12% em relação ao período anterior
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Brain className="h-4 w-4 text-green-500" />
-              Cards Dominados
-            </CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalCards}</div>
-            <p className="text-xs text-muted-foreground">Esta semana</p>
+            <div className="text-2xl font-bold">{metrics?.activeUsers || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +8% em relação ao período anterior
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-orange-500" />
-              Precisão Média
-            </CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Duração da Sessão</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {avgAccuracy.toFixed(1)}%
+            <div className="text-2xl font-bold">
+              {Math.round((metrics?.sessionDuration || 0) / 60)}m
             </div>
-            <p className="text-xs text-muted-foreground">Esta semana</p>
+            <p className="text-xs text-muted-foreground">
+              +15% em relação ao período anterior
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(metrics?.conversionRate || 0).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              +3% em relação ao período anterior
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Study Recommendations */}
-      {recommendations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-500" />
-              Recomendações Personalizadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recommendations.slice(0, 3).map((rec, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    {rec.priority === 1 && <AlertTriangle className="h-4 w-4 text-red-500" />}
-                    {rec.priority === 2 && <TrendingUp className="h-4 w-4 text-yellow-500" />}
-                    {rec.priority === 3 && <CheckCircle className="h-4 w-4 text-green-500" />}
-                    <span className="font-medium">{rec.title}</span>
-                    <Badge variant={rec.priority === 1 ? "destructive" : rec.priority === 2 ? "default" : "secondary"}>
-                      {rec.priority === 1 ? "Alta" : rec.priority === 2 ? "Média" : "Baixa"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{rec.description}</p>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      ~{rec.estimated_time_minutes} min
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {rec.target_cards} cards
-                    </Badge>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  Começar
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="features" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="features">Recursos Mais Usados</TabsTrigger>
+          <TabsTrigger value="engagement">Engajamento</TabsTrigger>
+          <TabsTrigger value="retention">Retenção</TabsTrigger>
+        </TabsList>
 
-      {/* Subject Performance */}
-      {subjectPerformance.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-purple-500" />
-              Performance por Matéria
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {subjectPerformance.map((subject, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{subject.subject}</span>
-                  <Badge variant={subject.avg_accuracy >= 80 ? "default" : subject.avg_accuracy >= 60 ? "secondary" : "destructive"}>
-                    {subject.avg_accuracy.toFixed(1)}%
-                  </Badge>
-                </div>
-                <Progress value={subject.avg_accuracy} className="h-2" />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{subject.total_cards} cards dominados</span>
-                  <span>{Math.round(subject.total_time / 60)}h {subject.total_time % 60}m estudados</span>
-                </div>
+        <TabsContent value="features" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Top 10 Recursos</CardTitle>
+              <CardDescription>
+                Recursos mais utilizados no período selecionado
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {metrics?.topFeatures.map((feature, index) => (
+                  <div key={feature.feature} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="w-8 justify-center">
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium capitalize">
+                        {feature.feature.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {feature.usage} usos
+                      </span>
+                      <div className="w-20 bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ 
+                            width: `${(feature.usage / (metrics?.topFeatures[0]?.usage || 1)) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Learning Velocity Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-green-500" />
-            Velocidade de Aprendizado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {weeklyProgress.slice(0, 7).map((day, index) => {
-              const date = new Date(day.date);
-              const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-              const velocity = day.learning_velocity || 0;
-              
-              return (
-                <div key={index} className="flex items-center gap-4">
-                  <div className="w-12 text-sm font-medium">{dayName}</div>
-                  <div className="flex-1">
-                    <Progress value={Math.min(velocity * 10, 100)} className="h-2" />
-                  </div>
-                  <div className="w-20 text-sm text-muted-foreground text-right">
-                    {velocity.toFixed(1)} c/min
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="engagement" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Engajamento do Usuário</CardTitle>
+              <CardDescription>
+                Métricas de engajamento ao longo do tempo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96 flex items-center justify-center text-muted-foreground">
+                Gráfico de engajamento em desenvolvimento...
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="retention" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Análise de Retenção</CardTitle>
+              <CardDescription>
+                Taxa de retenção de usuários por coorte
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96 flex items-center justify-center text-muted-foreground">
+                Análise de retenção em desenvolvimento...
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

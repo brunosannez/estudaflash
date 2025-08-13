@@ -1,392 +1,266 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { useNotificationManager } from '@/hooks/useNotificationManager';
+import { Bell, Settings, Mail, Smartphone, Clock, Trophy, Users, Tag } from 'lucide-react';
 import { toast } from 'sonner';
-import { 
-  Bell, 
-  Settings, 
-  Check, 
-  X, 
-  BookOpen, 
-  Target, 
-  Trophy,
-  Clock,
-  Trash2,
-  BellRing
-} from 'lucide-react';
 
-interface Notification {
-  id: string;
-  type: 'reminder' | 'achievement' | 'challenge' | 'social' | 'system';
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: Date;
-  actionUrl?: string;
-  metadata?: any;
-}
+const NotificationCenter = () => {
+  const { 
+    preferences, 
+    isSupported, 
+    loading, 
+    updatePreferences, 
+    sendNotification 
+  } = useNotificationManager();
+  
+  const [testNotificationSent, setTestNotificationSent] = useState(false);
 
-interface NotificationSettings {
-  flashcardReminders: boolean;
-  achievementAlerts: boolean;
-  challengeUpdates: boolean;
-  socialUpdates: boolean;
-  systemNotifications: boolean;
-  reminderTime: string;
-}
-
-export const NotificationCenter = () => {
-  const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [settings, setSettings] = useState<NotificationSettings>({
-    flashcardReminders: true,
-    achievementAlerts: true,
-    challengeUpdates: true,
-    socialUpdates: true,
-    systemNotifications: true,
-    reminderTime: '18:00'
-  });
-  const [showSettings, setShowSettings] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user?.id) {
-      loadNotifications();
-      loadSettings();
-      setupNotificationScheduler();
-    }
-  }, [user?.id]);
-
-  const loadNotifications = async () => {
-    try {
-      setLoading(true);
-      // Simular carregamento de notificações
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'reminder',
-          title: 'Hora de estudar!',
-          message: 'Você tem 5 flashcards prontos para revisão.',
-          read: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
-          actionUrl: '/my-flashcards'
-        },
-        {
-          id: '2',
-          type: 'achievement',
-          title: 'Conquista desbloqueada!',
-          message: 'Você alcançou o nível 3! 🎉',
-          read: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2h ago
-          actionUrl: '/social'
-        },
-        {
-          id: '3',
-          type: 'challenge',
-          title: 'Desafio concluído',
-          message: 'Parabéns! Você completou o desafio "Quiz Master".',
-          read: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        }
-      ];
-      setNotifications(mockNotifications);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-      toast.error('Erro ao carregar notificações');
-    } finally {
-      setLoading(false);
+  const handlePreferenceChange = async (key: string, value: boolean) => {
+    const success = await updatePreferences({ [key]: value });
+    if (success) {
+      toast.success('Preferências atualizadas!');
+    } else {
+      toast.error('Erro ao atualizar preferências');
     }
   };
 
-  const loadSettings = () => {
-    const savedSettings = localStorage.getItem('notificationSettings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
-  };
-
-  const saveSettings = (newSettings: NotificationSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
-    toast.success('Configurações salvas');
-  };
-
-  const setupNotificationScheduler = () => {
-    // Verificar permissão de notificação
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    // Configurar lembretes diários
-    const scheduleDaily = () => {
-      const now = new Date();
-      const reminderTime = new Date();
-      const [hours, minutes] = settings.reminderTime.split(':');
-      reminderTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-      if (reminderTime <= now) {
-        reminderTime.setDate(reminderTime.getDate() + 1);
-      }
-
-      const timeUntilReminder = reminderTime.getTime() - now.getTime();
-      
-      setTimeout(() => {
-        if (settings.flashcardReminders) {
-          showBrowserNotification(
-            'EstudaFlash - Hora de estudar!',
-            'Não esqueça de revisar seus flashcards hoje!'
-          );
-        }
-        scheduleDaily(); // Reagendar para o próximo dia
-      }, timeUntilReminder);
-    };
-
-    scheduleDaily();
-  };
-
-  const showBrowserNotification = (title: string, body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico'
-      });
-    }
-  };
-
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
+  const sendTestNotification = async () => {
+    await sendNotification(
+      'Notificação de Teste 🔔',
+      'Esta é uma notificação de teste do EstudaFlash!',
+      { type: 'test' }
     );
+    setTestNotificationSent(true);
+    toast.success('Notificação de teste enviada!');
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, read: true }))
-    );
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'reminder':
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'achievement':
-        return <Trophy className="h-4 w-4 text-yellow-500" />;
-      case 'challenge':
-        return <Target className="h-4 w-4 text-green-500" />;
-      case 'social':
-        return <BellRing className="h-4 w-4 text-purple-500" />;
-      default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  if (showSettings) {
+  if (!preferences) {
     return (
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Configurações de Notificação
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowSettings(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="flashcard-reminders">Lembretes de Flashcards</Label>
-              <Switch
-                id="flashcard-reminders"
-                checked={settings.flashcardReminders}
-                onCheckedChange={(checked) =>
-                  saveSettings({ ...settings, flashcardReminders: checked })
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="achievement-alerts">Alertas de Conquistas</Label>
-              <Switch
-                id="achievement-alerts"
-                checked={settings.achievementAlerts}
-                onCheckedChange={(checked) =>
-                  saveSettings({ ...settings, achievementAlerts: checked })
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="challenge-updates">Atualizações de Desafios</Label>
-              <Switch
-                id="challenge-updates"
-                checked={settings.challengeUpdates}
-                onCheckedChange={(checked) =>
-                  saveSettings({ ...settings, challengeUpdates: checked })
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="social-updates">Atualizações Sociais</Label>
-              <Switch
-                id="social-updates"
-                checked={settings.socialUpdates}
-                onCheckedChange={(checked) =>
-                  saveSettings({ ...settings, socialUpdates: checked })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reminder-time">Horário dos Lembretes</Label>
-              <input
-                id="reminder-time"
-                type="time"
-                value={settings.reminderTime}
-                onChange={(e) =>
-                  saveSettings({ ...settings, reminderTime: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-border rounded-md bg-background"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          Notificações
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="h-5 px-2 text-xs">
-              {unreadCount}
-            </Badge>
-          )}
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowSettings(true)}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <Bell className="h-8 w-8 text-primary" />
+        <div>
+          <h1 className="text-3xl font-bold">Central de Notificações</h1>
+          <p className="text-muted-foreground">
+            Configure suas preferências de notificação
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-96">
-          {loading ? (
-            <div className="p-4 space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-16 bg-muted rounded-lg" />
+      </div>
+
+      {!isSupported && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="flex items-center gap-3 pt-6">
+            <Badge variant="outline" className="bg-orange-100 text-orange-800">
+              Atenção
+            </Badge>
+            <p className="text-sm">
+              Seu navegador não suporta notificações push. Algumas funcionalidades podem estar limitadas.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Configurações de Notificação */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Preferências de Notificação
+            </CardTitle>
+            <CardDescription>
+              Configure quando e como você deseja receber notificações
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Email Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Notificações por Email</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receba emails sobre atividades importantes
+                  </p>
                 </div>
-              ))}
+              </div>
+              <Switch
+                checked={preferences.email_notifications}
+                onCheckedChange={(value) => handlePreferenceChange('email_notifications', value)}
+                disabled={loading}
+              />
             </div>
-          ) : notifications.length === 0 ? (
-            <div className="p-8 text-center">
-              <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                Nenhuma notificação no momento
+
+            <Separator />
+
+            {/* Push Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Smartphone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Notificações Push</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receba notificações instantâneas no navegador
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.push_notifications && isSupported}
+                onCheckedChange={(value) => handlePreferenceChange('push_notifications', value)}
+                disabled={loading || !isSupported}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Study Reminders */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Lembretes de Estudo</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receba lembretes para manter sua rotina de estudos
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.study_reminders}
+                onCheckedChange={(value) => handlePreferenceChange('study_reminders', value)}
+                disabled={loading}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Achievement Alerts */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Alertas de Conquistas</p>
+                  <p className="text-sm text-muted-foreground">
+                    Seja notificado sobre badges e marcos alcançados
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.achievement_alerts}
+                onCheckedChange={(value) => handlePreferenceChange('achievement_alerts', value)}
+                disabled={loading}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Social Updates */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Atualizações Sociais</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receba notificações sobre atividades de amigos
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.social_updates}
+                onCheckedChange={(value) => handlePreferenceChange('social_updates', value)}
+                disabled={loading}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Marketing Emails */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Tag className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Emails Promocionais</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receba emails sobre novidades e promoções
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={preferences.marketing_emails}
+                onCheckedChange={(value) => handlePreferenceChange('marketing_emails', value)}
+                disabled={loading}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Teste de Notificações */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Teste de Notificações</CardTitle>
+            <CardDescription>
+              Teste se as notificações estão funcionando corretamente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center py-8">
+              <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">
+                Clique no botão abaixo para enviar uma notificação de teste
               </p>
+              <Button 
+                onClick={sendTestNotification} 
+                disabled={!isSupported || loading}
+                className="gap-2"
+              >
+                <Bell className="h-4 w-4" />
+                Enviar Notificação de Teste
+              </Button>
+              
+              {testNotificationSent && (
+                <Badge className="mt-4 bg-green-100 text-green-800">
+                  Notificação enviada com sucesso!
+                </Badge>
+              )}
             </div>
-          ) : (
-            <div className="divide-y">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 hover:bg-muted/50 transition-colors ${
-                    !notification.read ? 'bg-primary/5' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      {getNotificationIcon(notification.type)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">
-                            {notification.title}
-                          </h4>
-                          {!notification.read && (
-                            <div className="h-2 w-2 bg-primary rounded-full" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {notification.createdAt.toLocaleString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-2">
-                      {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead(notification.id)}
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteNotification(notification.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  {notification.actionUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2 w-full"
-                      onClick={() => {
-                        markAsRead(notification.id);
-                        window.location.href = notification.actionUrl!;
-                      }}
-                    >
-                      Ver detalhes
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+
+            {!isSupported && (
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  Notificações push não são suportadas neste navegador
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Histórico de Notificações (placeholder) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Notificações</CardTitle>
+          <CardDescription>
+            Últimas notificações enviadas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Histórico de notificações em desenvolvimento...
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
+
+export default NotificationCenter;

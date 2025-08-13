@@ -35,6 +35,48 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          event_name: string
+          event_properties: Json
+          id: string
+          ip_address: unknown | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+          user_properties: Json
+        }
+        Insert: {
+          event_name: string
+          event_properties?: Json
+          id?: string
+          ip_address?: unknown | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_properties?: Json
+        }
+        Update: {
+          event_name?: string
+          event_properties?: Json
+          id?: string
+          ip_address?: unknown | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_properties?: Json
+        }
+        Relationships: []
+      }
       api_usage_tracking: {
         Row: {
           action_type: string
@@ -751,6 +793,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          achievement_alerts: boolean
+          created_at: string
+          email_notifications: boolean
+          id: string
+          marketing_emails: boolean
+          push_notifications: boolean
+          social_updates: boolean
+          study_reminders: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_emails?: boolean
+          push_notifications?: boolean
+          social_updates?: boolean
+          study_reminders?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_emails?: boolean
+          push_notifications?: boolean
+          social_updates?: boolean
+          study_reminders?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
@@ -1164,6 +1245,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limiting: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       resumos: {
         Row: {
@@ -1624,6 +1735,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_2fa: {
+        Row: {
+          backup_codes: string[]
+          created_at: string
+          id: string
+          is_enabled: boolean
+          secret_key: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          backup_codes?: string[]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          secret_key: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          backup_codes?: string[]
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          secret_key?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_category: string
@@ -1964,6 +2108,15 @@ export type Database = {
       check_and_award_quiz_badges: {
         Args: { target_user_id: string }
         Returns: number
+      }
+      check_rate_limit: {
+        Args: {
+          target_user_id: string
+          target_action_type: string
+          max_requests?: number
+          window_minutes?: number
+        }
+        Returns: boolean
       }
       check_user_is_admin: {
         Args: { user_uuid?: string }
