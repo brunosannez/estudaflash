@@ -156,29 +156,33 @@ const SwipeableFlashcard = ({
                   </div>
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="hidden md:block text-center text-sm text-muted-foreground">
-                    👈 Deslize para a esquerda se não lembrou | Deslize para a direita se lembrou 👉
+                  <div className="space-y-4">
+                  <div className="text-center text-sm text-muted-foreground">
+                    Responda se você lembrou ou não para avançar para o próximo card
                   </div>
                   
-                  {/* Mobile buttons - visible on small screens */}
-                  <div className="flex md:hidden space-x-3">
+                  {/* Buttons for both mobile and desktop */}
+                  <div className="flex space-x-3">
                     <Button
                       onClick={() => {
-                        console.log('🔴 Clicked Não Lembrei');
-                        onAnswer(false);
+                        console.log('🔴 Clicked Não Lembrei - isAnimating:', isAnimating);
+                        if (!isAnimating) {
+                          onAnswer(false);
+                        }
                       }}
                       disabled={isAnimating}
                       variant="outline"
-                      className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex-1 h-12 text-base font-semibold border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
                       <ChevronLeft className="h-5 w-5 mr-2" />
                       Não Lembrei
                     </Button>
                     <Button
                       onClick={() => {
-                        console.log('🟢 Clicked Lembrei');
-                        onAnswer(true);
+                        console.log('🟢 Clicked Lembrei - isAnimating:', isAnimating);
+                        if (!isAnimating) {
+                          onAnswer(true);
+                        }
                       }}
                       disabled={isAnimating}
                       className="flex-1 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
@@ -186,18 +190,6 @@ const SwipeableFlashcard = ({
                       Lembrei
                       <ChevronRight className="h-5 w-5 ml-2" />
                     </Button>
-                  </div>
-                  
-                  {/* Desktop swipe indicators */}
-                  <div className="hidden md:flex justify-between items-center px-4">
-                    <div className="flex items-center space-x-2 text-destructive/70">
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="text-sm">Não lembrei</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-success/70">
-                      <span className="text-sm">Lembrei</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
                   </div>
                 </div>
               </>
