@@ -9,6 +9,7 @@ import FlashcardLoadingState from './flashcard-study/FlashcardLoadingState';
 import FlashcardContinueDialog from './flashcard-study/FlashcardContinueDialog';
 import FlashcardEmptyState from './flashcard-study/FlashcardEmptyState';
 import FlashcardStudyContainer from './flashcard-study/FlashcardStudyContainer';
+import FlashcardCompletionScreen from './flashcard-study/FlashcardCompletionScreen';
 import './FlashcardAnimations.css';
 
 interface FlashcardStudyModeImprovedProps {
@@ -36,12 +37,14 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
     isAnimating,
     realGamificationData,
     sessionId: activeSessionId,
+    isCompleted,
     handleFlip,
     handleAnswer,
     handleShuffle,
     getCurrentCard,
     saveCurrentProgress,
-    completeSession
+    completeSession,
+    handleStudyAgain
   } = useFlashcardStudy(resumoId, sessionId || existingSessionId || undefined);
 
   // Setup keyboard shortcuts
@@ -152,6 +155,17 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
 
   if (flashcards.length === 0) {
     return <FlashcardEmptyState onBack={onBack} />;
+  }
+
+  if (isCompleted) {
+    return (
+      <FlashcardCompletionScreen
+        studyStats={studyStats}
+        score={score}
+        onStudyAgain={handleStudyAgain}
+        onBackToFlashcards={onBack}
+      />
+    );
   }
 
   return (

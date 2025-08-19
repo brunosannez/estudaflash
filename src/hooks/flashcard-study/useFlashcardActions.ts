@@ -29,6 +29,7 @@ interface UseFlashcardActionsProps {
   completedCards: Set<string>;
   saveProgress: (currentIndex: number, completedCardIds: string[], stats: any) => Promise<boolean>;
   realGamificationData: any;
+  onComplete?: () => void;
 }
 
 export const useFlashcardActions = ({
@@ -48,7 +49,8 @@ export const useFlashcardActions = ({
   addCompletedCard,
   completedCards,
   saveProgress,
-  realGamificationData
+  realGamificationData,
+  onComplete
 }: UseFlashcardActionsProps) => {
   const { toast } = useToast();
   const { updateProgressAfterActivity } = useProgressUpdater();
@@ -132,14 +134,18 @@ export const useFlashcardActions = ({
           : `+${xpToAdd} XP por tentar! Você está aprendendo!`,
       });
 
-      // Avançar para próximo card imediatamente
+      // Avançar para próximo card ou finalizar
       setTimeout(() => {
-        const nextIndex = currentIndex < flashcards.length - 1 ? currentIndex + 1 : 0;
-        setCurrentIndex(nextIndex);
-        console.log('➡️ Avançando para card:', nextIndex);
-        
-        setShowAnswer(false);
-        setIsFlipped(false);
+        if (currentIndex + 1 >= flashcards.length) {
+          console.log('📚 Todos os flashcards foram estudados!');
+          if (onComplete) {
+            onComplete();
+          }
+        } else {
+          setCurrentIndex(currentIndex + 1);
+          setShowAnswer(false);
+          setIsFlipped(false);
+        }
       }, 300);
 
     } catch (error) {

@@ -47,6 +47,9 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     resetSession
   } = useFlashcardSession();
 
+  // Study completion state
+  const [isCompleted, setIsCompleted] = useState(false);
+
   // Actions
   const { handleFlip, handleAnswer, getCurrentCard } = useFlashcardActions({
     flashcards,
@@ -65,7 +68,8 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     addCompletedCard,
     completedCards,
     saveProgress,
-    realGamificationData
+    realGamificationData,
+    onComplete: () => setIsCompleted(true)
   });
 
   // Initialize session once flashcards are loaded
@@ -144,6 +148,12 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     };
   }, []);
 
+  const handleStudyAgain = () => {
+    setIsCompleted(false);
+    setCurrentIndex(0);
+    resetFlipState();
+  };
+
   return {
     flashcards,
     currentIndex,
@@ -156,11 +166,13 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     isAnimating,
     realGamificationData,
     sessionId: activeSessionId,
+    isCompleted,
     handleFlip,
     handleAnswer,
     handleShuffle,
     getCurrentCard,
     saveCurrentProgress,
-    completeSession
+    completeSession,
+    handleStudyAgain
   };
 };

@@ -7,7 +7,7 @@ import MyFlashcardsHeader from '@/components/my-flashcards/MyFlashcardsHeader';
 import MyFlashcardsLoading from '@/components/my-flashcards/MyFlashcardsLoading';
 import MyFlashcardsEmpty from '@/components/my-flashcards/MyFlashcardsEmpty';
 import MyFlashcardsStudyMode from '@/components/my-flashcards/MyFlashcardsStudyMode';
-import FlashcardSetCard from '@/components/my-flashcards/FlashcardSetCard';
+import EnhancedFlashcardSetCard from '@/components/my-flashcards/EnhancedFlashcardSetCard';
 import CategoryManager from '@/components/my-flashcards/CategoryManager';
 import CategoryFilter from '@/components/my-flashcards/CategoryFilter';
 import StudyModeSelector from '@/components/my-flashcards/StudyModeSelector';
@@ -228,7 +228,7 @@ const MyFlashcards = () => {
               {/* Flashcard Sets */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredFlashcards.map((flashcardSet) => (
-                  <FlashcardSetCard
+                  <EnhancedFlashcardSetCard
                     key={flashcardSet.resumo_id}
                     flashcardSet={flashcardSet}
                     onStartStudy={handleStartStudy}
