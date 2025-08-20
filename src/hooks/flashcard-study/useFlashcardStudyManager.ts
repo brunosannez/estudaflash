@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useFlashcardSession } from '@/hooks/useFlashcardSession';
 import { useRealGamificationData } from '@/hooks/useRealGamificationData';
 import { useFlashcardData } from './useFlashcardData';
