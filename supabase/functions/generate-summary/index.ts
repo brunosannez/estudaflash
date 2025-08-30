@@ -82,100 +82,49 @@ function detectContentIntelligence(texto: string) {
   return { disciplina, tipoMaterial, hasMultiplePages, totalPaginas };
 }
 
-// Criar prompt ultra-otimizado usando o novo sistema improvedPrompts
+// Criar prompt didático e neutro
 function createOptimizedPrompt(texto: string, schoolYear: string) {
   const { disciplina, tipoMaterial, hasMultiplePages, totalPaginas } = detectContentIntelligence(texto);
   
   const pageInstruction = hasMultiplePages 
     ? `\n📖 **MATERIAL MULTIPÁGINA:** ${totalPaginas} páginas sequenciais detectadas. Mantenha ordem lógica e fluxo contínuo.\n`
     : '';
+    
+  // Converter idade escolar para idade aproximada
+  const getIdadeAproximada = (nivel: string) => {
+    switch (nivel?.toLowerCase()) {
+      case 'fundamental i': return '8-10';
+      case 'fundamental ii': return '11-14';
+      case 'ensino médio': return '15-17';
+      case 'superior': return '18+';
+      default: return '15-17';
+    }
+  };
   
-  return `🏆 **SISTEMA ARI DE SÁ & FARIAS BRITO - APROVAÇÃO GARANTIDA**
+  const idadeUsuario = getIdadeAproximada(schoolYear);
+  
+  return `Você é um professor didático que transforma textos de livros em resumos corridos, claros e explicativos. 
+Seu estilo deve ser como o de um livro didático: bem organizado, conectando cada ideia em sequência lógica.${pageInstruction}
 
-Você é um professor EXPERT dos colégios Ari de Sá e Farias Brito, líderes nacionais em aprovação no ENEM e vestibulares de medicina. ${pageInstruction}
-
-📊 **ANÁLISE INTELIGENTE:**
+📊 **ANÁLISE DO CONTEÚDO:**
 - Disciplina: ${disciplina.toUpperCase()}
 - Material: ${tipoMaterial}
 - Nível: ${schoolYear}
 - Páginas: ${totalPaginas}
 
-🎯 **METODOLOGIA COMPROVADA:**
+**INSTRUÇÕES PARA O RESUMO:**
 
-**1️⃣ CONCEITOS ESTRATÉGICOS (Fundação sólida)**
-- Definições ENEM-style com **negrito** nos termos-chave
-- Base teórica sólida mas didática
-- Links com conhecimento prévio
+Aqui está o texto bruto extraído da imagem (OCR):
 
-**2️⃣ COMO CAI NO ENEM (Inteligência competitiva)**
-- Padrões de questões dos últimos 3 anos
-- Competências/habilidades específicas testadas
-- Tipos de contexto mais usados pelas bancas
-- Porcentagem de cobrança estimada: [X]%
+"${texto}"
 
-**3️⃣ MACETES ARI DE SÁ (Resolução lightning ⚡)**
-- Técnicas de memorização rápida
-- Fórmulas mnemônicas exclusivas
-- Estratégias de eliminação de alternativas
-- Como resolver em 90-120 segundos
-
-**4️⃣ PEGADINHAS & ALERTAS (Defesa inteligente 🚨)**
-- Erros típicos de 80% dos alunos
-- Conceitos que as bancas adoram confundir
-- Palavras-armadilha nas questões
-- "Não confunda X com Y"
-
-**5️⃣ INTERDISCIPLINAR ENEM (Visão 360°)**
-- Conexões com outras matérias
-- Temas transversais (sustentabilidade, tecnologia, etc.)
-- Atualidades que podem aparecer
-- Contextualização brasileira
-
-**6️⃣ RESUMO EXECUTIVO (Tiro certeiro 🎯)**
-${getDisciplineSpecificTips(disciplina, schoolYear)}
-
-📖 **CONTEÚDO PARA MASTERIZAÇÃO:**
-${texto}
-
-💯 **META:** Aluno que domina este resumo = 95% de acerto em questões do tema no ENEM.
-🚀 **LEMA:** "Estudou pelo Ari de Sá = Passou!"`;
-}
-
-// Dicas específicas por disciplina
-function getDisciplineSpecificTips(disciplina: string, nivel: string) {
-  const tips = {
-    história: `• Cronologia é TUDO - decore períodos-chave
-• Causas → Eventos → Consequências (sempre essa ordem)
-• Brasil colonial/imperial/republicano = 60% das questões
-• Conecte com geografia e sociologia sempre`,
-    
-    geografia: `• Mapas mentais são essenciais
-• Dados do IBGE = questões certas
-• Geopolítica mundial + Brasil = foco
-• Questões ambientais são tendência crescente`,
-    
-    biologia: `• Ecologia = 25% do ENEM (priorize!)
-• Genética: faça árvores genealógicas
-• Citologia: decore organelas e funções
-• Evolução conecta tudo - use como fio condutor`,
-    
-    química: `• Tabela periódica = sua melhor amiga
-• MOL: se não souber, não passa em exatas
-• Orgânica: grupos funcionais = base tudo
-• pH e equilíbrio = sempre cai`,
-    
-    física: `• Cinemática: gráficos são 70% das questões
-• Energia: conservação resolve quase tudo
-• Eletricidade: Lei de Ohm + potência = básico
-• Ondas: som e luz no dia a dia`,
-    
-    default: `• Leia SEMPRE o enunciado completo
-• Elimine alternativas absurdas primeiro
-• Contextualize com realidade brasileira
-• Tempo: 3 min por questão máximo`
-  };
-  
-  return tips[disciplina] || tips.default;
+Reescreva esse conteúdo em forma de resumo corrido e explicativo, como se fosse um capítulo de livro didático.
+- Conecte cada parte de forma lógica, sem usar listas ou tópicos extensos.
+- Use uma linguagem adaptada para um estudante de aproximadamente ${idadeUsuario} anos.
+- Explique termos difíceis de forma simples quando necessário.
+- Destaque conceitos importantes com **negrito**.
+- O resultado deve ser um texto único e fluido, fácil de ler e entender.
+- Mantenha foco no conteúdo educacional sem mencionar instituições específicas.`;
 }
 
 serve(async (req) => {
