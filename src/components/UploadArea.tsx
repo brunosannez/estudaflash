@@ -13,6 +13,7 @@ const UploadArea = () => {
     fileInputRef,
     uploadResults,
     isProcessing,
+    batchProgress,
     handleDrag,
     handleDrop,
     handleFileButtonClick,
@@ -22,6 +23,7 @@ const UploadArea = () => {
     removeFile,
     handleChooseOther,
     handleAddMoreFiles,
+    getBatchSize,
   } = useUploadManager();
 
   if (uploadResult) {
@@ -41,6 +43,7 @@ const UploadArea = () => {
           selectedFiles={selectedFiles}
           uploadResults={uploadResults}
           isProcessing={isProcessing}
+          batchProgress={batchProgress}
           fileInputRef={fileInputRef}
           onDrag={handleDrag}
           onDrop={handleDrop}
@@ -50,6 +53,7 @@ const UploadArea = () => {
           onRemoveFile={removeFile}
           onChooseOther={handleChooseOther}
           onAddMoreFiles={handleAddMoreFiles}
+          getBatchSize={getBatchSize}
         />
         <HowItWorks />
       </div>

@@ -193,3 +193,62 @@ export const saveUploadRecord = async (userId: string, successfulResults: Succes
     throw error;
   }
 };
+
+export const saveBatchUploadRecord = async (userId: string, successfulResults: SuccessfulUploadResult[]) => {
+  try {
+    // Organizar texto extraído por ordem global das páginas/imagens
+    const combinedText = successfulResults
+      .map((result, index) => {
+        const pageNumber = index + 1;
+        const pageHeader = `=== PÁGINA ${pageNumber} ===`;
+        const fileName = `Arquivo: ${result.file.name}`;
+        const separator = '---'.repeat(20);
+        
+        return `${pageHeader}\n${fileName}\n${separator}\n${result.extractedText}\n`;
+      })
+      .join('\n\n');
+
+    console.log('📝 Batch combined text length:', combinedText.length);
+    console.log('📊 Total images processed across batches:', successfulResults.length);
+    
+    if (!combinedText.trim()) {
+      throw new Error('Nenhum texto foi extraído das imagens');
+    }
+    
+    const totalFileSize = successfulResults.reduce((total, result) => total + result.file.size, 0);
+    const arquivoOriginalNome = `${successfulResults.length} páginas processadas em lotes`;
+    
+    console.log('💾 Saving batch upload to database...');
+    const { data: uploadRecord, error: dbError } = await supabase
+      .from('uploads')
+      .insert({
+        user_id: userId,
+        imagem_url: successfulResults[0].imageUrl,
+        texto_extraido: combinedText,
+        arquivo_original_nome: arquivoOriginalNome,
+        file_size: totalFileSize
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('❌ Batch database error:', dbError);
+      throw new Error(`Falha ao salvar lote no banco: ${dbError.message}`);
+    }
+
+    if (!uploadRecord) {
+      throw new Error('Registro de lote não foi criado');
+    }
+
+    console.log('✅ Batch upload record saved:', {
+      id: uploadRecord.id,
+      total_pages: successfulResults.length,
+      file_size_mb: (uploadRecord.file_size / (1024 * 1024)).toFixed(2)
+    });
+    
+    return uploadRecord;
+  } catch (error) {
+    console.error('❌ Error saving batch upload record:', error);
+    throw error;
+  }
+};

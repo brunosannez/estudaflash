@@ -1,6 +1,7 @@
 
 import { useState, useRef } from 'react';
 import { useMultipleUpload } from '@/hooks/useMultipleUpload';
+import { useBatchUpload } from '@/hooks/useBatchUpload';
 import { useToast } from '@/hooks/use-toast';
 
 export const useUploadManager = () => {
@@ -11,6 +12,14 @@ export const useUploadManager = () => {
   const { toast } = useToast();
   
   const { uploadMultipleImages, uploadResults, isProcessing, resetUpload } = useMultipleUpload();
+  const { 
+    processBatchUpload, 
+    isProcessing: isBatchProcessing, 
+    batchProgress, 
+    allResults: batchResults,
+    resetBatch,
+    getBatchSize
+  } = useBatchUpload();
 
   function handleDrag(e: React.DragEvent) {
     e.preventDefault();
@@ -99,8 +108,22 @@ export const useUploadManager = () => {
       console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
     });
     
+    const batchSize = getBatchSize();
+    const needsBatchProcessing = selectedFiles.length > batchSize || batchSize < selectedFiles.length;
+    
     try {
-      const result = await uploadMultipleImages(selectedFiles);
+      let result;
+      
+      if (needsBatchProcessing && selectedFiles.length > 5) {
+        // Usar processamento em lotes para muitas imagens
+        console.log(`📦 Usando processamento em lotes para ${selectedFiles.length} imagens`);
+        result = await processBatchUpload(selectedFiles);
+      } else {
+        // Usar processamento normal para poucas imagens
+        console.log(`📤 Usando processamento normal para ${selectedFiles.length} imagens`);
+        result = await uploadMultipleImages(selectedFiles);
+      }
+      
       setUploadResult(result);
       setSelectedFiles([]);
       
@@ -108,7 +131,7 @@ export const useUploadManager = () => {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('❌ Erro no processamento das imagens no componente UploadArea:', error);
+      console.error('❌ Erro no processamento das imagens:', error);
     }
   }
 
@@ -116,6 +139,7 @@ export const useUploadManager = () => {
     setSelectedFiles([]);
     setUploadResult(null);
     resetUpload();
+    resetBatch();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -128,6 +152,7 @@ export const useUploadManager = () => {
   function handleChooseOther() {
     setSelectedFiles([]);
     resetUpload();
+    resetBatch();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -164,7 +189,9 @@ export const useUploadManager = () => {
     uploadResult,
     fileInputRef,
     uploadResults,
-    isProcessing,
+    isProcessing: isProcessing || isBatchProcessing,
+    batchProgress,
+    batchResults,
     handleDrag,
     handleDrop,
     handleFileButtonClick,
@@ -174,6 +201,7 @@ export const useUploadManager = () => {
     removeFile,
     handleChooseOther,
     handleAddMoreFiles,
-    setDragActive
+    setDragActive,
+    getBatchSize
   };
 };
