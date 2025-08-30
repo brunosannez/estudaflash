@@ -20,6 +20,7 @@ import Home from "./pages/Home";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -69,6 +70,9 @@ function App() {
             <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
             <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
             <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
+            
+            {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             
             {/* Rotas protegidas */}
             <Route 

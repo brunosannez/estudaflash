@@ -57,3 +57,9 @@ verify_jwt = false
 
 [functions.admin-rotate-guardian-key]
 verify_jwt = true
+
+[functions.create-stripe-checkout]
+verify_jwt = true
+
+[functions.verify-payment]
+verify_jwt = false

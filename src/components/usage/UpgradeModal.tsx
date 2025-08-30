@@ -2,8 +2,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, GraduationCap, Zap } from 'lucide-react';
+import { Crown, GraduationCap, Zap, Loader2 } from 'lucide-react';
 import { PlanType } from '@/types/plans';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { usePlansData } from '@/hooks/usePlansData';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -13,6 +17,9 @@ interface UpgradeModalProps {
 }
 
 const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModalProps) => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const { getNextPlan, loading: plansLoading } = usePlansData();
   const getPlanIcon = (plan: PlanType) => {
     switch (plan) {
       case 'pro':
@@ -25,25 +32,86 @@ const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModal
   };
 
   const getRecommendedPlan = () => {
-    if (currentPlan === 'free') {
+    const nextPlan = getNextPlan(currentPlan);
+    
+    if (!nextPlan) {
+      // Fallback to hardcoded data if no plans found
+      if (currentPlan === 'free') {
+        return {
+          id: 'fallback-pro',
+          name: 'pro',
+          displayName: 'PRO',
+          price: 'R$ 29,90/mês',
+          benefits: ['100 uploads por mês', '100 flashcards por mês', '100 quizzes por mês', 'Suporte prioritário'],
+          color: 'from-blue-500 to-blue-700',
+        };
+      }
       return {
-        name: 'pro',
-        displayName: 'PRO',
-        price: 'R$ 29,90/mês',
-        benefits: ['100 uploads por mês', '100 flashcards por mês', '100 quizzes por mês', 'Suporte prioritário'],
-        color: 'from-blue-500 to-blue-700',
+        id: 'fallback-edu',
+        name: 'edu',
+        displayName: 'EDU', 
+        price: 'R$ 49,90/mês',
+        benefits: ['Uploads ilimitados', 'Flashcards ilimitados', 'Quizzes ilimitados', 'Recursos educacionais especiais'],
+        color: 'from-green-500 to-green-700',
       };
     }
+
     return {
-      name: 'edu',
-      displayName: 'EDU',
-      price: 'R$ 49,90/mês',
-      benefits: ['Uploads ilimitados', 'Flashcards ilimitados', 'Quizzes ilimitados', 'Recursos educacionais especiais'],
-      color: 'from-green-500 to-green-700',
+      id: nextPlan.id,
+      name: nextPlan.name,
+      displayName: nextPlan.name.toUpperCase(),
+      price: `R$ ${nextPlan.price_brl.toFixed(2).replace('.', ',')}/mês`,
+      benefits: nextPlan.features || [
+        `${nextPlan.uploads_limit === -1 ? 'Uploads ilimitados' : `${nextPlan.uploads_limit} uploads por mês`}`,
+        `${nextPlan.flashcards_limit === -1 ? 'Flashcards ilimitados' : `${nextPlan.flashcards_limit} flashcards por mês`}`,
+        `${nextPlan.quizzes_limit === -1 ? 'Quizzes ilimitados' : `${nextPlan.quizzes_limit} quizzes por mês`}`,
+        'Suporte prioritário'
+      ],
+      color: nextPlan.name.toLowerCase() === 'pro' ? 'from-blue-500 to-blue-700' : 'from-green-500 to-green-700',
     };
   };
 
+  const handleUpgrade = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: { planId: recommendedPlan.id }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        onClose();
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: "Não foi possível iniciar o processo de upgrade. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const recommendedPlan = getRecommendedPlan();
+
+  if (plansLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,13 +157,17 @@ const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModal
             </Button>
             <Button 
               className={`flex-1 bg-gradient-to-r ${recommendedPlan.color} hover:opacity-90`}
-              onClick={() => {
-                // TODO: Implementar integração com sistema de pagamento
-                console.log(`Upgrade para plano ${recommendedPlan.name}`);
-                onClose();
-              }}
+              onClick={handleUpgrade}
+              disabled={isLoading}
             >
-              Assinar plano {recommendedPlan.displayName}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                `Assinar plano ${recommendedPlan.displayName}`
+              )}
             </Button>
           </div>
         </div>
