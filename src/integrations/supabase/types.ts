@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_credits_config: {
+        Row: {
+          action_type: string
+          ai_model: string
+          ai_provider: string
+          cost_per_1k_tokens_usd: number | null
+          created_at: string
+          credits_per_action: number
+          estimated_tokens: number | null
+          id: string
+          profit_margin_percentage: number | null
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          ai_model: string
+          ai_provider: string
+          cost_per_1k_tokens_usd?: number | null
+          created_at?: string
+          credits_per_action: number
+          estimated_tokens?: number | null
+          id?: string
+          profit_margin_percentage?: number | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          ai_model?: string
+          ai_provider?: string
+          cost_per_1k_tokens_usd?: number | null
+          created_at?: string
+          credits_per_action?: number
+          estimated_tokens?: number | null
+          id?: string
+          profit_margin_percentage?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string
@@ -194,6 +233,36 @@ export type Database = {
           title?: string
           type?: string
           xp_reward?: number
+        }
+        Relationships: []
+      }
+      credits_usage_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          credits_consumed: number
+          credits_remaining_after: number
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          credits_consumed: number
+          credits_remaining_after: number
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          credits_consumed?: number
+          credits_remaining_after?: number
+          id?: string
+          metadata?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -835,6 +904,8 @@ export type Database = {
       plans: {
         Row: {
           created_at: string
+          credits_cost_brl: number | null
+          credits_per_month: number | null
           description: string | null
           features: string[] | null
           flashcard_model: string
@@ -854,6 +925,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credits_cost_brl?: number | null
+          credits_per_month?: number | null
           description?: string | null
           features?: string[] | null
           flashcard_model?: string
@@ -873,6 +946,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credits_cost_brl?: number | null
+          credits_per_month?: number | null
           description?: string | null
           features?: string[] | null
           flashcard_model?: string
@@ -1927,10 +2002,13 @@ export type Database = {
       uso_usuarios: {
         Row: {
           created_at: string
+          credits_remaining: number | null
+          credits_used_this_month: number | null
           data_ultimo_reset: string
           flashcards_gerados: number
           id: string
           is_admin: boolean
+          last_credits_reset: string | null
           plan_id: string
           plano: string
           quizzes_realizados: number
@@ -1940,10 +2018,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credits_remaining?: number | null
+          credits_used_this_month?: number | null
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
           is_admin?: boolean
+          last_credits_reset?: string | null
           plan_id: string
           plano?: string
           quizzes_realizados?: number
@@ -1953,10 +2034,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credits_remaining?: number | null
+          credits_used_this_month?: number | null
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
           is_admin?: boolean
+          last_credits_reset?: string | null
           plan_id?: string
           plano?: string
           quizzes_realizados?: number
@@ -2131,6 +2215,15 @@ export type Database = {
         Returns: {
           deleted_files: number
           freed_storage_mb: number
+        }[]
+      }
+      consume_credits: {
+        Args: { action_type: string; target_user_id: string }
+        Returns: {
+          credits_consumed: number
+          credits_remaining: number
+          message: string
+          success: boolean
         }[]
       }
       create_stripe_checkout: {
@@ -2317,6 +2410,10 @@ export type Database = {
           target_user_id: string
         }
         Returns: boolean
+      }
+      reset_monthly_credits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       reset_monthly_usage: {
         Args: Record<PropertyKey, never>
