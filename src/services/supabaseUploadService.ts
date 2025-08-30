@@ -60,21 +60,39 @@ export const uploadImageToStorage = async (file: File, userId: string, index: nu
 export const invokeOcrFunction = async (imageUrl: string, userId?: string): Promise<string> => {
   try {
     console.log(`🔍 Starting OCR for image...`);
+    console.log(`📍 Image URL: ${imageUrl.substring(0, 100)}...`);
+    console.log(`👤 User ID: ${userId || 'not provided'}`);
     
+    const startTime = Date.now();
     const { data: extractData, error: extractError } = await supabase.functions
       .invoke('extract-text-from-image', {
         body: { imageUrl, userId }
       });
+    
+    const duration = Date.now() - startTime;
+    console.log(`⏱️ OCR function call took ${duration}ms`);
 
     if (extractError) {
       console.error('❌ OCR function error:', extractError);
+      console.error('Error details:', {
+        name: extractError.name,
+        message: extractError.message,
+        stack: extractError.stack,
+        context: extractError.context
+      });
       
       // Provide more specific error messages
       if (extractError.message.includes('network') || extractError.message.includes('fetch')) {
         throw new Error('Erro de conexão durante a extração de texto. Verifique sua internet.');
       }
-      if (extractError.message.includes('timeout')) {
+      if (extractError.message.includes('timeout') || extractError.message.includes('AbortError')) {
         throw new Error('Tempo limite excedido. Tente com uma imagem menor.');
+      }
+      if (extractError.message.includes('não configurada') || extractError.message.includes('not configured')) {
+        throw new Error('Serviço de OCR não configurado. Contate o suporte.');
+      }
+      if (extractError.message.includes('créditos') || extractError.message.includes('credits')) {
+        throw new Error(extractError.message); // Pass through credit errors as-is
       }
       
       throw new Error(`Falha na extração de texto: ${extractError.message}`);
@@ -82,17 +100,28 @@ export const invokeOcrFunction = async (imageUrl: string, userId?: string): Prom
 
     if (!extractData?.success) {
       console.error('❌ OCR function returned error:', extractData?.error);
+      console.error('Full OCR response:', extractData);
       
       // Handle specific OCR errors
       const errorMsg = extractData?.error || 'Erro desconhecido na extração de texto';
-      if (errorMsg.includes('muito grande')) {
+      
+      if (errorMsg.includes('muito grande') || errorMsg.includes('too large')) {
         throw new Error('Imagem muito grande para processar. Use uma imagem menor (máximo 10MB).');
       }
-      if (errorMsg.includes('API')) {
-        throw new Error('Serviço de OCR temporariamente indisponível. Tente novamente.');
+      if (errorMsg.includes('API') || errorMsg.includes('503')) {
+        throw new Error('Serviço de OCR temporariamente indisponível. Tente novamente em alguns minutos.');
+      }
+      if (errorMsg.includes('inválida') || errorMsg.includes('invalid') || errorMsg.includes('400')) {
+        throw new Error('Formato de imagem inválido. Use JPG, PNG, WebP ou GIF.');
+      }
+      if (errorMsg.includes('não configurada') || errorMsg.includes('not configured')) {
+        throw new Error('Serviço de OCR não configurado. Contate o suporte.');
+      }
+      if (errorMsg.includes('timeout') || errorMsg.includes('408')) {
+        throw new Error('Tempo limite excedido. Tente com uma imagem menor.');
       }
       
-      throw new Error(errorMsg);
+      throw new Error(errorMsg.includes('Erro da API do Google Vision') ? errorMsg : `Erro na extração de texto: ${errorMsg}`);
     }
     
     const extractedTextLength = extractData.extractedText?.length || 0;

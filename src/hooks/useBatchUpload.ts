@@ -115,19 +115,76 @@ export const useBatchUpload = () => {
           const globalIndex = batchIndex * batchSize + i + 1;
           
           console.log(`=== 🖼️ PROCESSING IMAGE ${i + 1}/${batch.length} (Global: ${globalIndex}/${files.length}): ${file.name} ===`);
+          console.log(`📏 File details:`, {
+            name: file.name,
+            size: file.size,
+            sizeMB: (file.size / (1024 * 1024)).toFixed(2),
+            type: file.type,
+            lastModified: new Date(file.lastModified).toISOString()
+          });
           
           try {
-            // Upload
-            const publicUrl = await uploadImageToStorage(file, user.id, globalIndex - 1);
+            // Update batch progress
+            setBatchProgress(prev => prev ? {
+              ...prev,
+              currentBatchProgress: ((i + 1) / batch.length) * 100,
+              processedImages: totalProcessed + i + 1
+            } : null);
             
-            // OCR
-            const extractedText = await invokeOcrFunction(publicUrl, user.id);
+            // Upload phase with retry logic
+            console.log(`📤 Starting upload for image ${globalIndex}...`);
+            let publicUrl;
+            let uploadAttempts = 0;
+            const maxUploadAttempts = 2;
             
+            while (uploadAttempts < maxUploadAttempts) {
+              try {
+                publicUrl = await uploadImageToStorage(file, user.id, globalIndex - 1);
+                console.log(`✅ Upload successful for image ${globalIndex} (attempt ${uploadAttempts + 1})`);
+                break;
+              } catch (uploadError) {
+                uploadAttempts++;
+                console.error(`❌ Upload attempt ${uploadAttempts} failed for image ${globalIndex}:`, uploadError);
+                
+                if (uploadAttempts >= maxUploadAttempts) {
+                  throw uploadError;
+                }
+                
+                // Wait before retry
+                console.log(`⏳ Waiting 2 seconds before retry attempt ${uploadAttempts + 1}...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+            }
+
+            // OCR phase with retry logic
+            console.log(`🔍 Starting OCR for image ${globalIndex}...`);
+            let extractedText;
+            let ocrAttempts = 0;
+            const maxOcrAttempts = 2;
+            
+            while (ocrAttempts < maxOcrAttempts) {
+              try {
+                extractedText = await invokeOcrFunction(publicUrl!, user.id);
+                console.log(`✅ OCR successful for image ${globalIndex} (attempt ${ocrAttempts + 1}), text length: ${extractedText.length}`);
+                break;
+              } catch (ocrError) {
+                ocrAttempts++;
+                console.error(`❌ OCR attempt ${ocrAttempts} failed for image ${globalIndex}:`, ocrError);
+                
+                if (ocrAttempts >= maxOcrAttempts) {
+                  throw ocrError;
+                }
+                
+                // Wait before retry
+                console.log(`⏳ Waiting 3 seconds before OCR retry attempt ${ocrAttempts + 1}...`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+              }
+            }
             const result: SuccessfulUploadResult = {
               file,
               status: 'completed',
-              imageUrl: publicUrl,
-              extractedText
+              imageUrl: publicUrl!,
+              extractedText: extractedText!
             };
             
             batchResults.push(result);
@@ -135,11 +192,11 @@ export const useBatchUpload = () => {
             totalProcessed++;
             
             // Atualizar progresso do lote
-            const batchProgress = ((i + 1) / batch.length) * 100;
+            const batchProgressPercent = ((i + 1) / batch.length) * 100;
             setBatchProgress(prev => prev ? {
               ...prev,
               processedImages: totalProcessed,
-              currentBatchProgress: batchProgress
+              currentBatchProgress: batchProgressPercent
             } : null);
             
             setCurrentBatchResults([...batchResults]);

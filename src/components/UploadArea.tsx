@@ -3,6 +3,7 @@ import AuthGuard from './AuthGuard';
 import HowItWorks from './upload/HowItWorks';
 import UploadDropzone from './upload/UploadDropzone';
 import UploadResult from './upload/UploadResult';
+import { UploadDebugInfo } from './upload/UploadDebugInfo';
 import { useUploadManager } from './upload/UploadManager';
 
 const UploadArea = () => {
@@ -56,6 +57,7 @@ const UploadArea = () => {
           getBatchSize={getBatchSize}
         />
         <HowItWorks />
+        <UploadDebugInfo />
       </div>
     </AuthGuard>
   );

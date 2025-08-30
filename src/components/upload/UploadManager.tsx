@@ -105,8 +105,17 @@ export const useUploadManager = () => {
     }
     
     console.log('🚀 Iniciando processamento de imagens:');
-    selectedFiles.forEach((file, index) => {
-      console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
+    console.log('📋 Resumo da operação:', {
+      totalFiles: selectedFiles.length,
+      totalSizeBytes: selectedFiles.reduce((total, file) => total + file.size, 0),
+      totalSizeMB: (selectedFiles.reduce((total, file) => total + file.size, 0) / (1024 * 1024)).toFixed(2),
+      files: selectedFiles.map((file, index) => ({
+        index: index + 1,
+        name: file.name,
+        sizeBytes: file.size,
+        sizeMB: (file.size / (1024 * 1024)).toFixed(2),
+        type: file.type
+      }))
     });
 
     // Verificar se o usuário está autenticado ANTES de processar
@@ -116,17 +125,18 @@ export const useUploadManager = () => {
         console.error('❌ Usuário não autenticado:', authError);
         toast({
           title: "Erro de Autenticação",
-          description: "Faça login novamente para continuar.",
+          description: "Sua sessão expirou. Faça login novamente para continuar.",
           variant: "destructive",
         });
         return;
       }
       console.log('✅ Usuário autenticado:', user.id);
+      console.log('📧 Email do usuário:', user.email);
     } catch (error) {
       console.error('❌ Erro ao verificar autenticação:', error);
       toast({
         title: "Erro de Conexão",
-        description: "Verifique sua conexão com a internet.",
+        description: "Não foi possível verificar sua autenticação. Verifique sua conexão com a internet.",
         variant: "destructive",
       });
       return;
@@ -156,25 +166,48 @@ export const useUploadManager = () => {
       }
     } catch (error) {
       console.error('❌ Erro no processamento das imagens:', error);
+      console.error('📊 Estatísticas do erro:', {
+        selectedFilesCount: selectedFiles.length,
+        processingType: needsBatchProcessing ? 'batch' : 'normal',
+        batchSize,
+        errorType: error?.constructor?.name,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
       
-      // Mensagens de erro mais específicas
+      // Mensagens de erro mais específicas e úteis
       let errorMessage = "Erro ao processar imagens.";
+      let errorTitle = "Erro no Processamento";
+      
       if (error instanceof Error) {
-        if (error.message.includes('créditos')) {
+        if (error.message.includes('créditos') || error.message.includes('credits')) {
           errorMessage = error.message;
-        } else if (error.message.includes('autenticação') || error.message.includes('login')) {
-          errorMessage = "Sessão expirada. Faça login novamente.";
-        } else if (error.message.includes('conexão') || error.message.includes('network')) {
-          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-        } else if (error.message.includes('grande') || error.message.includes('size')) {
-          errorMessage = "Uma ou mais imagens são muito grandes. Use imagens menores.";
+          errorTitle = "Créditos Insuficientes";
+        } else if (error.message.includes('autenticação') || error.message.includes('login') || error.message.includes('não autenticado')) {
+          errorMessage = "Sua sessão expirou. Faça login novamente e tente outra vez.";
+          errorTitle = "Sessão Expirada";
+        } else if (error.message.includes('conexão') || error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente em alguns segundos.";
+          errorTitle = "Erro de Conexão";
+        } else if (error.message.includes('grande') || error.message.includes('size') || error.message.includes('10MB')) {
+          errorMessage = "Uma ou mais imagens são muito grandes. Use imagens menores que 10MB cada.";
+          errorTitle = "Imagens Muito Grandes";
+        } else if (error.message.includes('formato') || error.message.includes('inválid') || error.message.includes('invalid')) {
+          errorMessage = "Formato de imagem não suportado. Use JPG, PNG, WebP ou GIF.";
+          errorTitle = "Formato Inválido";
+        } else if (error.message.includes('timeout') || error.message.includes('tempo limite')) {
+          errorMessage = "Processo demorou muito. Tente com menos imagens ou imagens menores.";
+          errorTitle = "Tempo Limite Excedido";
+        } else if (error.message.includes('API') || error.message.includes('503') || error.message.includes('502')) {
+          errorMessage = "Serviço temporariamente indisponível. Tente novamente em alguns minutos.";
+          errorTitle = "Serviço Indisponível";
         } else {
-          errorMessage = error.message;
+          errorMessage = `${error.message}\n\nSe o problema persistir, tente com menos imagens ou contate o suporte.`;
+          errorTitle = "Erro no Processamento";
         }
       }
       
       toast({
-        title: "Erro no Processamento",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       });

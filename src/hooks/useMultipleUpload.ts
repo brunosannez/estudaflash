@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMultipleUploadState } from './useMultipleUploadState';
 import { useUsageLimit } from './useUsageLimit';
 import { validateFiles } from '@/utils/fileValidator';
+import { withRetry, getErrorMessage } from '@/utils/uploadRetryUtils';
 import { 
   verifyUserAndBucket, 
   uploadImageToStorage, 
@@ -72,27 +73,25 @@ export const useMultipleUpload = () => {
           updateResult(i, { status: 'uploading' });
           console.log(`📤 Uploading image ${i + 1}...`);
           
-          let publicUrl;
-          try {
-            publicUrl = await uploadImageToStorage(file, user.id, i);
-            console.log(`✅ Upload successful for image ${i + 1}`);
-          } catch (uploadError) {
-            console.error(`❌ Upload failed for image ${i + 1}:`, uploadError);
-            throw uploadError;
-          }
+          const publicUrl = await withRetry(
+            () => uploadImageToStorage(file, user.id, i),
+            2,
+            2000,
+            `Upload image ${i + 1}`
+          );
+          console.log(`✅ Upload successful for image ${i + 1}`);
 
           // OCR phase
           updateResult(i, { status: 'extracting', imageUrl: publicUrl });
           console.log(`🔍 Extracting text from image ${i + 1}...`);
           
-          let extractedText;
-          try {
-            extractedText = await invokeOcrFunction(publicUrl, user.id);
-            console.log(`✅ Text extraction successful for image ${i + 1}, length: ${extractedText.length}`);
-          } catch (ocrError) {
-            console.error(`❌ OCR failed for image ${i + 1}:`, ocrError);
-            throw ocrError;
-          }
+          const extractedText = await withRetry(
+            () => invokeOcrFunction(publicUrl, user.id),
+            2,
+            3000,
+            `OCR image ${i + 1}`
+          );
+          console.log(`✅ Text extraction successful for image ${i + 1}, length: ${extractedText.length}`);
 
           const result: SuccessfulUploadResult = {
             file,
@@ -108,7 +107,7 @@ export const useMultipleUpload = () => {
 
         } catch (error) {
           console.error(`❌ Error processing image ${i + 1}:`, error);
-          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+          const errorMessage = getErrorMessage(error as Error, `Imagem ${i + 1}`);
           
           const errorResult: ImageUploadResult = {
             file,
