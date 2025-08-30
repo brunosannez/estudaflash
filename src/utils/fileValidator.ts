@@ -1,16 +1,26 @@
 
 export const validateFiles = (files: File[]) => {
-    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    const invalidFiles = files.filter(file => 
+      !file.type.startsWith('image/') && 
+      !file.type.includes('zip') && 
+      file.type !== 'application/zip' &&
+      file.type !== 'application/x-zip-compressed'
+    );
+    
     if (invalidFiles.length > 0) {
       console.error('❌ Invalid files found:', invalidFiles.map(f => f.name));
-      throw new Error(`Arquivos inválidos: ${invalidFiles.map(f => f.name).join(', ')}. Apenas imagens são aceitas.`);
+      throw new Error(`Arquivos inválidos: ${invalidFiles.map(f => f.name).join(', ')}. Apenas imagens e arquivos ZIP são aceitos.`);
     }
 
     for (const file of files) {
         const fileSizeInMB = file.size / (1024 * 1024);
         
-        if (file.size > 10 * 1024 * 1024) { // 10MB
-            throw new Error(`Arquivo ${file.name} é muito grande (${fileSizeInMB.toFixed(2)}MB). Tamanho máximo: 10MB`);
+        // Larger size limit for ZIP files
+        const maxSize = file.type.includes('zip') ? 50 * 1024 * 1024 : 10 * 1024 * 1024; // 50MB for ZIP, 10MB for images
+        
+        if (file.size > maxSize) {
+            const maxSizeMB = maxSize / (1024 * 1024);
+            throw new Error(`Arquivo ${file.name} é muito grande (${fileSizeInMB.toFixed(2)}MB). Tamanho máximo: ${maxSizeMB}MB`);
         }
         
         // Additional validation for very small files
@@ -19,9 +29,14 @@ export const validateFiles = (files: File[]) => {
         }
         
         // Check file type more specifically
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-        if (!allowedTypes.includes(file.type.toLowerCase())) {
-            throw new Error(`Tipo de arquivo não suportado: ${file.type}. Tipos aceitos: JPG, PNG, WebP, GIF`);
+        const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedZipTypes = ['application/zip', 'application/x-zip-compressed'];
+        
+        const isValidImage = allowedImageTypes.includes(file.type.toLowerCase());
+        const isValidZip = allowedZipTypes.includes(file.type.toLowerCase()) || file.type.includes('zip');
+        
+        if (!isValidImage && !isValidZip) {
+            throw new Error(`Tipo de arquivo não suportado: ${file.type}. Tipos aceitos: JPG, PNG, WebP, GIF, ZIP`);
         }
     }
     

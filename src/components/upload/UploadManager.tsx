@@ -4,6 +4,7 @@ import { useMultipleUpload } from '@/hooks/useMultipleUpload';
 import { useBatchUpload } from '@/hooks/useBatchUpload';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { processFilesAndExtractImages, validateZipContainsImages } from '@/utils/zipExtractor';
 
 export const useUploadManager = () => {
   const [dragActive, setDragActive] = useState(false);
@@ -51,33 +52,75 @@ export const useUploadManager = () => {
     handleFiles(files);
   }
 
-  function handleFiles(files: File[]) {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+  async function handleFiles(files: File[]) {
+    console.log('📁 Processando arquivos recebidos:', files.map(f => f.name));
     
-    if (imageFiles.length === 0) {
+    try {
+      // Processar arquivos e extrair imagens de ZIPs
+      const extractedImages = await processFilesAndExtractImages(files);
+      
+      if (extractedImages.length === 0) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma imagem válida foi encontrada. Verifique se os arquivos ZIP contêm imagens ou selecione imagens diretas.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validar ZIPs se houver
+      const zipFiles = files.filter(f => f.type.includes('zip'));
+      for (const zipFile of zipFiles) {
+        const hasImages = await validateZipContainsImages(zipFile);
+        if (!hasImages) {
+          toast({
+            title: "Arquivo ZIP Inválido",
+            description: `O arquivo ${zipFile.name} não contém imagens válidas.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      const finalFiles = extractedImages.map(img => img.file);
+      
+      console.log('📁 Arquivos finais para processamento:');
+      finalFiles.forEach((file, index) => {
+        const source = extractedImages[index].isFromZip ? '(do ZIP)' : '(direto)';
+        console.log(`📄 Arquivo ${index + 1}: ${file.name} ${source} - ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+      });
+      
+      if (finalFiles.length > 1) {
+        const zipCount = zipFiles.length;
+        const directImageCount = files.filter(f => f.type.startsWith('image/')).length;
+        
+        let message = `${finalFiles.length} imagens serão processadas`;
+        if (zipCount > 0) {
+          message += ` (${zipCount} arquivo(s) ZIP extraído(s)`;
+          if (directImageCount > 0) {
+            message += ` + ${directImageCount} imagem(ns) direta(s)`;
+          }
+          message += ')';
+        }
+        message += ' para criar o resumo completo.';
+        
+        toast({
+          title: "Processamento Expandido",
+          description: message,
+        });
+      }
+      
+      setSelectedFiles(finalFiles);
+      resetUpload();
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar arquivos:', error);
       toast({
-        title: "Erro",
-        description: "Nenhuma imagem válida foi selecionada. Por favor, selecione arquivos de imagem (JPG, PNG, etc.).",
+        title: "Erro no Processamento",
+        description: error instanceof Error ? error.message : "Erro ao processar os arquivos selecionados.",
         variant: "destructive",
       });
-      return;
     }
-    
-    // Aceitar todas as imagens válidas sem limitação
-    console.log('📁 Arquivos selecionados:');
-    imageFiles.forEach((file, index) => {
-      console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
-    });
-    
-    if (imageFiles.length > 1) {
-      toast({
-        title: "Múltiplas imagens detectadas",
-        description: `${imageFiles.length} imagens serão processadas em ordem para criar o resumo completo.`,
-      });
-    }
-    
-    setSelectedFiles(imageFiles);
-    resetUpload();
   }
 
   function handleFileButtonClick() {
@@ -143,14 +186,14 @@ export const useUploadManager = () => {
     }
     
     const batchSize = getBatchSize();
-    const needsBatchProcessing = selectedFiles.length > batchSize || batchSize < selectedFiles.length;
+    const needsBatchProcessing = selectedFiles.length > batchSize;
     
     try {
       let result;
       
-      if (needsBatchProcessing && selectedFiles.length > 5) {
-        // Usar processamento em lotes para muitas imagens
-        console.log(`📦 Usando processamento em lotes para ${selectedFiles.length} imagens`);
+      if (needsBatchProcessing || selectedFiles.length > 8) {
+        // Usar processamento em lotes para muitas imagens (agora a partir de 8)
+        console.log(`📦 Usando processamento em lotes para ${selectedFiles.length} imagens (lotes de ${batchSize})`);
         result = await processBatchUpload(selectedFiles);
       } else {
         // Usar processamento normal para poucas imagens
@@ -237,29 +280,47 @@ export const useUploadManager = () => {
     }
   }
 
-  const handleAddMoreFiles = (newFiles: File[]) => {
-    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
-    
-    if (imageFiles.length === 0) {
+  const handleAddMoreFiles = async (newFiles: File[]) => {
+    try {
+      const extractedImages = await processFilesAndExtractImages(newFiles);
+      
+      if (extractedImages.length === 0) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma imagem válida foi encontrada nos arquivos adicionais.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const additionalFiles = extractedImages.map(img => img.file);
+
+      setSelectedFiles(prev => {
+        const combined = [...prev, ...additionalFiles];
+        console.log(`📁 Adicionadas ${additionalFiles.length} imagens. Total: ${combined.length}`);
+        
+        const zipCount = newFiles.filter(f => f.type.includes('zip')).length;
+        let message = `${additionalFiles.length} imagens foram adicionadas`;
+        if (zipCount > 0) {
+          message += ` (incluindo ${zipCount} arquivo(s) ZIP extraído(s))`;
+        }
+        message += `. Total: ${combined.length} imagens para processar.`;
+        
+        toast({
+          title: "Conteúdo Expandido",
+          description: message,
+        });
+        
+        return combined;
+      });
+    } catch (error) {
+      console.error('❌ Erro ao adicionar arquivos:', error);
       toast({
         title: "Erro",
-        description: "Nenhuma imagem válida foi detectada nos arquivos adicionais.",
+        description: "Erro ao processar os arquivos adicionais.",
         variant: "destructive",
       });
-      return;
     }
-
-    setSelectedFiles(prev => {
-      const combined = [...prev, ...imageFiles];
-      console.log(`📁 Adicionadas ${imageFiles.length} imagens. Total: ${combined.length}`);
-      
-      toast({
-        title: "Imagens adicionadas",
-        description: `${imageFiles.length} imagens foram adicionadas. Total: ${combined.length} imagens para processar.`,
-      });
-      
-      return combined;
-    });
   };
 
   return {

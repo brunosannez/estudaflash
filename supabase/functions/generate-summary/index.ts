@@ -155,10 +155,13 @@ serve(async (req) => {
       );
     }
 
-    const { uploadId, textoExtraido, userId, schoolYear } = requestBody;
+    const { uploadId, textoExtraido, userId, schoolYear, isCombiningBatches = false, totalBatches = 1, totalImages = 1, extractedText } = requestBody;
+    
+    // Support both old format (textoExtraido) and new format (extractedText)
+    const textContent = extractedText || textoExtraido;
     
     // Validações
-    if (!uploadId || !textoExtraido || !userId) {
+    if (!userId || !textContent) {
       console.error('❌ Parâmetros obrigatórios ausentes');
       return new Response(
         JSON.stringify({ 
@@ -173,13 +176,14 @@ serve(async (req) => {
       );
     }
 
-    if (textoExtraido.length > 50000) {
-      console.error('❌ Texto muito grande:', textoExtraido.length);
+    // For batch combinations, don't require uploadId
+    if (!uploadId && !isCombiningBatches) {
+      console.error('❌ Upload ID obrigatório para resumos normais');
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Texto muito grande para processar',
-          fallbackMessage: 'Imagem com muito texto. Use uma imagem menor ou divida o conteúdo.'
+          error: 'Upload ID ausente',
+          fallbackMessage: 'Dados de upload incompletos.'
         }),
         {
           status: 400,
@@ -188,13 +192,30 @@ serve(async (req) => {
       );
     }
 
-    if (textoExtraido.length < 10) {
-      console.error('❌ Texto muito pequeno:', textoExtraido.length);
+    if (textContent.length > 100000) { // Increased limit for batch combinations
+      console.error('❌ Texto muito grande:', textContent.length);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Texto muito grande para processar',
+          fallbackMessage: isCombiningBatches 
+            ? 'Conteúdo combinado muito extenso. Tente processar em lotes menores.'
+            : 'Imagem com muito texto. Use uma imagem menor ou divida o conteúdo.'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (textContent.length < 10) {
+      console.error('❌ Texto muito pequeno:', textContent.length);
       return new Response(
         JSON.stringify({ 
           success: false,
           error: 'Texto muito pequeno para resumir',
-          fallbackMessage: 'Muito pouco texto na imagem. Use uma imagem com mais conteúdo textual.'
+          fallbackMessage: 'Muito pouco texto para gerar resumo.'
         }),
         {
           status: 400,
@@ -206,32 +227,35 @@ serve(async (req) => {
     // Inicializar Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // NOVO: Consumir créditos antes de gerar resumo
-    const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
-      target_user_id: userId,
-      action_type: 'summary'
-    });
+    // NOVO: Consumir créditos apenas para resumos normais (não para combinações)
+    if (!isCombiningBatches) {
+      const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+        target_user_id: userId,
+        action_type: 'summary'
+      });
 
-    if (creditError || !creditResult || !creditResult[0]?.success) {
-      console.error('❌ Erro ao consumir créditos:', creditError);
-      const message = creditResult?.[0]?.message || 'Créditos insuficientes';
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: message,
-          fallbackMessage: message.includes('insuficientes') 
-            ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
-            : 'Erro ao processar créditos. Tente novamente.'
-        }),
-        {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      if (creditError || !creditResult || !creditResult[0]?.success) {
+        console.error('❌ Erro ao consumir créditos:', creditError);
+        const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: message,
+            fallbackMessage: message.includes('insuficientes') 
+              ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+              : 'Erro ao processar créditos. Tente novamente.'
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      console.log(`💳 Créditos consumidos: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+    } else {
+      console.log('🔄 Combinação de lotes - não consome créditos adicionais');
     }
-
-    console.log(`💳 Créditos consumidos: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
-    
     // Buscar plano do usuário para configuração do modelo
     const userPlan = await getUserPlan(supabase, userId);
     const modelConfig = getModelConfigForPlan(userPlan);
@@ -239,10 +263,13 @@ serve(async (req) => {
     console.log('👤 Usuário:', userId);
     console.log('📊 Plano:', userPlan);
     console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
-    console.log('📝 Tamanho do texto:', textoExtraido.length, 'caracteres');
+    console.log('📝 Tamanho do texto:', textContent.length, 'caracteres');
+    console.log('🔄 Modo combinação:', isCombiningBatches ? `Sim (${totalBatches} lotes, ${totalImages} imagens)` : 'Não');
 
-    // Criar prompt otimizado para Ari de Sá
-    const optimizedPrompt = createOptimizedPrompt(textoExtraido, schoolYear || 'Ensino Médio');
+    // Criar prompt: usar texto direto para combinações ou criar prompt otimizado para resumos normais
+    const optimizedPrompt = isCombiningBatches ? 
+      textContent : // Para combinações, o texto já contém as instruções
+      createOptimizedPrompt(textContent, schoolYear || 'Ensino Médio');
     
     console.log('🤖 Iniciando chamada para API da Anthropic...');
     const startTime = Date.now();
@@ -258,7 +285,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: modelConfig.model,
-          max_tokens: 4000, // Aumentado para resumos mais completos
+          max_tokens: isCombiningBatches ? 6000 : 4000, // Mais tokens para combinações
           messages: [
             {
               role: 'user',
@@ -354,6 +381,29 @@ serve(async (req) => {
     const resumoGerado = data.content[0].text;
     console.log('✅ Resumo gerado:', resumoGerado.length, 'caracteres');
 
+    // Para combinações de lotes, retornar apenas o resumo sem salvar
+    if (isCombiningBatches) {
+      console.log('🔄 Combinação concluída - retornando resumo sem salvar');
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          summary: resumoGerado,
+          mode: 'batch_combination',
+          stats: {
+            caracteres_entrada: textContent.length,
+            caracteres_resumo: resumoGerado.length,
+            tempo_processamento: `${endTime - startTime}ms`,
+            modelo_usado: modelConfig.model,
+            total_lotes: totalBatches,
+            total_imagens: totalImages
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Salvar no banco
     try {
       const { data: insertData, error: resumoError } = await supabase
@@ -387,7 +437,7 @@ serve(async (req) => {
           success: true,
           resumo: insertData,
           stats: {
-            caracteres_entrada: textoExtraido.length,
+            caracteres_entrada: textContent.length,
             caracteres_resumo: resumoGerado.length,
             tempo_processamento: `${endTime - startTime}ms`,
             modelo_usado: modelConfig.model,

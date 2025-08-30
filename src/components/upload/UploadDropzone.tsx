@@ -48,15 +48,15 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   getBatchSize,
 }) => {
   const showDropzone = selectedFiles.length === 0 && uploadResults.length === 0;
-  const batchSize = getBatchSize?.() || 5;
-  const willUseBatchProcessing = selectedFiles.length > 5;
+  const batchSize = getBatchSize?.() || 8;
+  const willUseBatchProcessing = selectedFiles.length > 8;
 
   return (
     <div className="w-full space-y-6">
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.zip,.rar"
         multiple
         onChange={onFileInput}
         className="hidden"
@@ -88,10 +88,10 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
                 Arraste suas imagens aqui
               </h3>
               <p className="text-muted-foreground mb-4">
-                Ou clique para selecionar arquivos (JPG, PNG, WebP, GIF)
+                Ou clique para selecionar arquivos (JPG, PNG, WebP, GIF, ZIP)
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                📚 Sem limite de páginas! Carregue quantas imagens precisar para criar seu resumo completo.
+                📚 Sem limite de páginas! Carregue imagens diretamente ou arquivos ZIP com múltiplas imagens para criar seu resumo completo.
               </p>
             </div>
             
@@ -125,7 +125,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
                     mantendo a ordem das páginas para criar um resumo organizado.
                   </p>
                   <div className="text-xs text-blue-700">
-                    💡 <strong>Dica:</strong> Faça upgrade para PRO ou EDU para processar mais imagens simultâneas!
+                    💡 <strong>Novidade:</strong> Agora você pode carregar arquivos ZIP com múltiplas imagens! Faça upgrade para processar lotes ainda maiores simultaneamente.
                   </div>
                 </div>
               </div>

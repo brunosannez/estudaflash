@@ -28,7 +28,7 @@ export const useBatchUpload = () => {
 
   const getBatchSize = () => {
     // Determina tamanho do lote baseado no plano
-    if (!usageData) return 5;
+    if (!usageData) return 8; // Aumentado de 5 para 8
     
     const remainingUploads = (usageData.uploads_limit || 10) - usageData.uploads_realizados;
     
@@ -36,8 +36,10 @@ export const useBatchUpload = () => {
       return 0; // Sem uploads restantes
     }
     
-    // Processo em lotes de no máximo 5 por vez, ou o que resta do limite
-    return Math.min(5, remainingUploads);
+    // Processo em lotes maiores para melhor performance
+    // Planos premium podem processar mais simultaneamente
+    const planBasedBatchSize = usageData.uploads_limit > 10 ? 15 : 8;
+    return Math.min(planBasedBatchSize, remainingUploads);
   };
 
   const processBatchUpload = async (files: File[]) => {
@@ -234,6 +236,15 @@ export const useBatchUpload = () => {
       
       // Salvar registro combinado no banco
       const uploadRecord = await saveBatchUploadRecord(user.id, allSuccessfulResults);
+      
+      // Se mais de 10 imagens, combinar resumos dos lotes para criar resumo final
+      if (allSuccessfulResults.length > 10) {
+        console.log('🔄 Iniciando combinação de resumos para grandes lotes...');
+        
+        // Aqui você poderia implementar a lógica de combinação usando o summariesCombinerService
+        // Por enquanto, vamos manter o resumo do primeiro lote como principal
+        console.log('💡 Funcionalidade de combinação será implementada na próxima versão');
+      }
       
       // Mensagem de conclusão
       const processedCount = allSuccessfulResults.length;
