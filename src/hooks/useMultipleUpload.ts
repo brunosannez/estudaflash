@@ -87,7 +87,7 @@ export const useMultipleUpload = () => {
           
           let extractedText;
           try {
-            extractedText = await invokeOcrFunction(publicUrl);
+            extractedText = await invokeOcrFunction(publicUrl, user.id);
             console.log(`✅ Text extraction successful for image ${i + 1}, length: ${extractedText.length}`);
           } catch (ocrError) {
             console.error(`❌ OCR failed for image ${i + 1}:`, ocrError);

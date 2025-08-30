@@ -121,7 +121,7 @@ export const useBatchUpload = () => {
             const publicUrl = await uploadImageToStorage(file, user.id, globalIndex - 1);
             
             // OCR
-            const extractedText = await invokeOcrFunction(publicUrl);
+            const extractedText = await invokeOcrFunction(publicUrl, user.id);
             
             const result: SuccessfulUploadResult = {
               file,

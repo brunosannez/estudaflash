@@ -57,13 +57,13 @@ export const uploadImageToStorage = async (file: File, userId: string, index: nu
   }
 };
 
-export const invokeOcrFunction = async (imageUrl: string): Promise<string> => {
+export const invokeOcrFunction = async (imageUrl: string, userId?: string): Promise<string> => {
   try {
     console.log(`🔍 Starting OCR for image...`);
     
     const { data: extractData, error: extractError } = await supabase.functions
       .invoke('extract-text-from-image', {
-        body: { imageUrl }
+        body: { imageUrl, userId }
       });
 
     if (extractError) {

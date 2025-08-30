@@ -76,7 +76,7 @@ export const useUpload = () => {
       // Chamar função edge para extrair texto
       const { data: extractData, error: extractError } = await supabase.functions
         .invoke('extract-text-from-image', {
-          body: { imageUrl: publicUrl }
+          body: { imageUrl: publicUrl, userId: user.id }
         });
 
       if (extractError) {

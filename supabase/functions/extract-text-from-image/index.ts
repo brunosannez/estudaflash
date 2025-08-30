@@ -61,16 +61,27 @@ serve(async (req) => {
           action_type: 'ocr'
         });
 
-        if (creditError || !creditResult || !creditResult[0]?.success) {
-          console.error('❌ Erro ao consumir créditos para OCR:', creditError);
-          const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+        if (creditError) {
+          console.error('❌ Erro RPC consume_credits:', creditError);
+          throw new Error('Erro interno ao consumir créditos. Tente novamente.');
+        }
+
+        if (!creditResult || creditResult.length === 0) {
+          console.error('❌ Resposta vazia da função consume_credits');
+          throw new Error('Erro interno ao verificar créditos. Tente novamente.');
+        }
+
+        const result = creditResult[0];
+        if (!result?.success) {
+          const message = result?.message || 'Créditos insuficientes';
+          console.error('❌ Falha ao consumir créditos:', message);
           throw new Error(message.includes('insuficientes') 
             ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
             : 'Erro ao processar créditos. Tente novamente.'
           );
         }
 
-        console.log(`💳 Créditos consumidos para OCR: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+        console.log(`💳 Créditos consumidos para OCR: ${result.credits_consumed}. Restam: ${result.credits_remaining}`);
       }
     }
 
