@@ -4,7 +4,6 @@ import { useMultipleUpload } from '@/hooks/useMultipleUpload';
 import { useBatchUpload } from '@/hooks/useBatchUpload';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { processFilesAndExtractImages, validateZipContainsImages } from '@/utils/zipExtractor';
 
 export const useUploadManager = () => {
   const [dragActive, setDragActive] = useState(false);
@@ -56,61 +55,31 @@ export const useUploadManager = () => {
     console.log('📁 Processando arquivos recebidos:', files.map(f => f.name));
     
     try {
-      // Processar arquivos e extrair imagens de ZIPs
-      const extractedImages = await processFilesAndExtractImages(files);
+      // SIMPLIFICAÇÃO: Processar apenas imagens diretas por enquanto
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
       
-      if (extractedImages.length === 0) {
+      if (imageFiles.length === 0) {
         toast({
           title: "Erro",
-          description: "Nenhuma imagem válida foi encontrada. Verifique se os arquivos ZIP contêm imagens ou selecione imagens diretas.",
+          description: "Nenhuma imagem válida foi encontrada. Selecione arquivos de imagem (JPG, PNG, WebP, GIF).",
           variant: "destructive",
         });
         return;
       }
       
-      // Validar ZIPs se houver
-      const zipFiles = files.filter(f => f.type.includes('zip'));
-      for (const zipFile of zipFiles) {
-        const hasImages = await validateZipContainsImages(zipFile);
-        if (!hasImages) {
-          toast({
-            title: "Arquivo ZIP Inválido",
-            description: `O arquivo ${zipFile.name} não contém imagens válidas.`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
-      const finalFiles = extractedImages.map(img => img.file);
-      
-      console.log('📁 Arquivos finais para processamento:');
-      finalFiles.forEach((file, index) => {
-        const source = extractedImages[index].isFromZip ? '(do ZIP)' : '(direto)';
-        console.log(`📄 Arquivo ${index + 1}: ${file.name} ${source} - ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+      console.log('📁 Imagens válidas encontradas:', imageFiles.length);
+      imageFiles.forEach((file, index) => {
+        console.log(`📄 Imagem ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
       });
       
-      if (finalFiles.length > 1) {
-        const zipCount = zipFiles.length;
-        const directImageCount = files.filter(f => f.type.startsWith('image/')).length;
-        
-        let message = `${finalFiles.length} imagens serão processadas`;
-        if (zipCount > 0) {
-          message += ` (${zipCount} arquivo(s) ZIP extraído(s)`;
-          if (directImageCount > 0) {
-            message += ` + ${directImageCount} imagem(ns) direta(s)`;
-          }
-          message += ')';
-        }
-        message += ' para criar o resumo completo.';
-        
+      if (imageFiles.length > 1) {
         toast({
-          title: "Processamento Expandido",
-          description: message,
+          title: "Múltiplas Imagens",
+          description: `${imageFiles.length} imagens serão processadas para criar um resumo completo.`,
         });
       }
       
-      setSelectedFiles(finalFiles);
+      setSelectedFiles(imageFiles);
       resetUpload();
       
     } catch (error) {
@@ -185,21 +154,12 @@ export const useUploadManager = () => {
       return;
     }
     
-    const batchSize = getBatchSize();
-    const needsBatchProcessing = selectedFiles.length > batchSize;
-    
     try {
       let result;
       
-      if (needsBatchProcessing || selectedFiles.length > 8) {
-        // Usar processamento em lotes para muitas imagens (agora a partir de 8)
-        console.log(`📦 Usando processamento em lotes para ${selectedFiles.length} imagens (lotes de ${batchSize})`);
-        result = await processBatchUpload(selectedFiles);
-      } else {
-        // Usar processamento normal para poucas imagens
-        console.log(`📤 Usando processamento normal para ${selectedFiles.length} imagens`);
-        result = await uploadMultipleImages(selectedFiles);
-      }
+      // SIMPLIFICAÇÃO: Usar sempre processamento normal por enquanto
+      console.log(`📤 Processando ${selectedFiles.length} imagens...`);
+      result = await uploadMultipleImages(selectedFiles);
       
       setUploadResult(result);
       setSelectedFiles([]);
@@ -211,8 +171,7 @@ export const useUploadManager = () => {
       console.error('❌ Erro no processamento das imagens:', error);
       console.error('📊 Estatísticas do erro:', {
         selectedFilesCount: selectedFiles.length,
-        processingType: needsBatchProcessing ? 'batch' : 'normal',
-        batchSize,
+        processingType: 'normal',
         errorType: error?.constructor?.name,
         errorMessage: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -271,20 +230,78 @@ export const useUploadManager = () => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   }
 
-  function handleChooseOther() {
+  const handleChooseOther = () => {
     setSelectedFiles([]);
     resetUpload();
     resetBatch();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }
+  };
+
+  // Função de teste para OCR
+  const testOcrFunction = async () => {
+    try {
+      console.log('🧪 Testando conectividade com OCR function...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Faça login para testar o OCR.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // URL de teste (imagem pequena)
+      const testImageUrl = 'https://via.placeholder.com/300x200/000000/FFFFFF?text=Test+OCR';
+      
+      console.log('📞 Calling OCR function with test image...');
+      const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
+        body: { 
+          imageUrl: testImageUrl, 
+          userId: user.id 
+        }
+      });
+
+      if (error) {
+        console.error('❌ OCR test failed:', error);
+        toast({
+          title: "Teste OCR - Falhou",
+          description: `Erro: ${error.message}`,
+          variant: "destructive",
+        });
+      } else if (data?.success) {
+        console.log('✅ OCR test successful:', data);
+        toast({
+          title: "Teste OCR - Sucesso!",
+          description: "A função OCR está funcionando corretamente.",
+        });
+      } else {
+        console.error('❌ OCR test returned error:', data);
+        toast({
+          title: "Teste OCR - Falhou",
+          description: data?.error || "Erro desconhecido",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ OCR test exception:', error);
+      toast({
+        title: "Teste OCR - Erro",
+        description: "Erro ao testar função OCR.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddMoreFiles = async (newFiles: File[]) => {
     try {
-      const extractedImages = await processFilesAndExtractImages(newFiles);
+      // SIMPLIFICAÇÃO: Processar apenas imagens diretas
+      const imageFiles = newFiles.filter(f => f.type.startsWith('image/'));
       
-      if (extractedImages.length === 0) {
+      if (imageFiles.length === 0) {
         toast({
           title: "Erro",
           description: "Nenhuma imagem válida foi encontrada nos arquivos adicionais.",
@@ -293,22 +310,13 @@ export const useUploadManager = () => {
         return;
       }
 
-      const additionalFiles = extractedImages.map(img => img.file);
-
       setSelectedFiles(prev => {
-        const combined = [...prev, ...additionalFiles];
-        console.log(`📁 Adicionadas ${additionalFiles.length} imagens. Total: ${combined.length}`);
-        
-        const zipCount = newFiles.filter(f => f.type.includes('zip')).length;
-        let message = `${additionalFiles.length} imagens foram adicionadas`;
-        if (zipCount > 0) {
-          message += ` (incluindo ${zipCount} arquivo(s) ZIP extraído(s))`;
-        }
-        message += `. Total: ${combined.length} imagens para processar.`;
+        const combined = [...prev, ...imageFiles];
+        console.log(`📁 Adicionadas ${imageFiles.length} imagens. Total: ${combined.length}`);
         
         toast({
-          title: "Conteúdo Expandido",
-          description: message,
+          title: "Imagens Adicionadas",
+          description: `${imageFiles.length} imagens foram adicionadas. Total: ${combined.length} imagens para processar.`,
         });
         
         return combined;
@@ -342,6 +350,7 @@ export const useUploadManager = () => {
     handleChooseOther,
     handleAddMoreFiles,
     setDragActive,
-    getBatchSize
+    getBatchSize,
+    testOcrFunction
   };
 };

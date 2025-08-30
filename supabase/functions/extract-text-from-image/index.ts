@@ -26,26 +26,22 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== 🔍 OCR FUNCTION STARTED ===');
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('🔍 OCR Function Started - ', new Date().toISOString());
     
     let body;
     try {
       body = await req.json();
+      console.log('📥 Request received:', { 
+        hasImageUrl: !!body.imageUrl, 
+        hasUserId: !!body.userId,
+        imageUrlLength: body.imageUrl?.length || 0
+      });
     } catch (parseError) {
       console.error('❌ Failed to parse request body:', parseError);
       throw new Error('Invalid JSON in request body');
     }
     
     const { imageUrl, userId } = body;
-    
-    console.log('Request body received:', { 
-      imageUrl: imageUrl ? `${imageUrl.substring(0, 100)}...` : 'null', 
-      userId: userId || 'not provided',
-      imageUrlLength: imageUrl?.length || 0
-    });
     
     if (!imageUrl) {
       console.error('❌ No image URL provided');
@@ -57,12 +53,13 @@ serve(async (req) => {
     
     if (!googleVisionApiKey) {
       console.error('❌ Google Vision API key not configured');
-      console.error('Available env vars:', Object.keys(Deno.env.toObject()));
+      console.error('Available env vars:', Object.keys(Deno.env.toObject()).filter(key => 
+        key.includes('GOOGLE') || key.includes('VISION') || key.includes('API')
+      ));
       throw new Error('Chave da API do Google Vision não configurada. Configure GOOGLE_VISION_API_KEY nos secrets do Supabase.');
     }
     
     console.log('✅ Google Vision API key found, length:', googleVisionApiKey.length);
-    console.log('✅ API key starts with:', googleVisionApiKey.substring(0, 10) + '...');
 
     // NOVO: Consumir créditos para OCR se userId fornecido
     if (userId) {

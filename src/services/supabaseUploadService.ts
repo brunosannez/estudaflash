@@ -59,27 +59,24 @@ export const uploadImageToStorage = async (file: File, userId: string, index: nu
 
 export const invokeOcrFunction = async (imageUrl: string, userId?: string): Promise<string> => {
   try {
-    console.log(`🔍 Starting OCR for image...`);
-    console.log(`📍 Image URL: ${imageUrl.substring(0, 100)}...`);
+    console.log(`🔍 Starting OCR for image: ${imageUrl.substring(0, 50)}...`);
     console.log(`👤 User ID: ${userId || 'not provided'}`);
     
     const startTime = Date.now();
+    
+    // Test connectivity first
+    console.log('🌐 Testing function connectivity...');
     const { data: extractData, error: extractError } = await supabase.functions
       .invoke('extract-text-from-image', {
         body: { imageUrl, userId }
       });
     
     const duration = Date.now() - startTime;
-    console.log(`⏱️ OCR function call took ${duration}ms`);
+    console.log(`⏱️ OCR function completed in ${duration}ms`);
 
     if (extractError) {
       console.error('❌ OCR function error:', extractError);
-      console.error('Error details:', {
-        name: extractError.name,
-        message: extractError.message,
-        stack: extractError.stack,
-        context: extractError.context
-      });
+      console.error('Full error:', JSON.stringify(extractError, null, 2));
       
       // Provide more specific error messages
       if (extractError.message.includes('network') || extractError.message.includes('fetch')) {
@@ -92,7 +89,7 @@ export const invokeOcrFunction = async (imageUrl: string, userId?: string): Prom
         throw new Error('Serviço de OCR não configurado. Contate o suporte.');
       }
       if (extractError.message.includes('créditos') || extractError.message.includes('credits')) {
-        throw new Error(extractError.message); // Pass through credit errors as-is
+        throw new Error(extractError.message);
       }
       
       throw new Error(`Falha na extração de texto: ${extractError.message}`);

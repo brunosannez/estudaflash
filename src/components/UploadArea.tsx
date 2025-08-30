@@ -4,6 +4,7 @@ import HowItWorks from './upload/HowItWorks';
 import UploadDropzone from './upload/UploadDropzone';
 import UploadResult from './upload/UploadResult';
 import { UploadDebugInfo } from './upload/UploadDebugInfo';
+import { UploadTestButton } from './upload/UploadTestButton';
 import { useUploadManager } from './upload/UploadManager';
 
 const UploadArea = () => {
@@ -25,6 +26,7 @@ const UploadArea = () => {
     handleChooseOther,
     handleAddMoreFiles,
     getBatchSize,
+    testOcrFunction,
   } = useUploadManager();
 
   if (uploadResult) {
@@ -39,6 +41,13 @@ const UploadArea = () => {
   return (
     <AuthGuard>
       <div className="space-y-6">
+        {/* Botão de teste em desenvolvimento */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="flex justify-end">
+            <UploadTestButton onTest={testOcrFunction} isProcessing={isProcessing} />
+          </div>
+        )}
+        
         <UploadDropzone
           dragActive={dragActive}
           selectedFiles={selectedFiles}

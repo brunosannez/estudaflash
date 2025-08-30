@@ -3,7 +3,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useMultipleUploadState } from './useMultipleUploadState';
 import { useUsageLimit } from './useUsageLimit';
 import { validateFiles } from '@/utils/fileValidator';
-import { withRetry, getErrorMessage } from '@/utils/uploadRetryUtils';
 import { 
   verifyUserAndBucket, 
   uploadImageToStorage, 
@@ -29,17 +28,17 @@ export const useMultipleUpload = () => {
   const uploadMultipleImages = async (files: File[]) => {
     try {
       setIsProcessing(true);
-      console.log('=== 🚀 STARTING MULTIPLE UPLOAD PROCESS ===');
+      console.log('=== 🚀 STARTING UPLOAD PROCESS ===');
       console.log(`📁 Files to process: ${files.length}`);
       
-      // Verificar limite de uso ANTES de qualquer processamento
+      // Verificação de limite simplificada
       const canProceed = await checkCanProceed('uploads');
       if (!canProceed) {
         console.log('❌ Upload bloqueado por limite de uso');
         return;
       }
       
-      // Validate files first
+      // Validar arquivos
       try {
         validateFiles(files);
         console.log('✅ File validation passed');
@@ -48,7 +47,7 @@ export const useMultipleUpload = () => {
         throw validationError;
       }
 
-      // Verify user authentication and bucket access
+      // Verificar autenticação
       let user;
       try {
         user = await verifyUserAndBucket();
@@ -73,25 +72,15 @@ export const useMultipleUpload = () => {
           updateResult(i, { status: 'uploading' });
           console.log(`📤 Uploading image ${i + 1}...`);
           
-          const publicUrl = await withRetry(
-            () => uploadImageToStorage(file, user.id, i),
-            2,
-            2000,
-            `Upload image ${i + 1}`
-          );
+          const publicUrl = await uploadImageToStorage(file, user.id, i);
           console.log(`✅ Upload successful for image ${i + 1}`);
 
           // OCR phase
           updateResult(i, { status: 'extracting', imageUrl: publicUrl });
           console.log(`🔍 Extracting text from image ${i + 1}...`);
           
-          const extractedText = await withRetry(
-            () => invokeOcrFunction(publicUrl, user.id),
-            2,
-            3000,
-            `OCR image ${i + 1}`
-          );
-          console.log(`✅ Text extraction successful for image ${i + 1}, length: ${extractedText.length}`);
+          const extractedText = await invokeOcrFunction(publicUrl, user.id);
+          console.log(`✅ Text extraction successful for image ${i + 1}, text length: ${extractedText.length}`);
 
           const result: SuccessfulUploadResult = {
             file,
@@ -107,7 +96,7 @@ export const useMultipleUpload = () => {
 
         } catch (error) {
           console.error(`❌ Error processing image ${i + 1}:`, error);
-          const errorMessage = getErrorMessage(error as Error, `Imagem ${i + 1}`);
+          const errorMessage = error instanceof Error ? error.message : `Erro na imagem ${i + 1}`;
           
           const errorResult: ImageUploadResult = {
             file,
@@ -164,34 +153,18 @@ export const useMultipleUpload = () => {
         });
       }
 
-      console.log('=== ✅ MULTIPLE UPLOAD PROCESS COMPLETED ===');
+      console.log('✅ Upload completed successfully');
       return uploadRecord;
 
     } catch (error) {
-      console.error('=== ❌ MULTIPLE UPLOAD PROCESS FAILED ===');
+      console.error('=== ❌ UPLOAD PROCESS FAILED ===');
       console.error('Error details:', error);
       
       const errorMessage = error instanceof Error ? error.message : "Erro ao processar imagens.";
       
-      // Provide more helpful error messages based on error type
-      let userFriendlyMessage = errorMessage;
-      if (errorMessage.includes('não autenticado')) {
-        userFriendlyMessage = "Faça login e tente novamente.";
-      } else if (errorMessage.includes('bucket') || errorMessage.includes('storage')) {
-        userFriendlyMessage = "Problema na configuração de armazenamento. Contate o suporte.";
-      } else if (errorMessage.includes('permissão') || errorMessage.includes('permission')) {
-        userFriendlyMessage = "Sem permissão para fazer upload. Faça login e tente novamente.";
-      } else if (errorMessage.includes('conexão') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        userFriendlyMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-      } else if (errorMessage.includes('muito grande') || errorMessage.includes('large')) {
-        userFriendlyMessage = "Uma ou mais imagens são muito grandes. Use imagens menores (máximo 10MB).";
-      } else if (errorMessage.includes('inválido') || errorMessage.includes('invalid')) {
-        userFriendlyMessage = "Formato de arquivo inválido. Use apenas imagens JPG, PNG, WebP ou GIF.";
-      }
-      
       toast({
         title: "Erro",
-        description: userFriendlyMessage,
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
