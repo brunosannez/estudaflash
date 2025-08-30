@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -1984,28 +1984,28 @@ export type Database = {
         Returns: boolean
       }
       admin_change_user_plan: {
-        Args: { target_user_id: string; new_plan: string }
+        Args: { new_plan: string; target_user_id: string }
         Returns: boolean
       }
       admin_change_user_plan_new: {
-        Args: { target_user_id: string; new_plan_id: string }
+        Args: { new_plan_id: string; target_user_id: string }
         Returns: boolean
       }
       admin_create_plan: {
         Args: {
-          plan_name: string
           plan_description?: string
+          plan_features?: string[]
+          plan_flashcard_model?: string
+          plan_flashcards_limit?: number
+          plan_is_active?: boolean
+          plan_name: string
           plan_price_brl?: number
           plan_price_brl_yearly?: number
-          plan_uploads_limit?: number
-          plan_summaries_limit?: number
-          plan_flashcards_limit?: number
-          plan_quizzes_limit?: number
           plan_quiz_model?: string
+          plan_quizzes_limit?: number
+          plan_summaries_limit?: number
           plan_summary_model?: string
-          plan_flashcard_model?: string
-          plan_features?: string[]
-          plan_is_active?: boolean
+          plan_uploads_limit?: number
         }
         Returns: string
       }
@@ -2022,86 +2022,86 @@ export type Database = {
         Returns: boolean
       }
       admin_toggle_user_status: {
-        Args: { target_user_id: string; is_active: boolean }
+        Args: { is_active: boolean; target_user_id: string }
         Returns: boolean
       }
       admin_update_plan: {
         Args:
           | {
-              target_plan_id: string
+              new_description?: string
+              new_features?: string[]
+              new_flashcard_model?: string
+              new_flashcards_limit?: number
+              new_is_active?: boolean
+              new_is_editable?: boolean
               new_price_brl?: number
               new_price_brl_yearly?: number
-              new_uploads_limit?: number
-              new_summaries_limit?: number
-              new_flashcards_limit?: number
-              new_quizzes_limit?: number
               new_quiz_model?: string
+              new_quizzes_limit?: number
+              new_summaries_limit?: number
               new_summary_model?: string
-              new_flashcard_model?: string
-              new_is_editable?: boolean
+              new_uploads_limit?: number
+              target_plan_id: string
             }
           | {
-              target_plan_id: string
+              new_flashcard_model?: string
+              new_flashcards_limit?: number
+              new_is_editable?: boolean
               new_price_brl?: number
               new_price_brl_yearly?: number
-              new_uploads_limit?: number
-              new_summaries_limit?: number
-              new_flashcards_limit?: number
-              new_quizzes_limit?: number
               new_quiz_model?: string
+              new_quizzes_limit?: number
+              new_summaries_limit?: number
               new_summary_model?: string
-              new_flashcard_model?: string
-              new_is_editable?: boolean
-              new_features?: string[]
-              new_description?: string
-              new_is_active?: boolean
+              new_uploads_limit?: number
+              target_plan_id: string
             }
         Returns: boolean
       }
       analyze_quiz_weak_topics: {
-        Args: { user_uuid: string; last_sessions_count?: number }
+        Args: { last_sessions_count?: number; user_uuid: string }
         Returns: {
+          accuracy_percentage: number
+          correct_answers: number
+          recommendation: string
           topic: string
           total_questions: number
-          correct_answers: number
-          accuracy_percentage: number
-          recommendation: string
         }[]
       }
       calculate_enhanced_spaced_repetition: {
         Args: {
-          current_ef_factor: number
-          repetition_count: number
-          quality: number
-          response_time_ms?: number
           confidence_level?: number
+          current_ef_factor: number
+          quality: number
+          repetition_count: number
+          response_time_ms?: number
         }
         Returns: {
-          next_date: string
+          difficulty_adjustment: number
           new_ef_factor: number
           new_repetition_count: number
-          difficulty_adjustment: number
+          next_date: string
         }[]
       }
       calculate_next_review_date: {
         Args: {
           current_ef_factor: number
-          repetition_count: number
           quality: number
+          repetition_count: number
         }
         Returns: {
-          next_date: string
           new_ef_factor: number
           new_repetition_count: number
+          next_date: string
         }[]
       }
       calculate_quiz_performance_score: {
         Args: {
-          correct_answers: number
-          total_questions: number
           completion_time_seconds: number
-          hints_used: number
+          correct_answers: number
           difficulty_level?: number
+          hints_used: number
+          total_questions: number
         }
         Returns: number
       }
@@ -2111,9 +2111,9 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
-          target_user_id: string
-          target_action_type: string
           max_requests?: number
+          target_action_type: string
+          target_user_id: string
           window_minutes?: number
         }
         Returns: boolean
@@ -2133,6 +2133,17 @@ export type Database = {
           freed_storage_mb: number
         }[]
       }
+      create_stripe_checkout: {
+        Args: {
+          cancel_url: string
+          plan_name: string
+          success_url: string
+          user_uuid: string
+        }
+        Returns: {
+          checkout_url: string
+        }[]
+      }
       get_active_guardian_key_version: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2140,41 +2151,41 @@ export type Database = {
       get_active_plans: {
         Args: Record<PropertyKey, never>
         Returns: {
+          description: string
+          features: string[]
+          flashcard_model: string
+          flashcards_limit: number
           id: string
           name: string
-          description: string
           price_brl: number
           price_brl_yearly: number
-          uploads_limit: number
-          summaries_limit: number
-          flashcards_limit: number
-          quizzes_limit: number
           quiz_model: string
+          quizzes_limit: number
+          summaries_limit: number
           summary_model: string
-          flashcard_model: string
-          features: string[]
+          uploads_limit: number
         }[]
       }
       get_admin_dashboard_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
-          total_users: number
-          total_storage_mb: number
           active_users_7_days: number
+          total_storage_mb: number
+          total_users: number
         }[]
       }
       get_all_users_admin: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
-          email: string
-          plano: string
           created_at: string
-          uploads_realizados: number
+          email: string
           flashcards_gerados: number
-          quizzes_realizados: number
           is_admin: boolean
+          plano: string
+          quizzes_realizados: number
           storage_mb: number
+          uploads_realizados: number
+          user_id: string
         }[]
       }
       get_cpf_encryption_key: {
@@ -2184,92 +2195,92 @@ export type Database = {
       get_data_management_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
-          total_files: number
-          total_storage_mb: number
+          active_users_30_days: number
           average_storage_per_user: number
-          total_users: number
           files_older_than_30_days: number
           files_older_than_7_days: number
-          active_users_30_days: number
           largest_file_size_mb: number
           storage_by_plan: Json
+          total_files: number
+          total_storage_mb: number
+          total_users: number
         }[]
       }
       get_enhanced_quiz_history: {
         Args: { target_user_id?: string }
         Returns: {
-          session_id: string
-          resumo_id: string
-          resumo_titulo: string
-          quiz_title: string
-          status: string
-          total_questions: number
+          can_resume: boolean
+          completion_time_seconds: number
           correct_answers: number
-          progress_percentage: number
           created_at: string
           last_activity_at: string
-          completion_time_seconds: number
-          can_resume: boolean
+          progress_percentage: number
+          quiz_title: string
+          resumo_id: string
+          resumo_titulo: string
+          session_id: string
+          status: string
+          total_questions: number
         }[]
       }
       get_flashcards_due_for_review: {
         Args: { target_user_id: string }
         Returns: {
+          category: string
+          days_overdue: number
+          difficulty: number
+          exemplo: string
           flashcard_id: string
+          next_review_date: string
           pergunta: string
           resposta: string
-          exemplo: string
-          category: string
-          difficulty: number
-          next_review_date: string
-          days_overdue: number
         }[]
       }
       get_guardian_by_user: {
         Args:
+          | { access_reason?: string; target_user_id: string }
           | { target_user_id: string }
-          | { target_user_id: string; access_reason?: string }
         Returns: {
-          full_name: string
-          email: string
-          phone: string
           cpf: string
+          email: string
+          full_name: string
+          phone: string
           relation_to_student: string
         }[]
       }
       get_study_recommendations: {
         Args: { target_user_id: string }
         Returns: {
-          recommendation_type: string
-          title: string
           description: string
-          priority: number
           estimated_time_minutes: number
-          target_cards: number
+          priority: number
+          recommendation_type: string
           subject_area: string
+          target_cards: number
+          title: string
         }[]
       }
       get_usage_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
           action_type: string
-          usage_date: string
           total_actions: number
-          unique_users: number
           total_credits: number
+          unique_users: number
+          usage_date: string
         }[]
       }
       get_user_plan_details: {
         Args: { user_uuid?: string }
         Returns: {
-          plan_name: string
-          uploads_limit: number
-          summaries_limit: number
-          flashcards_limit: number
-          quizzes_limit: number
-          quiz_model: string
-          summary_model: string
           flashcard_model: string
+          flashcards_limit: number
+          plan_name: string
+          quiz_model: string
+          quizzes_limit: number
+          summaries_limit: number
+          summary_model: string
+          uploads_limit: number
         }[]
       }
       get_user_storage_usage: {
@@ -2284,10 +2295,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: {
           action_type: string
-          current_month_usage: number
-          current_month_credits: number
-          all_time_usage: number
           all_time_credits: number
+          all_time_usage: number
+          current_month_credits: number
+          current_month_usage: number
         }[]
       }
       is_admin: {
@@ -2300,10 +2311,10 @@ export type Database = {
       }
       log_usage: {
         Args: {
-          target_user_id: string
           target_action_type: string
           target_credits_used?: number
           target_metadata?: Json
+          target_user_id: string
         }
         Returns: boolean
       }
