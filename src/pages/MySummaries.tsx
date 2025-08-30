@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, FileText, Brain, Target, Edit3, Save, X, Sparkles } from 'lucide-react';
+import { BookOpen, Calendar, FileText, Brain, Target, Edit3, Save, X, Sparkles, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSummary } from '@/hooks/useSummary';
 import { useToast } from '@/hooks/use-toast';
+import { useContentDeletion } from '@/hooks/useContentDeletion';
 import { designColors } from '@/utils/designSystem';
 import PageLayout from '@/components/navigation/PageLayout';
 
@@ -15,6 +16,7 @@ const MySummaries = () => {
   const navigate = useNavigate();
   const { getAllResumos, updateResumoName } = useSummary();
   const { toast } = useToast();
+  const { deleteResumo, isDeleting } = useContentDeletion();
   const [resumos, setResumos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,6 +70,21 @@ const MySummaries = () => {
         description: "Não foi possível atualizar o nome do resumo.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteResumo = async (resumo: any) => {
+    const resumoName = getDisplayName(resumo);
+    const confirmMessage = `Tem certeza que deseja excluir "${resumoName}"?\n\nEsta ação irá deletar permanentemente:\n• O resumo\n• Todos os flashcards relacionados\n• Todos os quizzes relacionados\n\nEsta ação não pode ser desfeita.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    const success = await deleteResumo(resumo.id);
+    if (success) {
+      // Remove o resumo da lista local
+      setResumos(prev => prev.filter(r => r.id !== resumo.id));
     }
   };
 
@@ -186,17 +203,31 @@ const MySummaries = () => {
                         <CardTitle className="text-lg font-bold text-gray-800 flex-1 line-clamp-2">
                           {getDisplayName(resumo)}
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditName(resumo);
-                          }}
-                          className="ml-2 opacity-70 hover:opacity-100"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditName(resumo);
+                            }}
+                            className="opacity-70 hover:opacity-100"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteResumo(resumo);
+                            }}
+                            className="opacity-70 hover:opacity-100 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </>
                     )}
                   </div>

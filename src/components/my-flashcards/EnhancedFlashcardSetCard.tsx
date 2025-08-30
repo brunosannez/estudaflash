@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Brain, Info, TrendingUp, Calendar } from 'lucide-react';
+import { Brain, Info, TrendingUp, Calendar, Trash2 } from 'lucide-react';
 import { useFlashcardSetStats } from '@/hooks/useFlashcardSetStats';
+import { useContentDeletion } from '@/hooks/useContentDeletion';
 import FlashcardStatsTooltip from '@/components/flashcard-study/FlashcardStatsTooltip';
 
 interface FlashcardSet {
@@ -17,16 +18,35 @@ interface FlashcardSet {
 interface EnhancedFlashcardSetCardProps {
   flashcardSet: FlashcardSet;
   onStartStudy: (flashcardSet: FlashcardSet, sessionId?: string) => void;
+  onDelete?: () => void;
 }
 
-const EnhancedFlashcardSetCard = ({ flashcardSet, onStartStudy }: EnhancedFlashcardSetCardProps) => {
+const EnhancedFlashcardSetCard = ({ flashcardSet, onStartStudy, onDelete }: EnhancedFlashcardSetCardProps) => {
   const { loadStatsForSet, getStatsForSet, loading } = useFlashcardSetStats();
+  const { deleteMultipleFlashcards, isDeleting } = useContentDeletion();
   const [showStats, setShowStats] = useState(false);
   const stats = getStatsForSet(flashcardSet.resumo_id);
 
   useEffect(() => {
     loadStatsForSet(flashcardSet.resumo_id);
   }, [flashcardSet.resumo_id]);
+
+  const handleDeleteFlashcardSet = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const confirmMessage = `Tem certeza que deseja excluir todos os flashcards de "${flashcardSet.resumo_title}"?\n\nEsta ação irá deletar permanentemente ${flashcardSet.flashcards.length} flashcards e suas revisões.\n\nEsta ação não pode ser desfeita.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    const flashcardIds = flashcardSet.flashcards.map(card => card.id);
+    const success = await deleteMultipleFlashcards(flashcardIds);
+    
+    if (success && onDelete) {
+      onDelete();
+    }
+  };
 
   const getAccuracyBadge = () => {
     if (!stats || stats.total_cards_reviewed === 0) {
@@ -93,15 +113,31 @@ const EnhancedFlashcardSetCard = ({ flashcardSet, onStartStudy }: EnhancedFlashc
       <Card 
         className="border-4 border-blue-200 shadow-xl overflow-hidden hover:shadow-2xl hover:border-purple-300 transition-all duration-300 transform hover:scale-105 relative"
       >
-        {/* Indicador de Performance */}
-        {stats && stats.total_cards_reviewed > 0 && (
-          <div className="absolute top-2 right-2 z-10">
-            {getAccuracyBadge()}
-          </div>
-        )}
+        {/* Indicador de Performance e Botão Delete */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+          {stats && stats.total_cards_reviewed > 0 && getAccuracyBadge()}
+          {onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteFlashcardSet}
+                  className="h-7 w-7 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 opacity-70 hover:opacity-100"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>Excluir todos os flashcards</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 pb-3">
-          <CardTitle className="text-lg font-bold text-gray-800 line-clamp-2 pr-20">
+          <CardTitle className="text-lg font-bold text-gray-800 line-clamp-2 pr-24">
             {flashcardSet.resumo_title}
           </CardTitle>
         </CardHeader>
