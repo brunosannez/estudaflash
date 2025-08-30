@@ -179,31 +179,55 @@ serve(async (req) => {
     console.log('Gerando flashcards automaticamente para resumo:', resumoId);
     console.log('Tamanho do texto:', textoResumo.length, 'caracteres');
 
-    // Prompt otimizado para gerar flashcards educativos
-    const prompt = `Você é um especialista em técnicas de estudo que cria flashcards eficazes para memorização.
+    // SISTEMA AVANÇADO DE GERAÇÃO DE FLASHCARDS
+    // Calcular quantidade ideal baseada no conteúdo
+    const wordCount = textoResumo.split(' ').length;
+    const idealFlashcardCount = Math.max(6, Math.min(20, Math.ceil(wordCount / 175)));
+    
+    console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${idealFlashcardCount} flashcards`);
 
-Baseado no seguinte resumo de estudo, crie 8-12 flashcards seguindo estas diretrizes:
+    const prompt = `INSTRUÇÕES CRÍTICAS - VOCÊ É UM ANALISADOR DE CONTEÚDO ULTRA-PRECISO:
 
-1. Faça perguntas diretas e objetivas
-2. As respostas devem ser concisas mas completas
-3. Inclua exemplos práticos quando possível
-4. Varie o tipo de pergunta (conceito, aplicação, exemplo)
-5. Foque nos pontos mais importantes do conteúdo
-6. Use linguagem clara e didática
+🎯 OBJETIVO: Criar exatamente ${idealFlashcardCount} flashcards baseados EXCLUSIVAMENTE no conteúdo fornecido.
 
-Texto do resumo:
+📋 REGRAS ABSOLUTAS:
+1. JAMAIS invente informações que não estão no texto
+2. CADA flashcard deve ter base textual comprovável no resumo
+3. CUBRA 100% dos conceitos principais do conteúdo
+4. Use APENAS informações, dados, nomes, datas e exemplos do próprio resumo
+5. Se não há exemplo no texto, use "null" - NUNCA invente
+
+🔍 PROCESSO OBRIGATÓRIO:
+ETAPA 1: Identifique TODOS os conceitos-chave do resumo
+ETAPA 2: Mapeie informações factuais (datas, nomes, números, processos)
+ETAPA 3: Crie flashcards que cubram cada seção importante
+ETAPA 4: Varie tipos: conceituais, factuais, comparativas, de aplicação
+
+📝 TIPOS DE FLASHCARDS A CRIAR:
+- Conceitos fundamentais (O que é...?)
+- Dados específicos (Quando? Quanto? Quem?)
+- Processos e causas (Como funciona? Por que?)
+- Comparações (Qual a diferença entre...?)
+- Aplicações práticas (Como se aplica...?)
+
+CONTEÚDO DO RESUMO:
 ${textoResumo}
 
-Retorne APENAS um array JSON no seguinte formato:
+⚠️ VALIDAÇÃO FINAL: 
+- Verifique se CADA flashcard tem base no texto original
+- Confirme cobertura completa dos tópicos principais
+- Elimine qualquer informação externa ou inventada
+
+RETORNE EXATAMENTE ${idealFlashcardCount} FLASHCARDS no formato JSON:
 [
   {
-    "pergunta": "Pergunta clara e objetiva...",
-    "resposta": "Resposta concisa e completa...",
-    "exemplo": "Exemplo prático (opcional, use null se não aplicável)"
+    "pergunta": "Pergunta baseada exclusivamente no resumo...",
+    "resposta": "Resposta fiel ao conteúdo original...",
+    "exemplo": "Exemplo extraído do texto ou null"
   }
 ]
 
-Não inclua texto adicional, apenas o array JSON:`;
+IMPORTANTE: Não adicione texto explicativo, apenas o array JSON puro.`;
 
     console.log('Iniciando chamada para API...', modelConfig.provider);
     const startTime = Date.now();
@@ -292,8 +316,41 @@ Não inclua texto adicional, apenas o array JSON:`;
 
     console.log(`${flashcards.length} flashcards gerados com sucesso`);
 
+    // VALIDAÇÃO DE FIDELIDADE AO CONTEÚDO
+    const validatedFlashcards = flashcards.filter((card: any) => {
+      // Verificações básicas de estrutura
+      if (!card.pergunta || !card.resposta || card.pergunta.length < 10 || card.resposta.length < 5) {
+        console.warn('❌ Flashcard rejeitado: estrutura inválida', card);
+        return false;
+      }
+
+      // Verificar se há palavras-chave do conteúdo original na resposta
+      const contentWords = textoResumo.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const responseWords = card.resposta.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const commonWords = responseWords.filter(word => contentWords.includes(word));
+      
+      // Deve ter pelo menos 20% de overlap de palavras significativas
+      const overlapRatio = commonWords.length / responseWords.length;
+      if (overlapRatio < 0.2) {
+        console.warn('❌ Flashcard rejeitado: baixa fidelidade ao conteúdo', {
+          pergunta: card.pergunta,
+          overlap: overlapRatio
+        });
+        return false;
+      }
+
+      return true;
+    });
+
+    if (validatedFlashcards.length < Math.ceil(idealFlashcardCount * 0.6)) {
+      console.error('❌ Muitos flashcards rejeitados na validação');
+      throw new Error('Qualidade insuficiente dos flashcards gerados. Tente novamente.');
+    }
+
+    console.log(`✅ ${validatedFlashcards.length}/${flashcards.length} flashcards aprovados na validação`);
+
     // Salvar flashcards no banco de dados
-    const flashcardsToInsert = flashcards.map((card: any) => ({
+    const flashcardsToInsert = validatedFlashcards.map((card: any) => ({
       resumo_id: resumoId,
       pergunta: card.pergunta,
       resposta: card.resposta,
@@ -317,10 +374,14 @@ Não inclua texto adicional, apenas o array JSON:`;
         success: true,
         flashcards: savedFlashcards,
         stats: {
-          total_gerado: flashcards.length,
+          total_gerado: validatedFlashcards.length,
+          total_aprovado: validatedFlashcards.length,
+          total_rejeitado: flashcards.length - validatedFlashcards.length,
           tempo_processamento: `${endTime - startTime}ms`,
           modelo_usado: modelConfig.model,
-          plano_usuario: userPlan
+          plano_usuario: userPlan,
+          palavras_analisadas: wordCount,
+          cobertura_qualidade: Math.round((validatedFlashcards.length / idealFlashcardCount) * 100)
         }
       }),
       {
