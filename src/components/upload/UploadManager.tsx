@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { useMultipleUpload } from '@/hooks/useMultipleUpload';
 import { useBatchUpload } from '@/hooks/useBatchUpload';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useUploadManager = () => {
   const [dragActive, setDragActive] = useState(false);
@@ -107,6 +108,29 @@ export const useUploadManager = () => {
     selectedFiles.forEach((file, index) => {
       console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
     });
+
+    // Verificar se o usuário está autenticado ANTES de processar
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('❌ Usuário não autenticado:', authError);
+        toast({
+          title: "Erro de Autenticação",
+          description: "Faça login novamente para continuar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      console.log('✅ Usuário autenticado:', user.id);
+    } catch (error) {
+      console.error('❌ Erro ao verificar autenticação:', error);
+      toast({
+        title: "Erro de Conexão",
+        description: "Verifique sua conexão com a internet.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const batchSize = getBatchSize();
     const needsBatchProcessing = selectedFiles.length > batchSize || batchSize < selectedFiles.length;
@@ -132,6 +156,28 @@ export const useUploadManager = () => {
       }
     } catch (error) {
       console.error('❌ Erro no processamento das imagens:', error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = "Erro ao processar imagens.";
+      if (error instanceof Error) {
+        if (error.message.includes('créditos')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('autenticação') || error.message.includes('login')) {
+          errorMessage = "Sessão expirada. Faça login novamente.";
+        } else if (error.message.includes('conexão') || error.message.includes('network')) {
+          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+        } else if (error.message.includes('grande') || error.message.includes('size')) {
+          errorMessage = "Uma ou mais imagens são muito grandes. Use imagens menores.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Erro no Processamento",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   }
 

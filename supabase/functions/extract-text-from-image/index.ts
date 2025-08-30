@@ -26,15 +26,17 @@ serve(async (req) => {
   }
 
   try {
-    console.log('OCR function called');
+    console.log('=== 🔍 OCR FUNCTION STARTED ===');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
     const body = await req.json()
     const { imageUrl, userId } = body
     
-    console.log('Processing image:', imageUrl)
+    console.log('Request body received:', { imageUrl: imageUrl?.substring(0, 100) + '...', userId });
     
     if (!imageUrl) {
-      console.error('No image URL provided');
+      console.error('❌ No image URL provided');
       throw new Error('URL da imagem é obrigatória');
     }
     
@@ -42,24 +44,37 @@ serve(async (req) => {
     const googleVisionApiKey = Deno.env.get('GOOGLE_VISION_API_KEY')
     
     if (!googleVisionApiKey) {
-      console.error('Google Vision API key not configured')
+      console.error('❌ Google Vision API key not configured')
       throw new Error('Chave da API do Google Vision não configurada. Configure GOOGLE_VISION_API_KEY nos secrets do Supabase.')
     }
+    
+    console.log('✅ Google Vision API key found');
 
     // NOVO: Consumir créditos para OCR se userId fornecido
     if (userId) {
+      console.log('💳 Starting credit consumption for user:', userId);
       // Inicializar Supabase para consumir créditos
       const supabaseUrl = Deno.env.get('SUPABASE_URL')
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ Supabase credentials missing:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey });
+        throw new Error('Configuração do Supabase incompleta');
+      }
+      
+      console.log('✅ Supabase credentials found, initializing client...');
       
       if (supabaseUrl && supabaseKey) {
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.50.0');
         const supabase = createClient(supabaseUrl, supabaseKey);
         
+        console.log('📞 Calling consume_credits function...');
         const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
           target_user_id: userId,
           action_type: 'ocr'
         });
+
+        console.log('💳 Credit consumption result:', { creditResult, creditError });
 
         if (creditError) {
           console.error('❌ Erro RPC consume_credits:', creditError);
@@ -72,6 +87,8 @@ serve(async (req) => {
         }
 
         const result = creditResult[0];
+        console.log('💳 Credit result details:', result);
+        
         if (!result?.success) {
           const message = result?.message || 'Créditos insuficientes';
           console.error('❌ Falha ao consumir créditos:', message);
@@ -81,24 +98,27 @@ serve(async (req) => {
           );
         }
 
-        console.log(`💳 Créditos consumidos para OCR: ${result.credits_consumed}. Restam: ${result.credits_remaining}`);
+        console.log(`✅ Créditos consumidos para OCR: ${result.credits_consumed}. Restam: ${result.credits_remaining}`);
       }
+    } else {
+      console.log('⚠️ No userId provided, skipping credit consumption');
     }
 
-    console.log('Google Vision API key found, downloading image...');
+    console.log('🌐 Starting image download from:', imageUrl.substring(0, 100) + '...');
     
     // Baixar a imagem para converter para base64
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text()
-      console.error(`Failed to download image: ${imageResponse.status} - ${errorText}`)
+      console.error(`❌ Failed to download image: ${imageResponse.status} - ${errorText}`)
       throw new Error(`Falha ao baixar imagem: ${imageResponse.status}`)
     }
     
+    console.log('✅ Image downloaded successfully, converting to buffer...');
     const imageBuffer = await imageResponse.arrayBuffer()
     const imageSizeInMB = imageBuffer.byteLength / (1024 * 1024)
     
-    console.log(`Image downloaded, size: ${imageSizeInMB.toFixed(2)}MB`)
+    console.log(`📏 Image downloaded, size: ${imageSizeInMB.toFixed(2)}MB`);
     
     // Check if image is too large (limit to 10MB for OCR processing)
     if (imageSizeInMB > 10) {
