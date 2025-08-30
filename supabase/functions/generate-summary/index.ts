@@ -97,6 +97,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Integrar com sistema de créditos na geração de resumo
   try {
     console.log('🚀 Função generate-summary iniciada');
     
@@ -205,7 +206,33 @@ serve(async (req) => {
     // Inicializar Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Buscar plano do usuário
+    // NOVO: Consumir créditos antes de gerar resumo
+    const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+      target_user_id: userId,
+      action_type: 'summary'
+    });
+
+    if (creditError || !creditResult || !creditResult[0]?.success) {
+      console.error('❌ Erro ao consumir créditos:', creditError);
+      const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: message,
+          fallbackMessage: message.includes('insuficientes') 
+            ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+            : 'Erro ao processar créditos. Tente novamente.'
+        }),
+        {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log(`💳 Créditos consumidos: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+    
+    // Buscar plano do usuário para configuração do modelo
     const userPlan = await getUserPlan(supabase, userId);
     const modelConfig = getModelConfigForPlan(userPlan);
     

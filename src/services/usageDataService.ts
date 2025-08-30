@@ -16,6 +16,11 @@ export interface UsageData {
   data_ultimo_reset: string;
   created_at: string;
   updated_at: string;
+  // Novos campos para sistema de créditos
+  credits_remaining?: number;
+  credits_used_this_month?: number;
+  credits_per_month?: number;
+  last_credits_reset?: string;
 }
 
 export class UsageDataService {
@@ -32,7 +37,8 @@ export class UsageDataService {
             uploads_limit,
             summaries_limit,
             flashcards_limit,
-            quizzes_limit
+            quizzes_limit,
+            credits_per_month
           )
         `)
         .eq('user_id', userId)
@@ -67,7 +73,12 @@ export class UsageDataService {
         is_admin: data.is_admin,
         data_ultimo_reset: data.data_ultimo_reset,
         created_at: data.created_at,
-        updated_at: data.updated_at
+        updated_at: data.updated_at,
+        // Novos campos para sistema de créditos
+        credits_remaining: data.credits_remaining || 0,
+        credits_used_this_month: data.credits_used_this_month || 0,
+        credits_per_month: planData?.credits_per_month || 0,
+        last_credits_reset: data.last_credits_reset,
       };
     } catch (error) {
       console.error('❌ Error in getUserUsage:', error);
@@ -109,7 +120,8 @@ export class UsageDataService {
             uploads_limit,
             summaries_limit,
             flashcards_limit,
-            quizzes_limit
+            quizzes_limit,
+            credits_per_month
           )
         `)
         .single();
@@ -137,7 +149,12 @@ export class UsageDataService {
         is_admin: data.is_admin,
         data_ultimo_reset: data.data_ultimo_reset,
         created_at: data.created_at,
-        updated_at: data.updated_at
+        updated_at: data.updated_at,
+        // Novos campos para sistema de créditos
+        credits_remaining: data.credits_remaining || 0,
+        credits_used_this_month: data.credits_used_this_month || 0,
+        credits_per_month: planData?.credits_per_month || 0,
+        last_credits_reset: data.last_credits_reset,
       };
     } catch (error) {
       console.error('❌ Error initializing user usage:', error);

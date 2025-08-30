@@ -29,7 +29,7 @@ serve(async (req) => {
     console.log('OCR function called');
     
     const body = await req.json()
-    const { imageUrl } = body
+    const { imageUrl, userId } = body
     
     console.log('Processing image:', imageUrl)
     
@@ -46,7 +46,35 @@ serve(async (req) => {
       throw new Error('Chave da API do Google Vision não configurada. Configure GOOGLE_VISION_API_KEY nos secrets do Supabase.')
     }
 
-    console.log('Google Vision API key found, downloading image...')
+    // NOVO: Consumir créditos para OCR se userId fornecido
+    if (userId) {
+      // Inicializar Supabase para consumir créditos
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.50.0');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+          target_user_id: userId,
+          action_type: 'ocr'
+        });
+
+        if (creditError || !creditResult || !creditResult[0]?.success) {
+          console.error('❌ Erro ao consumir créditos para OCR:', creditError);
+          const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+          throw new Error(message.includes('insuficientes') 
+            ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+            : 'Erro ao processar créditos. Tente novamente.'
+          );
+        }
+
+        console.log(`💳 Créditos consumidos para OCR: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+      }
+    }
+
+    console.log('Google Vision API key found, downloading image...');
     
     // Baixar a imagem para converter para base64
     const imageResponse = await fetch(imageUrl)

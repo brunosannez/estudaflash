@@ -20,6 +20,39 @@ serve(async (req) => {
     }
 
     console.log('🚀 Generating quiz for resumo:', resumoId)
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // NOVO: Consumir créditos antes de gerar quiz
+    if (userId) {
+      const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+        target_user_id: userId,
+        action_type: 'quiz'
+      });
+
+      if (creditError || !creditResult || !creditResult[0]?.success) {
+        console.error('❌ Erro ao consumir créditos:', creditError);
+        const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: message,
+            fallbackMessage: message.includes('insuficientes') 
+              ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+              : 'Erro ao processar créditos. Tente novamente.'
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      console.log(`💳 Créditos consumidos para quiz: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+    }
 
     // Get user profile for difficulty adaptation
     let userProfile = null
@@ -32,11 +65,6 @@ serve(async (req) => {
       userProfile = profile
       console.log('👤 User profile found:', userProfile)
     }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Get OpenAI API key
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')

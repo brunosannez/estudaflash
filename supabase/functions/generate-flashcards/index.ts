@@ -139,8 +139,36 @@ serve(async (req) => {
     console.log('- HUGGINGFACE_API_KEY:', huggingfaceApiKey ? '✅' : '❌');
     console.log('- ANTHROPIC_API_KEY:', anthropicApiKey ? '✅' : '❌');
 
-    // Inicializar Supabase para buscar plano do usuário
+    // Inicializar Supabase
     const supabase = createClient(supabaseUrl!, supabaseKey!);
+    
+    // NOVO: Consumir créditos antes de gerar flashcards
+    if (userId) {
+      const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+        target_user_id: userId,
+        action_type: 'flashcards'
+      });
+
+      if (creditError || !creditResult || !creditResult[0]?.success) {
+        console.error('❌ Erro ao consumir créditos:', creditError);
+        const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: message,
+            fallbackMessage: message.includes('insuficientes') 
+              ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+              : 'Erro ao processar créditos. Tente novamente.'
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      console.log(`💳 Créditos consumidos para flashcards: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+    }
     
     // Buscar plano do usuário
     const userPlan = await getUserPlan(supabase, userId);
