@@ -8,24 +8,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Função para obter configuração do modelo baseada no plano - ATUALIZADA para Claude 4
+// Função para obter configuração do modelo baseada no plano - CORRIGIDA
 function getModelConfigForPlan(plan: string) {
   switch (plan) {
     case 'free':
       return {
         provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022' // Manter compatibilidade para free
+        model: 'claude-3-5-sonnet-20241022',
+        maxTokens: 4000
       };
     case 'pro':
     case 'edu':
       return {
         provider: 'anthropic', 
-        model: 'claude-sonnet-4-20250514' // Novo Claude 4 Sonnet para planos pagos
+        model: 'claude-3-5-sonnet-20241022', // Usar modelo estável para todos os planos
+        maxTokens: 8000 // Mais tokens para planos pagos
       };
     default:
       return {
         provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022'
+        model: 'claude-3-5-sonnet-20241022',
+        maxTokens: 4000
       };
   }
 }
@@ -355,19 +358,14 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: modelConfig.model,
-          // Usar max_completion_tokens para modelos Claude 4, max_tokens para Claude 3.5
-          ...(modelConfig.model.includes('claude-sonnet-4') ? 
-            { max_completion_tokens: isCombiningBatches ? 8000 : 6000 } : 
-            { max_tokens: isCombiningBatches ? 6000 : 4000 }
-          ),
+          max_tokens: isCombiningBatches ? modelConfig.maxTokens + 2000 : modelConfig.maxTokens,
           messages: [
             {
               role: 'user',
               content: optimizedPrompt
             }
           ],
-          // Claude 4 não suporta temperature, Claude 3.5 suporta
-          ...(modelConfig.model.includes('claude-sonnet-4') ? {} : { temperature: 0.2 }),
+          temperature: 0.2,
           top_p: 0.9
         })
       });
