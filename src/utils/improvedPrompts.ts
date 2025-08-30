@@ -1,53 +1,95 @@
 
+// Sistema inteligente de detecção de conteúdo e adaptação de prompts
+const detectContentType = (text: string) => {
+  const lowerText = text.toLowerCase();
+  
+  // Detectar disciplina
+  let discipline = 'geral';
+  if (lowerText.match(/(história|histórico|século|guerra|revolução|império|república|colonização)/)) discipline = 'história';
+  else if (lowerText.match(/(geografia|clima|relevo|população|território|região|estado|país)/)) discipline = 'geografia';
+  else if (lowerText.match(/(biologia|célula|dna|proteína|genética|evolução|ecossistema|organismo)/)) discipline = 'biologia';
+  else if (lowerText.match(/(química|átomo|molécula|reação|elemento|composto|solução)/)) discipline = 'química';
+  else if (lowerText.match(/(física|força|energia|movimento|velocidade|aceleração|onda|luz)/)) discipline = 'física';
+  else if (lowerText.match(/(matemática|equação|função|gráfico|área|volume|estatística|probabilidade)/)) discipline = 'matemática';
+  else if (lowerText.match(/(literatura|linguagem|texto|poesia|romance|autor|obra|estilo)/)) discipline = 'português';
+  else if (lowerText.match(/(filosofia|ética|conhecimento|verdade|ser|existência|pensamento)/)) discipline = 'filosofia';
+  else if (lowerText.match(/(sociologia|sociedade|cultura|grupo|instituição|mudança social)/)) discipline = 'sociologia';
+  
+  // Detectar tipo de material
+  let materialType = 'livro';
+  if (lowerText.match(/(exercício|questão|problema|resolva|calcule|determine)/)) materialType = 'exercícios';
+  else if (lowerText.match(/(slide|apresentação|tópico|bullet)/)) materialType = 'slides';
+  else if (lowerText.match(/(resumo|síntese|esquema)/)) materialType = 'resumo';
+  
+  // Detectar complexidade
+  let complexity = 'médio';
+  const complexWords = (lowerText.match(/\b\w{7,}\b/g) || []).length;
+  const totalWords = (lowerText.match(/\b\w+\b/g) || []).length;
+  const complexityRatio = complexWords / totalWords;
+  
+  if (complexityRatio > 0.3) complexity = 'avançado';
+  else if (complexityRatio < 0.15) complexity = 'básico';
+  
+  return { discipline, materialType, complexity };
+};
+
 export const createSummaryPrompt = (extractedText: string, schoolYear?: string) => {
   const educationLevel = getEducationLevel(schoolYear);
+  const { discipline, materialType, complexity } = detectContentType(extractedText);
   
-  return `Você é um professor especialista em educação brasileira, com experiência em preparar alunos para exames como ENEM, vestibulares e avaliações de instituições renomadas como o Colégio Ari de Sá Cavalcante.
+  return `🎓 **SISTEMA ARI DE SÁ - PREPARAÇÃO ENEM & VESTIBULARES**
 
-CONTEXTO DO ALUNO:
-- Nível educacional: ${educationLevel}
-- Foco: Preparação para provas brasileiras (ENEM, vestibulares, avaliações escolares)
+Você é um professor especialista do Colégio Ari de Sá e Farias Brito, referência nacional em aprovação no ENEM e vestibulares. Sua missão é criar um RESUMO ESTRATÉGICO ULTRA-ESPECÍFICO.
 
-TEXTO PARA RESUMIR:
+📊 **ANÁLISE DO CONTEÚDO:**
+- Nível: ${educationLevel}
+- Disciplina detectada: ${discipline.toUpperCase()}
+- Tipo de material: ${materialType}
+- Complexidade: ${complexity}
+
+🎯 **ESTRUTURA INTELIGENTE - ${discipline.toUpperCase()}:**
+${getAdaptiveStructure(discipline, educationLevel)}
+
+📝 **TEXTO PARA ANÁLISE:**
 ${extractedText}
 
-INSTRUÇÕES PARA O RESUMO:
+🏆 **METODOLOGIA ARI DE SÁ:**
 
-1. **ESTRUTURA OBRIGATÓRIA:**
-   - Título principal do tópico
-   - Conceitos fundamentais (definições claras)
-   - Desenvolvimento detalhado com exemplos
-   - Conexões interdisciplinares
-   - Aplicações práticas
-   - "O que pode cair na prova?"
+1. **📚 CONCEITOS ESSENCIAIS**
+   - Definições diretas e claras
+   - Palavras-chave destacadas em **negrito**
+   - Conexões com conhecimento prévio
 
-2. **DIRETRIZES PEDAGÓGICAS:**
-   - Use linguagem adequada ao nível ${educationLevel}
-   - Inclua exemplos práticos e contextualizados no Brasil
-   - Destaque fórmulas, datas e conceitos-chave
-   - Conecte o conteúdo com temas transversais (sustentabilidade, cidadania, etc.)
-   - Relacione com questões sociais, históricas e geográficas brasileiras quando relevante
+2. **🧠 ESTRATÉGIAS ENEM**
+   - Como o tema SEMPRE aparece no ENEM
+   - Competências e habilidades específicas
+   - Padrões de questões dos últimos 5 anos
+   - Pegadinhas típicas e como evitar
 
-3. **FORMATAÇÃO:**
-   - Use **negrito** para conceitos importantes
-   - Use marcadores (•) para listas
-   - Organize em seções claras com títulos
-   - Inclua resumos pontuais ao final de cada seção
+3. **⚡ DICAS LIGHTNING (Método Ari de Sá)**
+   - Macetes para memorização rápida
+   - Fórmulas mnemônicas
+   - Associações visuais
+   - Estratégias de resolução em 90 segundos
 
-4. **SEÇÃO ESPECIAL - "O QUE PODE CAIR NA PROVA?":**
-   Esta seção deve conter:
-   - Tópicos mais cobrados sobre este assunto
-   - Tipos de questão comum (múltipla escolha, dissertativa, etc.)
-   - Pegadinhas e erros comuns
-   - Dicas de resolução
-   - Exemplos de como o tema aparece no ENEM
-   - Conexões com outras disciplinas
-   - Atualidades relacionadas ao tema
+4. **🚨 PONTOS DE ATENÇÃO**
+   - Erros mais comuns dos alunos
+   - Conceitos que confundem
+   - Diferenças sutis mas importantes
+   - Armadilhas típicas das bancas
 
-5. **ADAPTAÇÃO POR NÍVEL:**
-   ${getSpecificGuidelines(educationLevel)}
+5. **🌐 CONEXÕES INTERDISCIPLINARES**
+   - Links com outras matérias para o ENEM
+   - Temas transversais (atualidades)
+   - Aplicações no mundo real
+   - Contexto brasileiro atual
 
-Crie um resumo completo, didático e estratégico que realmente prepare o aluno para ter sucesso nas avaliações. O aluno deve conseguir responder qualquer pergunta sobre o tema após estudar este resumo.`;
+6. **💯 RESUMO EXECUTIVO - FOCO PROVA**
+   ${getExamFocus(discipline, educationLevel)}
+
+🎖️ **RESULTADO ESPERADO:** Um aluno que estude este resumo deve conseguir resolver 90% das questões sobre o tema no ENEM e vestibulares top.
+
+**ESTILO:** Tom motivacional do Ari de Sá + didática clara + foco 100% em aprovação.`;
 };
 
 export const createQuizPrompt = (summaryContent: string, schoolYear?: string) => {
@@ -116,25 +158,97 @@ const getEducationLevel = (schoolYear?: string): string => {
   return 'Ensino Médio';
 };
 
+// Estrutura adaptativa baseada na disciplina detectada
+const getAdaptiveStructure = (discipline: string, level: string): string => {
+  const structures = {
+    história: `
+• **CRONOLOGIA & CONTEXTO** - Linha do tempo e causas
+• **PERSONAGENS & EVENTOS** - Quem fez o quê e quando
+• **CONSEQUÊNCIAS** - Impactos de curto e longo prazo
+• **ENEM HISTORY** - Como história aparece contextualizada
+• **BRASIL CONEXÃO** - Links com formação nacional`,
+    
+    geografia: `
+• **CONCEITOS ESPACIAIS** - Localização e características
+• **PROCESSOS NATURAIS/HUMANOS** - Dinâmicas do espaço
+• **DADOS & ESTATÍSTICAS** - Números que caem em prova
+• **BRASIL GEOGRÁFICO** - Realidade nacional específica
+• **QUESTÕES AMBIENTAIS** - Sustentabilidade e problemas atuais`,
+    
+    biologia: `
+• **ESTRUTURA & FUNÇÃO** - Como funciona biologicamente
+• **PROCESSOS VITAIS** - Mecanismos da vida
+• **CLASSIFICAÇÃO** - Taxonomia e organização
+• **EVOLUÇÃO & GENÉTICA** - Hereditariedade e mudanças
+• **ECOLOGIA** - Interações e meio ambiente`,
+    
+    química: `
+• **PROPRIEDADES** - Características físico-químicas
+• **REAÇÕES** - Transformações e equações
+• **CÁLCULOS** - Fórmulas e estequiometria
+• **APLICAÇÕES** - Química no cotidiano e indústria
+• **SEGURANÇA** - Riscos e precauções`,
+    
+    física: `
+• **CONCEITOS & LEIS** - Princípios fundamentais
+• **FÓRMULAS & CÁLCULOS** - Equações essenciais
+• **APLICAÇÕES** - Física no dia a dia
+• **GRÁFICOS** - Interpretação de dados
+• **TECNOLOGIA** - Inovações e descobertas`,
+    
+    default: `
+• **FUNDAMENTOS** - Base teórica sólida
+• **APLICAÇÕES** - Uso prático do conhecimento
+• **INTERDISCIPLINARIDADE** - Conexões entre áreas
+• **ATUALIDADES** - Contexto contemporâneo
+• **COMPETÊNCIAS ENEM** - Habilidades específicas`
+  };
+  
+  return structures[discipline] || structures.default;
+};
+
+// Foco específico por disciplina para exames
+const getExamFocus = (discipline: string, level: string): string => {
+  const examFocus = {
+    história: '• Processos históricos brasileiros • Períodos coloniais e republicanos • Movimentos sociais • Ditadura e democracia',
+    geografia: '• Geopolítica mundial • Questões ambientais brasileiras • Demografia • Urbanização • Globalização',
+    biologia: '• Ecologia e meio ambiente • Genética e biotecnologia • Fisiologia humana • Evolução • Citologia',
+    química: '• Química orgânica • Físico-química • Meio ambiente • Cálculos estequiométricos',
+    física: '• Mecânica • Termodinâmica • Eletromagnetismo • Ondulatória • Física moderna',
+    português: '• Interpretação textual • Literatura brasileira • Gramática aplicada • Redação argumentativa',
+    matemática: '• Funções • Geometria • Estatística • Probabilidade • Análise combinatória',
+    default: '• Análise crítica • Interpretação • Aplicação prática • Interdisciplinaridade'
+  };
+  
+  return examFocus[discipline] || examFocus.default;
+};
+
 const getSpecificGuidelines = (level: string): string => {
   switch (level) {
     case 'Ensino Fundamental':
-      return `- Use vocabulário acessível, explique termos técnicos
-- Inclua mais exemplos concretos do cotidiano
-- Foque em conceitos base, evite complexidade excessiva
-- Conecte com experiências da faixa etária (10-14 anos)`;
+      return `🎯 **ADAPTAÇÃO FUNDAMENTAL:**
+- Linguagem simples e direta
+- Exemplos do cotidiano familiar
+- Conceitos básicos bem explicados
+- Preparação para o ensino médio
+- Foco em compreensão, não decoreba`;
       
     case 'Ensino Superior':
-      return `- Use terminologia técnica adequada
-- Inclua referências bibliográficas quando relevante
-- Aborde aspectos mais complexos e nuances
-- Conecte com pesquisas e aplicações profissionais`;
+      return `🎯 **ADAPTAÇÃO UNIVERSITÁRIA:**
+- Terminologia técnica precisa
+- Referências acadêmicas quando útil
+- Aspectos avançados e nuances
+- Aplicações profissionais
+- Pesquisa e desenvolvimento crítico`;
       
     default: // Ensino Médio
-      return `- Equilibre linguagem técnica com clareza
-- Foque na preparação para ENEM e vestibulares
-- Inclua análise crítica e interpretação
-- Conecte teoria com aplicação prática`;
+      return `🎯 **ADAPTAÇÃO PRÉ-VESTIBULAR:**
+- Equilibrio entre técnico e acessível
+- FOCO TOTAL: ENEM + vestibulares top
+- Análise crítica desenvolvida
+- Teoria + aplicação prática
+- Estratégias de resolução rápida
+- Mindset de aprovação`;
   }
 };
 

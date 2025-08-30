@@ -8,15 +8,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Função para obter configuração do modelo baseada no plano
+// Função para obter configuração do modelo baseada no plano - ATUALIZADA para Claude 4
 function getModelConfigForPlan(plan: string) {
   switch (plan) {
     case 'free':
+      return {
+        provider: 'anthropic',
+        model: 'claude-3-5-sonnet-20241022' // Manter compatibilidade para free
+      };
     case 'pro':
     case 'edu':
       return {
-        provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022'
+        provider: 'anthropic', 
+        model: 'claude-sonnet-4-20250514' // Novo Claude 4 Sonnet para planos pagos
       };
     default:
       return {
@@ -46,50 +50,129 @@ async function getUserPlan(supabase: any, userId: string) {
   }
 }
 
-// Criar prompt otimizado para ENEM e Ari de Sá
-function createOptimizedPrompt(texto: string, schoolYear: string) {
-  // Detectar se há múltiplas páginas no texto
+// Sistema inteligente de detecção de conteúdo
+function detectContentIntelligence(texto: string) {
+  const lowerTexto = texto.toLowerCase();
+  
+  // Detectar disciplina
+  let disciplina = 'geral';
+  if (lowerTexto.match(/(história|histórico|século|guerra|revolução|império|república|colonização|período|época)/)) disciplina = 'história';
+  else if (lowerTexto.match(/(geografia|clima|relevo|população|território|região|estado|país|urbano|rural)/)) disciplina = 'geografia';
+  else if (lowerTexto.match(/(biologia|célula|dna|proteína|genética|evolução|ecossistema|organismo|vírus|bactéria)/)) disciplina = 'biologia';
+  else if (lowerTexto.match(/(química|átomo|molécula|reação|elemento|composto|solução|ácido|base)/)) disciplina = 'química';
+  else if (lowerTexto.match(/(física|força|energia|movimento|velocidade|aceleração|onda|luz|som)/)) disciplina = 'física';
+  else if (lowerTexto.match(/(matemática|equação|função|gráfico|área|volume|estatística|probabilidade|cálculo)/)) disciplina = 'matemática';
+  else if (lowerTexto.match(/(literatura|linguagem|texto|poesia|romance|autor|obra|estilo|português)/)) disciplina = 'português';
+  else if (lowerTexto.match(/(filosofia|ética|conhecimento|verdade|ser|existência|pensamento|teoria)/)) disciplina = 'filosofia';
+  else if (lowerTexto.match(/(sociologia|sociedade|cultura|grupo|instituição|mudança social|classe)/)) disciplina = 'sociologia';
+  
+  // Detectar tipo de material
+  let tipoMaterial = 'conteúdo';
+  if (lowerTexto.match(/(exercício|questão|problema|resolva|calcule|determine|resposta)/)) tipoMaterial = 'exercícios';
+  else if (lowerTexto.match(/(slide|apresentação|tópico|sumário|índice)/)) tipoMaterial = 'slides';
+  else if (lowerTexto.match(/(resumo|síntese|esquema|mapa|conceitual)/)) tipoMaterial = 'resumo';
+  
+  // Detectar se tem múltiplas páginas
   const hasMultiplePages = texto.includes('=== PÁGINA') && texto.split('=== PÁGINA').length > 2;
+  const totalPaginas = hasMultiplePages ? texto.split('=== PÁGINA').length - 1 : 1;
+  
+  return { disciplina, tipoMaterial, hasMultiplePages, totalPaginas };
+}
+
+// Criar prompt ultra-otimizado usando o novo sistema improvedPrompts
+function createOptimizedPrompt(texto: string, schoolYear: string) {
+  const { disciplina, tipoMaterial, hasMultiplePages, totalPaginas } = detectContentIntelligence(texto);
   
   const pageInstruction = hasMultiplePages 
-    ? `\n📖 **ATENÇÃO - MÚLTIPLAS PÁGINAS:** O material contém ${texto.split('=== PÁGINA').length - 1} páginas organizadas sequencialmente. Mantenha a ordem lógica e fluxo do conteúdo ao criar o resumo.\n`
+    ? `\n📖 **MATERIAL MULTIPÁGINA:** ${totalPaginas} páginas sequenciais detectadas. Mantenha ordem lógica e fluxo contínuo.\n`
     : '';
   
-  return `Você é um professor especialista do Colégio Ari de Sá, referência em preparação para ENEM e vestibulares. ${pageInstruction}
+  return `🏆 **SISTEMA ARI DE SÁ & FARIAS BRITO - APROVAÇÃO GARANTIDA**
 
-Crie um RESUMO DIDÁTICO COMPLETO baseado no texto fornecido, seguindo estas diretrizes específicas:
+Você é um professor EXPERT dos colégios Ari de Sá e Farias Brito, líderes nacionais em aprovação no ENEM e vestibulares de medicina. ${pageInstruction}
 
-🎯 **FOCO PEDAGÓGICO:**
-- Linguagem clara e acessível para estudantes de ${schoolYear}
-- Estrutura didática típica do Ari de Sá
-- Preparação específica para ENEM e vestibulares
-- Conexões com questões de provas anteriores quando relevante
+📊 **ANÁLISE INTELIGENTE:**
+- Disciplina: ${disciplina.toUpperCase()}
+- Material: ${tipoMaterial}
+- Nível: ${schoolYear}
+- Páginas: ${totalPaginas}
 
-📚 **ESTRUTURA OBRIGATÓRIA:**
-1. **CONCEITOS CENTRAIS** - Defina os pontos principais
-2. **TEORIA FUNDAMENTAL** - Explique com exemplos práticos
-3. **APLICAÇÕES ENEM** - Como o tema aparece em provas
-4. **DICAS ESTRATÉGICAS** - Macetes para resolução rápida
-5. **PONTOS DE ATENÇÃO** - Erros comuns e como evitar
+🎯 **METODOLOGIA COMPROVADA:**
 
-✨ **ESTILO ARI DE SÁ:**
-- Use bullet points e listas organizadas
-- Inclua mnemonicos e associações quando útil
-- Destaque fórmulas/conceitos importantes com **negrito**
-- Faça conexões interdisciplinares quando possível
-- Tom motivacional e confiante
+**1️⃣ CONCEITOS ESTRATÉGICOS (Fundação sólida)**
+- Definições ENEM-style com **negrito** nos termos-chave
+- Base teórica sólida mas didática
+- Links com conhecimento prévio
 
-🎓 **ADAPTAÇÃO POR NÍVEL:**
-${schoolYear === 'Ensino Fundamental' ? 
-  '- Foque em conceitos básicos e fundamentos\n- Use exemplos do cotidiano\n- Explique passo a passo' :
-schoolYear === 'Ensino Médio' ?
-  '- Nível intermediário com preparo para vestibular\n- Inclua conexões entre matérias\n- Foque em aplicações práticas' :
-  '- Nível avançado para competições\n- Aborde aspectos mais complexos\n- Inclua contexto universitário'}
+**2️⃣ COMO CAI NO ENEM (Inteligência competitiva)**
+- Padrões de questões dos últimos 3 anos
+- Competências/habilidades específicas testadas
+- Tipos de contexto mais usados pelas bancas
+- Porcentagem de cobrança estimada: [X]%
 
-📖 **TEXTO PARA RESUMIR:**
+**3️⃣ MACETES ARI DE SÁ (Resolução lightning ⚡)**
+- Técnicas de memorização rápida
+- Fórmulas mnemônicas exclusivas
+- Estratégias de eliminação de alternativas
+- Como resolver em 90-120 segundos
+
+**4️⃣ PEGADINHAS & ALERTAS (Defesa inteligente 🚨)**
+- Erros típicos de 80% dos alunos
+- Conceitos que as bancas adoram confundir
+- Palavras-armadilha nas questões
+- "Não confunda X com Y"
+
+**5️⃣ INTERDISCIPLINAR ENEM (Visão 360°)**
+- Conexões com outras matérias
+- Temas transversais (sustentabilidade, tecnologia, etc.)
+- Atualidades que podem aparecer
+- Contextualização brasileira
+
+**6️⃣ RESUMO EXECUTIVO (Tiro certeiro 🎯)**
+${getDisciplineSpecificTips(disciplina, schoolYear)}
+
+📖 **CONTEÚDO PARA MASTERIZAÇÃO:**
 ${texto}
 
-Gere um resumo completo, didático e estratégico que ajude o aluno a dominar o conteúdo e se sair bem nas provas!`;
+💯 **META:** Aluno que domina este resumo = 95% de acerto em questões do tema no ENEM.
+🚀 **LEMA:** "Estudou pelo Ari de Sá = Passou!"`;
+}
+
+// Dicas específicas por disciplina
+function getDisciplineSpecificTips(disciplina: string, nivel: string) {
+  const tips = {
+    história: `• Cronologia é TUDO - decore períodos-chave
+• Causas → Eventos → Consequências (sempre essa ordem)
+• Brasil colonial/imperial/republicano = 60% das questões
+• Conecte com geografia e sociologia sempre`,
+    
+    geografia: `• Mapas mentais são essenciais
+• Dados do IBGE = questões certas
+• Geopolítica mundial + Brasil = foco
+• Questões ambientais são tendência crescente`,
+    
+    biologia: `• Ecologia = 25% do ENEM (priorize!)
+• Genética: faça árvores genealógicas
+• Citologia: decore organelas e funções
+• Evolução conecta tudo - use como fio condutor`,
+    
+    química: `• Tabela periódica = sua melhor amiga
+• MOL: se não souber, não passa em exatas
+• Orgânica: grupos funcionais = base tudo
+• pH e equilíbrio = sempre cai`,
+    
+    física: `• Cinemática: gráficos são 70% das questões
+• Energia: conservação resolve quase tudo
+• Eletricidade: Lei de Ohm + potência = básico
+• Ondas: som e luz no dia a dia`,
+    
+    default: `• Leia SEMPRE o enunciado completo
+• Elimine alternativas absurdas primeiro
+• Contextualize com realidade brasileira
+• Tempo: 3 min por questão máximo`
+  };
+  
+  return tips[disciplina] || tips.default;
 }
 
 serve(async (req) => {
@@ -272,14 +355,19 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: modelConfig.model,
-          max_tokens: isCombiningBatches ? 6000 : 4000, // Mais tokens para combinações
+          // Usar max_completion_tokens para modelos Claude 4, max_tokens para Claude 3.5
+          ...(modelConfig.model.includes('claude-sonnet-4') ? 
+            { max_completion_tokens: isCombiningBatches ? 8000 : 6000 } : 
+            { max_tokens: isCombiningBatches ? 6000 : 4000 }
+          ),
           messages: [
             {
               role: 'user',
               content: optimizedPrompt
             }
           ],
-          temperature: 0.3,
+          // Claude 4 não suporta temperature, Claude 3.5 suporta
+          ...(modelConfig.model.includes('claude-sonnet-4') ? {} : { temperature: 0.2 }),
           top_p: 0.9
         })
       });
