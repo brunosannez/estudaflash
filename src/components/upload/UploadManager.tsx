@@ -3,8 +3,6 @@ import { useState, useRef } from 'react';
 import { useMultipleUpload } from '@/hooks/useMultipleUpload';
 import { useToast } from '@/hooks/use-toast';
 
-const MAX_IMAGES = 5;
-
 export const useUploadManager = () => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -55,22 +53,20 @@ export const useUploadManager = () => {
       return;
     }
     
-    const limitedFiles = imageFiles.slice(0, MAX_IMAGES);
-    
-    if (limitedFiles.length !== imageFiles.length) {
-      toast({
-        title: "Aviso",
-        description: `Apenas as primeiras ${MAX_IMAGES} imagens foram selecionadas.`,
-      });
-    }
-
-    // Log dos tamanhos dos arquivos selecionados
+    // Aceitar todas as imagens válidas sem limitação
     console.log('📁 Arquivos selecionados:');
-    limitedFiles.forEach((file, index) => {
+    imageFiles.forEach((file, index) => {
       console.log(`📄 Arquivo ${index + 1}: ${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)}MB (${file.size} bytes)`);
     });
     
-    setSelectedFiles(limitedFiles);
+    if (imageFiles.length > 1) {
+      toast({
+        title: "Múltiplas imagens detectadas",
+        description: `${imageFiles.length} imagens serão processadas em ordem para criar o resumo completo.`,
+      });
+    }
+    
+    setSelectedFiles(imageFiles);
     resetUpload();
   }
 
@@ -138,7 +134,28 @@ export const useUploadManager = () => {
   }
 
   const handleAddMoreFiles = (newFiles: File[]) => {
-    setSelectedFiles(prev => [...prev, ...newFiles]);
+    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma imagem válida foi detectada nos arquivos adicionais.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFiles(prev => {
+      const combined = [...prev, ...imageFiles];
+      console.log(`📁 Adicionadas ${imageFiles.length} imagens. Total: ${combined.length}`);
+      
+      toast({
+        title: "Imagens adicionadas",
+        description: `${imageFiles.length} imagens foram adicionadas. Total: ${combined.length} imagens para processar.`,
+      });
+      
+      return combined;
+    });
   };
 
   return {

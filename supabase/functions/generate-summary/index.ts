@@ -48,7 +48,14 @@ async function getUserPlan(supabase: any, userId: string) {
 
 // Criar prompt otimizado para ENEM e Ari de Sá
 function createOptimizedPrompt(texto: string, schoolYear: string) {
-  return `Você é um professor especialista do Colégio Ari de Sá, referência em preparação para ENEM e vestibulares. 
+  // Detectar se há múltiplas páginas no texto
+  const hasMultiplePages = texto.includes('=== PÁGINA') && texto.split('=== PÁGINA').length > 2;
+  
+  const pageInstruction = hasMultiplePages 
+    ? `\n📖 **ATENÇÃO - MÚLTIPLAS PÁGINAS:** O material contém ${texto.split('=== PÁGINA').length - 1} páginas organizadas sequencialmente. Mantenha a ordem lógica e fluxo do conteúdo ao criar o resumo.\n`
+    : '';
+  
+  return `Você é um professor especialista do Colégio Ari de Sá, referência em preparação para ENEM e vestibulares. ${pageInstruction}
 
 Crie um RESUMO DIDÁTICO COMPLETO baseado no texto fornecido, seguindo estas diretrizes específicas:
 

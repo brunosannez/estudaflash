@@ -2,8 +2,6 @@
 import { Loader2, Sparkles, Upload, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const MAX_IMAGES = 5;
-
 interface UploadActionsProps {
   selectedFiles: File[];
   onProcessImages: () => void;
@@ -23,10 +21,7 @@ const UploadActions = ({
   const handleAddMoreInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      const currentCount = selectedFiles.length;
-      const availableSlots = MAX_IMAGES - currentCount;
-      const filesToAdd = newFiles.slice(0, availableSlots);
-      onAddMoreFiles(filesToAdd);
+      onAddMoreFiles(newFiles);
     }
     e.target.value = '';
   }
@@ -98,7 +93,7 @@ const UploadActions = ({
       )}
 
       {/* Seção para adicionar mais fotos */}
-      {selectedFiles.length < MAX_IMAGES && selectedFiles.length > 0 && !isProcessing && (
+      {selectedFiles.length > 0 && !isProcessing && (
         <div className="border-t-2 border-dashed border-cyan-300 pt-4 mt-4 bg-gradient-to-r from-cyan-50 to-purple-50 rounded-lg p-4">
           <input
             type="file"
@@ -127,7 +122,7 @@ const UploadActions = ({
           >
             <Plus className="h-4 w-4 mr-2" />
             <span className="text-lg mr-2">📸</span>
-            Adicionar Mais Fotos ({selectedFiles.length}/{MAX_IMAGES})
+            Adicionar Mais Fotos (Total: {selectedFiles.length})
             <span className="text-lg ml-2">✨</span>
           </Button>
         </div>

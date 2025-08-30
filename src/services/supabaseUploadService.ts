@@ -111,10 +111,15 @@ export const invokeOcrFunction = async (imageUrl: string): Promise<string> => {
 
 export const saveUploadRecord = async (userId: string, successfulResults: SuccessfulUploadResult[]) => {
   try {
+    // Organizar texto extraído por ordem das páginas/imagens
     const combinedText = successfulResults
       .map((result, index) => {
-        const originalIndex = index + 1;
-        return `--- Imagem ${originalIndex} (${result.file.name}) ---\n${result.extractedText}`;
+        const pageNumber = index + 1;
+        const pageHeader = `=== PÁGINA ${pageNumber} ===`;
+        const fileName = `Arquivo: ${result.file.name}`;
+        const separator = '---'.repeat(20);
+        
+        return `${pageHeader}\n${fileName}\n${separator}\n${result.extractedText}\n`;
       })
       .join('\n\n');
 
