@@ -14,6 +14,11 @@ const EnhancedUpload = () => {
     isProcessing,
     progress,
     currentStep,
+    stage,
+    currentBatch,
+    totalBatches,
+    successfulImages,
+    failedImages,
     results,
     error,
     addFiles,
@@ -140,6 +145,11 @@ const EnhancedUpload = () => {
           progress={progress}
           currentStep={currentStep}
           totalFiles={files.length}
+          stage={stage}
+          currentBatch={currentBatch}
+          totalBatches={totalBatches}
+          successfulImages={successfulImages}
+          failedImages={failedImages}
         />
       )}
 

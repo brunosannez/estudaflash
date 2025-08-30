@@ -14,6 +14,11 @@ interface EnhancedUploadProgressProps {
   progress: number;
   currentStep: string;
   totalFiles: number;
+  stage?: 'preparing' | 'extracting' | 'uploading' | 'ocr' | 'summary' | 'complete';
+  currentBatch?: number;
+  totalBatches?: number;
+  successfulImages?: number;
+  failedImages?: number;
 }
 
 const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({

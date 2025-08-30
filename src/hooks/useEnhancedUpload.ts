@@ -19,6 +19,10 @@ export interface UploadProgress {
   current: number;
   total: number;
   message: string;
+  currentBatch?: number;
+  totalBatches?: number;
+  successfulImages?: number;
+  failedImages?: number;
 }
 
 export interface UploadResults {
@@ -175,12 +179,22 @@ export const useEnhancedUpload = () => {
       const ocrResults = await processImages(
         files.map(f => f.file),
         (current, total, message) => {
+          const batchSize = 3;
+          const currentBatch = Math.floor(current / batchSize) + 1;
+          const totalBatches = Math.ceil(total / batchSize);
+          const successful = current; // Current represents completed images
+          const failed = 0; // This would need to be tracked in processImages
+          
           updateProgress({
-            stage: current <= total * 0.7 ? 'uploading' : 'ocr',
+            stage: current <= total * 0.3 ? 'uploading' : 'ocr',
             progress: Math.round((current / total) * 80),
             current,
             total,
-            message
+            message,
+            currentBatch: totalBatches > 1 ? currentBatch : undefined,
+            totalBatches: totalBatches > 1 ? totalBatches : undefined,
+            successfulImages: successful,
+            failedImages: failed
           });
         }
       );
@@ -268,6 +282,11 @@ export const useEnhancedUpload = () => {
     isProcessing,
     progress: progress.progress,
     currentStep: progress.message,
+    stage: progress.stage,
+    currentBatch: progress.currentBatch,
+    totalBatches: progress.totalBatches,
+    successfulImages: progress.successfulImages,
+    failedImages: progress.failedImages,
     results,
     error,
     addFiles,

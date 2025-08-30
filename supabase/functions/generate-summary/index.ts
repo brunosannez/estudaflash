@@ -155,14 +155,14 @@ serve(async (req) => {
       );
     }
 
-    const { uploadId, textoExtraido, userId, schoolYear, isCombiningBatches = false, totalBatches = 1, totalImages = 1, extractedText } = requestBody;
+    const { uploadId, textoExtraido, userId, schoolYear, isCombiningBatches = false, totalBatches = 1, totalImages = 1, extractedText, metadata } = requestBody;
     
     // Support both old format (textoExtraido) and new format (extractedText)
     const textContent = extractedText || textoExtraido;
     
-    // Validações
+    // Validações básicas
     if (!userId || !textContent) {
-      console.error('❌ Parâmetros obrigatórios ausentes');
+      console.error('❌ Parâmetros obrigatórios ausentes - userId:', !!userId, 'textContent:', !!textContent);
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -176,21 +176,8 @@ serve(async (req) => {
       );
     }
 
-    // For batch combinations, don't require uploadId
-    if (!uploadId && !isCombiningBatches) {
-      console.error('❌ Upload ID obrigatório para resumos normais');
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Upload ID ausente',
-          fallbackMessage: 'Dados de upload incompletos.'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    // For new enhanced upload, don't require uploadId - we'll create it if needed
+    const needsUploadRecord = !uploadId && !isCombiningBatches;
 
     if (textContent.length > 100000) { // Increased limit for batch combinations
       console.error('❌ Texto muito grande:', textContent.length);
@@ -404,13 +391,52 @@ serve(async (req) => {
       );
     }
 
-    // Salvar no banco
+    // Salvar no banco - criar upload record se necessário
     try {
+      let finalUploadId = uploadId;
+      
+      // Se não temos uploadId, criar um registro de upload
+      if (needsUploadRecord) {
+        console.log('📁 Criando registro de upload...');
+        const { data: uploadData, error: uploadError } = await supabase
+          .from('uploads')
+          .insert({
+            user_id: userId,
+            arquivo_original_nome: `Enhanced_Upload_${totalImages || 1}_images.json`,
+            texto_extraido: textContent,
+            file_size: textContent.length,
+            imagem_url: metadata?.sourceType || '',
+            data_upload: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (uploadError) {
+          console.error('❌ Erro ao criar upload:', uploadError);
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              error: 'Erro ao criar registro de upload',
+              fallbackMessage: 'Erro ao salvar dados. Tente novamente.'
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        finalUploadId = uploadData.id;
+        console.log('✅ Upload record criado:', finalUploadId);
+      }
+
       const { data: insertData, error: resumoError } = await supabase
         .from('resumos')
         .insert({
-          upload_id: uploadId,
-          resumo_gerado: resumoGerado
+          upload_id: finalUploadId,
+          resumo_gerado: resumoGerado,
+          custom_name: `Resumo - ${totalImages || 1} páginas`,
+          data_criacao: new Date().toISOString()
         })
         .select()
         .single();

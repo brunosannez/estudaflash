@@ -34,11 +34,13 @@ export const useSummaryGenerator = () => {
     try {
       console.log(`📄 Generating summary from ${combinedText.length} characters of text`);
 
-      // Chamar a função de geração de resumo
+      // Chamar a função de geração de resumo com parâmetros corretos
       const { data, error } = await supabase.functions.invoke('generate-summary', {
         body: {
-          texto: combinedText,
+          extractedText: combinedText, // Corrigido: usar extractedText
           userId: user.id,
+          schoolYear: 'Ensino Médio', // Adicionar nível escolar
+          totalImages: ocrResults.length,
           metadata: {
             totalImages: ocrResults.length,
             successfulImages: ocrResults.filter(r => r.success).length,
@@ -48,23 +50,22 @@ export const useSummaryGenerator = () => {
         }
       });
 
-      if (error) {
+      if (!data?.success) {
         console.error('❌ Summary generation error:', error);
-        throw new Error(`Erro na geração do resumo: ${error.message}`);
+        throw new Error(`Erro na geração do resumo: ${data?.fallbackMessage || error?.message || 'Erro desconhecido'}`);
       }
 
-      if (!data?.resumo) {
+      if (!data?.resumo && !data?.summary) {
         throw new Error('Resumo não foi gerado corretamente');
       }
 
-      console.log(`✅ Summary generated successfully: ${data.resumo.length} characters`);
+      const generatedSummary = data.resumo?.resumo_gerado || data.summary;
+      console.log(`✅ Summary generated successfully: ${generatedSummary.length} characters`);
 
-      // Salvar informações do upload no banco
-      const uploadRecord = await saveUploadRecord(ocrResults, data.resumo);
-
+      // Para enhanced upload, o resumo já foi salvo pela edge function
       return {
-        id: uploadRecord.id,
-        summary: data.resumo,
+        id: data.resumo?.id || 'enhanced_upload',
+        summary: generatedSummary,
         metadata: {
           totalImages: ocrResults.length,
           totalPages: ocrResults.filter(r => r.success).length,
