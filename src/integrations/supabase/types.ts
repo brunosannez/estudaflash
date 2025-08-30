@@ -2423,6 +2423,10 @@ export type Database = {
         Args: { new_key: string; new_key_version?: number }
         Returns: boolean
       }
+      setup_super_admin: {
+        Args: { admin_email: string }
+        Returns: boolean
+      }
       update_daily_quiz_stats: {
         Args: { target_user_id: string }
         Returns: boolean
