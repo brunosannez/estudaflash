@@ -158,12 +158,11 @@ ${resumoContent}
 === REGRAS OBRIGATÓRIAS ===
 1) USO EXCLUSIVO DO RESUMO: só utilize informações do texto. Nada além dele.
 2) COBERTURA TOTAL: cada macrotema do resumo deve gerar pelo menos 1 questão objetiva + 1 questão V/F sequencial.
-3) QUANTIDADE AUTOMÁTICA: calcule o número de questões com base no tamanho do resumo:
-   - ≤300 palavras → 6 a 8 questões totais
-   - 301–600 → 10 a 14 questões
-   - 601–900 → 14 a 18 questões
-   - >900 → 18 a 24 questões
-   (metade objetivas, metade V/F sequenciais, aproximadamente).
+3) QUANTIDADE OBRIGATÓRIA: Você DEVE gerar EXATAMENTE as quantidades especificadas nos "targets":
+   - ${objetivasCount} questões objetivas (OBRIGATÓRIO)
+   - ${vfSequenciaisCount} questões V/F sequenciais (OBRIGATÓRIO)
+   - TOTAL: ${objetivasCount + vfSequenciaisCount} questões
+   ⚠️ IMPORTANTE: NÃO calcule quantidade própria. Use APENAS os valores fornecidos nos targets.
 4) QUESTÕES OBJETIVAS:
    - Estilo ENEM, contextualizadas.
    - 5 alternativas (A–E), UMA correta e 4 plausíveis.
@@ -272,7 +271,7 @@ ${resumoContent}
             content: structuredPrompt
           }
         ],
-        max_completion_tokens: 6000, // Updated for GPT-5
+        max_completion_tokens: 8500, // Increased for GPT-5 to handle 17+ questions
       }),
     })
 
@@ -361,6 +360,18 @@ ${resumoContent}
 
     if (validQuestions.length === 0) {
       throw new Error('No valid questions generated - all questions failed structured validation')
+    }
+
+    // CRITICAL VALIDATION: Check if AI generated the exact number specified in targets
+    const generatedObjetivas = quizData.quiz.objetivas.length
+    const generatedVfSequenciais = quizData.quiz.vf_sequenciais.length
+    
+    console.log(`🎯 Target vs Generated - Objetivas: ${objetivasCount} vs ${generatedObjetivas}, V/F: ${vfSequenciaisCount} vs ${generatedVfSequenciais}`)
+    
+    if (generatedObjetivas < objetivasCount || generatedVfSequenciais < vfSequenciaisCount) {
+      const deficit = (objetivasCount - generatedObjetivas) + (vfSequenciaisCount - generatedVfSequenciais)
+      console.error(`❌ AI generated insufficient questions: ${deficit} questões faltando`)
+      throw new Error(`AI não gerou quantidade suficiente. Esperado: ${objetivasCount} objetivas + ${vfSequenciaisCount} V/F, mas gerou: ${generatedObjetivas} + ${generatedVfSequenciais}`)
     }
 
     console.log(`✅ Structured validation: ${validQuestions.length}/${quizData.quiz.objetivas.length + quizData.quiz.vf_sequenciais.length} questões aprovadas`)
