@@ -9,6 +9,8 @@ interface MultipleChoiceQuestionProps {
   onAnswerSelect: (answer: number) => void;
   showResult: boolean;
   correctAnswer: number;
+  context?: string;
+  evidence?: string;
 }
 
 const MultipleChoiceQuestion = ({
@@ -17,7 +19,9 @@ const MultipleChoiceQuestion = ({
   selectedAnswer,
   onAnswerSelect,
   showResult,
-  correctAnswer
+  correctAnswer,
+  context,
+  evidence
 }: MultipleChoiceQuestionProps) => {
   const letters = ['A', 'B', 'C', 'D', 'E'];
 
@@ -62,6 +66,13 @@ const MultipleChoiceQuestion = ({
 
   return (
     <div className="space-y-4">
+      {/* Context */}
+      {context && (
+        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400">
+          <p className="text-sm text-blue-800">{context}</p>
+        </div>
+      )}
+
       {/* Question */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-800 leading-relaxed">
@@ -93,6 +104,15 @@ const MultipleChoiceQuestion = ({
           </Button>
         ))}
       </div>
+
+      {/* Evidence (if available and showing result) */}
+      {showResult && evidence && (
+        <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-400">
+          <p className="text-xs text-green-700">
+            <strong>Evidência do texto:</strong> "{evidence}"
+          </p>
+        </div>
+      )}
     </div>
   );
 };

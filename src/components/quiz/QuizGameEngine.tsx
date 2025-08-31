@@ -71,10 +71,14 @@ const QuizGameEngine = ({
     // Check if answer is correct based on question type
     if (currentQuestion.question_type === 'objetiva') {
       isCorrect = gameState.selectedAnswer === currentQuestion.correta;
-    } else if (currentQuestion.question_type === 'verdadeiro_falso_simples' || currentQuestion.question_type === 'verdadeiro_falso_combinacoes') {
+    } else if (currentQuestion.question_type === 'verdadeiro_falso_combinacoes') {
+      // Sequential V/F with A-E options
+      isCorrect = gameState.selectedAnswer === currentQuestion.correta;
+    } else if (currentQuestion.question_type === 'verdadeiro_falso_simples') {
+      // Traditional individual V/F
       const userAnswers = gameState.selectedAnswer as boolean[];
       const correctAnswers = currentQuestion.statements?.map(() => currentQuestion.answer) || [];
-      isCorrect = userAnswers.length === correctAnswers.length && 
+      isCorrect = userAnswers?.length === correctAnswers.length && 
                  userAnswers.every((answer, index) => answer === correctAnswers[index]);
     }
 
@@ -226,10 +230,15 @@ const QuizGameEngine = ({
               <TrueFalseQuestion
                 question={currentQuestion.pergunta}
                 statements={currentQuestion.statements || []}
-                selectedAnswers={gameState.selectedAnswer as boolean[] || []}
+                selectedAnswers={gameState.selectedAnswer}
                 onAnswerSelect={handleAnswerSelect}
                 showResult={gameState.showResult}
-                correctAnswers={currentQuestion.statements?.map(() => currentQuestion.answer || false) || []}
+                correctAnswers={currentQuestion.question_type === 'verdadeiro_falso_combinacoes' 
+                  ? currentQuestion.correta 
+                  : currentQuestion.statements?.map(() => currentQuestion.answer || false) || []}
+                alternatives={currentQuestion.alternativas}
+                isSequential={currentQuestion.question_type === 'verdadeiro_falso_combinacoes'}
+                context={currentQuestion.context}
               />
             ) : (
               <MultipleChoiceQuestion
@@ -239,6 +248,8 @@ const QuizGameEngine = ({
                 onAnswerSelect={handleAnswerSelect}
                 showResult={gameState.showResult}
                 correctAnswer={currentQuestion.correta}
+                context={currentQuestion.context}
+                evidence={currentQuestion.evidence}
               />
             )}
           </CardContent>
