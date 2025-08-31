@@ -125,29 +125,13 @@ serve(async (req) => {
     const idade_usuario = userProfile?.date_of_birth ? calculateAge(userProfile.date_of_birth) : 17
     const word_count = countWords(resumoContent)
     
-    // Intelligent question calculation based on word count
-    let objetivasCount, vfSequenciaisCount
-    if (word_count <= 300) {
-      objetivasCount = 3; vfSequenciaisCount = 2 // 6-8 total
-    } else if (word_count <= 600) {
-      objetivasCount = 5; vfSequenciaisCount = 4 // 10-14 total
-    } else if (word_count <= 900) {
-      objetivasCount = 7; vfSequenciaisCount = 6 // 14-18 total  
-    } else {
-      objetivasCount = 9; vfSequenciaisCount = 8 // 18-24 total
-    }
-    
-    // Identify macrothemes automatically
-    const macrothemes = [tema] // Could be enhanced with more sophisticated analysis
-    
     console.log(`📊 Análise inteligente: ${word_count} palavras, Tema: ${tema}, Idade: ${idade_usuario}`)
-    console.log(`🎯 Targets calculados: ${objetivasCount} objetivas, ${vfSequenciaisCount} V/F sequenciais`)
 
-    // STRUCTURED ENEM PROMPT - exactly as provided by user
-    const structuredPrompt = `Você é um elaborador de provas no estilo ENEM e vestibulares (Ari de Sá, Farias Brito). Sua missão é transformar o RESUMO abaixo em um QUIZ completo, coerente e proporcional ao conteúdo, SEM adicionar informações externas.
+    // User's exact prompt with AI-calculated quantities and ENEM-style long contextual statements
+    const structuredPrompt = `Você é um elaborador de provas no estilo ENEM e vestibulares (Ari de Sá, Farias Brito). Sua missão é transformar o RESUMO abaixo em um QUIZ completo, proporcional ao tamanho do conteúdo e adequado à idade do estudante, SEM adicionar informações externas.
 
 === PARÂMETROS ===
-- Idade do estudante: ${idade_usuario}
+- Idade do estudante: ${idade_usuario}   (ex.: 10, 14, 17)
 - Tema: ${tema}
 
 === RESUMO (fonte única de verdade) ===
@@ -157,29 +141,33 @@ ${resumoContent}
 
 === REGRAS OBRIGATÓRIAS ===
 1) USO EXCLUSIVO DO RESUMO: só utilize informações do texto. Nada além dele.
-2) COBERTURA TOTAL: cada macrotema do resumo deve gerar pelo menos 1 questão objetiva + 1 questão V/F sequencial.
-3) QUANTIDADE OBRIGATÓRIA: Você DEVE gerar EXATAMENTE as quantidades especificadas nos "targets":
-   - ${objetivasCount} questões objetivas (OBRIGATÓRIO)
-   - ${vfSequenciaisCount} questões V/F sequenciais (OBRIGATÓRIO)
-   - TOTAL: ${objetivasCount + vfSequenciaisCount} questões
-   ⚠️ IMPORTANTE: NÃO calcule quantidade própria. Use APENAS os valores fornecidos nos targets.
-4) QUESTÕES OBJETIVAS:
-   - Estilo ENEM, contextualizadas.
-   - 5 alternativas (A–E), UMA correta e 4 plausíveis.
-   - Distratores verossímeis, não absurdos.
-   - Proibido "todas as anteriores/nenhuma das anteriores".
-   - Alternativas equilibradas em tamanho e estilo.
-5) QUESTÕES V/F COM SEQUÊNCIA:
+2) COBERTURA TOTAL: cada macrotema identificado no resumo deve gerar pelo menos 1 questão objetiva e/ou 1 questão de V/F sequencial. Nenhum macrotema pode ficar de fora.
+3) QUANTIDADE AUTOMÁTICA: calcule o número de questões de acordo com o tamanho do resumo:
+   - ≤300 palavras → 6 a 8 questões totais
+   - 301–600 → 10 a 14 questões
+   - 601–900 → 14 a 18 questões
+   - >900 → 18 a 24 questões
+   Aproximadamente metade das questões deve ser de múltipla escolha (objetivas) e metade de V/F sequenciais.
+   ⚠️ ÊNFASE: Mínimo 10 questões. Sem limite máximo. Gere quantas forem necessárias para treinar e fixar TODO o conteúdo.
+4) QUESTÕES OBJETIVAS (5 alternativas A–E):
+   - Estilo ENEM, sempre com enunciado contextualizado.
+   - Enunciado longo: 80–150 palavras, com introdução, situação-problema, ou trecho explicativo do resumo.
+   - Após o texto-base, apresente a pergunta em forma de "Com base no texto..." ou "Considerando o contexto...".
+   - Distratores plausíveis, não absurdos.
+   - UMA correta e quatro alternativas incorretas.
+   - Proibido "todas as anteriores"/"nenhuma das anteriores".
+   - Alternativas equilibradas em tamanho e gramática.
+5) QUESTÕES V/F SEQUENCIAIS:
    - Cada item deve ter:
-     • Enunciado contextualizado.
-     • 4 afirmações numeradas (I, II, III, IV).
-     • Alternativas de resposta A–E representando combinações possíveis de V/F (ex.: A) V V F F, B) V F V F...).
-     • UMA sequência correta.
-6) EVIDENCE: em TODAS as questões, inclua um campo "evidence" com trecho literal (≤200 caracteres) do resumo que sustenta a resposta.
-7) DIFICULDADE E COGNITIVO:
-   - Varie entre "easy", "medium", "hard".
-   - Varie nível cognitivo: "remember", "understand", "apply", "analyze".
-8) ADAPTAÇÃO DE IDADE: use vocabulário adequado à idade ${idade_usuario} sem perder rigor.
+     • Enunciado contextualizado (2–4 frases).
+     • 4 afirmações numeradas (I, II, III, IV) com base no resumo.
+     • Alternativas de resposta A–E representando combinações possíveis de V/F (ex.: "A) V V F F", "B) V F V F"...).
+     • Uma única sequência correta.
+6) ADAPTAÇÃO POR IDADE: use linguagem e clareza adequadas à idade ${idade_usuario}, sem perder o rigor conceitual.
+7) EVIDENCE: em TODAS as questões inclua o campo "evidence" com trecho literal (≤200 caracteres) do resumo que sustenta a resposta correta.
+8) DIFICULDADE E COGNITIVO:
+   - Varie dificuldade: easy, medium, hard.
+   - Varie níveis cognitivos: remember, understand, apply, analyze.
 
 === FORMATO DE SAÍDA (JSON ÚNICO VÁLIDO) ===
 {
@@ -187,24 +175,24 @@ ${resumoContent}
     "tema": "${tema}",
     "idade_usuario": ${idade_usuario},
     "word_count": ${word_count},
-    "macrothemes": ${JSON.stringify(macrothemes)},
+    "macrothemes": ["..."],
     "targets": {
-      "objetivas": ${objetivasCount},
-      "vf_sequenciais": ${vfSequenciaisCount}
+      "objetivas": <int>,
+      "vf_sequenciais": <int>
     },
     "generated": {
-      "objetivas": ${objetivasCount},
-      "vf_sequenciais": ${vfSequenciaisCount}
+      "objetivas": <int>,
+      "vf_sequenciais": <int>
     }
   },
   "coverage_map": [
-    { "macrotema": "nome", "objetivas": 1, "vf_sequenciais": 1 }
+    { "macrotema": "nome", "objetivas": <int>, "vf_sequenciais": <int> }
   ],
   "quiz": {
     "objetivas": [
       {
-        "context": "até 2 frases opcionais",
-        "stem": "pergunta clara estilo ENEM",
+        "enunciado": "contexto longo estilo ENEM (80–150 palavras)",
+        "stem": "pergunta clara baseada no resumo",
         "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
         "correct_index": 0,
         "difficulty": "easy|medium|hard",
@@ -214,11 +202,10 @@ ${resumoContent}
     ],
     "vf_sequenciais": [
       {
-        "context": "até 2 frases opcionais",
-        "enunciado": "pergunta clara baseada no resumo",
+        "enunciado": "contextualização de 2–4 frases baseada no resumo",
         "statements": [
           "I. afirmação 1",
-          "II. afirmação 2", 
+          "II. afirmação 2",
           "III. afirmação 3",
           "IV. afirmação 4"
         ],
@@ -247,10 +234,11 @@ ${resumoContent}
 }
 
 === VALIDAÇÕES ===
-- Conferir que a quantidade de questões segue a faixa proporcional ao word_count.
-- Garantir ao menos 1 objetiva + 1 V/F sequencial por macrotema.
-- Garantir sempre 5 alternativas em todas as questões.
-- Responder SOMENTE com o JSON final.`
+- Gere o número de questões dentro da faixa proporcional ao word_count.
+- Garanta pelo menos 1 questão por macrotema em "coverage_map".
+- Verifique que todos os enunciados objetivos tenham 80–150 palavras e sejam contextualizados.
+- Confirme que TODAS as questões contêm evidence do resumo.
+- Responda SOMENTE com o JSON final.`
 
     // Call OpenAI API with GPT-5 and structured prompt
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -271,7 +259,7 @@ ${resumoContent}
             content: structuredPrompt
           }
         ],
-        max_completion_tokens: 8500, // Increased for GPT-5 to handle 17+ questions
+        max_completion_tokens: 12000, // Increased for GPT-5 to handle unlimited questions with long contextual statements
       }),
     })
 
@@ -314,18 +302,18 @@ ${resumoContent}
     // Process and validate questions
     const validQuestions = []
     
-    // Process objetivas (multiple choice)
+    // Process objetivas (multiple choice) - now with long contextual enunciados
     for (const q of quizData.quiz.objetivas) {
-      if (q.stem && q.options && Array.isArray(q.options) && q.options.length === 5 && 
+      if (q.enunciado && q.stem && q.options && Array.isArray(q.options) && q.options.length === 5 && 
           typeof q.correct_index === 'number' && q.evidence && q.difficulty && q.cognitive_level) {
         
         validQuestions.push({
           question_type: 'objetiva',
-          pergunta: q.stem,
+          pergunta: `${q.enunciado}\n\n${q.stem}`, // Combine long contextual enunciado with stem
           alternativas: q.options,
           correta: q.correct_index,
           explicacao: `Evidence: ${q.evidence}`,
-          context: q.context,
+          context: q.enunciado, // Store the long contextual statement
           difficulty: q.difficulty,
           cognitive_level: q.cognitive_level,
           evidence: q.evidence
@@ -362,16 +350,27 @@ ${resumoContent}
       throw new Error('No valid questions generated - all questions failed structured validation')
     }
 
-    // CRITICAL VALIDATION: Check if AI generated the exact number specified in targets
+    // ENHANCED VALIDATION: Ensure minimum quantity and AI calculated properly
     const generatedObjetivas = quizData.quiz.objetivas.length
     const generatedVfSequenciais = quizData.quiz.vf_sequenciais.length
+    const totalGenerated = generatedObjetivas + generatedVfSequenciais
     
-    console.log(`🎯 Target vs Generated - Objetivas: ${objetivasCount} vs ${generatedObjetivas}, V/F: ${vfSequenciaisCount} vs ${generatedVfSequenciais}`)
+    console.log(`🎯 AI Generated Quantities - Objetivas: ${generatedObjetivas}, V/F: ${generatedVfSequenciais}, Total: ${totalGenerated}`)
     
-    if (generatedObjetivas < objetivasCount || generatedVfSequenciais < vfSequenciaisCount) {
-      const deficit = (objetivasCount - generatedObjetivas) + (vfSequenciaisCount - generatedVfSequenciais)
-      console.error(`❌ AI generated insufficient questions: ${deficit} questões faltando`)
-      throw new Error(`AI não gerou quantidade suficiente. Esperado: ${objetivasCount} objetivas + ${vfSequenciaisCount} V/F, mas gerou: ${generatedObjetivas} + ${generatedVfSequenciais}`)
+    // Ensure minimum 10 questions as requested by user
+    if (totalGenerated < 10) {
+      console.error(`❌ AI generated insufficient questions: ${totalGenerated} (minimum required: 10)`)
+      throw new Error(`AI não gerou quantidade suficiente. Mínimo: 10 questões, mas gerou: ${totalGenerated}`)
+    }
+
+    // Validate that AI calculated targets match generated quantities
+    if (quizData.meta.targets && quizData.meta.generated) {
+      const targetsObjetivas = quizData.meta.targets.objetivas || 0
+      const targetsVf = quizData.meta.targets.vf_sequenciais || 0
+      
+      if (generatedObjetivas !== targetsObjetivas || generatedVfSequenciais !== targetsVf) {
+        console.warn(`⚠️ AI targets don't match generated - Targets: ${targetsObjetivas}+${targetsVf}, Generated: ${generatedObjetivas}+${generatedVfSequenciais}`)
+      }
     }
 
     console.log(`✅ Structured validation: ${validQuestions.length}/${quizData.quiz.objetivas.length + quizData.quiz.vf_sequenciais.length} questões aprovadas`)
