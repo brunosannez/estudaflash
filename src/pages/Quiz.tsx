@@ -1,17 +1,19 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, startTransition } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
-import SimplifiedQuizPlay from '@/components/quiz/SimplifiedQuizPlay';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
-import EnhancedQuizDashboard from '@/components/quiz/EnhancedQuizDashboard';
+import QuizSuspenseWrapper from '@/components/quiz/QuizSuspenseWrapper';
 import { useQuizPageState } from '@/hooks/quiz/useQuizPageState';
-import { useQuizDataLoader } from '@/hooks/quiz/useQuizDataLoader';
-import { useEnhancedQuizSystem } from '@/hooks/useEnhancedQuizSystem';
+import { useOptimizedQuizDataLoader } from '@/hooks/quiz/useOptimizedQuizDataLoader';
 import { Button } from '@/components/ui/button';
 import { Settings, BarChart3 } from 'lucide-react';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+
+// Lazy load components to prevent concurrent loading issues
+const SimplifiedQuizPlay = React.lazy(() => import('@/components/quiz/SimplifiedQuizPlay'));
+const EnhancedQuizDashboard = React.lazy(() => import('@/components/quiz/EnhancedQuizDashboard'));
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,14 +35,7 @@ const Quiz = () => {
     setInitialized
   } = useQuizPageState();
 
-  const { loadQuizData, generateQuiz } = useQuizDataLoader();
-  const { 
-    configurations, 
-    badges, 
-    analytics, 
-    todayStats,
-    isLoading: enhancedLoading 
-  } = useEnhancedQuizSystem();
+  const { loadQuizData, generateQuiz } = useOptimizedQuizDataLoader();
 
   // Check if this is a resume operation
   const sessionId = searchParams.get('session');
@@ -55,7 +50,7 @@ const Quiz = () => {
     isLoading
   });
 
-  // Load data once on mount
+  // Load data once on mount with startTransition to avoid synchronous updates
   useEffect(() => {
     if (!id) {
       console.error('❌ No summary ID provided');
@@ -68,28 +63,34 @@ const Quiz = () => {
 
     const loadData = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        startTransition(() => {
+          setLoading(true);
+          setError(null);
+        });
         
         const data = await loadQuizData(id);
         
-        setResumo(data.resumo);
-        setQuizzes(data.quizzes);
-        setInitialized(true);
+        startTransition(() => {
+          setResumo(data.resumo);
+          setQuizzes(data.quizzes);
+          setInitialized(true);
+          setLoading(false);
+        });
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
         const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar dados do quiz';
         
-        if (errorMessage.includes('não encontrado')) {
-          toast.error('Resumo não encontrado');
-          navigate('/my-summaries');
-        } else {
-          setError(errorMessage);
-          toast.error(errorMessage);
-        }
-      } finally {
-        setLoading(false);
+        startTransition(() => {
+          if (errorMessage.includes('não encontrado')) {
+            toast.error('Resumo não encontrado');
+            navigate('/my-summaries');
+          } else {
+            setError(errorMessage);
+            toast.error(errorMessage);
+          }
+          setLoading(false);
+        });
       }
     };
 
@@ -109,15 +110,25 @@ const Quiz = () => {
     if (generating) return;
 
     try {
-      setGenerating(true);
+      startTransition(() => {
+        setGenerating(true);
+      });
+      
       const newQuizzes = await generateQuiz(resumo, id);
-      setQuizzes(newQuizzes);
+      
+      startTransition(() => {
+        setQuizzes(newQuizzes);
+        setGenerating(false);
+      });
     } catch (error) {
       console.error('❌ Quiz generation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar quiz. Tente novamente.';
+      
+      startTransition(() => {
+        setGenerating(false);
+      });
+      
       toast.error(errorMessage);
-    } finally {
-      setGenerating(false);
     }
   };
 
@@ -186,7 +197,12 @@ const Quiz = () => {
               Voltar
             </Button>
           </div>
-          <EnhancedQuizDashboard />
+          <QuizSuspenseWrapper 
+            fallbackMessage="Carregando dashboard..." 
+            fallbackDescription="Preparando estatísticas..."
+          >
+            <EnhancedQuizDashboard />
+          </QuizSuspenseWrapper>
         </div>
       </PageLayout>
     );
@@ -202,59 +218,17 @@ const Quiz = () => {
     };
     
     return (
-      <>
-        {/* Enhanced Stats Header */}
-        {(badges.length > 0 || todayStats) && (
-          <div className="mb-4 bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {todayStats && (
-                  <div className="text-sm">
-                    <span className="font-medium">Hoje: </span>
-                    <span className="text-green-600">{todayStats.total_quizzes_completed} quizzes</span>
-                    {todayStats.average_accuracy > 0 && (
-                      <span className="ml-2 text-blue-600">
-                        {Math.round(todayStats.average_accuracy)}% precisão
-                      </span>
-                    )}
-                  </div>
-                )}
-                {badges.length > 0 && (
-                  <div className="text-sm">
-                    <span className="font-medium">Badges: </span>
-                    <span className="text-yellow-600">{badges.length} conquistados</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/quiz/${id}?dashboard=true`)}
-                >
-                  <BarChart3 className="h-4 w-4 mr-1" />
-                  Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/quiz/${id}?config=true`)}
-                >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Configurar
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-        
+      <QuizSuspenseWrapper 
+        fallbackMessage="Carregando quiz..." 
+        fallbackDescription="Preparando questões..."
+      >
         <SimplifiedQuizPlay 
           quiz={quizData} 
           onComplete={handleQuizComplete}
           sessionId={sessionId}
           resumeMode={resumeMode}
         />
-      </>
+      </QuizSuspenseWrapper>
     );
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { enhancedQuizService } from '@/services/enhancedQuizService';
 import { useGameification } from '@/hooks/useGameification';
 import { useToast } from '@/hooks/use-toast';
@@ -75,7 +75,9 @@ export const useEnhancedQuizSystem = () => {
   }, []);
 
   const loadInitialData = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    startTransition(() => {
+      setState(prev => ({ ...prev, isLoading: true }));
+    });
     
     try {
       const [configurations, todayStats, analytics, badges] = await Promise.all([
@@ -85,15 +87,17 @@ export const useEnhancedQuizSystem = () => {
         enhancedQuizService.getUserBadges()
       ]);
 
-      setState(prev => ({
-        ...prev,
-        configurations,
-        todayStats,
-        analytics,
-        badges,
-        weakTopics: analytics?.weakestTopics || [],
-        isLoading: false
-      }));
+      startTransition(() => {
+        setState(prev => ({
+          ...prev,
+          configurations,
+          todayStats,
+          analytics,
+          badges,
+          weakTopics: analytics?.weakestTopics || [],
+          isLoading: false
+        }));
+      });
     } catch (error) {
       console.error('Error loading quiz data:', error);
       toast({
@@ -101,7 +105,9 @@ export const useEnhancedQuizSystem = () => {
         description: 'Falha ao carregar dados do quiz',
         variant: 'destructive'
       });
-      setState(prev => ({ ...prev, isLoading: false }));
+      startTransition(() => {
+        setState(prev => ({ ...prev, isLoading: false }));
+      });
     }
   }, [toast]);
 
@@ -188,7 +194,9 @@ export const useEnhancedQuizSystem = () => {
     config: QuizSessionConfig = {}
   ) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
+      startTransition(() => {
+        setState(prev => ({ ...prev, isLoading: true }));
+      });
       
       const session = await enhancedQuizService.createEnhancedQuizSession(
         resumoId,
@@ -199,19 +207,21 @@ export const useEnhancedQuizSystem = () => {
 
       const timeLimit = config.timeLimit ? config.timeLimit * 60 : questionsData.length * 30;
 
-      setState(prev => ({
-        ...prev,
-        currentSession: session,
-        currentQuestionIndex: 0,
-        userAnswers: new Array(questionsData.length).fill(null),
-        sessionStartTime: Date.now(),
-        isSessionActive: true,
-        isLoading: false,
-        selectedAnswer: null,
-        showExplanation: false,
-        timeRemaining: timeLimit,
-        hintsUsed: 0
-      }));
+      startTransition(() => {
+        setState(prev => ({
+          ...prev,
+          currentSession: session,
+          currentQuestionIndex: 0,
+          userAnswers: new Array(questionsData.length).fill(null),
+          sessionStartTime: Date.now(),
+          isSessionActive: true,
+          isLoading: false,
+          selectedAnswer: null,
+          showExplanation: false,
+          timeRemaining: timeLimit,
+          hintsUsed: 0
+        }));
+      });
 
       toast({
         title: 'Quiz Iniciado!',
@@ -221,7 +231,9 @@ export const useEnhancedQuizSystem = () => {
       return session;
     } catch (error) {
       console.error('Error starting quiz session:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      startTransition(() => {
+        setState(prev => ({ ...prev, isLoading: false }));
+      });
       toast({
         title: 'Erro',
         description: 'Falha ao iniciar quiz',

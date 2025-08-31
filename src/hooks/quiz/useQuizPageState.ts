@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 interface QuizPageState {
   resumo: any | null;
@@ -20,15 +20,21 @@ export const useQuizPageState = () => {
     initialized: false
   });
 
+  // Add ref to prevent concurrent updates
+  const updateInProgress = useRef(false);
+
   const setResumo = useCallback((resumo: any) => {
+    if (updateInProgress.current) return;
     setState(prev => ({ ...prev, resumo }));
   }, []);
 
   const setQuizzes = useCallback((quizzes: any[]) => {
+    if (updateInProgress.current) return;
     setState(prev => ({ ...prev, quizzes }));
   }, []);
 
   const setLoading = useCallback((isLoading: boolean) => {
+    updateInProgress.current = isLoading;
     setState(prev => ({ ...prev, isLoading }));
   }, []);
 

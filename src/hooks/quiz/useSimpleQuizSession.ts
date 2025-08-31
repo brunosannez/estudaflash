@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuizSessionManager } from './useQuizSessionManager';
 import { useQuizAnswerSaver } from './useQuizAnswerSaver';
 import { useQuizProgressTracker } from './useQuizProgressTracker';
@@ -7,6 +7,9 @@ import { useQuizProgressTracker } from './useQuizProgressTracker';
 export const useSimpleQuizSession = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
+  // Add ref to prevent concurrent session operations
+  const sessionOperationInProgress = useRef(false);
 
   const {
     sessionId,
@@ -32,12 +35,18 @@ export const useSimpleQuizSession = () => {
     onQuestionIndexUpdate: setCurrentQuestionIndex
   });
 
-  // Sync local state with session state when session loads
+  // Sync local state with session state when session loads (with debouncing)
   useEffect(() => {
-    if (sessionId && !loading) {
+    if (sessionId && !loading && !sessionOperationInProgress.current) {
       console.log('🔄 Syncing local state with session:', { sessionQuestionIndex, sessionCorrectAnswers });
-      setCurrentQuestionIndex(sessionQuestionIndex);
-      setCorrectAnswers(sessionCorrectAnswers);
+      sessionOperationInProgress.current = true;
+      
+      // Use setTimeout to batch state updates
+      setTimeout(() => {
+        setCurrentQuestionIndex(sessionQuestionIndex);
+        setCorrectAnswers(sessionCorrectAnswers);
+        sessionOperationInProgress.current = false;
+      }, 0);
     }
   }, [sessionId, loading, sessionQuestionIndex, sessionCorrectAnswers]);
 
