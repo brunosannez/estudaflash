@@ -72,132 +72,77 @@ serve(async (req) => {
     const tema = detectTheme(resumoContent);
 
     // Create the exact prompt from user requirements
-    const promptText = `Você é um elaborador de provas no estilo ENEM. Sua missão é transformar o RESUMO criado em um QUIZ completo, proporcional ao tamanho do conteúdo e adequado à idade do estudante, SEM adicionar informações externas.
+    // Optimized prompt with reduced token count
+    const promptText = `Você é um especialista em elaboração de provas ENEM. Transforme o RESUMO em um QUIZ completo usando APENAS as informações do texto.
 
-=== PARÂMETROS ===
-- Idade do estudante: ${userAge}
+PARÂMETROS:
+- Idade: ${userAge}
 - Tema: ${tema}
 
-=== RESUMO (fonte única de verdade) ===
+RESUMO:
 """
 ${resumoContent}
 """
 
-=== REGRAS OBRIGATÓRIAS ===
-1) USO EXCLUSIVO DO RESUMO: só utilize informações do texto. Nada além dele.
-2) COBERTURA TOTAL: cada macrotema identificado no resumo deve gerar pelo menos 1 questão objetiva e/ou 1 questão de V/F sequencial. Nenhum macrotema pode ficar de fora.
-3) QUANTIDADE AUTOMÁTICA: calcule o número de questões de acordo com o tamanho do resumo:
-   - ≤300 palavras → 6 a 8 questões totais
-   - 301–600 → 10 a 14 questões
-   - 601–900 → 14 a 18 questões
-   - >900 → 18 a 24 questões
-   Aproximadamente metade das questões deve ser de múltipla escolha (objetivas) e metade de V/F sequenciais.
-4) QUESTÕES OBJETIVAS (5 alternativas A–E):
-   - Estilo ENEM, sempre com enunciado contextualizado.
-   - Enunciado longo: 80–150 palavras, com introdução, situação-problema, ou trecho explicativo do resumo.
-   - Após o texto-base, apresente a pergunta em forma de "Com base no texto..." ou "Considerando o contexto...".
-   - Distratores plausíveis, não absurdos.
-   - UMA correta e quatro alternativas incorretas.
-   - Proibido "todas as anteriores"/"nenhuma das anteriores".
-   - Alternativas equilibradas em tamanho e gramática.
-5) QUESTÕES V/F SEQUENCIAIS:
-   - Cada item deve ter:
-     • Enunciado contextualizado (2–4 frases).
-     • 4 afirmações numeradas (I, II, III, IV) com base no resumo.
-     • Alternativas de resposta A–E representando combinações possíveis de V/F (ex.: "A) V V F F", "B) V F V F"...).
-     • Uma única sequência correta.
-6) ADAPTAÇÃO POR IDADE: use linguagem e clareza adequadas à idade ${userAge}, sem perder o rigor conceitual.
-7) EVIDENCE: em TODAS as questões inclua o campo "evidence" com trecho literal (≤200 caracteres) do resumo que sustenta a resposta correta.
-8) DIFICULDADE E COGNITIVO:
-   - Varie dificuldade: easy, medium, hard.
-   - Varie níveis cognitivos: remember, understand, apply, analyze.
+REGRAS:
+1) USO EXCLUSIVO DO RESUMO - não adicione informações externas
+2) QUANTIDADE por tamanho:
+   - ≤300 palavras → 6-8 questões
+   - 301-600 → 8-12 questões  
+   - 601-900 → 12-16 questões
+   - >900 → 16-20 questões
+   Metade objetivas (A-E) e metade V/F sequenciais
+3) QUESTÕES OBJETIVAS:
+   - Enunciado contextualizado 60-120 palavras
+   - Pergunta "Com base no texto..." 
+   - 5 alternativas A-E, apenas 1 correta
+   - Distratores plausíveis
+4) QUESTÕES V/F:
+   - Enunciado 2-3 frases
+   - 4 afirmações (I,II,III,IV)
+   - 5 alternativas A-E com combinações V/F
+5) Varie dificuldade: easy/medium/hard
+6) Evidence: trecho do resumo ≤150 caracteres
 
-=== FORMATO DE SAÍDA (JSON ÚNICO VÁLIDO) ===
+JSON FORMATO:
 {
-  "meta": {
-    "tema": "${tema}",
-    "idade_usuario": ${userAge},
-    "word_count": <int>,
-    "macrothemes": ["..."],
-    "targets": {
-      "objetivas": <int>,
-      "vf_sequenciais": <int>
-    },
-    "generated": {
-      "objetivas": <int>,
-      "vf_sequenciais": <int>
-    }
-  },
-  "coverage_map": [
-    { "macrotema": "nome", "objetivas": <int>, "vf_sequenciais": <int> }
-  ],
+  "meta": {"tema": "${tema}", "idade_usuario": ${userAge}, "word_count": <int>, "macrothemes": ["..."], "targets": {"objetivas": <int>, "vf_sequenciais": <int>}, "generated": {"objetivas": <int>, "vf_sequenciais": <int>}},
+  "coverage_map": [{"macrotema": "nome", "objetivas": <int>, "vf_sequenciais": <int>}],
   "quiz": {
-    "objetivas": [
-      {
-        "enunciado": "contexto longo estilo ENEM (80–150 palavras)",
-        "stem": "pergunta clara baseada no resumo",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-        "correct_index": 0,
-        "difficulty": "easy|medium|hard",
-        "cognitive_level": "remember|understand|apply|analyze",
-        "evidence": "trecho literal do resumo (<=200)"
-      }
-    ],
-    "vf_sequenciais": [
-      {
-        "enunciado": "contextualização de 2–4 frases baseada no resumo",
-        "statements": [
-          "I. afirmação 1",
-          "II. afirmação 2",
-          "III. afirmação 3",
-          "IV. afirmação 4"
-        ],
-        "options": [
-          "A) V V F F",
-          "B) V F V F",
-          "C) V F F V",
-          "D) F V V F",
-          "E) F F V V"
-        ],
-        "correct_index": 2,
-        "difficulty": "easy|medium|hard",
-        "cognitive_level": "understand|analyze",
-        "evidence": "trecho literal do resumo (<=200)"
-      }
-    ]
+    "objetivas": [{"enunciado": "contexto", "stem": "pergunta", "options": ["A)...", "B)...", "C)...", "D)...", "E)..."], "correct_index": 0, "difficulty": "easy", "cognitive_level": "understand", "evidence": "trecho"}],
+    "vf_sequenciais": [{"enunciado": "contexto", "statements": ["I...", "II...", "III...", "IV..."], "options": ["A) V V F F", "B) V F V F", "C) F V F V", "D) F F V V", "E) V V V F"], "correct_index": 2, "difficulty": "medium", "cognitive_level": "analyze", "evidence": "trecho"}]
   },
-  "quality_checks": {
-    "all_from_summary": true,
-    "age_adapted": true,
-    "balanced_difficulty": true,
-    "balanced_cognitive_levels": true,
-    "coverage_complete": true,
-    "no_duplicates": true
-  }
+  "quality_checks": {"all_from_summary": true, "age_adapted": true, "balanced_difficulty": true, "balanced_cognitive_levels": true, "coverage_complete": true, "no_duplicates": true}
 }
 
-=== VALIDAÇÕES ===
-- Gere o número de questões dentro da faixa proporcional ao word_count.
-- Garanta pelo menos 1 questão por macrotema em "coverage_map".
-- Verifique que todos os enunciados objetivos tenham 80–150 palavras e sejam contextualizados.
-- Confirme que TODAS as questões contêm evidence do resumo.
-- Responda SOMENTE com o JSON final.`;
+Responda APENAS com o JSON.`;
 
     console.log('📝 Starting ENEM quiz generation...');
     console.log('📊 Content length:', resumoContent.length, 'characters');
     console.log('👤 User age:', userAge);
     console.log('📚 Detected theme:', tema);
 
-    // Call OpenAI API with retry logic
+    // Call OpenAI API with improved retry logic and exponential backoff
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = 2; // Reduced from 3 to 2
     let quizData = null;
+
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
 
     while (attempts < maxAttempts && !quizData) {
       attempts++;
       console.log(`🔄 Attempt ${attempts}/${maxAttempts}`);
 
       try {
+        // Use exponential backoff for delays
+        if (attempts > 1) {
+          const delay = Math.pow(2, attempts - 1) * 2000; // 2s, 4s, 8s...
+          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -205,7 +150,7 @@ ${resumoContent}
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-4.1-2025-04-14', // Updated to more stable model
             messages: [
               {
                 role: 'system',
@@ -216,13 +161,26 @@ ${resumoContent}
                 content: promptText
               }
             ],
-            max_tokens: 25000,
-            temperature: 0.3
+            max_completion_tokens: 15000, // Updated parameter name and reduced size
+            // temperature removed - not supported in newer models
           }),
         });
 
+        console.log(`📡 OpenAI Response status: ${response.status}`);
+
         if (!response.ok) {
-          throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error(`❌ OpenAI API error details:`, errorText);
+          
+          if (response.status === 429) {
+            throw new Error('Rate limit exceeded - too many requests');
+          } else if (response.status === 400) {
+            throw new Error(`Bad request to OpenAI API: ${errorText}`);
+          } else if (response.status === 401) {
+            throw new Error('Invalid OpenAI API key');
+          } else {
+            throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+          }
         }
 
         const openAIResponse = await response.json();
@@ -267,10 +225,16 @@ ${resumoContent}
 
         // Validate minimum question count
         const wordCount = quizData.meta?.word_count || resumoContent.split(' ').length;
-        const expectedMin = wordCount <= 300 ? 6 : wordCount <= 600 ? 10 : wordCount <= 900 ? 14 : 18;
+        let expectedMin = 6;
+        if (wordCount <= 300) expectedMin = 6;
+        else if (wordCount <= 600) expectedMin = 8;
+        else if (wordCount <= 900) expectedMin = 12;
+        else expectedMin = 16;
+        
         const totalGenerated = (quizData.quiz?.objetivas?.length || 0) + (quizData.quiz?.vf_sequenciais?.length || 0);
 
         console.log(`📊 Generated ${totalGenerated} questions, expected minimum: ${expectedMin}`);
+        console.log(`📝 Word count: ${wordCount}`);
 
         if (totalGenerated < expectedMin) {
           console.log(`⚠️ Insufficient questions generated (${totalGenerated}/${expectedMin}), retrying...`);
@@ -281,6 +245,10 @@ ${resumoContent}
         // Validate required fields
         if (!quizData.quiz?.objetivas && !quizData.quiz?.vf_sequenciais) {
           throw new Error('No questions generated');
+        }
+
+        if (!quizData.meta || !quizData.coverage_map) {
+          throw new Error('Invalid quiz structure - missing metadata');
         }
 
         console.log('✅ Quiz validation passed');

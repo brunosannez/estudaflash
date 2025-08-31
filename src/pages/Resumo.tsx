@@ -25,7 +25,7 @@ const Resumo = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { generateQuiz, loading: quizLoading } = useEnemQuiz();
+  const { generateQuiz, loading: quizLoading, generating } = useEnemQuiz();
   const { generateAutoFlashcards, isGenerating: flashcardsLoading } = useAutoFlashcards();
   const { generateMindMap, loading: mindMapLoading } = useMindMap();
 
@@ -108,25 +108,34 @@ const Resumo = () => {
   };
 
   const handleGenerateEnemQuiz = async () => {
-    if (!resumo) {
-      console.error('❌ No resumo data available');
-      toast.error('Dados do resumo não disponíveis');
+    if (!resumo || generating) return;
+    
+    console.log('🎯 Generate ENEM Quiz clicked');
+    console.log('📋 Resumo ID:', resumo.id);
+    console.log('📄 Content length:', resumo.resumo_gerado?.length);
+    
+    if (!resumo.resumo_gerado || resumo.resumo_gerado.trim().length < 100) {
+      toast.error('Resumo muito pequeno para gerar quiz. Mínimo 100 caracteres.');
       return;
     }
-
-    console.log('🎯 Generating ENEM quiz for:', resumo.id);
     
     try {
       const quizMetadataId = await generateQuiz(resumo.id, resumo.resumo_gerado);
+      
       if (quizMetadataId) {
-        console.log('✅ Quiz generated, navigating to:', `/quiz-enem/${resumo.id}`);
-        toast.success('Quiz ENEM gerado com sucesso!');
-        navigate(`/quiz-enem/${resumo.id}`);
+        console.log('✅ Quiz generated, navigating to quiz page');
+        console.log('🆔 Quiz Metadata ID:', quizMetadataId);
+        
+        // Small delay to ensure toast is visible before navigation
+        setTimeout(() => {
+          navigate(`/quiz-enem/${resumo.id}`);
+        }, 2000);
+      } else {
+        console.log('❌ Quiz generation failed - no metadata ID returned');
       }
     } catch (error) {
-      console.error('❌ Erro ao gerar quiz ENEM:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro ao gerar quiz ENEM: ${errorMessage}`);
+      console.error('❌ Error in handleGenerateEnemQuiz:', error);
+      toast.error('Erro inesperado ao gerar quiz');
     }
   };
 
@@ -244,13 +253,13 @@ const Resumo = () => {
             <div className="grid gap-3 md:grid-cols-3">
               <Button 
                 onClick={handleGenerateEnemQuiz}
-                disabled={quizLoading || !resumo}
+                disabled={generating || !resumo}
                 className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white"
               >
-                {quizLoading ? (
+                {generating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Gerando...
+                    Gerando Quiz...
                   </>
                 ) : (
                   <>

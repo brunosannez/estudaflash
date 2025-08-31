@@ -45,6 +45,11 @@ export const useEnemQuiz = () => {
       return null;
     }
 
+    if (!resumoContent || resumoContent.trim().length < 100) {
+      toast.error('Conteúdo do resumo muito pequeno para gerar quiz');
+      return null;
+    }
+
     setGenerating(true);
     
     try {
@@ -65,24 +70,53 @@ export const useEnemQuiz = () => {
 
       if (error) {
         console.error('❌ Edge function error:', error);
-        throw new Error(`Edge function error: ${error.message}`);
+        
+        // More specific error messages
+        if (error.message?.includes('Rate limit')) {
+          toast.error('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+        } else if (error.message?.includes('API key')) {
+          toast.error('Erro de configuração do sistema. Contate o suporte.');
+        } else if (error.message?.includes('400')) {
+          toast.error('Erro na requisição. Tente novamente com um resumo diferente.');
+        } else {
+          toast.error(`Erro na geração: ${error.message}`);
+        }
+        return null;
       }
 
       if (!data?.success) {
         console.error('❌ Quiz generation failed:', data);
-        throw new Error(data?.error || 'Failed to generate quiz');
+        const errorMsg = data?.error || 'Falha na geração do quiz';
+        
+        if (errorMsg.includes('Rate limit')) {
+          toast.error('Limite de requisições atingido. Aguarde alguns minutos.');
+        } else if (errorMsg.includes('insufficient questions')) {
+          toast.error('Resumo muito pequeno. Adicione mais conteúdo.');
+        } else {
+          toast.error(`Erro: ${errorMsg}`);
+        }
+        return null;
       }
 
       console.log('✅ ENEM quiz generated successfully:', data);
       
-      toast.success(`Quiz ENEM gerado com sucesso! ${data.totalQuestions} questões criadas.`);
+      toast.success(`Quiz ENEM gerado com sucesso! ${data.totalQuestions} questões criadas.`, {
+        duration: 5000
+      });
       
       return data.quizMetadataId;
 
     } catch (error) {
       console.error('❌ Error generating ENEM quiz:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro ao gerar quiz ENEM: ${errorMessage}`);
+      
+      if (errorMessage.includes('Failed to fetch')) {
+        toast.error('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else if (errorMessage.includes('timeout')) {
+        toast.error('Tempo limite excedido. O resumo pode ser muito longo.');
+      } else {
+        toast.error(`Erro ao gerar quiz ENEM: ${errorMessage}`);
+      }
       return null;
     } finally {
       setGenerating(false);
