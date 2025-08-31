@@ -67,7 +67,7 @@ serve(async (req) => {
       throw new Error('Conteúdo do resumo e ID são obrigatórios')
     }
 
-    console.log('🚀 Generating ENEM-style quiz with structured prompt for resumo:', resumoId)
+    console.log('🚀 Generating ENEM-style quiz with unlimited questions for resumo:', resumoId)
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -127,7 +127,7 @@ serve(async (req) => {
     
     console.log(`📊 Análise inteligente: ${word_count} palavras, Tema: ${tema}, Idade: ${idade_usuario}`)
 
-    // User's exact prompt with AI-calculated quantities and ENEM-style long contextual statements
+    // PROMPT EXATO ESTILO ENEM COM ÊNFASE EM QUANTIDADE PROPORCIONAL
     const structuredPrompt = `Você é um elaborador de provas no estilo ENEM e vestibulares (Ari de Sá, Farias Brito). Sua missão é transformar o RESUMO abaixo em um QUIZ completo, proporcional ao tamanho do conteúdo e adequado à idade do estudante, SEM adicionar informações externas.
 
 === PARÂMETROS ===
@@ -148,7 +148,7 @@ ${resumoContent}
    - 601–900 → 14 a 18 questões
    - >900 → 18 a 24 questões
    Aproximadamente metade das questões deve ser de múltipla escolha (objetivas) e metade de V/F sequenciais.
-   ⚠️ ÊNFASE: Mínimo 10 questões. Sem limite máximo. Gere quantas forem necessárias para treinar e fixar TODO o conteúdo.
+   ⚠️ ÊNFASE CRÍTICA: Mínimo 10 questões. Sem limite máximo. Gere quantas forem necessárias para treinar e fixar TODO o conteúdo. Para conteúdos grandes (>900 palavras), gere pelo menos 18-24 questões.
 4) QUESTÕES OBJETIVAS (5 alternativas A–E):
    - Estilo ENEM, sempre com enunciado contextualizado.
    - Enunciado longo: 80–150 palavras, com introdução, situação-problema, ou trecho explicativo do resumo.
@@ -238,9 +238,10 @@ ${resumoContent}
 - Garanta pelo menos 1 questão por macrotema em "coverage_map".
 - Verifique que todos os enunciados objetivos tenham 80–150 palavras e sejam contextualizados.
 - Confirme que TODAS as questões contêm evidence do resumo.
-- Responda SOMENTE com o JSON final.`
+- Responda SOMENTE com o JSON final.
+⚠️ IMPORTANTE: Para ${word_count} palavras, você DEVE gerar pelo menos ${Math.max(10, Math.floor(word_count/200))} questões totais.`
 
-    // Call OpenAI API with GPT-5 and structured prompt
+    // Call OpenAI API with enhanced tokens for unlimited questions
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -248,18 +249,18 @@ ${resumoContent}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07', // Updated to newest model
+        model: 'gpt-5-2025-08-07',
         messages: [
           {
             role: 'system',
-            content: 'Você é um elaborador de provas ENEM especialista. Siga RIGOROSAMENTE o formato JSON solicitado. Use EXCLUSIVAMENTE as informações do resumo fornecido. NUNCA invente dados. Responda APENAS com JSON válido.'
+            content: `Você é um elaborador de provas ENEM especialista. CRÍTICO: Você DEVE gerar quantidade proporcional ao conteúdo - mínimo 10 questões, sem limite máximo. Para conteúdos grandes (>900 palavras), gere 18-24+ questões. Siga RIGOROSAMENTE o formato JSON solicitado. Use EXCLUSIVAMENTE as informações do resumo fornecido. NUNCA invente dados. Responda APENAS com JSON válido. GERE TODAS AS QUESTÕES NECESSÁRIAS PARA COBRIR TODO O CONTEÚDO.`
           },
           {
             role: 'user',
             content: structuredPrompt
           }
         ],
-        max_completion_tokens: 12000, // Increased for GPT-5 to handle unlimited questions with long contextual statements
+        max_completion_tokens: 15000, // Aumentado significativamente para permitir mais questões
       }),
     })
 
@@ -272,7 +273,8 @@ ${resumoContent}
     const openaiData = await openaiResponse.json()
     const content = openaiData.choices[0].message.content
 
-    console.log('📝 Structured ENEM quiz response received:', content.substring(0, 200) + '...')
+    console.log('📝 ENEM quiz response received, length:', content.length)
+    console.log('📝 First 300 chars:', content.substring(0, 300))
 
     // Parse and validate structured JSON response
     let quizData
@@ -297,85 +299,74 @@ ${resumoContent}
 
     console.log('✅ Structured format validated successfully')
     console.log(`📊 Metadata: ${JSON.stringify(quizData.meta)}`)
-    console.log(`🔍 Quality checks: ${JSON.stringify(quizData.quality_checks)}`)
 
-    // Process and validate questions
+    // Process and validate questions - FLEXÍVEL para aceitar mais questões
     const validQuestions = []
     
-    // Process objetivas (multiple choice) - now with long contextual enunciados
-    for (const q of quizData.quiz.objetivas) {
-      if (q.enunciado && q.stem && q.options && Array.isArray(q.options) && q.options.length === 5 && 
-          typeof q.correct_index === 'number' && q.evidence && q.difficulty && q.cognitive_level) {
-        
-        validQuestions.push({
-          question_type: 'objetiva',
-          pergunta: `${q.enunciado}\n\n${q.stem}`, // Combine long contextual enunciado with stem
-          alternativas: q.options,
-          correta: q.correct_index,
-          explicacao: `Evidence: ${q.evidence}`,
-          context: q.enunciado, // Store the long contextual statement
-          difficulty: q.difficulty,
-          cognitive_level: q.cognitive_level,
-          evidence: q.evidence
-        })
-      } else {
-        console.warn('⚠️ Invalid objetiva question skipped:', Object.keys(q))
+    // Process objetivas (multiple choice) - with ENEM-style long enunciados
+    if (quizData.quiz.objetivas && Array.isArray(quizData.quiz.objetivas)) {
+      for (const q of quizData.quiz.objetivas) {
+        if (q.enunciado && q.stem && q.options && Array.isArray(q.options) && q.options.length === 5 && 
+            typeof q.correct_index === 'number' && q.evidence && q.difficulty && q.cognitive_level) {
+          
+          validQuestions.push({
+            question_type: 'objetiva',
+            pergunta: `${q.enunciado}\n\n${q.stem}`, // Combine long contextual enunciado with stem
+            alternativas: q.options,
+            correta: q.correct_index,
+            explicacao: `Evidence: ${q.evidence}`,
+            context: q.enunciado, // Store the long contextual statement
+            difficulty: q.difficulty,
+            cognitive_level: q.cognitive_level,
+            evidence: q.evidence
+          })
+        } else {
+          console.warn('⚠️ Invalid objetiva question skipped:', Object.keys(q))
+        }
       }
     }
 
     // Process vf_sequenciais (sequential true/false with A-E options)
-    for (const q of quizData.quiz.vf_sequenciais) {
-      if (q.enunciado && q.statements && Array.isArray(q.statements) && q.statements.length === 4 &&
-          q.options && Array.isArray(q.options) && q.options.length === 5 &&
-          typeof q.correct_index === 'number' && q.evidence && q.difficulty && q.cognitive_level) {
-        
-        validQuestions.push({
-          question_type: 'verdadeiro_falso_combinacoes',
-          pergunta: q.enunciado,
-          statements: q.statements,
-          alternativas: q.options, // A-E format for sequential V/F
-          correta: q.correct_index,
-          explicacao: `Evidence: ${q.evidence}`,
-          context: q.context,
-          difficulty: q.difficulty,
-          cognitive_level: q.cognitive_level,
-          evidence: q.evidence
-        })
-      } else {
-        console.warn('⚠️ Invalid vf_sequenciais question skipped:', Object.keys(q))
+    if (quizData.quiz.vf_sequenciais && Array.isArray(quizData.quiz.vf_sequenciais)) {
+      for (const q of quizData.quiz.vf_sequenciais) {
+        if (q.enunciado && q.statements && Array.isArray(q.statements) && q.statements.length === 4 &&
+            q.options && Array.isArray(q.options) && q.options.length === 5 &&
+            typeof q.correct_index === 'number' && q.evidence && q.difficulty && q.cognitive_level) {
+          
+          validQuestions.push({
+            question_type: 'verdadeiro_falso_combinacoes',
+            pergunta: q.enunciado,
+            statements: q.statements,
+            alternativas: q.options, // A-E format for sequential V/F
+            correta: q.correct_index,
+            explicacao: `Evidence: ${q.evidence}`,
+            context: q.enunciado,
+            difficulty: q.difficulty,
+            cognitive_level: q.cognitive_level,
+            evidence: q.evidence
+          })
+        } else {
+          console.warn('⚠️ Invalid vf_sequenciais question skipped:', Object.keys(q))
+        }
       }
     }
 
     if (validQuestions.length === 0) {
-      throw new Error('No valid questions generated - all questions failed structured validation')
+      throw new Error('No valid questions generated - all questions failed validation')
     }
 
-    // ENHANCED VALIDATION: Ensure minimum quantity and AI calculated properly
-    const generatedObjetivas = quizData.quiz.objetivas.length
-    const generatedVfSequenciais = quizData.quiz.vf_sequenciais.length
-    const totalGenerated = generatedObjetivas + generatedVfSequenciais
+    // VALIDAÇÃO CRÍTICA: Garantir quantidade mínima baseada no conteúdo
+    const minimumExpected = Math.max(10, Math.floor(word_count/200))
+    console.log(`🎯 Generated ${validQuestions.length} questions, minimum expected: ${minimumExpected}`)
     
-    console.log(`🎯 AI Generated Quantities - Objetivas: ${generatedObjetivas}, V/F: ${generatedVfSequenciais}, Total: ${totalGenerated}`)
-    
-    // Ensure minimum 10 questions as requested by user
-    if (totalGenerated < 10) {
-      console.error(`❌ AI generated insufficient questions: ${totalGenerated} (minimum required: 10)`)
-      throw new Error(`AI não gerou quantidade suficiente. Mínimo: 10 questões, mas gerou: ${totalGenerated}`)
+    if (validQuestions.length < 10) {
+      console.error(`❌ INSUFFICIENT QUESTIONS: Generated ${validQuestions.length}, minimum required: 10`)
+      throw new Error(`AI não gerou quantidade suficiente. Gerou apenas ${validQuestions.length} questões, mínimo: 10. Para ${word_count} palavras, esperado: pelo menos ${minimumExpected} questões.`)
     }
 
-    // Validate that AI calculated targets match generated quantities
-    if (quizData.meta.targets && quizData.meta.generated) {
-      const targetsObjetivas = quizData.meta.targets.objetivas || 0
-      const targetsVf = quizData.meta.targets.vf_sequenciais || 0
-      
-      if (generatedObjetivas !== targetsObjetivas || generatedVfSequenciais !== targetsVf) {
-        console.warn(`⚠️ AI targets don't match generated - Targets: ${targetsObjetivas}+${targetsVf}, Generated: ${generatedObjetivas}+${generatedVfSequenciais}`)
-      }
-    }
-
-    console.log(`✅ Structured validation: ${validQuestions.length}/${quizData.quiz.objetivas.length + quizData.quiz.vf_sequenciais.length} questões aprovadas`)
+    console.log(`✅ Successfully generated ${validQuestions.length} ENEM-style questions`)
     
-    // Save enhanced metadata with structured format
+    // Save enhanced metadata
     const { data: metadataInserted, error: metadataError } = await supabase
       .from('quiz_metadata')
       .insert({
@@ -383,11 +374,11 @@ ${resumoContent}
         tema: quizData.meta.tema,
         idade_usuario: quizData.meta.idade_usuario,
         word_count: quizData.meta.word_count,
-        macrothemes: quizData.meta.macrothemes,
-        targets: quizData.meta.targets,
-        generated: quizData.meta.generated,
-        coverage_map: quizData.coverage_map,
-        quality_checks: quizData.quality_checks
+        macrothemes: quizData.meta.macrothemes || [],
+        targets: quizData.meta.targets || {},
+        generated: quizData.meta.generated || {},
+        coverage_map: quizData.coverage_map || [],
+        quality_checks: quizData.quality_checks || {}
       })
       .select()
       .single()
@@ -424,17 +415,21 @@ ${resumoContent}
       throw new Error(`Failed to save questions: ${insertError.message}`)
     }
 
-    console.log(`💾 Saved ${insertedQuestions.length} intelligent questions to database`)
+    console.log(`💾 Saved ${insertedQuestions.length} ENEM-style questions to database`)
 
     return new Response(
       JSON.stringify({
         success: true,
         questoes: insertedQuestions,
         metadata: metadataInserted,
-        message: `Quiz ENEM estruturado gerado: ${insertedQuestions.length} questões (${quizData.meta.tema})`,
-        stats: quizData.meta,
-        coverage_map: quizData.coverage_map,
-        quality_checks: quizData.quality_checks
+        message: `Quiz ENEM completo gerado: ${insertedQuestions.length} questões (${quizData.meta.tema}) - Proporcional a ${word_count} palavras`,
+        stats: {
+          ...quizData.meta,
+          questoes_geradas: insertedQuestions.length,
+          word_count: word_count
+        },
+        coverage_map: quizData.coverage_map || [],
+        quality_checks: quizData.quality_checks || {}
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -442,7 +437,7 @@ ${resumoContent}
     )
 
   } catch (error) {
-    console.error('❌ Intelligent quiz generation error:', error)
+    console.error('❌ Quiz generation error:', error)
     return new Response(
       JSON.stringify({
         success: false,
