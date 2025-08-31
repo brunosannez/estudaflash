@@ -101,7 +101,7 @@ export const useEnemQuiz = () => {
       console.log('✅ ENEM quiz generated successfully:', data);
       
       toast.success(`Quiz ENEM gerado com sucesso! ${data.totalQuestions} questões criadas.`, {
-        duration: 5000
+        duration: 4000
       });
       
       return data.quizMetadataId;
