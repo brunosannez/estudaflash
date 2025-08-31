@@ -26,7 +26,8 @@ const Quiz = () => {
     loading: generatorLoading, 
     analyzing, 
     generating, 
-    generateIntelligentQuiz 
+    generateIntelligentQuiz,
+    checkExistingQuiz
   } = useIntelligentQuizGenerator();
 
   // Check if this is auto-generate mode
@@ -61,7 +62,6 @@ const Quiz = () => {
       console.log('📄 Summary loaded successfully');
 
       // Check for existing quiz questions
-      const { checkExistingQuiz } = useIntelligentQuizGenerator();
       const { exists, questions: existingQuestions } = await checkExistingQuiz(id!);
 
       if (exists && existingQuestions.length > 0) {
