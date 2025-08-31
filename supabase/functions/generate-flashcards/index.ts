@@ -186,48 +186,65 @@ serve(async (req) => {
     
     console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${idealFlashcardCount} flashcards`);
 
-    const prompt = `INSTRUÇÕES CRÍTICAS - VOCÊ É UM ANALISADOR DE CONTEÚDO ULTRA-PRECISO:
+    const prompt = `Você é um elaborador de materiais didáticos especialista em criar flashcards de estudo no estilo Anki.  
+Sua tarefa é transformar o RESUMO fornecido em um conjunto de flashcards claros, objetivos e bem estruturados.
 
-🎯 OBJETIVO: Criar exatamente ${idealFlashcardCount} flashcards baseados EXCLUSIVAMENTE no conteúdo fornecido.
+=== INSTRUÇÕES ===
+1. **Fonte de verdade**  
+   - Use EXCLUSIVAMENTE o texto do resumo fornecido abaixo.  
+   - NÃO invente informações externas.  
 
-📋 REGRAS ABSOLUTAS:
-1. JAMAIS invente informações que não estão no texto
-2. CADA flashcard deve ter base textual comprovável no resumo
-3. CUBRA 100% dos conceitos principais do conteúdo
-4. Use APENAS informações, dados, nomes, datas e exemplos do próprio resumo
-5. Se não há exemplo no texto, use "null" - NUNCA invente
+2. **Estrutura de cada flashcard**  
+   - front: pergunta curta e clara (uma única ideia por card).  
+   - back: resposta objetiva em 1 a 2 frases.  
+   - explanation: explicação complementar em até 3 frases, com detalhes adicionais para fixar.  
+   - difficulty: classifique cada card como "easy", "medium" ou "hard".  
+   - tags: inclua sempre ["geral"] e, se possível, subtemas derivados do conteúdo.  
+   - evidence: copie um pequeno trecho literal do resumo (até 200 caracteres) que justifique a resposta.  
 
-🔍 PROCESSO OBRIGATÓRIO:
-ETAPA 1: Identifique TODOS os conceitos-chave do resumo
-ETAPA 2: Mapeie informações factuais (datas, nomes, números, processos)
-ETAPA 3: Crie flashcards que cubram cada seção importante
-ETAPA 4: Varie tipos: conceituais, factuais, comparativas, de aplicação
+3. **Tipos de perguntas**  
+   - Definição direta ("O que é...?").  
+   - Causa e efeito ("Por que... aconteceu?").  
+   - Comparação ("Qual a diferença entre...?").  
+   - Exemplos ("Cite um exemplo de...").  
+   - Verdadeiro/Falso (para fixar pontos rápidos).  
 
-📝 TIPOS DE FLASHCARDS A CRIAR:
-- Conceitos fundamentais (O que é...?)
-- Dados específicos (Quando? Quanto? Quem?)
-- Processos e causas (Como funciona? Por que?)
-- Comparações (Qual a diferença entre...?)
-- Aplicações práticas (Como se aplica...?)
+4. **Quantidade**  
+   - Gere **1 a 2 flashcards para cada parágrafo ou ideia importante do resumo**.  
+   - Se o resumo for curto, mínimo de 8 flashcards.  
+   - Se for médio, entre 15 e 20.  
+   - Se for longo, acima de 25 (divida em blocos).  
 
-CONTEÚDO DO RESUMO:
+5. **Estilo**  
+   - Clareza e simplicidade: como se estivesse perguntando a um aluno.  
+   - Resposta deve sempre caber em poucos segundos de leitura.  
+   - NÃO use frases longas, listas ou linguagem acadêmica complicada.  
+   - Cada flashcard deve ser independente e fazer sentido sozinho.  
+
+=== RESUMO A SER TRANSFORMADO EM FLASHCARDS ===
+"""
 ${textoResumo}
+"""
 
-⚠️ VALIDAÇÃO FINAL: 
-- Verifique se CADA flashcard tem base no texto original
-- Confirme cobertura completa dos tópicos principais
-- Elimine qualquer informação externa ou inventada
+=== SAÍDA ESPERADA ===
+Um JSON com a seguinte estrutura:
 
-RETORNE EXATAMENTE ${idealFlashcardCount} FLASHCARDS no formato JSON:
-[
-  {
-    "pergunta": "Pergunta baseada exclusivamente no resumo...",
-    "resposta": "Resposta fiel ao conteúdo original...",
-    "exemplo": "Exemplo extraído do texto ou null"
-  }
-]
+{
+  "flashcards": [
+    {
+      "front": "PERGUNTA clara e objetiva",
+      "back": "RESPOSTA curta e direta",
+      "explanation": "Explicação complementar em até 3 frases",
+      "difficulty": "easy|medium|hard",
+      "tags": ["geral", "subtema"],
+      "evidence": "trecho literal do resumo que sustenta a resposta"
+    }
+  ]
+}
 
-IMPORTANTE: Não adicione texto explicativo, apenas o array JSON puro.`;
+- Todos os flashcards devem estar dentro de "flashcards".  
+- O JSON deve ser válido.  
+- O número de flashcards deve ser proporcional ao conteúdo do resumo, conforme instruído.`;
 
     console.log('Iniciando chamada para API...', modelConfig.provider);
     const startTime = Date.now();
@@ -291,25 +308,36 @@ IMPORTANTE: Não adicione texto explicativo, apenas o array JSON puro.`;
       flashcardsText = flashcardsText.replace(/^```\w*\s*/, '').replace(/```$/, '');
     }
 
-    // Tentar extrair JSON do texto
-    const jsonStart = flashcardsText.indexOf('[');
-    const jsonEnd = flashcardsText.lastIndexOf(']');
+    // Tentar extrair JSON do texto - buscar objeto com array "flashcards"
+    let jsonText = flashcardsText;
     
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      flashcardsText = flashcardsText.substring(jsonStart, jsonEnd + 1);
+    // Se há um objeto com propriedade flashcards
+    const objectMatch = flashcardsText.match(/\{[\s\S]*"flashcards"\s*:\s*\[[\s\S]*\]\s*[\s\S]*\}/);
+    if (objectMatch) {
+      jsonText = objectMatch[0];
+    } else {
+      // Fallback: buscar apenas o array
+      const jsonStart = flashcardsText.indexOf('[');
+      const jsonEnd = flashcardsText.lastIndexOf(']');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        jsonText = `{"flashcards": ${flashcardsText.substring(jsonStart, jsonEnd + 1)}}`;
+      }
     }
 
     console.log('Processando flashcards gerados...');
 
-    let flashcards;
+    let flashcardsData;
     try {
-      flashcards = JSON.parse(flashcardsText);
+      flashcardsData = JSON.parse(jsonText);
     } catch (e) {
       console.error('Erro ao parsear JSON dos flashcards:', e);
-      console.error('Texto recebido:', flashcardsText.substring(0, 500));
+      console.error('Texto recebido:', jsonText.substring(0, 500));
       throw new Error('Erro ao processar flashcards gerados pela IA');
     }
 
+    const flashcards = flashcardsData.flashcards || flashcardsData;
+    
     if (!Array.isArray(flashcards)) {
       throw new Error('Formato inválido de flashcards retornado pela IA');
     }
@@ -318,22 +346,25 @@ IMPORTANTE: Não adicione texto explicativo, apenas o array JSON puro.`;
 
     // VALIDAÇÃO DE FIDELIDADE AO CONTEÚDO
     const validatedFlashcards = flashcards.filter((card: any) => {
-      // Verificações básicas de estrutura
-      if (!card.pergunta || !card.resposta || card.pergunta.length < 10 || card.resposta.length < 5) {
+      // Verificações básicas de estrutura - nova estrutura com front/back
+      const question = card.front || card.pergunta;
+      const answer = card.back || card.resposta;
+      
+      if (!question || !answer || question.length < 10 || answer.length < 5) {
         console.warn('❌ Flashcard rejeitado: estrutura inválida', card);
         return false;
       }
 
       // Verificar se há palavras-chave do conteúdo original na resposta
       const contentWords = textoResumo.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      const responseWords = card.resposta.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const responseWords = answer.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const commonWords = responseWords.filter(word => contentWords.includes(word));
       
       // Deve ter pelo menos 20% de overlap de palavras significativas
       const overlapRatio = commonWords.length / responseWords.length;
       if (overlapRatio < 0.2) {
         console.warn('❌ Flashcard rejeitado: baixa fidelidade ao conteúdo', {
-          pergunta: card.pergunta,
+          pergunta: question,
           overlap: overlapRatio
         });
         return false;
@@ -349,12 +380,12 @@ IMPORTANTE: Não adicione texto explicativo, apenas o array JSON puro.`;
 
     console.log(`✅ ${validatedFlashcards.length}/${flashcards.length} flashcards aprovados na validação`);
 
-    // Salvar flashcards no banco de dados
+    // Salvar flashcards no banco de dados - mapear nova estrutura para schema existente
     const flashcardsToInsert = validatedFlashcards.map((card: any) => ({
       resumo_id: resumoId,
-      pergunta: card.pergunta,
-      resposta: card.resposta,
-      exemplo: card.exemplo || null
+      pergunta: card.front || card.pergunta,
+      resposta: card.back || card.resposta,
+      exemplo: card.explanation || card.exemplo || null
     }));
 
     const { data: savedFlashcards, error: flashcardError } = await supabase
