@@ -6,7 +6,7 @@ interface EnemObjectiveQuestionProps {
   question: {
     enunciado: string;
     stem?: string;
-    options: string[];
+    options: string[] | any; // Handle both string array and JSON from database
   };
   selectedAnswer: number;
   onAnswerSelect: (index: number) => void;
@@ -39,7 +39,7 @@ export const EnemObjectiveQuestion: React.FC<EnemObjectiveQuestionProps> = ({
 
       {/* Options */}
       <div className="space-y-3">
-        {question.options.map((option, index) => (
+        {(Array.isArray(question.options) ? question.options : []).map((option, index) => (
           <button
             key={index}
             onClick={() => onAnswerSelect(index)}

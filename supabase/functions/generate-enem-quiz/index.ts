@@ -205,19 +205,19 @@ ${resumoContent}
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4.1-2025-04-14',
+            model: 'gpt-4o',
             messages: [
               {
                 role: 'system',
-                content: 'Você é um especialista em elaboração de provas ENEM. Siga exatamente as instruções fornecidas e responda APENAS com o JSON solicitado.'
+                content: 'Você é um especialista em elaboração de provas ENEM. Siga exatamente as instruções fornecidas e responda APENAS com o JSON solicitado, sem comentários ou explicações.'
               },
               {
                 role: 'user',
                 content: promptText
               }
             ],
-            max_completion_tokens: 25000,
-            temperature: 0.7
+            max_tokens: 25000,
+            temperature: 0.3
           }),
         });
 
@@ -232,15 +232,37 @@ ${resumoContent}
           throw new Error('Invalid OpenAI response structure');
         }
 
-        const content = openAIResponse.choices[0].message.content.trim();
+        let content = openAIResponse.choices[0].message.content.trim();
         
-        // Extract JSON from response
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in OpenAI response');
+        // Clean content - remove markdown code blocks if present
+        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // Find JSON object - more robust extraction
+        let startIndex = content.indexOf('{');
+        let braceCount = 0;
+        let endIndex = -1;
+        
+        if (startIndex === -1) {
+          throw new Error('No JSON object found in OpenAI response');
         }
-
-        quizData = JSON.parse(jsonMatch[0]);
+        
+        for (let i = startIndex; i < content.length; i++) {
+          if (content[i] === '{') braceCount++;
+          if (content[i] === '}') braceCount--;
+          if (braceCount === 0) {
+            endIndex = i;
+            break;
+          }
+        }
+        
+        if (endIndex === -1) {
+          throw new Error('Incomplete JSON object in OpenAI response');
+        }
+        
+        const jsonString = content.substring(startIndex, endIndex + 1);
+        console.log('🔍 Extracted JSON length:', jsonString.length);
+        
+        quizData = JSON.parse(jsonString);
         console.log('📋 Quiz data parsed successfully');
 
         // Validate minimum question count

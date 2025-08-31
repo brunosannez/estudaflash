@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 interface EnemVFQuestionProps {
   question: {
     enunciado: string;
-    statements?: string[];
-    options: string[];
+    statements?: string[] | any; // Handle both string array and JSON from database
+    options: string[] | any; // Handle both string array and JSON from database
   };
   selectedAnswer: number;
   onAnswerSelect: (index: number) => void;
@@ -31,13 +31,13 @@ export const EnemVFQuestion: React.FC<EnemVFQuestionProps> = ({
       </Card>
 
       {/* Statements */}
-      {question.statements && question.statements.length > 0 && (
+      {question.statements && (Array.isArray(question.statements) ? question.statements : []).length > 0 && (
         <div className="space-y-3">
           <h4 className="font-medium text-foreground">
             Analise as afirmações a seguir:
           </h4>
           <div className="space-y-2">
-            {question.statements.map((statement, index) => (
+            {(Array.isArray(question.statements) ? question.statements : []).map((statement, index) => (
               <div
                 key={index}
                 className="flex items-start gap-3 p-3 rounded-lg bg-muted/20"
@@ -61,7 +61,7 @@ export const EnemVFQuestion: React.FC<EnemVFQuestionProps> = ({
 
       {/* Options */}
       <div className="space-y-3">
-        {question.options.map((option, index) => (
+        {(Array.isArray(question.options) ? question.options : []).map((option, index) => (
           <button
             key={index}
             onClick={() => onAnswerSelect(index)}

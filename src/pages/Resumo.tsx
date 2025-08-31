@@ -108,17 +108,25 @@ const Resumo = () => {
   };
 
   const handleGenerateEnemQuiz = async () => {
-    if (!resumo) return;
+    if (!resumo) {
+      console.error('❌ No resumo data available');
+      toast.error('Dados do resumo não disponíveis');
+      return;
+    }
 
+    console.log('🎯 Generating ENEM quiz for:', resumo.id);
+    
     try {
       const quizMetadataId = await generateQuiz(resumo.id, resumo.resumo_gerado);
       if (quizMetadataId) {
+        console.log('✅ Quiz generated, navigating to:', `/quiz-enem/${resumo.id}`);
         toast.success('Quiz ENEM gerado com sucesso!');
         navigate(`/quiz-enem/${resumo.id}`);
       }
     } catch (error) {
-      console.error('Erro ao gerar quiz ENEM:', error);
-      toast.error('Erro ao gerar quiz ENEM');
+      console.error('❌ Erro ao gerar quiz ENEM:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao gerar quiz ENEM: ${errorMessage}`);
     }
   };
 
@@ -236,7 +244,7 @@ const Resumo = () => {
             <div className="grid gap-3 md:grid-cols-3">
               <Button 
                 onClick={handleGenerateEnemQuiz}
-                disabled={quizLoading}
+                disabled={quizLoading || !resumo}
                 className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white"
               >
                 {quizLoading ? (

@@ -49,6 +49,9 @@ export const useEnemQuiz = () => {
     
     try {
       console.log('🚀 Starting ENEM quiz generation...');
+      console.log('📝 ResumoId:', resumoId);
+      console.log('📊 Content length:', resumoContent?.length);
+      console.log('👤 UserId:', user.id);
       
       const { data, error } = await supabase.functions.invoke('generate-enem-quiz', {
         body: {
@@ -58,12 +61,16 @@ export const useEnemQuiz = () => {
         }
       });
 
+      console.log('🔍 Edge function response:', { data, error });
+
       if (error) {
-        throw new Error(error.message);
+        console.error('❌ Edge function error:', error);
+        throw new Error(`Edge function error: ${error.message}`);
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate quiz');
+      if (!data?.success) {
+        console.error('❌ Quiz generation failed:', data);
+        throw new Error(data?.error || 'Failed to generate quiz');
       }
 
       console.log('✅ ENEM quiz generated successfully:', data);
@@ -74,7 +81,8 @@ export const useEnemQuiz = () => {
 
     } catch (error) {
       console.error('❌ Error generating ENEM quiz:', error);
-      toast.error('Erro ao gerar quiz ENEM');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao gerar quiz ENEM: ${errorMessage}`);
       return null;
     } finally {
       setGenerating(false);

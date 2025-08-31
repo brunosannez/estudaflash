@@ -72,8 +72,27 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
           throw new Error('No questions found');
         }
 
-        setQuestions(questionsData as EnemQuestion[]);
-        setUserAnswers(new Array(questionsData.length).fill(-1));
+        console.log('🔄 Processing', questionsData.length, 'questions...');
+        
+        // Process questions to ensure options and statements are arrays
+        const processedQuestions = questionsData.map((q, index) => {
+          console.log(`📋 Processing question ${index + 1}:`, {
+            tipo: q.tipo,
+            hasOptions: !!q.options,
+            hasStatements: !!q.statements,
+            optionsType: typeof q.options,
+            statementsType: typeof q.statements
+          });
+
+          return {
+            ...q,
+            options: Array.isArray(q.options) ? q.options : (q.options ? [q.options] : []),
+            statements: q.statements && Array.isArray(q.statements) ? q.statements : (q.statements ? [q.statements] : null)
+          };
+        });
+
+        setQuestions(processedQuestions as EnemQuestion[]);
+        setUserAnswers(new Array(processedQuestions.length).fill(-1));
 
         // Create session
         const { data: sessionData, error: sessionError } = await supabase
@@ -81,7 +100,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
           .insert({
             user_id: user.id,
             quiz_metadata_id: quizMetadataId,
-            total_questions: questionsData.length
+            total_questions: processedQuestions.length
           })
           .select()
           .single();
@@ -91,7 +110,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
         }
 
         setSessionId(sessionData.id);
-        console.log('✅ Quiz loaded:', questionsData.length, 'questions');
+        console.log('✅ Quiz loaded:', processedQuestions.length, 'questions, session ID:', sessionData.id);
 
       } catch (error) {
         console.error('❌ Error loading quiz:', error);
