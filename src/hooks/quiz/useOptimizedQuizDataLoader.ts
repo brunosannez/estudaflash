@@ -103,31 +103,68 @@ export const useOptimizedQuizDataLoader = () => {
     }
   }, []);
 
-  const generateQuiz = useCallback(async (resumo: any, resumoId: string) => {
+  const generateQuiz = useCallback(async (resumo: any, resumoId: string, forceRegenerate = false) => {
     if (!resumo?.resumo_gerado) {
       throw new Error('Conteúdo do resumo não disponível');
     }
 
-    console.log('🚀 Starting quiz generation...');
+    console.log('🚀 Starting quiz generation...', { forceRegenerate });
 
-    // Double-check for existing quizzes with timeout
+    // Check for existing quizzes - but allow regeneration if invalid ones exist
     const existingCheckResult = await Promise.race([
       supabase
         .from('quizzes')
-        .select('id')
-        .eq('resumo_id', resumoId)
-        .limit(1),
+        .select('*')
+        .eq('resumo_id', resumoId),
       new Promise<any>((_, reject) => 
         setTimeout(() => reject(new Error('Timeout checking existing quizzes')), 5000)
       )
     ]) as any;
 
-    const { data: existingCheck } = existingCheckResult;
+    const { data: existingQuizzes } = existingCheckResult;
 
-    if (existingCheck && existingCheck.length > 0) {
-      throw new Error('Quiz já existe para este resumo!');
+    if (existingQuizzes && existingQuizzes.length > 0) {
+      // Check if we have valid 5-alternative questions
+      const validQuizzes = existingQuizzes.filter(quiz => 
+        quiz.pergunta && 
+        Array.isArray(quiz.alternativas) && 
+        quiz.alternativas.length === 5 &&
+        Number.isInteger(quiz.correta) &&
+        quiz.correta >= 0 && 
+        quiz.correta <= 4
+      );
+
+      console.log('📊 Existing quiz analysis:', {
+        total: existingQuizzes.length,
+        valid: validQuizzes.length,
+        invalid: existingQuizzes.length - validQuizzes.length
+      });
+
+      // If we have enough valid questions and not forcing regeneration, don't generate
+      if (validQuizzes.length >= 5 && !forceRegenerate) {
+        console.log('✅ Using existing valid questions');
+        return validQuizzes;
+      }
+
+      // If forcing regeneration or invalid questions exist, clear old questions first
+      if (forceRegenerate || validQuizzes.length < 5) {
+        console.log('🗑️ Clearing existing questions for regeneration...');
+        const { error: deleteError } = await supabase
+          .from('quizzes')
+          .delete()
+          .eq('resumo_id', resumoId);
+
+        if (deleteError) {
+          console.error('❌ Error clearing old questions:', deleteError);
+          // Continue anyway - we'll try to generate new ones
+        } else {
+          console.log('✅ Old questions cleared successfully');
+        }
+      }
     }
 
+    // Generate new quiz
+    console.log('🎯 Calling edge function to generate quiz...');
     const { data, error } = await supabase.functions.invoke('generate-quiz', {
       body: { 
         resumoContent: resumo.resumo_gerado,
@@ -146,10 +183,14 @@ export const useOptimizedQuizDataLoader = () => {
     }
 
     console.log('✅ Quiz generated successfully:', data);
-    toast.success(`Quiz gerado com ${data.questoes.length} questões!`);
+    toast.success(`Quiz gerado com ${data.questoes.length} questões ENEM!`);
     
     return data.questoes;
   }, []);
+
+  const forceRegenerateQuiz = useCallback(async (resumo: any, resumoId: string) => {
+    return generateQuiz(resumo, resumoId, true);
+  }, [generateQuiz]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -163,6 +204,7 @@ export const useOptimizedQuizDataLoader = () => {
   return {
     loadQuizData,
     generateQuiz,
+    forceRegenerateQuiz,
     cleanup
   };
 };

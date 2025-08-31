@@ -116,6 +116,8 @@ const Resumo = () => {
     }
   };
 
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+
   const handleGenerateQuiz = async () => {
     if (!resumo?.id) {
       console.error('❌ Summary ID not available');
@@ -123,12 +125,22 @@ const Resumo = () => {
       return;
     }
     
+    if (isGeneratingQuiz) return;
+    
     try {
-      console.log('🚀 Navigating to quiz page:', resumo.id);
-      navigate(`/quiz/${resumo.id}`);
+      setIsGeneratingQuiz(true);
+      console.log('🚀 Starting automatic quiz generation for:', resumo.id);
+      
+      // Import the hook directly to generate quiz
+      const { useOptimizedQuizDataLoader } = await import('@/hooks/quiz/useOptimizedQuizDataLoader');
+      
+      // For now, navigate to quiz page which will handle generation
+      navigate(`/quiz/${resumo.id}?autoGenerate=true`);
     } catch (error) {
-      console.error('❌ Error navigating to quiz:', error);
-      toast.error('Erro ao acessar quiz');
+      console.error('❌ Error starting quiz generation:', error);
+      toast.error('Erro ao iniciar geração de quiz');
+    } finally {
+      setIsGeneratingQuiz(false);
     }
   };
 
@@ -168,7 +180,7 @@ const Resumo = () => {
       existingMindMap={existingMindMap}
       mindMapLoading={mindMapLoading}
       isGeneratingFlashcards={isGeneratingFlashcards}
-      isGeneratingQuiz={false}
+      isGeneratingQuiz={isGeneratingQuiz}
       isGeneratingMindMap={isGeneratingMindMap}
       onGenerateFlashcards={handleGenerateFlashcards}
       onGenerateQuiz={handleGenerateQuiz}

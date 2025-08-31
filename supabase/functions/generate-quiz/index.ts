@@ -204,6 +204,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
           }
         ],
         temperature: 0.1, // Lower for consistency
+        max_completion_tokens: 3000, // Use max_completion_tokens for newer models
         max_tokens: 3000,
       }),
     })

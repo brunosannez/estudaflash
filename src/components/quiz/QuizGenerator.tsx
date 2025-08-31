@@ -66,7 +66,7 @@ const QuizGenerator = ({
             <p className="text-gray-600 mb-6">
               {hasExistingQuiz 
                 ? 'Este resumo já possui um quiz. Use a opção "Continuar Quiz" para retomar onde parou.'
-                : 'Este resumo ainda não possui um quiz. Vamos criar questões de múltipla escolha personalizadas baseadas no seu conteúdo!'
+                : 'Vamos criar questões de múltipla escolha no estilo ENEM baseadas exclusivamente no seu resumo. O quiz será gerado automaticamente pela IA!'
               }
             </p>
             
@@ -96,7 +96,7 @@ const QuizGenerator = ({
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      ✨ Gerar Quiz
+                      ✨ Gerar Quiz ENEM
                     </>
                   )}
                 </Button>

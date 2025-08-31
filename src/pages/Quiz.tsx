@@ -34,12 +34,13 @@ const Quiz = () => {
     setInitialized
   } = useQuizPageState();
 
-  const { loadQuizData, generateQuiz } = useOptimizedQuizDataLoader();
+  const { loadQuizData, generateQuiz, forceRegenerateQuiz } = useOptimizedQuizDataLoader();
 
-  // Check if this is a resume operation
+  // Check if this is a resume operation or auto-generate
   const sessionId = searchParams.get('session');
   const resumeMode = searchParams.get('resume') === 'true';
   const showDashboard = searchParams.get('dashboard') === 'true';
+  const autoGenerate = searchParams.get('autoGenerate') === 'true';
 
   console.log('📍 Quiz page rendered:', { 
     id, 
@@ -75,6 +76,12 @@ const Quiz = () => {
           setInitialized(true);
           setLoading(false);
         });
+
+        // Auto-generate quiz if requested and no valid questions exist
+        if (autoGenerate && data.quizzes.length < 5 && data.resumo) {
+          console.log('🎯 Auto-generating quiz as requested...');
+          setTimeout(() => handleGenerateQuiz(), 500);
+        }
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
@@ -96,14 +103,17 @@ const Quiz = () => {
     loadData();
   }, [id, initialized, loadQuizData, navigate, setResumo, setQuizzes, setLoading, setError, setInitialized]);
 
-  const handleGenerateQuiz = async () => {
+  const handleGenerateQuiz = async (forceRegenerate = false) => {
     if (!resumo || !id) return;
 
-    // Check if quiz already exists
-    if (quizzes.length > 0) {
-      console.warn('⚠️ Quiz already exists, preventing duplicate generation');
-      toast.warning('Este resumo já possui um quiz!');
-      return;
+    // For force regeneration, always proceed
+    if (!forceRegenerate) {
+      // Check if we have enough valid quiz questions
+      if (quizzes.length >= 5) {
+        console.warn('⚠️ Quiz already has enough valid questions');
+        toast.warning('Este resumo já possui um quiz completo!');
+        return;
+      }
     }
 
     if (generating) return;
@@ -113,7 +123,9 @@ const Quiz = () => {
         setGenerating(true);
       });
       
-      const newQuizzes = await generateQuiz(resumo, id);
+      const newQuizzes = forceRegenerate 
+        ? await forceRegenerateQuiz(resumo, id)
+        : await generateQuiz(resumo, id);
       
       startTransition(() => {
         setQuizzes(newQuizzes);
@@ -130,6 +142,8 @@ const Quiz = () => {
       toast.error(errorMessage);
     }
   };
+
+  const handleRegenerateQuiz = () => handleGenerateQuiz(true);
 
   const handleQuizComplete = (result: any) => {
     console.log('🏆 Quiz completed with result:', result);
@@ -228,17 +242,34 @@ const Quiz = () => {
     );
   }
 
-  // No quiz found - show generation option
-  console.log('❌ No quiz found, showing generator');
+  // No quiz found or insufficient questions - show generation option
+  const hasInsufficient = quizzes.length > 0 && quizzes.length < 5;
+  console.log(hasInsufficient ? '⚠️ Insufficient valid questions, showing generator' : '❌ No quiz found, showing generator');
+  
   return (
-    <QuizGenerator 
-      resumoId={id}
-      resumoContent={resumo?.resumo_gerado}
-      onGenerateQuiz={handleGenerateQuiz}
-      isGenerating={generating}
-      onBack={handleBack}
-      hasExistingQuiz={false}
-    />
+    <div className="space-y-4">
+      <QuizGenerator 
+        resumoId={id}
+        resumoContent={resumo?.resumo_gerado}
+        onGenerateQuiz={() => handleGenerateQuiz()}
+        isGenerating={generating}
+        onBack={handleBack}
+        hasExistingQuiz={false}
+      />
+      
+      {hasInsufficient && (
+        <div className="flex justify-center">
+          <Button 
+            onClick={handleRegenerateQuiz}
+            variant="outline"
+            disabled={generating}
+            className="border-orange-500 text-orange-600 hover:bg-orange-50"
+          >
+            🔄 Regenerar Quiz Completo (ENEM)
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
