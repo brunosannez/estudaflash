@@ -149,105 +149,33 @@ serve(async (req) => {
 
     console.log(`🎯 Targets: ${targets.objetivas} objetivas, ${targets.vf_simples} V/F simples, ${targets.vf_combinacoes} V/F combinações`)
 
-    // Construir prompt ENEM avançado com variáveis dinâmicas
-    const enemPrompt = `Você é um elaborador de provas no estilo ENEM. Sua missão é transformar o RESUMO criado em um QUIZ coerente, completo e adequado à idade do estudante, SEM adicionar informações externas.
+    // Prompt simplificado e direto para evitar alucinações
+    const simplePrompt = `Crie um quiz baseado EXCLUSIVAMENTE no texto abaixo. NÃO invente informações que não estão no texto.
 
-=== PARÂMETROS ===
-- Idade do estudante: ${idade_usuario}
-- Tema: ${tema}
-- Quantidades desejadas:
-  - Objetivas (5 alternativas A–E): ${targets.objetivas}
-  - Verdadeiro/Falso simples: ${targets.vf_simples}
-  - Verdadeiro/Falso com combinações: ${targets.vf_combinacoes}
-
-=== RESUMO (fonte única de verdade) ===
+TEXTO BASE:
 """
 ${resumoContent}
 """
 
-=== REGRAS PEDAGÓGICAS OBRIGATÓRIAS ===
-1) USO EXCLUSIVO DO RESUMO: não invente fatos, datas, termos ou exemplos fora do texto.
-2) LINGUAGEM POR IDADE: adapte vocabulário, período frasal e clareza para ${idade_usuario} anos.
-3) ENUNCIADOS CLAROS: evite negações confusas ("NÃO é") e absolutos ("sempre/nunca"), a menos que o resumo seja taxativo.
-4) CONTEXTUALIZAÇÃO: cada questão pode ter um breve contexto (até 2 frases) antes da pergunta.
-5) NÍVEL COGNITIVO: varie entre lembrar, entender, aplicar e analisar (Taxonomia de Bloom).
-6) ALTERNATIVAS:
-   - Objetivas: 5 alternativas (A–E), UMA correta; 4 distratores plausíveis e alinhados ao texto.
-   - Proibido usar "todas as anteriores"/"nenhuma das anteriores".
-   - Alternativas com tamanho semelhante e concordância gramatical com o enunciado.
-   - Embaralhe a posição da correta (não padronize).
-7) EVIDENCE OBRIGATÓRIO: em TODAS as questões inclua um campo "evidence" com um trecho literal (≤ 200 caracteres) do resumo que sustente a resposta correta.
-8) COBERTURA: identifique macrotemas do resumo e distribua as questões para cobrir todos. Evite repetição de perguntas.
+INSTRUÇÕES:
+- Crie 5-8 questões de múltipla escolha (A, B, C, D, E)
+- Use APENAS informações que estão no texto
+- Perguntas claras e adequadas para idade ${idade_usuario} anos
+- Inclua uma explicação curta para cada resposta
 
-=== FORMATO DE SAÍDA (JSON ÚNICO VÁLIDO) ===
+FORMATO JSON:
 {
-  "meta": {
-    "tema": "${tema}",
-    "idade_usuario": ${idade_usuario},
-    "word_count": ${word_count},
-    "macrothemes": ${JSON.stringify(macrothemes)},
-    "targets": ${JSON.stringify(targets)},
-    "generated": {
-      "objetivas": 0,
-      "vf_simples": 0,
-      "vf_combinacoes": 0
+  "questoes": [
+    {
+      "pergunta": "pergunta baseada no texto",
+      "alternativas": ["A) opção", "B) opção", "C) opção", "D) opção", "E) opção"],
+      "correta": 0,
+      "explicacao": "explicação baseada no texto"
     }
-  },
-  "quiz": {
-    "objetivas": [
-      {
-        "context": "até 2 frases opcionais",
-        "stem": "pergunta clara, direta e contextualizada ao resumo",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-        "correct_index": 0,
-        "difficulty": "easy|medium|hard",
-        "cognitive_level": "remember|understand|apply|analyze",
-        "evidence": "trecho literal do resumo (<=200)"
-      }
-    ],
-    "verdadeiro_falso_simples": [
-      {
-        "statement": "afirmação checável no resumo",
-        "answer": true,
-        "difficulty": "easy|medium|hard", 
-        "cognitive_level": "remember|understand|apply|analyze",
-        "evidence": "trecho literal do resumo (<=200)"
-      }
-    ],
-    "verdadeiro_falso_combinacoes": [
-      {
-        "statements": [
-          "I. afirmação 1 baseada no resumo",
-          "II. afirmação 2 baseada no resumo", 
-          "III. afirmação 3 baseada no resumo",
-          "IV. afirmação 4 baseada no resumo"
-        ],
-        "options": [
-          "A) V V F F",
-          "B) V F V F", 
-          "C) V F F V",
-          "D) F V V F",
-          "E) F F V V"
-        ],
-        "correct_index": 2,
-        "difficulty": "easy|medium|hard",
-        "cognitive_level": "understand|analyze",
-        "evidence": "trecho(s) literal(is) do resumo (<=200)"
-      }
-    ]
-  },
-  "quality_checks": {
-    "all_from_summary": true,
-    "language_adapted_to_age": true,
-    "balanced_difficulties": true,
-    "balanced_cognitive_levels": true,
-    "no_repeated_questions": true,
-    "full_coverage": true,
-    "uncovered_macrothemes": []
-  }
+  ]
 }
 
-VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as questões possuem "evidence" retirado do resumo.`
+Responda APENAS com o JSON válido:`
 
     // Call OpenAI API with ENEM prompt
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -261,15 +189,15 @@ VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as q
         messages: [
           {
             role: 'system',
-            content: 'Você é um elaborador de provas no estilo ENEM. Retorne APENAS JSON válido seguindo a estrutura especificada.'
+            content: 'Você cria quizzes educacionais simples. Responda APENAS com JSON válido. NÃO invente informações fora do texto fornecido.'
           },
           {
             role: 'user',
-            content: enemPrompt
+            content: simplePrompt
           }
         ],
-        temperature: 0.2, // Lower for more consistent structure
-        max_tokens: 6000,
+        temperature: 0.1, // Lower for consistency
+        max_tokens: 3000,
       }),
     })
 
@@ -282,89 +210,52 @@ VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as q
     const openaiData = await openaiResponse.json()
     const content = openaiData.choices[0].message.content
 
-    console.log('📝 Raw OpenAI ENEM response:', content.substring(0, 500) + '...')
+    console.log('📝 Raw OpenAI response:', content.substring(0, 300) + '...')
 
-    // Parse ENEM format JSON
-    let enemData
+    // Parse simple JSON format
+    let quizData
     try {
-      enemData = JSON.parse(content)
+      quizData = JSON.parse(content)
     } catch (parseError) {
       console.error('JSON parse error:', parseError)
       console.error('Content that failed to parse:', content)
-      throw new Error('Failed to parse ENEM quiz data from AI response')
+      throw new Error('Failed to parse quiz data from AI response')
     }
 
-    if (!enemData.meta || !enemData.quiz) {
-      throw new Error('Invalid ENEM quiz format from AI')
+    if (!quizData.questoes || !Array.isArray(quizData.questoes)) {
+      throw new Error('Invalid quiz format from AI - missing questoes array')
     }
 
-    // Process new ENEM format questions
-    const allQuestions = []
+    // Validate and process questions
+    const validQuestions = []
     
-    // Process objetivas
-    if (enemData.quiz.objetivas) {
-      enemData.quiz.objetivas.forEach((q, i) => {
-        if (q.stem && q.options && Array.isArray(q.options) && q.options.length === 5) {
-          allQuestions.push({
-            question_type: 'objetiva',
-            pergunta: q.stem,
-            alternativas: q.options,
-            correta: q.correct_index || 0,
-            explicacao: q.evidence || 'Evidência não disponível',
-            context: q.context || null,
-            difficulty: q.difficulty || 'medium',
-            cognitive_level: q.cognitive_level || 'understand',
-            evidence: q.evidence || null
-          })
-        }
-      })
+    for (const q of quizData.questoes) {
+      if (q.pergunta && q.alternativas && Array.isArray(q.alternativas) && 
+          q.alternativas.length === 5 && typeof q.correta === 'number' && q.explicacao) {
+        
+        validQuestions.push({
+          question_type: 'objetiva',
+          pergunta: q.pergunta,
+          alternativas: q.alternativas,
+          correta: q.correta,
+          explicacao: q.explicacao,
+          context: null,
+          difficulty: 'medium',
+          cognitive_level: 'understand',
+          evidence: null
+        })
+      }
     }
+
+    if (validQuestions.length === 0) {
+      throw new Error('No valid questions generated - all questions failed validation')
+    }
+
+    console.log(`✅ ${validQuestions.length}/${quizData.questoes.length} questões aprovadas na validação`)
     
-    // Process verdadeiro_falso_simples
-    if (enemData.quiz.verdadeiro_falso_simples) {
-      enemData.quiz.verdadeiro_falso_simples.forEach((q, i) => {
-        if (q.statement) {
-          allQuestions.push({
-            question_type: 'verdadeiro_falso_simples',
-            pergunta: q.statement,
-            alternativas: ['Verdadeiro', 'Falso'],
-            correta: q.answer === true ? 0 : 1,
-            explicacao: q.evidence || 'Evidência não disponível',
-            answer: q.answer,
-            difficulty: q.difficulty || 'medium',
-            cognitive_level: q.cognitive_level || 'understand',
-            evidence: q.evidence || null
-          })
-        }
-      })
-    }
-    
-    // Process verdadeiro_falso_combinacoes
-    if (enemData.quiz.verdadeiro_falso_combinacoes) {
-      enemData.quiz.verdadeiro_falso_combinacoes.forEach((q, i) => {
-        if (q.statements && q.options && Array.isArray(q.options) && q.options.length === 5) {
-          allQuestions.push({
-            question_type: 'verdadeiro_falso_combinacoes',
-            pergunta: 'Analise as afirmações abaixo:',
-            alternativas: q.options,
-            correta: q.correct_index || 0,
-            explicacao: q.evidence || 'Evidência não disponível',
-            statements: q.statements,
-            difficulty: q.difficulty || 'hard',
-            cognitive_level: q.cognitive_level || 'analyze',
-            evidence: q.evidence || null
-          })
-        }
-      })
-    }
+    const allQuestions = validQuestions
 
-    if (allQuestions.length === 0) {
-      throw new Error('No valid ENEM questions generated')
-    }
-
-    console.log(`✅ Generated ${allQuestions.length} ENEM-style questions`)
-
-    // Save metadata first
+    // Save simplified metadata
     const { data: metadataInserted, error: metadataError } = await supabase
       .from('quiz_metadata')
       .insert({
@@ -372,15 +263,10 @@ VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as q
         tema: tema,
         idade_usuario: idade_usuario,
         word_count: word_count,
-        macrothemes: macrothemes,
-        targets: targets,
-        generated: {
-          objetivas: enemData.quiz.objetivas?.length || 0,
-          vf_simples: enemData.quiz.verdadeiro_falso_simples?.length || 0,
-          vf_combinacoes: enemData.quiz.verdadeiro_falso_combinacoes?.length || 0
-        },
-        coverage_map: enemData.coverage_map || [],
-        quality_checks: enemData.quality_checks || {}
+        macrothemes: [tema],
+        targets: { objetivas: allQuestions.length },
+        generated: { objetivas: allQuestions.length },
+        quality_checks: { all_from_summary: true }
       })
       .select()
       .single()
@@ -390,10 +276,10 @@ VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as q
       console.log('Continuing without metadata...')
     }
 
-    // Save questions with new fields
+    // Save questions 
     const questionsToInsert = allQuestions.map(q => ({
       resumo_id: resumoId,
-      question_type: q.question_type,
+      question_type: q.question_type || 'objetiva',
       pergunta: q.pergunta,
       alternativas: q.alternativas,
       correta: q.correta,
@@ -424,16 +310,13 @@ VALIDAÇÕES FINAIS: Responder SOMENTE com o JSON final. Conferir que TODAS as q
         success: true,
         questoes: insertedQuestions,
         metadata: metadataInserted,
-        message: `Quiz ENEM gerado com ${insertedQuestions.length} questões inteligentes`,
+        message: `Quiz gerado com ${insertedQuestions.length} questões`,
         stats: {
           word_count,
           tema,
           idade_usuario,
-          targets,
           generated: {
-            objetivas: enemData.quiz.objetivas?.length || 0,
-            vf_simples: enemData.quiz.verdadeiro_falso_simples?.length || 0,
-            vf_combinacoes: enemData.quiz.verdadeiro_falso_combinacoes?.length || 0
+            objetivas: allQuestions.length
           }
         }
       }),

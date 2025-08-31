@@ -1,16 +1,14 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
 interface QuizCompletionScreenProps {
   correctAnswers: number;
   totalQuestions: number;
+  onComplete?: () => void;
 }
 
-const QuizCompletionScreen = ({ correctAnswers, totalQuestions }: QuizCompletionScreenProps) => {
-  const navigate = useNavigate();
-
+const QuizCompletionScreen = ({ correctAnswers, totalQuestions, onComplete }: QuizCompletionScreenProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-blue-100 to-purple-100 p-4 flex items-center justify-center">
       <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-2xl mx-auto text-center">
@@ -26,7 +24,7 @@ const QuizCompletionScreen = ({ correctAnswers, totalQuestions }: QuizCompletion
           Precisão: {Math.round((correctAnswers / totalQuestions) * 100)}%
         </div>
         <Button
-          onClick={() => navigate('/quiz-history')}
+          onClick={onComplete}
           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 md:px-8 py-3 rounded-xl font-bold text-base md:text-lg w-full md:w-auto"
         >
           Ver Histórico de Quizzes

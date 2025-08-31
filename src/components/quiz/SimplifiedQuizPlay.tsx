@@ -200,7 +200,13 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
 
   // Error state
   if (sessionError) {
-    return <QuizErrorScreen error={sessionError} />;
+    return (
+      <QuizErrorScreen 
+        error={sessionError}
+        onRetry={() => window.location.reload()}
+        onBack={handleExit}
+      />
+    );
   }
 
   // No questions
@@ -214,6 +220,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       <QuizCompletionScreen 
         correctAnswers={correctAnswers}
         totalQuestions={quiz.questoes.length}
+        onComplete={handleExit}
       />
     );
   }
