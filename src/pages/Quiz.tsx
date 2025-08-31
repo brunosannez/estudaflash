@@ -13,7 +13,6 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 // Lazy load components to prevent concurrent loading issues
 const SimplifiedQuizPlay = React.lazy(() => import('@/components/quiz/SimplifiedQuizPlay'));
-const EnhancedQuizDashboard = React.lazy(() => import('@/components/quiz/EnhancedQuizDashboard'));
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -186,23 +185,20 @@ const Quiz = () => {
     );
   }
 
-  // Show enhanced dashboard if requested
+  // Show enhanced dashboard if requested - temporarily disabled to fix suspense issues
   if (showDashboard) {
     return (
       <PageLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Dashboard de Quiz Avançado</h1>
+            <h1 className="text-2xl font-bold">Dashboard de Quiz</h1>
             <Button onClick={handleBack} variant="outline">
               Voltar
             </Button>
           </div>
-          <QuizSuspenseWrapper 
-            fallbackMessage="Carregando dashboard..." 
-            fallbackDescription="Preparando estatísticas..."
-          >
-            <EnhancedQuizDashboard />
-          </QuizSuspenseWrapper>
+          <div className="text-center p-8">
+            <p className="text-gray-600">Dashboard em manutenção. Use o quiz simplificado por enquanto.</p>
+          </div>
         </div>
       </PageLayout>
     );

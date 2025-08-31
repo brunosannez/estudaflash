@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSimpleQuizSession } from '@/hooks/quiz/useSimpleQuizSession';
+import { useUnifiedQuizSession } from '@/hooks/quiz/useUnifiedQuizSession';
 import { useGameification } from '@/hooks/useGameification';
 import { toast } from 'sonner';
 
@@ -36,11 +36,13 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     error: sessionError,
     currentQuestionIndex,
     correctAnswers,
+    totalQuestions,
+    initialized,
     createOrResumeSession,
     saveAnswer,
     advanceToNextQuestion,
     resetSession
-  } = useSimpleQuizSession();
+  } = useUnifiedQuizSession();
 
   // Local UI states
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -64,18 +66,18 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     return currentQuestionIndex === quiz.questoes.length - 1;
   }, [currentQuestionIndex, quiz.questoes.length]);
 
-  // Initialize session once
+  // Initialize session once with proper guards
   useEffect(() => {
     if (!quiz.questoes || quiz.questoes.length === 0) return;
-    if (activeSessionId || sessionLoading) return;
+    if (initialized || sessionLoading) return;
 
     const initSession = async () => {
-      console.log('🔄 Initializing session with:', { resumeMode, sessionId, questionsCount: quiz.questoes.length });
+      console.log('🔄 Initializing unified session with:', { resumeMode, sessionId, questionsCount: quiz.questoes.length });
       await createOrResumeSession(quiz.resumo_id, quiz.questoes, sessionId);
     };
 
     initSession();
-  }, [quiz.resumo_id, quiz.questoes, sessionId, activeSessionId, sessionLoading, createOrResumeSession]);
+  }, [quiz.resumo_id, quiz.questoes, sessionId, initialized, sessionLoading, createOrResumeSession]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -98,17 +100,20 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     const correctAnswer = Number(currentQuestion.correta);
     const isAnswerCorrect = selectedAnswer === correctAnswer;
     
-    setIsCorrect(isAnswerCorrect);
-    setShowResult(true);
+    // Update UI state in transition
+    startTransition(() => {
+      setIsCorrect(isAnswerCorrect);
+      setShowResult(true);
+    });
 
     // Save answer to database
     const saved = await saveAnswer(currentQuestionIndex, selectedAnswer, isAnswerCorrect);
     
     if (saved) {
-      console.log('✅ Answer saved to database');
+      console.log('✅ Answer saved to unified session');
     }
 
-    // Add XP
+    // Add XP in background
     try {
       if (isAnswerCorrect) {
         await addXP(10, 'quiz_correct');
@@ -126,7 +131,9 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
     if (isLastQuestion) {
       console.log('🏆 Quiz completed, finalizing...');
       
-      setGameFinished(true);
+      startTransition(() => {
+        setGameFinished(true);
+      });
       
       const finalCorrectAnswers = isCorrect ? correctAnswers + 1 : correctAnswers;
       
@@ -139,7 +146,7 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       
       onComplete(result);
       
-      // Bonus XP
+      // Bonus XP in background
       try {
         const accuracy = (finalCorrectAnswers / quiz.questoes.length) * 100;
         
@@ -162,10 +169,12 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       // Advance to next question in database
       await advanceToNextQuestion();
       
-      // Reset UI state for next question
-      setSelectedAnswer(null);
-      setShowResult(false);
-      setIsCorrect(false);
+      // Reset UI state for next question in transition
+      startTransition(() => {
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setIsCorrect(false);
+      });
     }
   }, [isLastQuestion, correctAnswers, isCorrect, activeSessionId, quiz.questoes.length, onComplete, addXP, advanceToNextQuestion]);
 
