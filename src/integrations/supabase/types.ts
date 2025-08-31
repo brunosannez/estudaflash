@@ -1351,6 +1351,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limiting_enhanced: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          request_count: number | null
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          request_count?: number | null
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          request_count?: number | null
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       resumos: {
         Row: {
           custom_name: string | null
@@ -1382,6 +1412,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_audit_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string
+          success: boolean | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type: string
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       social_activities: {
         Row: {
@@ -1964,6 +2033,7 @@ export type Database = {
           display_name: string
           id: string
           is_public: boolean
+          privacy_level: string | null
           stats: Json
           total_xp: number
           updated_at: string
@@ -1978,6 +2048,7 @@ export type Database = {
           display_name: string
           id?: string
           is_public?: boolean
+          privacy_level?: string | null
           stats?: Json
           total_xp?: number
           updated_at?: string
@@ -1992,6 +2063,7 @@ export type Database = {
           display_name?: string
           id?: string
           is_public?: boolean
+          privacy_level?: string | null
           stats?: Json
           total_xp?: number
           updated_at?: string
@@ -2401,6 +2473,15 @@ export type Database = {
       is_current_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_sensitive_access: {
+        Args: {
+          action_type_param: string
+          details_param?: Json
+          resource_id_param?: string
+          resource_type_param: string
+        }
+        Returns: undefined
       }
       log_usage: {
         Args: {
