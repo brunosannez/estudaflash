@@ -37,59 +37,71 @@ export const createSummaryPrompt = (extractedText: string, schoolYear?: string) 
   const educationLevel = getEducationLevel(schoolYear);
   const { discipline, materialType, complexity } = detectContentType(extractedText);
   
-  return `🎓 **SISTEMA ARI DE SÁ - PREPARAÇÃO ENEM & VESTIBULARES**
+  // Determinar idade do usuário baseada no nível escolar
+  const getUserAge = (level: string) => {
+    switch (level) {
+      case 'Ensino Fundamental': return '12-14';
+      case 'Ensino Superior': return '18+';
+      default: return '15-17';
+    }
+  };
+  
+  const userAge = getUserAge(educationLevel);
+  
+  return `=== INSTRUÇÕES ===
 
-Você é um professor especialista do Colégio Ari de Sá e Farias Brito, referência nacional em aprovação no ENEM e vestibulares. Sua missão é criar um RESUMO ESTRATÉGICO ULTRA-ESPECÍFICO.
+Você é um professor didático e paciente. Sua missão é transformar conteúdos escolares brutos (extraídos de imagem, PDF ou arquivo de estudo) em **resumos claros, completos e explicativos**.
 
 📊 **ANÁLISE DO CONTEÚDO:**
 - Nível: ${educationLevel}
+- Idade do usuário: ${userAge} anos
 - Disciplina detectada: ${discipline.toUpperCase()}
 - Tipo de material: ${materialType}
 - Complexidade: ${complexity}
 
-🎯 **ESTRUTURA INTELIGENTE - ${discipline.toUpperCase()}:**
-${getAdaptiveStructure(discipline, educationLevel)}
+**INSTRUÇÕES DETALHADAS:**
 
-📝 **TEXTO PARA ANÁLISE:**
+1. **Compreensão do texto**  
+   - Leia atentamente o conteúdo fornecido abaixo (extraído por OCR).  
+   - Identifique os principais tópicos e ideias centrais.  
+
+2. **Método SQ3R**  
+   - SURVEY: observe títulos, subtítulos ou trechos-chave.  
+   - QUESTION: transforme-os em perguntas que guiem o entendimento.  
+   - READ: encontre as respostas no texto.  
+   - RECITE: reescreva com suas próprias palavras.  
+   - REVIEW: revise para manter clareza e lógica.  
+
+3. **Técnica de Feynman**  
+   - Explique como se estivesse ensinando a uma criança.  
+   - Simplifique termos difíceis.  
+   - Se necessário, use comparações ou exemplos fáceis de entender.  
+
+4. **Formato do resumo**  
+   - Crie um **texto corrido**, em parágrafos bem organizados, como um capítulo de livro resumo.  
+   - NÃO use listas ou tópicos isolados.  
+   - As ideias devem se conectar de forma lógica, com começo, meio e fim.  
+
+5. **Linguagem**  
+   - Adapte a explicação para a idade aproximada do estudante: **${userAge} anos**.  
+   - Use frases curtas, claras e simples, mas mantendo todas as informações importantes.  
+   - O aluno deve ser capaz de entender todo o conteúdo apenas lendo o resumo.  
+
+6. **Completude**  
+   - O resumo deve cobrir todas as informações necessárias do texto original.  
+   - NÃO invente informações externas. Use somente o material fornecido.  
+
+=== CONTEÚDO A RESUMIR ===
+"""
 ${extractedText}
+"""
 
-🏆 **METODOLOGIA ARI DE SÁ:**
-
-1. **📚 CONCEITOS ESSENCIAIS**
-   - Definições diretas e claras
-   - Palavras-chave destacadas em **negrito**
-   - Conexões com conhecimento prévio
-
-2. **🧠 ESTRATÉGIAS ENEM**
-   - Como o tema SEMPRE aparece no ENEM
-   - Competências e habilidades específicas
-   - Padrões de questões dos últimos 5 anos
-   - Pegadinhas típicas e como evitar
-
-3. **⚡ DICAS LIGHTNING (Método Ari de Sá)**
-   - Macetes para memorização rápida
-   - Fórmulas mnemônicas
-   - Associações visuais
-   - Estratégias de resolução em 90 segundos
-
-4. **🚨 PONTOS DE ATENÇÃO**
-   - Erros mais comuns dos alunos
-   - Conceitos que confundem
-   - Diferenças sutis mas importantes
-   - Armadilhas típicas das bancas
-
-5. **🌐 CONEXÕES INTERDISCIPLINARES**
-   - Links com outras matérias para o ENEM
-   - Temas transversais (atualidades)
-   - Aplicações no mundo real
-   - Contexto brasileiro atual
-
-6. **💯 RESUMO EXECUTIVO - FOCO PROVA**
-   ${getExamFocus(discipline, educationLevel)}
-
-🎖️ **RESULTADO ESPERADO:** Um aluno que estude este resumo deve conseguir resolver 90% das questões sobre o tema no ENEM e vestibulares top.
-
-**ESTILO:** Tom motivacional do Ari de Sá + didática clara + foco 100% em aprovação.`;
+=== SAÍDA ESPERADA ===
+Um **resumo corrido, explicativo e bem estruturado**, semelhante a um texto de livro didático.  
+O texto deve:  
+- Conter todas as informações essenciais.  
+- Ser organizado em parágrafos.  
+- Ter clareza e didática, adequado para a idade de ${userAge} anos.`;
 };
 
 export const createQuizPrompt = (summaryContent: string, schoolYear?: string) => {

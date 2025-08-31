@@ -82,7 +82,7 @@ function detectContentIntelligence(texto: string) {
   return { disciplina, tipoMaterial, hasMultiplePages, totalPaginas };
 }
 
-// Criar prompt didático e neutro
+// Criar prompt didático usando as instruções pedagógicas fornecidas
 function createOptimizedPrompt(texto: string, schoolYear: string) {
   const { disciplina, tipoMaterial, hasMultiplePages, totalPaginas } = detectContentIntelligence(texto);
   
@@ -103,28 +103,60 @@ function createOptimizedPrompt(texto: string, schoolYear: string) {
   
   const idadeUsuario = getIdadeAproximada(schoolYear);
   
-  return `Você é um professor didático que transforma textos de livros em resumos corridos, claros e explicativos. 
-Seu estilo deve ser como o de um livro didático: bem organizado, conectando cada ideia em sequência lógica.${pageInstruction}
+  return `=== INSTRUÇÕES ===
+
+Você é um professor didático e paciente. Sua missão é transformar conteúdos escolares brutos (extraídos de imagem, PDF ou arquivo de estudo) em **resumos claros, completos e explicativos**.${pageInstruction}
 
 📊 **ANÁLISE DO CONTEÚDO:**
 - Disciplina: ${disciplina.toUpperCase()}
 - Material: ${tipoMaterial}
 - Nível: ${schoolYear}
+- Idade do usuário: ${idadeUsuario} anos
 - Páginas: ${totalPaginas}
 
-**INSTRUÇÕES PARA O RESUMO:**
+**INSTRUÇÕES DETALHADAS:**
 
-Aqui está o texto bruto extraído da imagem (OCR):
+1. **Compreensão do texto**  
+   - Leia atentamente o conteúdo fornecido abaixo (extraído por OCR).  
+   - Identifique os principais tópicos e ideias centrais.  
 
-"${texto}"
+2. **Método SQ3R**  
+   - SURVEY: observe títulos, subtítulos ou trechos-chave.  
+   - QUESTION: transforme-os em perguntas que guiem o entendimento.  
+   - READ: encontre as respostas no texto.  
+   - RECITE: reescreva com suas próprias palavras.  
+   - REVIEW: revise para manter clareza e lógica.  
 
-Reescreva esse conteúdo em forma de resumo corrido e explicativo, como se fosse um capítulo de livro didático.
-- Conecte cada parte de forma lógica, sem usar listas ou tópicos extensos.
-- Use uma linguagem adaptada para um estudante de aproximadamente ${idadeUsuario} anos.
-- Explique termos difíceis de forma simples quando necessário.
-- Destaque conceitos importantes com **negrito**.
-- O resultado deve ser um texto único e fluido, fácil de ler e entender.
-- Mantenha foco no conteúdo educacional sem mencionar instituições específicas.`;
+3. **Técnica de Feynman**  
+   - Explique como se estivesse ensinando a uma criança.  
+   - Simplifique termos difíceis.  
+   - Se necessário, use comparações ou exemplos fáceis de entender.  
+
+4. **Formato do resumo**  
+   - Crie um **texto corrido**, em parágrafos bem organizados, como um capítulo de livro resumo.  
+   - NÃO use listas ou tópicos isolados.  
+   - As ideias devem se conectar de forma lógica, com começo, meio e fim.  
+
+5. **Linguagem**  
+   - Adapte a explicação para a idade aproximada do estudante: **${idadeUsuario} anos**.  
+   - Use frases curtas, claras e simples, mas mantendo todas as informações importantes.  
+   - O aluno deve ser capaz de entender todo o conteúdo apenas lendo o resumo.  
+
+6. **Completude**  
+   - O resumo deve cobrir todas as informações necessárias do texto original.  
+   - NÃO invente informações externas. Use somente o material fornecido.  
+
+=== CONTEÚDO A RESUMIR ===
+"""
+${texto}
+"""
+
+=== SAÍDA ESPERADA ===
+Um **resumo corrido, explicativo e bem estruturado**, semelhante a um texto de livro didático.  
+O texto deve:  
+- Conter todas as informações essenciais.  
+- Ser organizado em parágrafos.  
+- Ter clareza e didática, adequado para a idade de ${idadeUsuario} anos.`;
 }
 
 serve(async (req) => {
