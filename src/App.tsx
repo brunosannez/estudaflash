@@ -17,6 +17,9 @@ import Home from "./pages/Home";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import MindMap from "./pages/MindMap";
+import MySummaries from "./pages/MySummaries";
+import Resumo from "./pages/Resumo";
+import EnemQuiz from "./pages/EnemQuiz";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -101,6 +104,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LazySocial />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-summaries" 
+              element={
+                <ProtectedRoute>
+                  <MySummaries />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resumo/:id" 
+              element={
+                <ProtectedRoute>
+                  <Resumo />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/quiz-enem/:id" 
+              element={
+                <ProtectedRoute>
+                  <EnemQuiz />
                 </ProtectedRoute>
               } 
             />

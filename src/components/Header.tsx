@@ -33,7 +33,7 @@ const Header = () => {
   const quickActions = [
     { icon: BookOpen, label: 'Resumos', path: '/my-summaries', emoji: '📚' },
     { icon: Brain, label: 'Flashcards', path: '/my-flashcards', emoji: '🧠' },
-    { icon: Target, label: 'Quiz', path: '/quiz-history', emoji: '🎯' },
+    { icon: Target, label: 'Quiz ENEM', path: '/my-summaries', emoji: '🎯' },
     { icon: Trophy, label: 'Progresso', path: '/my-progress', emoji: '🏆' },
   ];
 

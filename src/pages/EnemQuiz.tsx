@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export const EnemQuiz: React.FC = () => {
+const EnemQuiz: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -355,3 +355,5 @@ export const EnemQuiz: React.FC = () => {
     </div>
   );
 };
+
+export default EnemQuiz;
