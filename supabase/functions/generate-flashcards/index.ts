@@ -46,6 +46,61 @@ async function getUserPlan(supabase: any, userId: string) {
   }
 }
 
+// Detectar tema automático do conteúdo
+function detectTheme(content: string): string {
+  const keywords: { [key: string]: string[] } = {
+    'História': ['guerra', 'século', 'revolução', 'colonização', 'império', 'independência', 'período', 'história'],
+    'Matemática': ['equação', 'função', 'cálculo', 'geometria', 'álgebra', 'número', 'fórmula', 'matemática'],
+    'Biologia': ['célula', 'DNA', 'evolução', 'organismo', 'genética', 'espécie', 'sistema', 'biologia'],
+    'Química': ['átomo', 'molécula', 'reação', 'elemento', 'ligação', 'composto', 'solução', 'química'],
+    'Física': ['força', 'energia', 'movimento', 'velocidade', 'massa', 'gravidade', 'onda', 'física'],
+    'Geografia': ['clima', 'relevo', 'população', 'território', 'região', 'paisagem', 'urbano', 'geografia'],
+    'Literatura': ['obra', 'autor', 'texto', 'narrativa', 'personagem', 'estilo', 'movimento', 'literatura'],
+    'Filosofia': ['pensamento', 'filosofia', 'ética', 'moral', 'razão', 'conhecimento', 'verdade']
+  };
+  
+  const contentLower = content.toLowerCase();
+  let bestMatch = 'Geral';
+  let maxScore = 0;
+  
+  for (const [subject, words] of Object.entries(keywords)) {
+    const score = words.filter(word => contentLower.includes(word)).length;
+    if (score > maxScore) {
+      maxScore = score;
+      bestMatch = subject;
+    }
+  }
+  
+  return bestMatch;
+}
+
+// Obter idade do usuário (padrão 15 anos se não especificado)
+async function getUserAge(supabase: any, userId: string): Promise<number> {
+  try {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('date_of_birth')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (profile?.date_of_birth) {
+      const age = new Date().getFullYear() - new Date(profile.date_of_birth).getFullYear();
+      return age;
+    }
+  } catch (error) {
+    console.log('Erro ao obter idade do usuário:', error);
+  }
+  return 15; // Idade padrão
+}
+
+// Calcular quantidade ideal de cards baseada no tamanho
+function calculateTargetCards(wordCount: number): number {
+  if (wordCount <= 300) return Math.min(10, Math.max(8, Math.floor(wordCount / 30)));
+  if (wordCount <= 600) return Math.min(15, Math.max(12, Math.floor(wordCount / 40)));
+  if (wordCount <= 900) return Math.min(20, Math.max(15, Math.floor(wordCount / 45)));
+  return Math.min(20, Math.max(18, Math.floor(wordCount / 50))); // Máximo 20 cards
+}
+
 async function generateWithHuggingFace(apiKey: string, model: string, prompt: string) {
   const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
     method: 'POST',
@@ -179,72 +234,59 @@ serve(async (req) => {
     console.log('Gerando flashcards automaticamente para resumo:', resumoId);
     console.log('Tamanho do texto:', textoResumo.length, 'caracteres');
 
-    // SISTEMA AVANÇADO DE GERAÇÃO DE FLASHCARDS
-    // Calcular quantidade ideal baseada no conteúdo
-    const wordCount = textoResumo.split(' ').length;
-    const idealFlashcardCount = Math.max(6, Math.min(20, Math.ceil(wordCount / 175)));
-    
-    console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${idealFlashcardCount} flashcards`);
+    // SISTEMA AVANÇADO DE GERAÇÃO DE FLASHCARDS COM VARIÁVEIS DINÂMICAS
+    const theme = detectTheme(textoResumo);
+    const userAge = await getUserAge(supabase, userId);
+    const wordCount = textoResumo.split(/\s+/).length;
+    const targetCards = calculateTargetCards(wordCount);
 
-    const prompt = `Você é um elaborador de materiais didáticos especialista em criar flashcards de estudo no estilo Anki.  
-Sua tarefa é transformar o RESUMO fornecido em um conjunto de flashcards claros, objetivos e bem estruturados.
+    console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${targetCards} flashcards`);
+    console.log(`🎯 Tema detectado: ${theme}, Idade: ${userAge} anos`);
 
-=== INSTRUÇÕES ===
-1. **Fonte de verdade**  
-   - Use EXCLUSIVAMENTE o texto do resumo fornecido abaixo.  
-   - NÃO invente informações externas.  
+    const prompt = `Você é um elaborador de materiais didáticos no estilo Anki. Sua missão é gerar flashcards eficientes e claros apenas com base no RESUMO abaixo. Proibido inserir dados externos.
 
-2. **Estrutura de cada flashcard**  
-   - front: pergunta curta e clara (uma única ideia por card).  
-   - back: resposta objetiva em 1 a 2 frases.  
-   - explanation: explicação complementar em até 3 frases, com detalhes adicionais para fixar.  
-   - difficulty: classifique cada card como "easy", "medium" ou "hard".  
-   - tags: inclua sempre ["geral"] e, se possível, subtemas derivados do conteúdo.  
-   - evidence: copie um pequeno trecho literal do resumo (até 200 caracteres) que justifique a resposta.  
+— REGRAS:
+1) Use somente o conteúdo do resumo.
+2) Para cada macrotema, crie pelo menos 1–2 cards que cubram diferentes aspectos (definição, causa, consequência, exemplo, verdadeiro/falso).
+3) Linguagem adaptada para um estudante de ~${userAge} anos.
+4) Cada card:
+   - front: pergunta clara (1 ideia)
+   - back: resposta de 1–2 frases
+   - explanation: até 3 frases de contexto
+   - type: escolha entre "definicao", "causa_efeito", "exemplo", "verdadeiro_falso"
+   - tags: ["${theme}"]
+   - difficulty: easy|medium|hard
+   - evidence: trecho literal (<=200 caracteres) do resumo que comprove a resposta
+5) Gere exatamente ${targetCards} flashcards baseado no tamanho do conteúdo.
+6) NUNCA gere mais de 20 cards de uma só vez para não saturar o aluno.
+7) Verifique duplicidade de perguntas — não gerar cards repetidos.
 
-3. **Tipos de perguntas**  
-   - Definição direta ("O que é...?").  
-   - Causa e efeito ("Por que... aconteceu?").  
-   - Comparação ("Qual a diferença entre...?").  
-   - Exemplos ("Cite um exemplo de...").  
-   - Verdadeiro/Falso (para fixar pontos rápidos).  
-
-4. **Quantidade**  
-   - Gere **1 a 2 flashcards para cada parágrafo ou ideia importante do resumo**.  
-   - Se o resumo for curto, mínimo de 8 flashcards.  
-   - Se for médio, entre 15 e 20.  
-   - Se for longo, acima de 25 (divida em blocos).  
-
-5. **Estilo**  
-   - Clareza e simplicidade: como se estivesse perguntando a um aluno.  
-   - Resposta deve sempre caber em poucos segundos de leitura.  
-   - NÃO use frases longas, listas ou linguagem acadêmica complicada.  
-   - Cada flashcard deve ser independente e fazer sentido sozinho.  
-
-=== RESUMO A SER TRANSFORMADO EM FLASHCARDS ===
+— RESUMO:
 """
 ${textoResumo}
 """
 
-=== SAÍDA ESPERADA ===
-Um JSON com a seguinte estrutura:
-
+— SAÍDA (JSON válido):
 {
+  "meta": {
+    "word_count": ${wordCount},
+    "cards_target": ${targetCards},
+    "cards_generated": <número_real_de_cards_criados>
+  },
   "flashcards": [
     {
-      "front": "PERGUNTA clara e objetiva",
-      "back": "RESPOSTA curta e direta",
-      "explanation": "Explicação complementar em até 3 frases",
-      "difficulty": "easy|medium|hard",
-      "tags": ["geral", "subtema"],
-      "evidence": "trecho literal do resumo que sustenta a resposta"
+      "front": "...",
+      "back": "...",
+      "explanation": "...",
+      "type": "...",
+      "difficulty": "...",
+      "tags": ["${theme}"],
+      "evidence": "..."
     }
   ]
 }
 
-- Todos os flashcards devem estar dentro de "flashcards".  
-- O JSON deve ser válido.  
-- O número de flashcards deve ser proporcional ao conteúdo do resumo, conforme instruído.`;
+Responda APENAS com o JSON válido, sem texto adicional.`;
 
     console.log('Iniciando chamada para API...', modelConfig.provider);
     const startTime = Date.now();
@@ -373,7 +415,7 @@ Um JSON com a seguinte estrutura:
       return true;
     });
 
-    if (validatedFlashcards.length < Math.ceil(idealFlashcardCount * 0.6)) {
+    if (validatedFlashcards.length < Math.ceil(targetCards * 0.6)) {
       console.error('❌ Muitos flashcards rejeitados na validação');
       throw new Error('Qualidade insuficiente dos flashcards gerados. Tente novamente.');
     }
@@ -385,7 +427,10 @@ Um JSON com a seguinte estrutura:
       resumo_id: resumoId,
       pergunta: card.front || card.pergunta,
       resposta: card.back || card.resposta,
-      exemplo: card.explanation || card.exemplo || null
+      exemplo: card.explanation || card.exemplo || null,
+      card_type: card.type || 'definicao', // Novo campo type mapeado
+      difficulty: card.difficulty === 'easy' ? 1 : card.difficulty === 'medium' ? 2 : 3,
+      category: Array.isArray(card.tags) ? card.tags[0] || theme : theme
     }));
 
     const { data: savedFlashcards, error: flashcardError } = await supabase
@@ -412,7 +457,7 @@ Um JSON com a seguinte estrutura:
           modelo_usado: modelConfig.model,
           plano_usuario: userPlan,
           palavras_analisadas: wordCount,
-          cobertura_qualidade: Math.round((validatedFlashcards.length / idealFlashcardCount) * 100)
+          cobertura_qualidade: Math.round((validatedFlashcards.length / targetCards) * 100)
         }
       }),
       {

@@ -605,6 +605,7 @@ export type Database = {
       }
       flashcards: {
         Row: {
+          card_type: string | null
           category: string | null
           data_criacao: string
           difficulty: number
@@ -621,6 +622,7 @@ export type Database = {
           tags: string[] | null
         }
         Insert: {
+          card_type?: string | null
           category?: string | null
           data_criacao?: string
           difficulty?: number
@@ -637,6 +639,7 @@ export type Database = {
           tags?: string[] | null
         }
         Update: {
+          card_type?: string | null
           category?: string | null
           data_criacao?: string
           difficulty?: number
