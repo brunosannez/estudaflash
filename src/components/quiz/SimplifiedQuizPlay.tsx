@@ -239,16 +239,24 @@ const SimplifiedQuizPlay = ({ quiz, sessionId, resumeMode = false, onComplete }:
       <div className="p-4 pb-20">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
-            <QuizQuestionDisplay question={currentQuestion.pergunta} />
+                <QuizQuestionDisplay 
+                  question={currentQuestion.pergunta}
+                  context={currentQuestion.context}
+                  statements={currentQuestion.statements}
+                  questionType={currentQuestion.question_type || currentQuestion.tipo}
+                  difficulty={currentQuestion.difficulty}
+                />
 
-            <QuizAlternativesList
-              alternatives={currentQuestion.alternativas}
-              selectedAnswer={selectedAnswer}
-              showResult={showResult}
-              correctAnswer={currentQuestion.correta}
-              isCorrect={isCorrect}
-              onAnswerSelect={handleAnswerSelect}
-            />
+                {/* Alternatives */}
+                <QuizAlternativesList
+                  alternatives={currentQuestion.alternativas}
+                  selectedAnswer={selectedAnswer}
+                  showResult={showResult}
+                  correctAnswer={currentQuestion.correta}
+                  isCorrect={isCorrect}
+                  onAnswerSelect={handleAnswerSelect}
+                  questionType={currentQuestion.question_type || currentQuestion.tipo}
+                />
 
             <QuizExplanation
               explanation={currentQuestion.explicacao}

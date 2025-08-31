@@ -1105,6 +1105,59 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_metadata: {
+        Row: {
+          coverage_map: Json | null
+          created_at: string | null
+          generated: Json | null
+          id: string
+          idade_usuario: number | null
+          macrothemes: Json | null
+          quality_checks: Json | null
+          resumo_id: string
+          targets: Json | null
+          tema: string
+          updated_at: string | null
+          word_count: number | null
+        }
+        Insert: {
+          coverage_map?: Json | null
+          created_at?: string | null
+          generated?: Json | null
+          id?: string
+          idade_usuario?: number | null
+          macrothemes?: Json | null
+          quality_checks?: Json | null
+          resumo_id: string
+          targets?: Json | null
+          tema: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          coverage_map?: Json | null
+          created_at?: string | null
+          generated?: Json | null
+          id?: string
+          idade_usuario?: number | null
+          macrothemes?: Json | null
+          quality_checks?: Json | null
+          resumo_id?: string
+          targets?: Json | null
+          tema?: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_metadata_resumo_id_fkey"
+            columns: ["resumo_id"]
+            isOneToOne: false
+            referencedRelation: "resumos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_performance_stats: {
         Row: {
           average_accuracy: number | null
@@ -1286,32 +1339,53 @@ export type Database = {
       quizzes: {
         Row: {
           alternativas: Json
+          answer: boolean | null
+          cognitive_level: string | null
+          context: string | null
           correta: number
           data_criacao: string
+          difficulty: string | null
+          evidence: string | null
           explicacao: string
           id: string
           pergunta: string
+          question_type: string | null
           resumo_id: string
+          statements: Json | null
           tipo: string | null
         }
         Insert: {
           alternativas: Json
+          answer?: boolean | null
+          cognitive_level?: string | null
+          context?: string | null
           correta: number
           data_criacao?: string
+          difficulty?: string | null
+          evidence?: string | null
           explicacao: string
           id?: string
           pergunta: string
+          question_type?: string | null
           resumo_id: string
+          statements?: Json | null
           tipo?: string | null
         }
         Update: {
           alternativas?: Json
+          answer?: boolean | null
+          cognitive_level?: string | null
+          context?: string | null
           correta?: number
           data_criacao?: string
+          difficulty?: string | null
+          evidence?: string | null
           explicacao?: string
           id?: string
           pergunta?: string
+          question_type?: string | null
           resumo_id?: string
+          statements?: Json | null
           tipo?: string | null
         }
         Relationships: [

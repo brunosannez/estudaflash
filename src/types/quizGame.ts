@@ -5,6 +5,15 @@ export interface QuizQuestion {
   alternativas: string[];
   correta: number;
   explicacao: string;
+  // New ENEM fields
+  question_type?: 'objetiva' | 'verdadeiro_falso_simples' | 'verdadeiro_falso_combinacoes';
+  tipo?: string;
+  context?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  cognitive_level?: 'remember' | 'understand' | 'apply' | 'analyze';
+  evidence?: string;
+  statements?: string[];
+  answer?: boolean;
 }
 
 export interface QuizGameState {

@@ -19,14 +19,15 @@ const QuizAlternativesList = ({
   correctAnswer, 
   isCorrect,
   onAnswerSelect,
-  questionType = 'multipla_escolha'
+  questionType = 'objetiva'
 }: QuizAlternativesListProps) => {
-  const isTrueFalse = questionType === 'verdadeiro_falso';
+  const isTrueFalse = questionType === 'verdadeiro_falso' || questionType === 'verdadeiro_falso_simples';
+  const isCombinations = questionType === 'verdadeiro_falso_combinacoes';
   
   return (
     <div className={`${isTrueFalse ? 'grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4' : 'space-y-3 md:space-y-4'} mb-6 md:mb-8`}>
       {alternatives?.map((alternativa: string, index: number) => {
-        let buttonClass = `w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 font-medium text-sm md:text-base min-h-[60px] md:min-h-[70px] flex items-center justify-center ${isTrueFalse ? 'text-center' : ''} `;
+        let buttonClass = `w-full p-4 md:p-5 text-left rounded-xl border-2 transition-all duration-200 font-medium text-sm md:text-base min-h-[60px] md:min-h-[70px] flex items-center ${isTrueFalse ? 'justify-center text-center' : 'justify-start'} `;
         
         if (showResult) {
           if (index === correctAnswer) {
@@ -50,19 +51,31 @@ const QuizAlternativesList = ({
             className={buttonClass}
           >
             <div className={`flex items-center ${isTrueFalse ? 'justify-center' : 'space-x-3'} w-full`}>
-              {!isTrueFalse && (
+              {!isTrueFalse && !isCombinations && (
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-background shadow-md flex items-center justify-center font-bold text-sm md:text-base flex-shrink-0">
                   {String.fromCharCode(65 + index)}
                 </div>
               )}
-              <span className={`flex-1 ${isTrueFalse ? 'text-center text-lg md:text-xl font-semibold' : 'text-left'}`}>
-                {isTrueFalse ? (
+              
+              {isCombinations && (
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-background shadow-md flex items-center justify-center font-bold text-sm md:text-base flex-shrink-0">
+                  {String.fromCharCode(65 + index)}
+                </div>
+              )}
+              
+              <span className={`flex-1 ${isTrueFalse && !isCombinations ? 'text-center text-lg md:text-xl font-semibold' : 'text-left'}`}>
+                {isTrueFalse && !isCombinations ? (
                   <div className="flex items-center justify-center space-x-2">
                     <span className="text-2xl">{index === 0 ? '✓' : '✗'}</span>
                     <span>{alternativa}</span>
                   </div>
+                ) : isCombinations ? (
+                  <div className="text-center font-mono font-bold text-lg">
+                    {alternativa}
+                  </div>
                 ) : alternativa}
               </span>
+              
               {showResult && index === correctAnswer && (
                 <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
