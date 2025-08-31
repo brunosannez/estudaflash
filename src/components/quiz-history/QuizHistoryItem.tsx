@@ -4,7 +4,7 @@ import QuizPerformanceIndicator from "./QuizPerformanceIndicator";
 import QuizMetrics from "./QuizMetrics";
 import QuizActions from "./QuizActions";
 import MindMapButton from "./MindMapButton";
-import { useQuizDelete } from "./QuizDeleteHandler";
+import { useQuizDeleteHandler } from "./QuizDeleteHandler";
 
 interface QuizHistoryItemProps {
   quiz: {
@@ -23,11 +23,14 @@ interface QuizHistoryItemProps {
 }
 
 const QuizHistoryItem = ({ quiz, onRefazerQuiz, onViewQuiz, onDelete }: QuizHistoryItemProps) => {
-  const { deleteQuiz } = useQuizDelete();
+  const { deleteQuizSession } = useQuizDeleteHandler();
   const percentage = quiz.total_perguntas > 0 ? Math.round((quiz.acertos / quiz.total_perguntas) * 100) : 0;
 
   const handleDeleteQuiz = async () => {
-    await deleteQuiz(quiz.id, onDelete);
+    const success = await deleteQuizSession(quiz.id);
+    if (success && onDelete) {
+      onDelete();
+    }
   };
 
   return (

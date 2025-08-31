@@ -56,7 +56,7 @@ export const useProgressData = () => {
 
       // Calculate totals based on real data
       const totalFlashcards = flashcardReviews.length;
-      const correctAnswers = quizAnswers.filter(a => a.acertou).length;
+      const correctAnswers = quizAnswers.filter(a => a.is_correct).length;
       const incorrectAnswers = quizAnswers.length - correctAnswers;
       const totalXP = calculateXP(totalFlashcards, correctAnswers, incorrectAnswers);
       const currentLevel = calculateLevel(totalXP);
@@ -64,15 +64,15 @@ export const useProgressData = () => {
       // Calculate today's activity
       const today = new Date().toISOString().split('T')[0];
       const todayFlashcards = flashcardReviews.filter(r => r.data_review?.startsWith(today)).length;
-      const todayQuizAnswers = quizAnswers.filter(a => a.data_resposta?.startsWith(today));
-      const todayCorrect = todayQuizAnswers.filter(a => a.acertou).length;
+      const todayQuizAnswers = quizAnswers.filter(a => a.answered_at?.startsWith(today));
+      const todayCorrect = todayQuizAnswers.filter(a => a.is_correct).length;
       const todayIncorrect = todayQuizAnswers.length - todayCorrect;
       const todayXP = calculateXP(todayFlashcards, todayCorrect, todayIncorrect);
 
       // Calculate streak based on consecutive days with activity
       const activityDates = new Set([
         ...flashcardReviews.map(r => r.data_review?.split('T')[0]).filter(Boolean),
-        ...quizAnswers.map(a => a.data_resposta?.split('T')[0]).filter(Boolean)
+        ...quizAnswers.map(a => a.answered_at?.split('T')[0]).filter(Boolean)
       ]);
       
       const sortedDates = Array.from(activityDates).sort().reverse();

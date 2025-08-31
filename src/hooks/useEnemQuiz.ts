@@ -97,7 +97,14 @@ export const useEnemQuiz = () => {
         throw new Error(error.message);
       }
 
-      return data;
+      return data ? {
+        ...data,
+        macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
+        targets: data.targets as { objetivas: number; vf_sequenciais: number },
+        generated: data.generated as { objetivas: number; vf_sequenciais: number },
+        coverage_map: Array.isArray(data.coverage_map) ? data.coverage_map : [],
+        quality_checks: data.quality_checks as any
+      } : null;
 
     } catch (error) {
       console.error('❌ Error fetching quiz metadata:', error);

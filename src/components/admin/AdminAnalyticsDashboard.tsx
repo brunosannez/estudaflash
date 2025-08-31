@@ -126,7 +126,7 @@ const AdminAnalyticsDashboard = () => {
         ).length;
         
         const quizzesCount = quizzes.filter(quiz => 
-          quiz.created_at?.startsWith(dateStr)
+          quiz.started_at?.startsWith(dateStr)
         ).length;
 
         return {
