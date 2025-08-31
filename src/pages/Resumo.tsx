@@ -24,7 +24,7 @@ interface ResumoData {
 const Resumo = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { generateQuiz, loading: quizLoading } = useEnemQuiz();
   const { generateAutoFlashcards, isGenerating: flashcardsLoading } = useAutoFlashcards();
   const { generateMindMap, loading: mindMapLoading } = useMindMap();
@@ -34,12 +34,30 @@ const Resumo = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadResumo();
-  }, [id]);
+    // Debug logs
+    console.log('🔍 Resumo useEffect - ID:', id, 'User:', !!user, 'AuthLoading:', authLoading);
+    
+    // Only try to load resumo when auth is not loading
+    if (!authLoading) {
+      loadResumo();
+    }
+  }, [id, user, authLoading]);
 
   const loadResumo = async () => {
-    if (!id || !user) {
+    console.log('📄 loadResumo called - ID:', id, 'User:', !!user);
+    
+    // Check if ID is provided
+    if (!id) {
+      console.error('❌ No ID provided');
       setError('ID do resumo não fornecido');
+      setLoading(false);
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      console.error('❌ No user authenticated');
+      setError('Usuário não autenticado');
       setLoading(false);
       return;
     }
