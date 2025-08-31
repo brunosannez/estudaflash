@@ -7,6 +7,7 @@ import PlanManagement from '@/components/admin/PlanManagement';
 import DataManagement from '@/components/admin/DataManagement';
 import UsageAnalytics from '@/components/admin/UsageAnalytics';
 import ApiUsageMonitoring from '@/components/admin/ApiUsageMonitoring';
+import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import PageLayout from '@/components/navigation/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,7 +111,7 @@ const AdminPanel = () => {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8 min-w-fit gap-1">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 min-w-fit gap-1">
               <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Usuários</TabsTrigger>
               <TabsTrigger value="plans" className="text-xs sm:text-sm">Planos</TabsTrigger>
@@ -119,6 +120,7 @@ const AdminPanel = () => {
               <TabsTrigger value="data" className="text-xs sm:text-sm">Dados</TabsTrigger>
               <TabsTrigger value="audit" className="text-xs sm:text-sm">Auditoria</TabsTrigger>
               <TabsTrigger value="security" className="text-xs sm:text-sm">Segurança</TabsTrigger>
+              <TabsTrigger value="monitoring" className="text-xs sm:text-sm">Monitoramento</TabsTrigger>
             </TabsList>
           </div>
           
@@ -152,6 +154,10 @@ const AdminPanel = () => {
 
           <TabsContent value="security" className="space-y-6 mt-6">
             <AdminSecurity />
+          </TabsContent>
+
+          <TabsContent value="monitoring" className="space-y-6 mt-6">
+            <SecurityDashboard />
           </TabsContent>
         </Tabs>
       </div>
