@@ -8,18 +8,18 @@ export const useQuizScoring = () => {
   const { addXP } = useGameification();
 
   const handleCorrectAnswer = async () => {
-    await addXP(10, 'quiz_correct');
+    await addXP(15, 'quiz_correct'); // Increased XP for correct answers
     toast({
-      title: '🎉 Correto! +10 XP',
+      title: '🎉 Correto! +15 XP',
       description: 'Excelente resposta!',
       duration: 2000,
     });
   };
 
   const handleIncorrectAnswer = async () => {
-    await addXP(2, 'quiz_incorrect');
+    await addXP(3, 'quiz_incorrect'); // Small XP for trying
     toast({
-      title: '😅 Incorreto, mas +2 XP por tentar!',
+      title: '😅 Incorreto, mas +3 XP por tentar!',
       description: 'Continue tentando!',
       duration: 2000,
     });
@@ -31,15 +31,19 @@ export const useQuizScoring = () => {
 
     if (accuracy === 100) {
       bonusXP = 50;
-      bonusMessage = 'Perfeito! +50 XP de bônus!';
+      bonusMessage = '🏆 Perfeito! +50 XP de bônus!';
       await addXP(bonusXP, 'quiz_perfect');
-    } else if (accuracy >= 80) {
-      bonusXP = 25;
-      bonusMessage = 'Excelente! +25 XP de bônus!';
+    } else if (accuracy >= 90) {
+      bonusXP = 30;
+      bonusMessage = '⭐ Excelente! +30 XP de bônus!';
       await addXP(bonusXP, 'quiz_excellent');
-    } else if (accuracy >= 60) {
+    } else if (accuracy >= 80) {
+      bonusXP = 20;
+      bonusMessage = '👏 Muito bom! +20 XP de bônus!';
+      await addXP(bonusXP, 'quiz_excellent');
+    } else if (accuracy >= 70) {
       bonusXP = 10;
-      bonusMessage = 'Bom trabalho! +10 XP de bônus!';
+      bonusMessage = '👍 Bom trabalho! +10 XP de bônus!';
       await addXP(bonusXP, 'quiz_good');
     }
 
@@ -56,9 +60,11 @@ export const useQuizScoring = () => {
 
   const finalizeSessionResult = async (sessionResult: QuizSessionResult): Promise<QuizSessionResult> => {
     const bonusXP = await calculateBonusXP(sessionResult.accuracy);
-    const totalXP = (sessionResult.correctAnswers * 10) + 
-                   (sessionResult.totalQuestions - sessionResult.correctAnswers) * 2 + 
-                   bonusXP;
+    
+    // Calculate total XP: base points + incorrect attempt points + bonus
+    const baseXP = sessionResult.correctAnswers * 15; // 15 XP per correct answer
+    const attemptXP = (sessionResult.totalQuestions - sessionResult.correctAnswers) * 3; // 3 XP per incorrect attempt
+    const totalXP = baseXP + attemptXP + bonusXP;
 
     return {
       ...sessionResult,

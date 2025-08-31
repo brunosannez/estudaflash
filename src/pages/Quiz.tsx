@@ -1,149 +1,111 @@
-import React, { useEffect, Suspense, startTransition } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 import QuizLoader from '@/components/quiz/QuizLoader';
 import QuizGenerator from '@/components/quiz/QuizGenerator';
-import QuizSuspenseWrapper from '@/components/quiz/QuizSuspenseWrapper';
-import { useQuizPageState } from '@/hooks/quiz/useQuizPageState';
-import { useOptimizedQuizDataLoader } from '@/hooks/quiz/useOptimizedQuizDataLoader';
+import QuizGameEngine from '@/components/quiz/QuizGameEngine';
+import { useIntelligentQuizGenerator } from '@/hooks/quiz/useIntelligentQuizGenerator';
+import { summaryDataService } from '@/services/summaryDataService';
 import { Button } from '@/components/ui/button';
-import { Settings, BarChart3 } from 'lucide-react';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-
-// Lazy load components to prevent concurrent loading issues
-const SimplifiedQuizPlay = React.lazy(() => import('@/components/quiz/SimplifiedQuizPlay'));
+import { useAuth } from '@/hooks/useAuth';
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   
-  const {
-    resumo,
-    quizzes,
-    isLoading,
-    generating,
-    error,
-    initialized,
-    setResumo,
-    setQuizzes,
-    setLoading,
-    setGenerating,
-    setError,
-    setInitialized
-  } = useQuizPageState();
+  const [resumo, setResumo] = useState<any>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [gameStarted, setGameStarted] = useState(false);
 
-  const { loadQuizData, generateQuiz, forceRegenerateQuiz } = useOptimizedQuizDataLoader();
+  const { 
+    loading: generatorLoading, 
+    analyzing, 
+    generating, 
+    generateIntelligentQuiz 
+  } = useIntelligentQuizGenerator();
 
-  // Check if this is a resume operation or auto-generate
-  const sessionId = searchParams.get('session');
-  const resumeMode = searchParams.get('resume') === 'true';
-  const showDashboard = searchParams.get('dashboard') === 'true';
+  // Check if this is auto-generate mode
   const autoGenerate = searchParams.get('autoGenerate') === 'true';
+  const sessionId = searchParams.get('session');
 
-  console.log('📍 Quiz page rendered:', { 
-    id, 
-    sessionId, 
-    resumeMode,
-    initialized,
-    isLoading
-  });
-
-  // Load data once on mount with startTransition to avoid synchronous updates
+  // Load quiz data on mount
   useEffect(() => {
     if (!id) {
-      console.error('❌ No summary ID provided');
       toast.error('ID do resumo não fornecido');
       navigate('/my-summaries');
       return;
     }
 
-    if (initialized) return;
+    loadQuizData();
+  }, [id, navigate]);
 
-    const loadData = async () => {
-      try {
-        startTransition(() => {
-          setLoading(true);
-          setError(null);
-        });
-        
-        const data = await loadQuizData(id);
-        
-        startTransition(() => {
-          setResumo(data.resumo);
-          setQuizzes(data.quizzes);
-          setInitialized(true);
-          setLoading(false);
-        });
-
-        // Auto-generate quiz if requested and no valid questions exist
-        if (autoGenerate && data.quizzes.length < 5 && data.resumo) {
-          console.log('🎯 Auto-generating quiz as requested...');
-          setTimeout(() => handleGenerateQuiz(), 500);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error loading data:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar dados do quiz';
-        
-        startTransition(() => {
-          if (errorMessage.includes('não encontrado')) {
-            toast.error('Resumo não encontrado');
-            navigate('/my-summaries');
-          } else {
-            setError(errorMessage);
-            toast.error(errorMessage);
-          }
-          setLoading(false);
-        });
-      }
-    };
-
-    loadData();
-  }, [id, initialized, loadQuizData, navigate, setResumo, setQuizzes, setLoading, setError, setInitialized]);
-
-  const handleGenerateQuiz = async (forceRegenerate = false) => {
-    if (!resumo || !id) return;
-
-    // For force regeneration, always proceed
-    if (!forceRegenerate) {
-      // Check if we have enough valid quiz questions
-      if (quizzes.length >= 5) {
-        console.warn('⚠️ Quiz already has enough valid questions');
-        toast.warning('Este resumo já possui um quiz completo!');
-        return;
-      }
-    }
-
-    if (generating) return;
-
+  const loadQuizData = async () => {
     try {
-      startTransition(() => {
-        setGenerating(true);
-      });
-      
-      const newQuizzes = forceRegenerate 
-        ? await forceRegenerateQuiz(resumo, id)
-        : await generateQuiz(resumo, id);
-      
-      startTransition(() => {
-        setQuizzes(newQuizzes);
-        setGenerating(false);
-      });
+      setLoading(true);
+      setError(null);
+
+      console.log('🔍 Loading quiz data for ID:', id);
+
+      // Load summary
+      const resumoData = await summaryDataService.getResumoById(id!);
+      if (!resumoData) {
+        throw new Error('Resumo não encontrado');
+      }
+
+      setResumo(resumoData);
+      console.log('📄 Summary loaded successfully');
+
+      // Check for existing quiz questions
+      const { checkExistingQuiz } = useIntelligentQuizGenerator();
+      const { exists, questions: existingQuestions } = await checkExistingQuiz(id!);
+
+      if (exists && existingQuestions.length > 0) {
+        console.log('✅ Found existing quiz with', existingQuestions.length, 'questions');
+        setQuestions(existingQuestions);
+        if (autoGenerate) {
+          // If auto-generate is requested but quiz exists, start directly
+          setGameStarted(true);
+        }
+      } else if (autoGenerate) {
+        console.log('🎯 Auto-generating quiz as requested...');
+        await handleGenerateQuiz();
+      }
+
     } catch (error) {
-      console.error('❌ Quiz generation error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar quiz. Tente novamente.';
-      
-      startTransition(() => {
-        setGenerating(false);
-      });
-      
+      console.error('❌ Error loading quiz data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar dados do quiz';
+      setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRegenerateQuiz = () => handleGenerateQuiz(true);
+  const handleGenerateQuiz = async () => {
+    if (!resumo || !id) return;
+
+    try {
+      console.log('🚀 Starting intelligent quiz generation...');
+      const newQuestions = await generateIntelligentQuiz(
+        resumo.resumo_gerado, 
+        id, 
+        user?.id
+      );
+      
+      setQuestions(newQuestions);
+      setGameStarted(true);
+      
+    } catch (error) {
+      console.error('❌ Quiz generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar quiz';
+      toast.error(errorMessage);
+    }
+  };
 
   const handleQuizComplete = (result: any) => {
     console.log('🏆 Quiz completed with result:', result);
@@ -151,14 +113,17 @@ const Quiz = () => {
     navigate('/quiz-history');
   };
 
-  const handleBack = () => {
-    console.log('⬅️ Navigating back to quiz history');
+  const handleExit = () => {
+    console.log('⬅️ Exiting quiz');
     navigate('/quiz-history');
   };
 
-  // Show loading while data loads
-  if (isLoading) {
-    console.log('⏳ Showing loading state');
+  const handleBackToSummary = () => {
+    navigate(`/resumo/${id}`);
+  };
+
+  // Show loading state
+  if (loading) {
     return (
       <QuizLoader 
         message="🔍 Carregando dados do quiz..."
@@ -176,12 +141,9 @@ const Quiz = () => {
             <div className="text-4xl md:text-6xl mb-4">😔</div>
             <h2 className="text-lg md:text-xl font-bold mb-2 text-gray-800">Erro</h2>
             <p className="text-sm md:text-base text-gray-600 mb-4">{error}</p>
-            <button 
-              onClick={handleBack}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm md:text-base"
-            >
+            <Button onClick={handleExit} variant="outline">
               Voltar ao Histórico
-            </button>
+            </Button>
           </div>
         </div>
       </PageLayout>
@@ -189,87 +151,49 @@ const Quiz = () => {
   }
 
   // Show generating state
-  if (generating) {
-    console.log('🔄 Showing quiz generation state');
+  if (generatorLoading) {
+    const message = analyzing ? '🔍 Analisando conteúdo...' : 
+                   generating ? '🧠 Gerando questões inteligentes...' : 
+                   '⏳ Preparando quiz...';
+    
+    const description = analyzing ? 'Detectando tema e complexidade do conteúdo' :
+                       generating ? 'Criando questões múltipla escolha e verdadeiro/falso' :
+                       'Isso pode levar alguns segundos';
+
     return (
       <QuizLoader 
-        message="🧠 Gerando quiz..."
-        description="Criando questões personalizadas (isso pode levar alguns segundos)"
+        message={message}
+        description={description}
       />
     );
   }
 
-  // Show enhanced dashboard if requested - temporarily disabled to fix suspense issues
-  if (showDashboard) {
+  // Show quiz game if questions exist and game started
+  if (questions.length > 0 && gameStarted) {
+    console.log('🎮 Starting quiz game with', questions.length, 'questions');
     return (
-      <PageLayout>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Dashboard de Quiz</h1>
-            <Button onClick={handleBack} variant="outline">
-              Voltar
-            </Button>
-          </div>
-          <div className="text-center p-8">
-            <p className="text-gray-600">Dashboard em manutenção. Use o quiz simplificado por enquanto.</p>
-          </div>
-        </div>
-      </PageLayout>
+      <QuizGameEngine
+        questions={questions}
+        onComplete={handleQuizComplete}
+        onExit={handleExit}
+        resumoId={id!}
+        sessionId={sessionId}
+      />
     );
   }
 
-  // Show quiz if we have questions
-  if (quizzes && quizzes.length > 0) {
-    console.log('✅ Showing quiz with', quizzes.length, 'questions');
-    const quizData = {
-      resumo_id: id!,
-      questoes: quizzes,
-      titulo: `Quiz - ${quizzes.length} questões`
-    };
-    
-    return (
-      <QuizSuspenseWrapper 
-        fallbackMessage="Carregando quiz..." 
-        fallbackDescription="Preparando questões..."
-      >
-        <SimplifiedQuizPlay 
-          quiz={quizData} 
-          onComplete={handleQuizComplete}
-          sessionId={sessionId}
-          resumeMode={resumeMode}
-        />
-      </QuizSuspenseWrapper>
-    );
-  }
-
-  // No quiz found or insufficient questions - show generation option
-  const hasInsufficient = quizzes.length > 0 && quizzes.length < 5;
-  console.log(hasInsufficient ? '⚠️ Insufficient valid questions, showing generator' : '❌ No quiz found, showing generator');
+  // Show quiz generator if no questions or game not started
+  console.log('🎯 Showing quiz generator - Questions:', questions.length);
   
   return (
-    <div className="space-y-4">
-      <QuizGenerator 
-        resumoId={id}
-        resumoContent={resumo?.resumo_gerado}
-        onGenerateQuiz={() => handleGenerateQuiz()}
-        isGenerating={generating}
-        onBack={handleBack}
-        hasExistingQuiz={false}
-      />
-      
-      {hasInsufficient && (
-        <div className="flex justify-center">
-          <Button 
-            onClick={handleRegenerateQuiz}
-            variant="outline"
-            disabled={generating}
-            className="border-orange-500 text-orange-600 hover:bg-orange-50"
-          >
-            🔄 Regenerar Quiz Completo (ENEM)
-          </Button>
-        </div>
-      )}
-    </div>
+    <QuizGenerator 
+      resumoId={id}
+      resumoContent={resumo?.resumo_gerado}
+      onGenerateQuiz={handleGenerateQuiz}
+      isGenerating={generatorLoading}
+      onBack={handleBackToSummary}
+      hasExistingQuiz={questions.length > 0}
+    />
   );
 };
 

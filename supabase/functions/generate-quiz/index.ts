@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -7,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Função para detectar tema automaticamente
+// Intelligent theme detection
 const detectTheme = (content: string): string => {
   const keywords = {
     'História': ['história', 'guerra', 'revolução', 'século', 'brasil', 'império', 'república', 'colonização', 'independência'],
@@ -38,7 +37,7 @@ const detectTheme = (content: string): string => {
   return detectedTheme
 }
 
-// Função para calcular idade do usuário
+// Calculate age for difficulty adjustment
 const calculateAge = (dateOfBirth: string): number => {
   if (!dateOfBirth) return 17 // Default
   const birth = new Date(dateOfBirth)
@@ -51,24 +50,9 @@ const calculateAge = (dateOfBirth: string): number => {
   return Math.max(10, Math.min(25, age)) // Clamp between 10-25
 }
 
-// Função para contar palavras
+// Count words for intelligent question calculation
 const countWords = (text: string): number => {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length
-}
-
-// Função para calcular quantidades automáticas
-const calculateTargets = (wordCount: number, macrothemes: string[]) => {
-  const themeCount = macrothemes.length
-  
-  if (wordCount <= 300) {
-    return { objetivas: Math.max(6, themeCount), vf_simples: 2, vf_combinacoes: 0 }
-  } else if (wordCount <= 600) {
-    return { objetivas: Math.max(8, themeCount), vf_simples: 3, vf_combinacoes: 1 }
-  } else if (wordCount <= 900) {
-    return { objetivas: Math.max(10, themeCount), vf_simples: 4, vf_combinacoes: 2 }
-  } else {
-    return { objetivas: Math.max(12, themeCount), vf_simples: 5, vf_combinacoes: 3 }
-  }
 }
 
 serve(async (req) => {
@@ -77,20 +61,20 @@ serve(async (req) => {
   }
 
   try {
-    const { resumoContent, resumoId, userId } = await req.json()
+    const { resumoContent, resumoId, userId, analysis } = await req.json()
     
     if (!resumoContent || !resumoId) {
       throw new Error('Conteúdo do resumo e ID são obrigatórios')
     }
 
-    console.log('🚀 Generating ENEM-style quiz for resumo:', resumoId)
+    console.log('🚀 Generating intelligent ENEM-style quiz for resumo:', resumoId)
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Consumir créditos antes de gerar quiz
+    // Consume credits before generating quiz
     if (userId) {
       const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
         target_user_id: userId,
@@ -136,55 +120,59 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured')
     }
 
-    // Análise dinâmica do conteúdo
-    const tema = detectTheme(resumoContent)
+    // Intelligent content analysis
+    const tema = analysis?.theme || detectTheme(resumoContent)
     const idade_usuario = userProfile?.date_of_birth ? calculateAge(userProfile.date_of_birth) : 17
     const word_count = countWords(resumoContent)
     
+    // Use provided analysis or calculate defaults
+    const multipleChoiceCount = analysis?.multipleChoiceCount || (word_count > 600 ? 6 : 4)
+    const trueFalseCount = analysis?.trueFalseCount || (word_count > 400 ? 3 : 2)
+    const difficulty = analysis?.difficulty || (word_count > 600 ? 'hard' : word_count > 300 ? 'medium' : 'easy')
+    
     console.log(`📊 Análise: ${word_count} palavras, Tema: ${tema}, Idade: ${idade_usuario}`)
+    console.log(`🎯 Targets: ${multipleChoiceCount} múltipla escolha, ${trueFalseCount} verdadeiro/falso`)
 
-    // Simulated macrotheme detection (would be enhanced with AI)
-    const macrothemes = [tema, 'Conceitos fundamentais', 'Aplicações práticas']
-    const targets = calculateTargets(word_count, macrothemes)
-
-    console.log(`🎯 Targets: ${targets.objetivas} objetivas, ${targets.vf_simples} V/F simples, ${targets.vf_combinacoes} V/F combinações`)
-
-    // Prompt otimizado para questões ENEM - ANTI-ALUCINAÇÃO
-    const enemPrompt = `Você deve criar questões de múltipla escolha no estilo ENEM baseadas EXCLUSIVAMENTE no texto fornecido.
+    // Enhanced ENEM-style prompt for both question types
+    const enemPrompt = `Você deve criar questões de múltipla escolha E verdadeiro/falso no estilo ENEM baseadas EXCLUSIVAMENTE no texto fornecido.
 
 TEXTO BASE OBRIGATÓRIO:
 """
 ${resumoContent}
 """
 
-REGRAS RÍGIDAS:
+REGRAS RÍGIDAS ANTI-ALUCINAÇÃO:
 1. Use SOMENTE informações que estão EXPLICITAMENTE no texto acima
 2. NUNCA invente dados, datas, nomes ou conceitos que não estão no texto
-3. Crie 6-8 questões de múltipla escolha com EXATAMENTE 5 alternativas (A, B, C, D, E)
-4. Perguntas adequadas para estudantes de ${idade_usuario} anos
-5. Estilo ENEM: enunciados contextualizados e claros
-
-ESTRUTURA OBRIGATÓRIA:
-- Pergunta clara baseada no texto
-- 5 alternativas (A, B, C, D, E) sendo apenas 1 correta
-- Explicação curta baseada no texto
-- Use índice 0-4 para resposta correta (0=A, 1=B, 2=C, 3=D, 4=E)
+3. Crie EXATAMENTE ${multipleChoiceCount} questões de múltipla escolha com 5 alternativas (A, B, C, D, E)
+4. Crie EXATAMENTE ${trueFalseCount} questões de verdadeiro/falso com 3-4 afirmações cada
+5. Perguntas adequadas para estudantes de ${idade_usuario} anos
+6. Nível de dificuldade: ${difficulty}
+7. Estilo ENEM: enunciados contextualizados e claros
 
 FORMATO JSON EXATO:
 {
   "questoes": [
     {
+      "question_type": "objetiva",
       "pergunta": "Baseado no texto, [pergunta clara]",
       "alternativas": ["A) opção baseada no texto", "B) opção baseada no texto", "C) opção baseada no texto", "D) opção baseada no texto", "E) opção baseada no texto"],
       "correta": 0,
       "explicacao": "Segundo o texto, [explicação baseada exclusivamente no conteúdo]"
+    },
+    {
+      "question_type": "verdadeiro_falso_simples",
+      "pergunta": "Analise as afirmações sobre [tópico do texto] e marque V para verdadeiro ou F para falso:",
+      "statements": ["Afirmação 1 baseada no texto", "Afirmação 2 baseada no texto", "Afirmação 3 baseada no texto"],
+      "answer": true,
+      "explicacao": "As afirmações estão corretas/incorretas porque, segundo o texto, [explicação]"
     }
   ]
 }
 
 ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois.`
 
-    // Call OpenAI API with ENEM prompt
+    // Call OpenAI API with enhanced prompt
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -196,7 +184,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista em questões ENEM. Crie questões EXCLUSIVAMENTE baseadas no texto fornecido. PROIBIDO inventar informações. Responda APENAS com JSON válido sem texto adicional.'
+            content: 'Você é um especialista em questões ENEM. Crie questões múltipla escolha E verdadeiro/falso EXCLUSIVAMENTE baseadas no texto fornecido. PROIBIDO inventar informações. Responda APENAS com JSON válido sem texto adicional.'
           },
           {
             role: 'user',
@@ -204,8 +192,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
           }
         ],
         temperature: 0.1, // Lower for consistency
-        max_completion_tokens: 3000, // Use max_completion_tokens for newer models
-        max_tokens: 3000,
+        max_tokens: 4000,
       }),
     })
 
@@ -220,7 +207,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
 
     console.log('📝 Raw OpenAI response:', content.substring(0, 300) + '...')
 
-    // Parse simple JSON format
+    // Parse JSON response
     let quizData
     try {
       quizData = JSON.parse(content)
@@ -238,8 +225,9 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
     const validQuestions = []
     
     for (const q of quizData.questoes) {
-      if (q.pergunta && q.alternativas && Array.isArray(q.alternativas) && 
-          q.alternativas.length === 5 && typeof q.correta === 'number' && q.explicacao) {
+      if (q.question_type === 'objetiva' && q.pergunta && q.alternativas && 
+          Array.isArray(q.alternativas) && q.alternativas.length === 5 && 
+          typeof q.correta === 'number' && q.explicacao) {
         
         validQuestions.push({
           question_type: 'objetiva',
@@ -248,9 +236,23 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
           correta: q.correta,
           explicacao: q.explicacao,
           context: null,
-          difficulty: 'medium',
+          difficulty: difficulty,
           cognitive_level: 'understand',
           evidence: null
+        })
+      } else if ((q.question_type === 'verdadeiro_falso_simples' || q.question_type === 'verdadeiro_falso_combinacoes') && 
+                 q.pergunta && q.statements && Array.isArray(q.statements) && 
+                 typeof q.answer === 'boolean' && q.explicacao) {
+        
+        validQuestions.push({
+          question_type: q.question_type,
+          pergunta: q.pergunta,
+          statements: q.statements,
+          answer: q.answer,
+          explicacao: q.explicacao,
+          context: null,
+          difficulty: difficulty,
+          cognitive_level: 'analyze'
         })
       }
     }
@@ -261,9 +263,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
 
     console.log(`✅ ${validQuestions.length}/${quizData.questoes.length} questões aprovadas na validação`)
     
-    const allQuestions = validQuestions
-
-    // Save simplified metadata
+    // Save metadata
     const { data: metadataInserted, error: metadataError } = await supabase
       .from('quiz_metadata')
       .insert({
@@ -272,9 +272,15 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
         idade_usuario: idade_usuario,
         word_count: word_count,
         macrothemes: [tema],
-        targets: { objetivas: allQuestions.length },
-        generated: { objetivas: allQuestions.length },
-        quality_checks: { all_from_summary: true }
+        targets: { 
+          multipleChoice: multipleChoiceCount, 
+          trueFalse: trueFalseCount 
+        },
+        generated: { 
+          multipleChoice: validQuestions.filter(q => q.question_type === 'objetiva').length,
+          trueFalse: validQuestions.filter(q => q.question_type.includes('verdadeiro_falso')).length
+        },
+        quality_checks: { all_from_summary: true, intelligent_analysis: true }
       })
       .select()
       .single()
@@ -284,21 +290,21 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
       console.log('Continuing without metadata...')
     }
 
-    // Save questions 
-    const questionsToInsert = allQuestions.map(q => ({
+    // Save questions to database
+    const questionsToInsert = validQuestions.map(q => ({
       resumo_id: resumoId,
-      question_type: q.question_type || 'objetiva',
+      question_type: q.question_type,
       pergunta: q.pergunta,
-      alternativas: q.alternativas,
-      correta: q.correta,
+      alternativas: q.alternativas || null,
+      correta: q.correta !== undefined ? q.correta : null,
       explicacao: q.explicacao,
       tipo: q.question_type === 'objetiva' ? 'multipla_escolha' : 'verdadeiro_falso',
       context: q.context,
       difficulty: q.difficulty,
       cognitive_level: q.cognitive_level,
       evidence: q.evidence,
-      statements: q.statements,
-      answer: q.answer
+      statements: q.statements || null,
+      answer: q.answer !== undefined ? q.answer : null
     }))
 
     const { data: insertedQuestions, error: insertError } = await supabase
@@ -308,23 +314,26 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
 
     if (insertError) {
       console.error('Database insert error:', insertError)
-      throw new Error(`Failed to save ENEM questions: ${insertError.message}`)
+      throw new Error(`Failed to save questions: ${insertError.message}`)
     }
 
-    console.log(`💾 Saved ${insertedQuestions.length} ENEM questions to database`)
+    console.log(`💾 Saved ${insertedQuestions.length} intelligent questions to database`)
 
     return new Response(
       JSON.stringify({
         success: true,
         questoes: insertedQuestions,
         metadata: metadataInserted,
-        message: `Quiz gerado com ${insertedQuestions.length} questões`,
+        message: `Quiz inteligente gerado: ${insertedQuestions.length} questões (${tema})`,
         stats: {
           word_count,
           tema,
           idade_usuario,
+          difficulty,
           generated: {
-            objetivas: allQuestions.length
+            multipleChoice: validQuestions.filter(q => q.question_type === 'objetiva').length,
+            trueFalse: validQuestions.filter(q => q.question_type.includes('verdadeiro_falso')).length,
+            total: validQuestions.length
           }
         }
       }),
@@ -334,7 +343,7 @@ ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois
     )
 
   } catch (error) {
-    console.error('❌ Quiz generation error:', error)
+    console.error('❌ Intelligent quiz generation error:', error)
     return new Response(
       JSON.stringify({
         success: false,

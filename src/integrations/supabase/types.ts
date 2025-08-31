@@ -1265,6 +1265,7 @@ export type Database = {
           last_activity_at: string | null
           performance_score: number | null
           progress_percentage: number | null
+          question_types: Json | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
@@ -1289,6 +1290,7 @@ export type Database = {
           last_activity_at?: string | null
           performance_score?: number | null
           progress_percentage?: number | null
+          question_types?: Json | null
           questions_data: Json
           quiz_title: string
           resumo_id: string
@@ -1313,6 +1315,7 @@ export type Database = {
           last_activity_at?: string | null
           performance_score?: number | null
           progress_percentage?: number | null
+          question_types?: Json | null
           questions_data?: Json
           quiz_title?: string
           resumo_id?: string
@@ -1342,6 +1345,7 @@ export type Database = {
           answer: boolean | null
           cognitive_level: string | null
           context: string | null
+          correct_statements: Json | null
           correta: number
           data_criacao: string
           difficulty: string | null
@@ -1353,12 +1357,14 @@ export type Database = {
           resumo_id: string
           statements: Json | null
           tipo: string | null
+          true_false_statements: Json | null
         }
         Insert: {
           alternativas: Json
           answer?: boolean | null
           cognitive_level?: string | null
           context?: string | null
+          correct_statements?: Json | null
           correta: number
           data_criacao?: string
           difficulty?: string | null
@@ -1370,12 +1376,14 @@ export type Database = {
           resumo_id: string
           statements?: Json | null
           tipo?: string | null
+          true_false_statements?: Json | null
         }
         Update: {
           alternativas?: Json
           answer?: boolean | null
           cognitive_level?: string | null
           context?: string | null
+          correct_statements?: Json | null
           correta?: number
           data_criacao?: string
           difficulty?: string | null
@@ -1387,6 +1395,7 @@ export type Database = {
           resumo_id?: string
           statements?: Json | null
           tipo?: string | null
+          true_false_statements?: Json | null
         }
         Relationships: [
           {
