@@ -6,7 +6,7 @@ import PersonalizedGreeting from '@/components/dashboard/PersonalizedGreeting';
 import GamificationCards from '@/components/dashboard/GamificationCards';
 import QuickActions from '@/components/dashboard/QuickActions';
 import StudyStatsGrid from '@/components/dashboard/StudyStatsGrid';
-import EnhancedRecentActivity from '@/components/dashboard/EnhancedRecentActivity';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 
 const Index = () => {
@@ -58,7 +58,15 @@ const Index = () => {
               </div>
               
               <div className="xl:col-span-1">
-                <EnhancedRecentActivity />
+          <Card>
+            <CardHeader>
+              <CardTitle>Atividade Recente</CardTitle>
+              <CardDescription>Suas atividades de estudo mais recentes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Seus estudos recentes aparecerão aqui</p>
+            </CardContent>
+          </Card>
               </div>
             </div>
           </div>

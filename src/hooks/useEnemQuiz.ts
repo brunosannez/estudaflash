@@ -102,7 +102,13 @@ export const useEnemQuiz = () => {
         macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
         targets: data.targets as { objetivas: number; vf_sequenciais: number },
         generated: data.generated as { objetivas: number; vf_sequenciais: number },
-        coverage_map: Array.isArray(data.coverage_map) ? data.coverage_map : [],
+        coverage_map: Array.isArray(data.coverage_map) 
+          ? (data.coverage_map as any[]).map(item => ({
+              macrotema: typeof item === 'object' && item?.macrotema ? item.macrotema : String(item),
+              objetivas: typeof item === 'object' && item?.objetivas ? item.objetivas : 0,
+              vf_sequenciais: typeof item === 'object' && item?.vf_sequenciais ? item.vf_sequenciais : 0
+            }))
+          : [],
         quality_checks: data.quality_checks as any
       } : null;
 

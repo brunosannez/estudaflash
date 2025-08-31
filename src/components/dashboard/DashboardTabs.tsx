@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Upload, Trophy } from 'lucide-react';
 import DashboardUsageOverview from './DashboardUsageOverview';
 import UploadTabContent from './UploadTabContent';
-import ProgressTabContent from './ProgressTabContent';
 
 const DashboardTabs = () => {
   return (
@@ -50,7 +49,7 @@ const DashboardTabs = () => {
 
         <TabsContent value="progress" className="space-y-6">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
-            <ProgressTabContent />
+            <UploadTabContent />
           </div>
         </TabsContent>
       </Tabs>

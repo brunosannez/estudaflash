@@ -8,11 +8,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { DataSeederService } from "@/services/dataSeederService";
-import { LazyUpload, LazyMyFlashcards, LazyQuizHistory, LazyMySummaries, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
+import { LazyUpload, LazyMyFlashcards, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
 import Index from "./pages/Index";
-import Resumo from "./pages/Resumo";
-import Quiz from "./pages/Quiz";
-import QuizHistoryView from "./pages/QuizHistoryView";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NewSignup from "./pages/NewSignup";
@@ -84,50 +81,10 @@ function App() {
               } 
             />
             <Route 
-              path="/my-summaries" 
-              element={
-                <ProtectedRoute>
-                  <LazyMySummaries />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/resumo/:id" 
-              element={
-                <ProtectedRoute>
-                  <Resumo />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/my-flashcards" 
               element={
                 <ProtectedRoute>
                   <LazyMyFlashcards />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/quiz/:id" 
-              element={
-                <ProtectedRoute>
-                  <Quiz />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/quiz-history" 
-              element={
-                <ProtectedRoute>
-                  <LazyQuizHistory />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/quiz-history/:sessionId/view" 
-              element={
-                <ProtectedRoute>
-                  <QuizHistoryView />
                 </ProtectedRoute>
               } 
             />
