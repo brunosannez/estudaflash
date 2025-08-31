@@ -21,15 +21,39 @@ export const useQuizDelete = () => {
         throw new Error('Usuário não autenticado');
       }
 
+      // Buscar resumo_id da sessão para deletar quizzes relacionados
+      const { data: sessionData } = await supabase
+        .from('quiz_sessions')
+        .select('resumo_id')
+        .eq('id', quizId)
+        .single();
+
       // Deletar a sessão do quiz
-      const { error: deleteError } = await supabase
+      const { error: deleteSessionError } = await supabase
         .from('quiz_sessions')
         .delete()
         .eq('id', quizId);
 
-      if (deleteError) {
-        console.error('❌ Error deleting quiz session:', deleteError);
-        throw deleteError;
+      if (deleteSessionError) {
+        console.error('❌ Error deleting quiz session:', deleteSessionError);
+        throw deleteSessionError;
+      }
+
+      // Se encontrou resumo_id, deletar também as questões do quiz
+      if (sessionData?.resumo_id) {
+        console.log('🗑️ Deleting quiz questions for resumo_id:', sessionData.resumo_id);
+        
+        const { error: deleteQuestionsError } = await supabase
+          .from('quizzes')
+          .delete()
+          .eq('resumo_id', sessionData.resumo_id);
+
+        if (deleteQuestionsError) {
+          console.error('❌ Error deleting quiz questions:', deleteQuestionsError);
+          // Não falhar a operação principal se a deleção das questões falhar
+        } else {
+          console.log('✅ Quiz questions deleted successfully');
+        }
       }
 
       console.log('✅ Quiz session deleted successfully');

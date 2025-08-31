@@ -149,33 +149,40 @@ serve(async (req) => {
 
     console.log(`🎯 Targets: ${targets.objetivas} objetivas, ${targets.vf_simples} V/F simples, ${targets.vf_combinacoes} V/F combinações`)
 
-    // Prompt simplificado e direto para evitar alucinações
-    const simplePrompt = `Crie um quiz baseado EXCLUSIVAMENTE no texto abaixo. NÃO invente informações que não estão no texto.
+    // Prompt otimizado para questões ENEM - ANTI-ALUCINAÇÃO
+    const enemPrompt = `Você deve criar questões de múltipla escolha no estilo ENEM baseadas EXCLUSIVAMENTE no texto fornecido.
 
-TEXTO BASE:
+TEXTO BASE OBRIGATÓRIO:
 """
 ${resumoContent}
 """
 
-INSTRUÇÕES:
-- Crie 5-8 questões de múltipla escolha (A, B, C, D, E)
-- Use APENAS informações que estão no texto
-- Perguntas claras e adequadas para idade ${idade_usuario} anos
-- Inclua uma explicação curta para cada resposta
+REGRAS RÍGIDAS:
+1. Use SOMENTE informações que estão EXPLICITAMENTE no texto acima
+2. NUNCA invente dados, datas, nomes ou conceitos que não estão no texto
+3. Crie 6-8 questões de múltipla escolha com EXATAMENTE 5 alternativas (A, B, C, D, E)
+4. Perguntas adequadas para estudantes de ${idade_usuario} anos
+5. Estilo ENEM: enunciados contextualizados e claros
 
-FORMATO JSON:
+ESTRUTURA OBRIGATÓRIA:
+- Pergunta clara baseada no texto
+- 5 alternativas (A, B, C, D, E) sendo apenas 1 correta
+- Explicação curta baseada no texto
+- Use índice 0-4 para resposta correta (0=A, 1=B, 2=C, 3=D, 4=E)
+
+FORMATO JSON EXATO:
 {
   "questoes": [
     {
-      "pergunta": "pergunta baseada no texto",
-      "alternativas": ["A) opção", "B) opção", "C) opção", "D) opção", "E) opção"],
+      "pergunta": "Baseado no texto, [pergunta clara]",
+      "alternativas": ["A) opção baseada no texto", "B) opção baseada no texto", "C) opção baseada no texto", "D) opção baseada no texto", "E) opção baseada no texto"],
       "correta": 0,
-      "explicacao": "explicação baseada no texto"
+      "explicacao": "Segundo o texto, [explicação baseada exclusivamente no conteúdo]"
     }
   ]
 }
 
-Responda APENAS com o JSON válido:`
+ATENÇÃO: Responda APENAS com JSON válido. NÃO adicione texto antes ou depois.`
 
     // Call OpenAI API with ENEM prompt
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -189,11 +196,11 @@ Responda APENAS com o JSON válido:`
         messages: [
           {
             role: 'system',
-            content: 'Você cria quizzes educacionais simples. Responda APENAS com JSON válido. NÃO invente informações fora do texto fornecido.'
+            content: 'Você é um especialista em questões ENEM. Crie questões EXCLUSIVAMENTE baseadas no texto fornecido. PROIBIDO inventar informações. Responda APENAS com JSON válido sem texto adicional.'
           },
           {
             role: 'user',
-            content: simplePrompt
+            content: enemPrompt
           }
         ],
         temperature: 0.1, // Lower for consistency
