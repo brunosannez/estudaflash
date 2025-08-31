@@ -50,7 +50,7 @@ const AdminAnalyticsDashboard = () => {
         supabase.from('uso_usuarios').select('*'),
         supabase.from('uploads').select('id, file_size, data_upload, user_id'),
         supabase.from('flashcards').select('id, data_criacao, resumo_id(upload_id(user_id))'),
-        supabase.from('quiz_sessions').select('id, created_at, user_id')
+        supabase.from('enem_quiz_sessions').select('id, started_at, user_id')
       ]);
 
       if (usersResult.error) console.error('Erro ao buscar usuários:', usersResult.error);

@@ -302,6 +302,202 @@ export type Database = {
         }
         Relationships: []
       }
+      enem_questions: {
+        Row: {
+          cognitive_level: string
+          correct_index: number
+          created_at: string
+          difficulty: string
+          enunciado: string
+          evidence: string
+          id: string
+          options: Json
+          quiz_metadata_id: string
+          statements: Json | null
+          stem: string | null
+          tipo: string
+        }
+        Insert: {
+          cognitive_level: string
+          correct_index: number
+          created_at?: string
+          difficulty: string
+          enunciado: string
+          evidence: string
+          id?: string
+          options: Json
+          quiz_metadata_id: string
+          statements?: Json | null
+          stem?: string | null
+          tipo: string
+        }
+        Update: {
+          cognitive_level?: string
+          correct_index?: number
+          created_at?: string
+          difficulty?: string
+          enunciado?: string
+          evidence?: string
+          id?: string
+          options?: Json
+          quiz_metadata_id?: string
+          statements?: Json | null
+          stem?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_questions_quiz_metadata_id_fkey"
+            columns: ["quiz_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "enem_quiz_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_quiz_metadata: {
+        Row: {
+          coverage_map: Json
+          created_at: string
+          generated: Json
+          id: string
+          idade_usuario: number
+          macrothemes: Json
+          quality_checks: Json
+          resumo_id: string
+          targets: Json
+          tema: string
+          updated_at: string
+          word_count: number
+        }
+        Insert: {
+          coverage_map?: Json
+          created_at?: string
+          generated?: Json
+          id?: string
+          idade_usuario: number
+          macrothemes?: Json
+          quality_checks?: Json
+          resumo_id: string
+          targets?: Json
+          tema: string
+          updated_at?: string
+          word_count: number
+        }
+        Update: {
+          coverage_map?: Json
+          created_at?: string
+          generated?: Json
+          id?: string
+          idade_usuario?: number
+          macrothemes?: Json
+          quality_checks?: Json
+          resumo_id?: string
+          targets?: Json
+          tema?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Relationships: []
+      }
+      enem_quiz_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_question_index: number
+          id: string
+          last_activity_at: string
+          quiz_metadata_id: string
+          score: number
+          started_at: string
+          status: string
+          total_questions: number
+          user_answers: Json
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          last_activity_at?: string
+          quiz_metadata_id: string
+          score?: number
+          started_at?: string
+          status?: string
+          total_questions: number
+          user_answers?: Json
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          last_activity_at?: string
+          quiz_metadata_id?: string
+          score?: number
+          started_at?: string
+          status?: string
+          total_questions?: number
+          user_answers?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_quiz_sessions_quiz_metadata_id_fkey"
+            columns: ["quiz_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "enem_quiz_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_user_answers: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          selected_answer: number
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          selected_answer: number
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          selected_answer?: number
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_user_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "enem_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enem_user_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "enem_quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enhanced_flashcard_reviews: {
         Row: {
           confidence_level: number | null
@@ -969,443 +1165,6 @@ export type Database = {
           uploads_limit?: number
         }
         Relationships: []
-      }
-      quiz_attempts: {
-        Row: {
-          answered_at: string | null
-          confidence_level: number | null
-          created_at: string | null
-          difficulty_perceived: number | null
-          explanation_viewed: boolean | null
-          hint_used: boolean | null
-          id: string
-          is_correct: boolean | null
-          quiz_question_id: string
-          resumo_id: string
-          selected_answer: number | null
-          session_id: string
-          time_taken_seconds: number | null
-          user_id: string
-        }
-        Insert: {
-          answered_at?: string | null
-          confidence_level?: number | null
-          created_at?: string | null
-          difficulty_perceived?: number | null
-          explanation_viewed?: boolean | null
-          hint_used?: boolean | null
-          id?: string
-          is_correct?: boolean | null
-          quiz_question_id: string
-          resumo_id: string
-          selected_answer?: number | null
-          session_id: string
-          time_taken_seconds?: number | null
-          user_id: string
-        }
-        Update: {
-          answered_at?: string | null
-          confidence_level?: number | null
-          created_at?: string | null
-          difficulty_perceived?: number | null
-          explanation_viewed?: boolean | null
-          hint_used?: boolean | null
-          id?: string
-          is_correct?: boolean | null
-          quiz_question_id?: string
-          resumo_id?: string
-          selected_answer?: number | null
-          session_id?: string
-          time_taken_seconds?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      quiz_badges: {
-        Row: {
-          badge_description: string
-          badge_icon: string | null
-          badge_name: string
-          badge_type: string
-          earned_at: string
-          id: string
-          metadata: Json | null
-          user_id: string
-        }
-        Insert: {
-          badge_description: string
-          badge_icon?: string | null
-          badge_name: string
-          badge_type: string
-          earned_at?: string
-          id?: string
-          metadata?: Json | null
-          user_id: string
-        }
-        Update: {
-          badge_description?: string
-          badge_icon?: string | null
-          badge_name?: string
-          badge_type?: string
-          earned_at?: string
-          id?: string
-          metadata?: Json | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      quiz_configurations: {
-        Row: {
-          allow_hints: boolean | null
-          category_filters: string[] | null
-          created_at: string
-          description: string | null
-          difficulty_level: number | null
-          id: string
-          name: string
-          questions_count: number | null
-          randomize_answers: boolean | null
-          randomize_questions: boolean | null
-          show_explanations: boolean | null
-          time_limit_minutes: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          allow_hints?: boolean | null
-          category_filters?: string[] | null
-          created_at?: string
-          description?: string | null
-          difficulty_level?: number | null
-          id?: string
-          name: string
-          questions_count?: number | null
-          randomize_answers?: boolean | null
-          randomize_questions?: boolean | null
-          show_explanations?: boolean | null
-          time_limit_minutes?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          allow_hints?: boolean | null
-          category_filters?: string[] | null
-          created_at?: string
-          description?: string | null
-          difficulty_level?: number | null
-          id?: string
-          name?: string
-          questions_count?: number | null
-          randomize_answers?: boolean | null
-          randomize_questions?: boolean | null
-          show_explanations?: boolean | null
-          time_limit_minutes?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      quiz_metadata: {
-        Row: {
-          coverage_map: Json | null
-          created_at: string | null
-          generated: Json | null
-          id: string
-          idade_usuario: number | null
-          macrothemes: Json | null
-          quality_checks: Json | null
-          resumo_id: string
-          targets: Json | null
-          tema: string
-          updated_at: string | null
-          word_count: number | null
-        }
-        Insert: {
-          coverage_map?: Json | null
-          created_at?: string | null
-          generated?: Json | null
-          id?: string
-          idade_usuario?: number | null
-          macrothemes?: Json | null
-          quality_checks?: Json | null
-          resumo_id: string
-          targets?: Json | null
-          tema: string
-          updated_at?: string | null
-          word_count?: number | null
-        }
-        Update: {
-          coverage_map?: Json | null
-          created_at?: string | null
-          generated?: Json | null
-          id?: string
-          idade_usuario?: number | null
-          macrothemes?: Json | null
-          quality_checks?: Json | null
-          resumo_id?: string
-          targets?: Json | null
-          tema?: string
-          updated_at?: string | null
-          word_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_metadata_resumo_id_fkey"
-            columns: ["resumo_id"]
-            isOneToOne: false
-            referencedRelation: "resumos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_performance_stats: {
-        Row: {
-          average_accuracy: number | null
-          average_time_per_question: number | null
-          created_at: string
-          current_streak: number | null
-          date: string
-          fastest_completion_time: number | null
-          id: string
-          longest_streak: number | null
-          topics_mastered: string[] | null
-          topics_struggling: string[] | null
-          total_correct_answers: number | null
-          total_questions_answered: number | null
-          total_quizzes_attempted: number | null
-          total_quizzes_completed: number | null
-          updated_at: string
-          user_id: string
-          xp_earned_from_quizzes: number | null
-        }
-        Insert: {
-          average_accuracy?: number | null
-          average_time_per_question?: number | null
-          created_at?: string
-          current_streak?: number | null
-          date?: string
-          fastest_completion_time?: number | null
-          id?: string
-          longest_streak?: number | null
-          topics_mastered?: string[] | null
-          topics_struggling?: string[] | null
-          total_correct_answers?: number | null
-          total_questions_answered?: number | null
-          total_quizzes_attempted?: number | null
-          total_quizzes_completed?: number | null
-          updated_at?: string
-          user_id: string
-          xp_earned_from_quizzes?: number | null
-        }
-        Update: {
-          average_accuracy?: number | null
-          average_time_per_question?: number | null
-          created_at?: string
-          current_streak?: number | null
-          date?: string
-          fastest_completion_time?: number | null
-          id?: string
-          longest_streak?: number | null
-          topics_mastered?: string[] | null
-          topics_struggling?: string[] | null
-          total_correct_answers?: number | null
-          total_questions_answered?: number | null
-          total_quizzes_attempted?: number | null
-          total_quizzes_completed?: number | null
-          updated_at?: string
-          user_id?: string
-          xp_earned_from_quizzes?: number | null
-        }
-        Relationships: []
-      }
-      quiz_respostas: {
-        Row: {
-          acertou: boolean
-          data_resposta: string
-          id: string
-          quiz_id: string
-          resposta_selecionada: number
-          user_id: string
-        }
-        Insert: {
-          acertou: boolean
-          data_resposta?: string
-          id?: string
-          quiz_id: string
-          resposta_selecionada: number
-          user_id: string
-        }
-        Update: {
-          acertou?: boolean
-          data_resposta?: string
-          id?: string
-          quiz_id?: string
-          resposta_selecionada?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_respostas_quiz_id_fkey"
-            columns: ["quiz_id"]
-            isOneToOne: false
-            referencedRelation: "quizzes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_sessions: {
-        Row: {
-          completion_time_seconds: number | null
-          correct_answers: number
-          created_at: string
-          current_question_index: number | null
-          difficulty_level: number | null
-          hints_used: number | null
-          id: string
-          last_activity_at: string | null
-          performance_score: number | null
-          progress_percentage: number | null
-          question_types: Json | null
-          questions_data: Json
-          quiz_title: string
-          resumo_id: string
-          session_type: string | null
-          started_at: string | null
-          status: string | null
-          study_recommendations: Json | null
-          tags: string[] | null
-          time_per_question_seconds: number | null
-          total_questions: number
-          user_id: string
-          weak_topics: Json | null
-        }
-        Insert: {
-          completion_time_seconds?: number | null
-          correct_answers: number
-          created_at?: string
-          current_question_index?: number | null
-          difficulty_level?: number | null
-          hints_used?: number | null
-          id?: string
-          last_activity_at?: string | null
-          performance_score?: number | null
-          progress_percentage?: number | null
-          question_types?: Json | null
-          questions_data: Json
-          quiz_title: string
-          resumo_id: string
-          session_type?: string | null
-          started_at?: string | null
-          status?: string | null
-          study_recommendations?: Json | null
-          tags?: string[] | null
-          time_per_question_seconds?: number | null
-          total_questions: number
-          user_id: string
-          weak_topics?: Json | null
-        }
-        Update: {
-          completion_time_seconds?: number | null
-          correct_answers?: number
-          created_at?: string
-          current_question_index?: number | null
-          difficulty_level?: number | null
-          hints_used?: number | null
-          id?: string
-          last_activity_at?: string | null
-          performance_score?: number | null
-          progress_percentage?: number | null
-          question_types?: Json | null
-          questions_data?: Json
-          quiz_title?: string
-          resumo_id?: string
-          session_type?: string | null
-          started_at?: string | null
-          status?: string | null
-          study_recommendations?: Json | null
-          tags?: string[] | null
-          time_per_question_seconds?: number | null
-          total_questions?: number
-          user_id?: string
-          weak_topics?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_sessions_resumo_id_fkey"
-            columns: ["resumo_id"]
-            isOneToOne: false
-            referencedRelation: "resumos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quizzes: {
-        Row: {
-          alternativas: Json
-          answer: boolean | null
-          cognitive_level: string | null
-          context: string | null
-          correct_statements: Json | null
-          correta: number
-          data_criacao: string
-          difficulty: string | null
-          evidence: string | null
-          explicacao: string
-          id: string
-          pergunta: string
-          question_type: string | null
-          resumo_id: string
-          statements: Json | null
-          tipo: string | null
-          true_false_statements: Json | null
-        }
-        Insert: {
-          alternativas: Json
-          answer?: boolean | null
-          cognitive_level?: string | null
-          context?: string | null
-          correct_statements?: Json | null
-          correta: number
-          data_criacao?: string
-          difficulty?: string | null
-          evidence?: string | null
-          explicacao: string
-          id?: string
-          pergunta: string
-          question_type?: string | null
-          resumo_id: string
-          statements?: Json | null
-          tipo?: string | null
-          true_false_statements?: Json | null
-        }
-        Update: {
-          alternativas?: Json
-          answer?: boolean | null
-          cognitive_level?: string | null
-          context?: string | null
-          correct_statements?: Json | null
-          correta?: number
-          data_criacao?: string
-          difficulty?: string | null
-          evidence?: string | null
-          explicacao?: string
-          id?: string
-          pergunta?: string
-          question_type?: string | null
-          resumo_id?: string
-          statements?: Json | null
-          tipo?: string | null
-          true_false_statements?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quizzes_resumo_id_fkey"
-            columns: ["resumo_id"]
-            isOneToOne: false
-            referencedRelation: "resumos"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       rate_limiting: {
         Row: {

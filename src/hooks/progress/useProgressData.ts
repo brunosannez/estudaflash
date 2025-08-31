@@ -39,8 +39,8 @@ export const useProgressData = () => {
       // Fetch historical activity data with better queries
       const [flashcardResult, quizResult, sessionResult] = await Promise.allSettled([
         supabase.from('flashcard_reviews').select('*').eq('user_id', user.id),
-        supabase.from('quiz_respostas').select('*').eq('user_id', user.id),
-        supabase.from('quiz_sessions').select('*').eq('user_id', user.id).eq('status', 'completed')
+        supabase.from('enem_user_answers').select('*').eq('user_id', user.id),
+        supabase.from('enem_quiz_sessions').select('*').eq('user_id', user.id).eq('status', 'completed')
       ]);
 
       // Safely extract data
