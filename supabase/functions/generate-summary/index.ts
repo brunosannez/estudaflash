@@ -10,26 +10,25 @@ const corsHeaders = {
 
 // Função para obter configuração do modelo baseada no plano - CORRIGIDA
 function getModelConfigForPlan(plan: string) {
+  // Usar sempre um modelo Anthropic válido e estável
+  const baseConfig = {
+    provider: 'anthropic',
+    // Nome oficial do modelo na API Anthropic (mensagens)
+    // Referência: claude-3-5-sonnet-20240620
+    model: 'claude-3-5-sonnet-20240620',
+    maxTokens: 4000,
+  } as const;
+
   switch (plan) {
-    case 'free':
-      return {
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-5',
-        maxTokens: 4000
-      };
     case 'pro':
     case 'edu':
       return {
-        provider: 'anthropic', 
-        model: 'claude-sonnet-4-5', // Usar modelo mais recente e inteligente
-        maxTokens: 8000 // Mais tokens para planos pagos
+        ...baseConfig,
+        maxTokens: 8000,
       };
+    case 'free':
     default:
-      return {
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-5',
-        maxTokens: 4000
-      };
+      return baseConfig;
   }
 }
 
@@ -316,6 +315,7 @@ serve(async (req) => {
     
     console.log('👤 Usuário:', userId);
     console.log('📊 Plano:', userPlan);
+    console.log('🤖 Modelo Anthropic:', modelConfig.model);
     console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
     console.log('📝 Tamanho do texto:', textContent.length, 'caracteres');
     console.log('🔄 Modo combinação:', isCombiningBatches ? `Sim (${totalBatches} lotes, ${totalImages} imagens)` : 'Não');
