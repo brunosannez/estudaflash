@@ -6,11 +6,31 @@ import { useZipExtractor } from './useZipExtractor';
 import { useSequentialOCR } from './useSequentialOCR';
 import { useSummaryGenerator } from './useSummaryGenerator';
 
+// Função helper para detectar número de página
+const extractPageNumber = (fileName: string): number | null => {
+  const patterns = [
+    /(?:p[aá]gina?|pg|page)[-_\s]*(\d+)/i,
+    /^(\d+)[-_\.]/,
+    /[-_](\d+)(?:\.|$)/,
+    /(\d+)/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = fileName.match(pattern);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num)) return num;
+    }
+  }
+  return null;
+};
+
 export interface ProcessedFile {
   file: File;
   originalPath: string;
   isFromZip: boolean;
   order: number;
+  pageNumber?: number; // Detected page number from filename
 }
 
 export interface UploadProgress {
@@ -74,26 +94,42 @@ export const useEnhancedUpload = () => {
 
           const extractedImages = await extractFromZip(file);
           
-          // Ordenar imagens extraídas por nome
-          extractedImages.sort((a, b) => a.originalPath.localeCompare(b.originalPath));
+          // Ordenar imagens extraídas por número de página detectado
+          extractedImages.sort((a, b) => {
+            // Se ambos têm números de página, ordenar por eles
+            if (a.pageNumber !== undefined && b.pageNumber !== undefined) {
+              return a.pageNumber - b.pageNumber;
+            }
+            // Se apenas um tem número, ele vem primeiro
+            if (a.pageNumber !== undefined) return -1;
+            if (b.pageNumber !== undefined) return 1;
+            // Fallback para ordem alfabética
+            return a.originalPath.localeCompare(b.originalPath, undefined, { numeric: true });
+          });
           
-          extractedImages.forEach(img => {
+          extractedImages.forEach((img, idx) => {
             processedFiles.push({
               file: img.file,
               originalPath: img.originalPath,
               isFromZip: true,
-              order: orderCounter++
+              order: orderCounter++,
+              pageNumber: img.pageNumber
             });
           });
           
           console.log(`✅ Extracted ${extractedImages.length} images from ZIP`);
         } else if (file.type.startsWith('image/')) {
           console.log('🖼️ Adding direct image:', file.name);
+          
+          // Detectar número de página para imagens diretas também
+          const pageNum = extractPageNumber(file.name);
+          
           processedFiles.push({
             file,
             originalPath: file.name,
             isFromZip: false,
-            order: orderCounter++
+            order: orderCounter++,
+            pageNumber: pageNum
           });
         } else {
           console.warn('⚠️ Unsupported file type:', file.type);
@@ -103,11 +139,11 @@ export const useEnhancedUpload = () => {
         }
       }
 
-      // Validar limite total
+      // Validar limite total - MÁXIMO 10 IMAGENS
       const totalFiles = files.length + processedFiles.length;
-      if (totalFiles > 20) {
+      if (totalFiles > 10) {
         toast.error('Limite excedido', {
-          description: `Máximo de 20 imagens. Você selecionou ${totalFiles}.`
+          description: `Máximo de 10 imagens por upload. Você selecionou ${totalFiles}.`
         });
         return;
       }

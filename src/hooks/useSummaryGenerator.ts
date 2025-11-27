@@ -23,6 +23,20 @@ export const useSummaryGenerator = () => {
   ): Promise<SummaryResult> => {
     console.log('📝 Starting summary generation...');
     
+    // Validar texto mínimo
+    const minTextLength = 50;
+    if (combinedText.trim().length < minTextLength) {
+      throw new Error(`Texto muito curto para gerar resumo (mínimo ${minTextLength} caracteres). Verifique se as imagens contêm texto legível.`);
+    }
+    
+    // Validar que há pelo menos uma página com texto
+    const pagesWithText = ocrResults.filter(r => r.extractedText && r.extractedText.trim().length > 20);
+    if (pagesWithText.length === 0) {
+      throw new Error('Nenhuma página com texto suficiente foi detectada. Certifique-se de que as imagens estão nítidas e contêm texto legível.');
+    }
+    
+    console.log(`✅ Validation passed: ${pagesWithText.length} pages with text`);
+    
     if (!user) {
       throw new Error('Usuário não autenticado');
     }

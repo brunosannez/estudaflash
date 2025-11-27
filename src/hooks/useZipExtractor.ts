@@ -5,6 +5,7 @@ export interface ExtractedImage {
   file: File;
   originalPath: string;
   isFromZip: boolean;
+  pageNumber?: number;
 }
 
 export const useZipExtractor = () => {
@@ -58,11 +59,14 @@ export const useZipExtractor = () => {
           
           const imageFile = new File([blob], cleanName, { type: mimeType });
           
-          extractedImages.push({
-            file: imageFile,
-            originalPath: path,
-            isFromZip: true
-          });
+        const detectedPageNumber = extractNumbers(path);
+        
+        extractedImages.push({
+          file: imageFile,
+          originalPath: path,
+          isFromZip: true,
+          pageNumber: detectedPageNumber
+        });
           
           console.log(`✅ Extracted: ${cleanName} (${(imageFile.size / 1024).toFixed(2)}KB)`);
           
@@ -107,11 +111,30 @@ export const useZipExtractor = () => {
   };
 };
 
-// Função auxiliar para extrair números de um nome de arquivo
+// Função auxiliar para extrair números de página de um nome de arquivo
+// Detecta: 1.jpg, 01.png, p1.jpg, pg1.png, page1.jpg, página01.png, pag_1.jpg
 const extractNumbers = (path: string): number | null => {
   const fileName = path.split('/').pop() || '';
-  const numberMatch = fileName.match(/(\d+)/);
-  return numberMatch ? parseInt(numberMatch[1], 10) : null;
+  
+  // Padrões de detecção (em ordem de prioridade):
+  const patterns = [
+    /(?:p[aá]gina?|pg|page)[-_\s]*(\d+)/i,  // página1, pg1, page1, etc.
+    /^(\d+)[-_\.]/, // começa com número (1-image.jpg, 01.png)
+    /[-_](\d+)(?:\.|$)/, // termina com número antes da extensão (image-1.jpg, foto_01.png)
+    /(\d+)/ // qualquer número no nome
+  ];
+  
+  for (const pattern of patterns) {
+    const match = fileName.match(pattern);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num)) {
+        return num;
+      }
+    }
+  }
+  
+  return null;
 };
 
 // Função auxiliar para determinar o tipo MIME

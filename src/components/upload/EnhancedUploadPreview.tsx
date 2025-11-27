@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, FileArchive, Image as ImageIcon, Hash } from 'lucide-react';
+import { X, FileArchive, Image as ImageIcon, Hash, ChevronUp, ChevronDown, Check } from 'lucide-react';
 import { ProcessedFile } from '@/hooks/useEnhancedUpload';
 
 interface EnhancedUploadPreviewProps {
@@ -56,11 +56,14 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {zipFiles.map((processedFile, index) => (
-                <ZipFilePreview
+                <FilePreview
                   key={`zip-${index}`}
                   processedFile={processedFile}
+                  displayOrder={index + 1}
+                  totalFiles={zipFiles.length}
                   onRemove={() => onRemoveFile(files.indexOf(processedFile))}
                   disabled={disabled}
+                  isZip={true}
                 />
               ))}
             </div>
@@ -76,33 +79,61 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {directFiles.map((processedFile, index) => (
-                <DirectFilePreview
+                <FilePreview
                   key={`direct-${index}`}
                   processedFile={processedFile}
+                  displayOrder={zipFiles.length + index + 1}
+                  totalFiles={files.length}
                   onRemove={() => onRemoveFile(files.indexOf(processedFile))}
                   disabled={disabled}
+                  isZip={false}
                 />
               ))}
             </div>
           </div>
         )}
+
+        {/* Helpful tip */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <div className="flex items-start space-x-2">
+            <Check className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="text-blue-800">
+              <strong>Ordem detectada automaticamente:</strong> As imagens estão ordenadas 
+              {files.some(f => f.pageNumber) ? ' pelos números de página detectados nos nomes dos arquivos' : ' alfabeticamente'}.
+              {files.some(f => f.pageNumber) && (
+                <span className="block mt-1 text-xs text-blue-600">
+                  ✓ Números de página detectados em {files.filter(f => f.pageNumber).length} de {files.length} imagens
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </Card>
   );
 };
 
-const ZipFilePreview: React.FC<{
+const FilePreview: React.FC<{
   processedFile: ProcessedFile;
+  displayOrder: number;
+  totalFiles: number;
   onRemove: () => void;
   disabled: boolean;
-}> = ({ processedFile, onRemove, disabled }) => {
+  isZip: boolean;
+}> = ({ processedFile, displayOrder, totalFiles, onRemove, disabled, isZip }) => {
   const previewUrl = processedFile.file.type.startsWith('image/') 
     ? URL.createObjectURL(processedFile.file) 
     : '';
 
+  const bgColor = isZip ? 'bg-purple-50' : 'bg-blue-50';
+  const borderColor = isZip ? 'border-purple-200' : 'border-blue-200';
+  const textColor = isZip ? 'text-purple-700' : 'text-blue-700';
+  const iconColor = isZip ? 'text-purple-600' : 'text-blue-600';
+
   return (
-    <Card className="relative group overflow-hidden bg-purple-50 border-purple-200">
-      <div className="aspect-square bg-purple-100 flex items-center justify-center">
+    <Card className={`relative group overflow-hidden ${bgColor} ${borderColor}`}>
+      {/* Preview Image */}
+      <div className="aspect-square bg-white/50 flex items-center justify-center relative">
         {previewUrl ? (
           <img 
             src={previewUrl} 
@@ -111,16 +142,27 @@ const ZipFilePreview: React.FC<{
             onLoad={() => URL.revokeObjectURL(previewUrl)}
           />
         ) : (
-          <FileArchive className="w-12 h-12 text-purple-400" />
+          <FileArchive className={`w-12 h-12 ${iconColor} opacity-30`} />
         )}
+        
+        {/* Page number badge */}
+        <div className={`absolute top-2 left-2 ${bgColor} border ${borderColor} rounded-full px-2 py-1 text-xs font-bold ${textColor} shadow-sm`}>
+          Pág. {displayOrder}
+        </div>
       </div>
       
+      {/* File Info */}
       <div className="p-3 space-y-1">
         <div className="flex items-center space-x-1">
-          <Hash className="w-3 h-3 text-purple-600" />
-          <span className="text-xs font-medium text-purple-700">
-            Página {processedFile.order + 1}
+          <Hash className={`w-3 h-3 ${iconColor}`} />
+          <span className={`text-xs font-medium ${textColor}`}>
+            Página {displayOrder} de {totalFiles}
           </span>
+          {processedFile.pageNumber !== undefined && (
+            <span className="text-xs text-green-600 font-semibold ml-auto">
+              ✓ P{processedFile.pageNumber}
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-600 truncate" title={processedFile.originalPath}>
           {processedFile.originalPath}
@@ -130,58 +172,12 @@ const ZipFilePreview: React.FC<{
         </p>
       </div>
 
+      {/* Remove Button */}
       {!disabled && (
         <Button
           variant="destructive"
           size="sm"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-          onClick={onRemove}
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      )}
-    </Card>
-  );
-};
-
-const DirectFilePreview: React.FC<{
-  processedFile: ProcessedFile;
-  onRemove: () => void;
-  disabled: boolean;
-}> = ({ processedFile, onRemove, disabled }) => {
-  const previewUrl = URL.createObjectURL(processedFile.file);
-
-  return (
-    <Card className="relative group overflow-hidden bg-blue-50 border-blue-200">
-      <div className="aspect-square bg-blue-100 flex items-center justify-center">
-        <img 
-          src={previewUrl} 
-          alt={processedFile.file.name}
-          className="w-full h-full object-contain"
-          onLoad={() => URL.revokeObjectURL(previewUrl)}
-        />
-      </div>
-      
-      <div className="p-3 space-y-1">
-        <div className="flex items-center space-x-1">
-          <Hash className="w-3 h-3 text-blue-600" />
-          <span className="text-xs font-medium text-blue-700">
-            Página {processedFile.order + 1}
-          </span>
-        </div>
-        <p className="text-xs text-gray-600 truncate" title={processedFile.file.name}>
-          {processedFile.file.name}
-        </p>
-        <p className="text-xs text-gray-500">
-          {(processedFile.file.size / 1024).toFixed(1)} KB
-        </p>
-      </div>
-
-      {!disabled && (
-        <Button
-          variant="destructive"
-          size="sm"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto shadow-lg"
           onClick={onRemove}
         >
           <X className="w-4 h-4" />
