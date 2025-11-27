@@ -139,7 +139,7 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
             {getMessage()}
           </p>
           <p className="text-sm text-gray-500">
-            Máximo: 20 imagens ou 1 arquivo ZIP • Até 10MB por arquivo
+            Máximo: 10 imagens ou 1 arquivo ZIP • Até 10MB por arquivo
           </p>
         </div>
 

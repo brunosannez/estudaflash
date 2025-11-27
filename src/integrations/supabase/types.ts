@@ -79,7 +79,7 @@ export type Database = {
           event_name: string
           event_properties: Json
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           page_url: string | null
           referrer: string | null
           session_id: string | null
@@ -92,7 +92,7 @@ export type Database = {
           event_name: string
           event_properties?: Json
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           page_url?: string | null
           referrer?: string | null
           session_id?: string | null
@@ -105,7 +105,7 @@ export type Database = {
           event_name?: string
           event_properties?: Json
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           page_url?: string | null
           referrer?: string | null
           session_id?: string | null
@@ -1171,7 +1171,7 @@ export type Database = {
           action_type: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           request_count: number
           user_id: string
           window_start: string
@@ -1180,7 +1180,7 @@ export type Database = {
           action_type: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number
           user_id: string
           window_start?: string
@@ -1189,7 +1189,7 @@ export type Database = {
           action_type?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number
           user_id?: string
           window_start?: string
@@ -1201,7 +1201,7 @@ export type Database = {
           action_type: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           request_count: number | null
           user_id: string
           window_start: string | null
@@ -1210,7 +1210,7 @@ export type Database = {
           action_type: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number | null
           user_id: string
           window_start?: string | null
@@ -1219,7 +1219,7 @@ export type Database = {
           action_type?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_count?: number | null
           user_id?: string
           window_start?: string | null
@@ -1264,7 +1264,7 @@ export type Database = {
           created_at: string | null
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resource_id: string | null
           resource_type: string
           success: boolean | null
@@ -1276,7 +1276,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type: string
           success?: boolean | null
@@ -1288,7 +1288,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string
           success?: boolean | null
@@ -1980,10 +1980,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_admin_by_email: {
-        Args: { admin_email: string }
-        Returns: boolean
-      }
+      add_admin_by_email: { Args: { admin_email: string }; Returns: boolean }
       admin_change_user_plan: {
         Args: { new_plan: string; target_user_id: string }
         Returns: boolean
@@ -2014,10 +2011,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
-      admin_promote_user: {
-        Args: { target_email: string }
-        Returns: boolean
-      }
+      admin_promote_user: { Args: { target_email: string }; Returns: boolean }
       admin_reset_user_usage: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -2026,9 +2020,25 @@ export type Database = {
         Args: { is_active: boolean; target_user_id: string }
         Returns: boolean
       }
-      admin_update_plan: {
-        Args:
-          | {
+      admin_update_plan:
+        | {
+            Args: {
+              new_flashcard_model?: string
+              new_flashcards_limit?: number
+              new_is_editable?: boolean
+              new_price_brl?: number
+              new_price_brl_yearly?: number
+              new_quiz_model?: string
+              new_quizzes_limit?: number
+              new_summaries_limit?: number
+              new_summary_model?: string
+              new_uploads_limit?: number
+              target_plan_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
               new_description?: string
               new_features?: string[]
               new_flashcard_model?: string
@@ -2044,21 +2054,8 @@ export type Database = {
               new_uploads_limit?: number
               target_plan_id: string
             }
-          | {
-              new_flashcard_model?: string
-              new_flashcards_limit?: number
-              new_is_editable?: boolean
-              new_price_brl?: number
-              new_price_brl_yearly?: number
-              new_quiz_model?: string
-              new_quizzes_limit?: number
-              new_summaries_limit?: number
-              new_summary_model?: string
-              new_uploads_limit?: number
-              target_plan_id: string
-            }
-        Returns: boolean
-      }
+            Returns: boolean
+          }
       analyze_quiz_weak_topics: {
         Args: { last_sessions_count?: number; user_uuid: string }
         Returns: {
@@ -2119,10 +2116,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_user_is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
+      check_user_is_admin: { Args: { user_uuid?: string }; Returns: boolean }
       check_username_available: {
         Args: { username_to_check: string }
         Returns: boolean
@@ -2154,12 +2148,9 @@ export type Database = {
           checkout_url: string
         }[]
       }
-      get_active_guardian_key_version: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      get_active_guardian_key_version: { Args: never; Returns: number }
       get_active_plans: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           description: string
           features: string[]
@@ -2177,7 +2168,7 @@ export type Database = {
         }[]
       }
       get_admin_dashboard_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_users_7_days: number
           total_storage_mb: number
@@ -2185,7 +2176,7 @@ export type Database = {
         }[]
       }
       get_all_users_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -2198,12 +2189,9 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_cpf_encryption_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_cpf_encryption_key: { Args: never; Returns: string }
       get_data_management_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_users_30_days: number
           average_storage_per_user: number
@@ -2246,18 +2234,27 @@ export type Database = {
           resposta: string
         }[]
       }
-      get_guardian_by_user: {
-        Args:
-          | { access_reason?: string; target_user_id: string }
-          | { target_user_id: string }
-        Returns: {
-          cpf: string
-          email: string
-          full_name: string
-          phone: string
-          relation_to_student: string
-        }[]
-      }
+      get_guardian_by_user:
+        | {
+            Args: { access_reason?: string; target_user_id: string }
+            Returns: {
+              cpf: string
+              email: string
+              full_name: string
+              phone: string
+              relation_to_student: string
+            }[]
+          }
+        | {
+            Args: { target_user_id: string }
+            Returns: {
+              cpf: string
+              email: string
+              full_name: string
+              phone: string
+              relation_to_student: string
+            }[]
+          }
       get_study_recommendations: {
         Args: { target_user_id: string }
         Returns: {
@@ -2311,14 +2308,8 @@ export type Database = {
           current_month_usage: number
         }[]
       }
-      is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: { user_uuid?: string }; Returns: boolean }
+      is_current_user_admin: { Args: never; Returns: boolean }
       log_sensitive_access: {
         Args: {
           action_type_param: string
@@ -2337,22 +2328,13 @@ export type Database = {
         }
         Returns: boolean
       }
-      reset_monthly_credits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      reset_monthly_usage: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      reset_monthly_credits: { Args: never; Returns: undefined }
+      reset_monthly_usage: { Args: never; Returns: undefined }
       rotate_guardian_cpf_key: {
         Args: { new_key: string; new_key_version?: number }
         Returns: boolean
       }
-      setup_super_admin: {
-        Args: { admin_email: string }
-        Returns: boolean
-      }
+      setup_super_admin: { Args: { admin_email: string }; Returns: boolean }
       update_daily_quiz_stats: {
         Args: { target_user_id: string }
         Returns: boolean

@@ -19,12 +19,19 @@ interface EnhancedUploadProgressProps {
   totalBatches?: number;
   successfulImages?: number;
   failedImages?: number;
+  currentImageIndex?: number; // New: Current image being processed
+  estimatedTimeRemaining?: number; // New: Estimated time in seconds
 }
 
 const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
   progress,
   currentStep,
-  totalFiles
+  totalFiles,
+  stage,
+  currentBatch,
+  totalBatches,
+  successfulImages = 0,
+  failedImages = 0
 }) => {
   const getStageIcon = (step: string) => {
     if (step.includes('Extraindo')) return FileArchive;
@@ -113,23 +120,46 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
           </div>
         </div>
 
+        {/* Current processing info - More detailed */}
+        {stage === 'ocr' && successfulImages > 0 && (
+          <div className="bg-white/70 rounded-lg p-3 text-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-gray-700">Processando imagem:</span>
+              <span className="text-blue-600 font-bold">{successfulImages + 1} de {totalFiles}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${(successfulImages / totalFiles) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Batch info */}
+        {currentBatch && totalBatches && totalBatches > 1 && (
+          <div className="text-xs text-center text-gray-600 bg-white/50 rounded px-3 py-2">
+            Processando lote {currentBatch} de {totalBatches}
+          </div>
+        )}
+
         {/* Detailed progress info */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/50">
           <div className="text-center">
             <div className="text-lg font-bold text-blue-600">
-              {Math.min(Math.round(progress * 0.2), totalFiles)}
+              {successfulImages}
             </div>
-            <div className="text-xs text-gray-600">Enviadas</div>
+            <div className="text-xs text-gray-600">Processadas</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-green-600">
-              {progress > 20 ? Math.min(Math.round((progress - 20) * 0.0125 * totalFiles), totalFiles) : 0}
+              {totalFiles - successfulImages - failedImages}
             </div>
-            <div className="text-xs text-gray-600">Analisadas</div>
+            <div className="text-xs text-gray-600">Restantes</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-purple-600">
-              {progress > 80 ? '1' : '0'}
+              {progress > 80 ? '✓' : '○'}
             </div>
             <div className="text-xs text-gray-600">Resumo</div>
           </div>
