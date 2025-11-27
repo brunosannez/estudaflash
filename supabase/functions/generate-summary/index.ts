@@ -14,20 +14,20 @@ function getModelConfigForPlan(plan: string) {
     case 'free':
       return {
         provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5',
         maxTokens: 4000
       };
     case 'pro':
     case 'edu':
       return {
         provider: 'anthropic', 
-        model: 'claude-3-5-sonnet-20241022', // Usar modelo estável para todos os planos
+        model: 'claude-sonnet-4-5', // Usar modelo mais recente e inteligente
         maxTokens: 8000 // Mais tokens para planos pagos
       };
     default:
       return {
         provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5',
         maxTokens: 4000
       };
   }
