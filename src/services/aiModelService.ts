@@ -1,4 +1,3 @@
-
 import { PlanType } from '@/types/plans';
 
 export interface AIModelConfig {
@@ -19,14 +18,14 @@ export interface AIModelConfig {
 export class AIModelService {
   static getModelConfigForPlan(plan: PlanType): AIModelConfig {
     // Configuração otimizada usando apenas Anthropic
-    // Claude 3.5 Sonnet para tarefas de alta qualidade (resumos, quiz)
+    // Claude Sonnet 4 para tarefas de alta qualidade (resumos, quiz)
     // Claude 3 Haiku para tarefas de custo-benefício (flashcards)
     switch (plan) {
       case 'free':
         return {
           summaryModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           },
           flashcardModel: {
             provider: 'anthropic',
@@ -34,7 +33,7 @@ export class AIModelService {
           },
           quizModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           }
         };
 
@@ -42,7 +41,7 @@ export class AIModelService {
         return {
           summaryModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           },
           flashcardModel: {
             provider: 'anthropic',
@@ -50,7 +49,7 @@ export class AIModelService {
           },
           quizModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           }
         };
 
@@ -58,7 +57,7 @@ export class AIModelService {
         return {
           summaryModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           },
           flashcardModel: {
             provider: 'anthropic',
@@ -66,7 +65,7 @@ export class AIModelService {
           },
           quizModel: {
             provider: 'anthropic',
-            model: 'claude-3-5-sonnet-20241022'
+            model: 'claude-sonnet-4-20250514'
           }
         };
 
@@ -86,8 +85,8 @@ export class AIModelService {
 
   static getModelDisplayName(model: string): string {
     switch (model) {
-      case 'claude-3-5-sonnet-20241022':
-        return 'Claude 3.5 Sonnet';
+      case 'claude-sonnet-4-20250514':
+        return 'Claude Sonnet 4';
       case 'claude-3-haiku-20240307':
         return 'Claude 3 Haiku';
       default:

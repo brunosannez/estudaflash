@@ -3,10 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar, BookOpen, Zap, Target, Brain } from 'lucide-react';
+import { FileText, Calendar, BookOpen, Zap, Target, Brain, Trash2 } from 'lucide-react';
 import { summaryDataService } from '@/services/summaryDataService';
+import { deleteService } from '@/services/deleteService';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Resumo {
   id: string;
@@ -25,6 +37,7 @@ const MySummaries = () => {
   const navigate = useNavigate();
   const [resumos, setResumos] = useState<Resumo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadResumos();
@@ -41,6 +54,15 @@ const MySummaries = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async (resumoId: string) => {
+    setDeletingId(resumoId);
+    const success = await deleteService.deleteResumo(resumoId);
+    if (success) {
+      setResumos(prev => prev.filter(r => r.id !== resumoId));
+    }
+    setDeletingId(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -100,9 +122,40 @@ const MySummaries = () => {
           /* Resumos Grid */
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {resumos.map((resumo) => (
-              <Card key={resumo.id} className="group hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50">
+              <Card key={resumo.id} className="group hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 relative">
+                {/* Botão de excluir */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 z-10"
+                      disabled={deletingId === resumo.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Deletar resumo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação é irreversível. O resumo, flashcards e quizzes relacionados serão permanentemente excluídos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(resumo.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Deletar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between pr-8">
                     <div className="flex-1">
                       <CardTitle className="text-lg font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {getResumoTitle(resumo)}
