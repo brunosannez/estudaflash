@@ -3,21 +3,24 @@ import { PlanType } from '@/types/plans';
 
 export interface AIModelConfig {
   summaryModel: {
-    provider: 'anthropic' | 'openai';
+    provider: 'anthropic';
     model: string;
   };
   flashcardModel: {
-    provider: 'huggingface' | 'anthropic';
+    provider: 'anthropic';
     model: string;
   };
   quizModel: {
-    provider: 'openai' | 'anthropic';
+    provider: 'anthropic';
     model: string;
   };
 }
 
 export class AIModelService {
   static getModelConfigForPlan(plan: PlanType): AIModelConfig {
+    // Configuração otimizada usando apenas Anthropic
+    // Claude 3.5 Sonnet para tarefas de alta qualidade (resumos, quiz)
+    // Claude 3 Haiku para tarefas de custo-benefício (flashcards)
     switch (plan) {
       case 'free':
         return {
@@ -26,12 +29,12 @@ export class AIModelService {
             model: 'claude-3-5-sonnet-20241022'
           },
           flashcardModel: {
-            provider: 'huggingface',
-            model: 'deepseek-ai/DeepSeek-V2-Chat'
+            provider: 'anthropic',
+            model: 'claude-3-haiku-20240307'
           },
           quizModel: {
-            provider: 'openai',
-            model: 'gpt-3.5-turbo'
+            provider: 'anthropic',
+            model: 'claude-3-5-sonnet-20241022'
           }
         };
 
@@ -42,12 +45,12 @@ export class AIModelService {
             model: 'claude-3-5-sonnet-20241022'
           },
           flashcardModel: {
-            provider: 'huggingface',
-            model: 'deepseek-ai/DeepSeek-V2-Chat'
+            provider: 'anthropic',
+            model: 'claude-3-haiku-20240307'
           },
           quizModel: {
-            provider: 'openai',
-            model: 'gpt-4o'
+            provider: 'anthropic',
+            model: 'claude-3-5-sonnet-20241022'
           }
         };
 
@@ -58,17 +61,16 @@ export class AIModelService {
             model: 'claude-3-5-sonnet-20241022'
           },
           flashcardModel: {
-            provider: 'huggingface',
-            model: 'deepseek-ai/DeepSeek-V2-Chat'
+            provider: 'anthropic',
+            model: 'claude-3-haiku-20240307'
           },
           quizModel: {
-            provider: 'openai',
-            model: 'gpt-4o'
+            provider: 'anthropic',
+            model: 'claude-3-5-sonnet-20241022'
           }
         };
 
       default:
-        // Fallback para plano free
         return this.getModelConfigForPlan('free');
     }
   }
@@ -76,11 +78,7 @@ export class AIModelService {
   static getProviderDisplayName(provider: string): string {
     switch (provider) {
       case 'anthropic':
-        return 'Claude';
-      case 'openai':
-        return 'OpenAI';
-      case 'huggingface':
-        return 'HuggingFace';
+        return 'Claude (Anthropic)';
       default:
         return provider;
     }
@@ -90,12 +88,8 @@ export class AIModelService {
     switch (model) {
       case 'claude-3-5-sonnet-20241022':
         return 'Claude 3.5 Sonnet';
-      case 'deepseek-ai/DeepSeek-V2-Chat':
-        return 'DeepSeek-V2';
-      case 'gpt-3.5-turbo':
-        return 'GPT-3.5 Turbo';
-      case 'gpt-4o':
-        return 'GPT-4o';
+      case 'claude-3-haiku-20240307':
+        return 'Claude 3 Haiku';
       default:
         return model;
     }

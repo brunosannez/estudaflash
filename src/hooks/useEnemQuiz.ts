@@ -129,17 +129,25 @@ export const useEnemQuiz = () => {
     setLoading(true);
     
     try {
+      // Get the most recent quiz for this resumo
       const { data, error } = await supabase
         .from('enem_quiz_metadata')
         .select('*')
         .eq('resumo_id', resumoId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
+        console.error('❌ Error fetching quiz metadata:', error);
         throw new Error(error.message);
       }
 
-      return data ? {
+      if (!data) {
+        return null;
+      }
+
+      return {
         ...data,
         macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
         targets: data.targets as { objetivas: number; vf_sequenciais: number },
@@ -152,7 +160,7 @@ export const useEnemQuiz = () => {
             }))
           : [],
         quality_checks: data.quality_checks as any
-      } : null;
+      };
 
     } catch (error) {
       console.error('❌ Error fetching quiz metadata:', error);

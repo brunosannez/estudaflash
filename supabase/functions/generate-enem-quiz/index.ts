@@ -7,7 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -19,13 +18,14 @@ serve(async (req) => {
   try {
     console.log('🚀 Starting ENEM quiz generation function...');
     
-    // Check if OpenAI API key is configured
-    if (!openAIApiKey) {
-      console.error('❌ OpenAI API key not found');
+    // Check if Anthropic API key is configured
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!anthropicApiKey) {
+      console.error('❌ ANTHROPIC_API_KEY not found');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'OpenAI API key not configured'
+          error: 'ANTHROPIC_API_KEY not configured'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -34,7 +34,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('✅ OpenAI API key found');
+    console.log('✅ ANTHROPIC_API_KEY found');
 
     const requestBody = await req.json();
     console.log('📨 Request received:', { 
@@ -66,100 +66,122 @@ serve(async (req) => {
     // Simple theme detection
     const detectTheme = (content: string): string => {
       const contentLower = content.toLowerCase();
-      if (contentLower.includes('história') || contentLower.includes('histórico')) return 'história';
-      if (contentLower.includes('matemática') || contentLower.includes('equação')) return 'matemática';
-      if (contentLower.includes('português') || contentLower.includes('literatura')) return 'português';
+      if (contentLower.includes('história') || contentLower.includes('histórico') || contentLower.includes('guerra') || contentLower.includes('revolução')) return 'história';
+      if (contentLower.includes('matemática') || contentLower.includes('equação') || contentLower.includes('função') || contentLower.includes('cálculo')) return 'matemática';
+      if (contentLower.includes('português') || contentLower.includes('literatura') || contentLower.includes('gramática')) return 'português';
+      if (contentLower.includes('biologia') || contentLower.includes('célula') || contentLower.includes('genética')) return 'biologia';
+      if (contentLower.includes('física') || contentLower.includes('força') || contentLower.includes('energia')) return 'física';
+      if (contentLower.includes('química') || contentLower.includes('átomo') || contentLower.includes('molécula')) return 'química';
+      if (contentLower.includes('geografia') || contentLower.includes('clima') || contentLower.includes('território')) return 'geografia';
       return 'conhecimentos gerais';
     };
 
     const tema = detectTheme(resumoContent);
+    const wordCount = resumoContent.split(/\s+/).length;
     console.log('📚 Theme detected:', tema);
+    console.log('📝 Word count:', wordCount);
 
-    // Simplified prompt for testing
-    const promptText = `Crie um quiz ENEM simples baseado no seguinte resumo:
+    // Calculate number of questions based on content length
+    const numObjetivas = Math.min(5, Math.max(2, Math.floor(wordCount / 150)));
+    const numVF = Math.min(3, Math.max(1, Math.floor(wordCount / 250)));
 
-RESUMO:
-${resumoContent.substring(0, 1500)}
+    // ENEM-style prompt using Claude for better reasoning
+    const promptText = `Você é um especialista em elaboração de provas ENEM. Crie um quiz baseado EXCLUSIVAMENTE no resumo abaixo.
 
-Crie apenas 3 questões: 2 objetivas e 1 verdadeiro/falso.
+RESUMO PARA BASE DAS QUESTÕES:
+"""
+${resumoContent.substring(0, 4000)}
+"""
 
-Formato JSON (responda APENAS o JSON):
+REGRAS OBRIGATÓRIAS:
+1. Todas as questões DEVEM ser baseadas APENAS no conteúdo do resumo acima
+2. NÃO invente informações que não estão no resumo
+3. Cada questão deve ter uma "evidence" - trecho literal do resumo que comprova a resposta
+4. Linguagem adaptada para estudante de ensino médio (15-17 anos)
+5. Questões devem avaliar compreensão, não apenas memorização
+
+FORMATO DE SAÍDA (JSON válido):
 {
-  "meta": {"tema": "${tema}", "idade_usuario": 17, "word_count": ${resumoContent.split(' ').length}, "macrothemes": ["tema1"], "targets": {"objetivas": 2, "vf_sequenciais": 1}, "generated": {"objetivas": 2, "vf_sequenciais": 1}},
-  "coverage_map": [{"macrotema": "principal", "objetivas": 2, "vf_sequenciais": 1}],
+  "meta": {
+    "tema": "${tema}",
+    "idade_usuario": 17,
+    "word_count": ${wordCount},
+    "macrothemes": ["tema principal extraído do resumo"],
+    "targets": {"objetivas": ${numObjetivas}, "vf_sequenciais": ${numVF}},
+    "generated": {"objetivas": ${numObjetivas}, "vf_sequenciais": ${numVF}}
+  },
+  "coverage_map": [{"macrotema": "${tema}", "objetivas": ${numObjetivas}, "vf_sequenciais": ${numVF}}],
   "quiz": {
     "objetivas": [
       {
-        "enunciado": "Contexto da questão baseado no resumo",
-        "stem": "Pergunta sobre o conteúdo?", 
-        "options": ["A) opção 1", "B) opção 2", "C) opção 3", "D) opção 4", "E) opção 5"],
+        "enunciado": "Texto-base contextualizando a questão baseado no resumo",
+        "stem": "Pergunta clara e objetiva sobre o conteúdo?",
+        "options": ["A) primeira alternativa", "B) segunda alternativa", "C) terceira alternativa", "D) quarta alternativa", "E) quinta alternativa"],
         "correct_index": 0,
         "difficulty": "medium",
         "cognitive_level": "understand",
-        "evidence": "evidência do texto"
-      },
-      {
-        "enunciado": "Outra questão baseada no resumo",
-        "stem": "Segunda pergunta?",
-        "options": ["A) alt 1", "B) alt 2", "C) alt 3", "D) alt 4", "E) alt 5"], 
-        "correct_index": 1,
-        "difficulty": "medium",
-        "cognitive_level": "analyze",
-        "evidence": "outra evidência"
+        "evidence": "trecho literal do resumo que comprova a resposta correta"
       }
     ],
     "vf_sequenciais": [
       {
-        "enunciado": "Contexto para V/F",
-        "statements": ["I. afirmação 1", "II. afirmação 2", "III. afirmação 3", "IV. afirmação 4"],
-        "options": ["A) V V F F", "B) V F V F", "C) F V F V", "D) F F V V", "E) V V V F"],
+        "enunciado": "Contexto para análise de afirmações",
+        "statements": ["I. Primeira afirmação baseada no resumo", "II. Segunda afirmação", "III. Terceira afirmação", "IV. Quarta afirmação"],
+        "options": ["A) V, V, F, F", "B) V, F, V, F", "C) F, V, F, V", "D) F, F, V, V", "E) V, V, V, F"],
         "correct_index": 0,
-        "difficulty": "medium", 
+        "difficulty": "medium",
         "cognitive_level": "analyze",
-        "evidence": "evidência V/F"
+        "evidence": "trecho do resumo que valida a resposta"
       }
     ]
   },
-  "quality_checks": {"all_from_summary": true, "age_adapted": true, "balanced_difficulty": true, "balanced_cognitive_levels": true, "coverage_complete": true, "no_duplicates": true}
-}`;
+  "quality_checks": {
+    "all_from_summary": true,
+    "age_adapted": true,
+    "balanced_difficulty": true,
+    "balanced_cognitive_levels": true,
+    "coverage_complete": true,
+    "no_duplicates": true
+  }
+}
 
-    console.log('🤖 Calling OpenAI API...');
+Gere ${numObjetivas} questões objetivas e ${numVF} questões V/F sequenciais.
+Responda APENAS com o JSON válido, sem explicações adicionais.`;
+
+    console.log('🤖 Calling Anthropic Claude API...');
     console.log('📝 Prompt length:', promptText.length);
 
-    // Test OpenAI API call with simpler model
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Use Anthropic Claude 3.5 Sonnet for quiz generation
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',  // Using simpler, more stable model
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
         messages: [
-          {
-            role: 'system',
-            content: 'Você é um especialista em elaboração de provas ENEM. Responda APENAS com JSON válido, sem comentários.'
-          },
           {
             role: 'user',
             content: promptText
           }
         ],
-        max_tokens: 3000,
         temperature: 0.3
       }),
     });
 
-    console.log('📡 OpenAI Response status:', response.status);
+    console.log('📡 Anthropic Response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ OpenAI API error:', errorText);
+      console.error('❌ Anthropic API error:', errorText);
       
       return new Response(
         JSON.stringify({
           success: false,
-          error: `OpenAI API error: ${response.status} - ${errorText}`
+          error: `Anthropic API error: ${response.status} - ${errorText}`
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -168,15 +190,15 @@ Formato JSON (responda APENAS o JSON):
       );
     }
 
-    const openAIResponse = await response.json();
-    console.log('🤖 OpenAI Response received');
+    const anthropicResponse = await response.json();
+    console.log('🤖 Anthropic Response received');
 
-    if (!openAIResponse.choices?.[0]?.message?.content) {
-      console.error('❌ Invalid OpenAI response structure');
+    if (!anthropicResponse.content?.[0]?.text) {
+      console.error('❌ Invalid Anthropic response structure');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid response from OpenAI'
+          error: 'Invalid response from Anthropic'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -185,7 +207,7 @@ Formato JSON (responda APENAS o JSON):
       );
     }
 
-    let content = openAIResponse.choices[0].message.content.trim();
+    let content = anthropicResponse.content[0].text.trim();
     console.log('📝 Raw content length:', content.length);
     
     // Clean and parse JSON
@@ -202,7 +224,7 @@ Formato JSON (responda APENAS o JSON):
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Failed to parse OpenAI response as JSON'
+          error: 'Failed to parse Anthropic response as JSON'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -215,17 +237,17 @@ Formato JSON (responda APENAS o JSON):
     console.log('💾 Saving quiz to database...');
 
     try {
-      // Save metadata
+      // Save metadata - allow multiple quizzes per resumo
       const { data: metadataRecord, error: metadataError } = await supabase
         .from('enem_quiz_metadata')
         .insert({
           resumo_id: resumoId,
-          tema: quizData.meta.tema,
-          idade_usuario: quizData.meta.idade_usuario,
-          word_count: quizData.meta.word_count,
-          macrothemes: quizData.meta.macrothemes || [],
-          targets: quizData.meta.targets || {objetivas: 2, vf_sequenciais: 1},
-          generated: quizData.meta.generated || {objetivas: 2, vf_sequenciais: 1},
+          tema: quizData.meta?.tema || tema,
+          idade_usuario: quizData.meta?.idade_usuario || 17,
+          word_count: quizData.meta?.word_count || wordCount,
+          macrothemes: quizData.meta?.macrothemes || [tema],
+          targets: quizData.meta?.targets || { objetivas: numObjetivas, vf_sequenciais: numVF },
+          generated: quizData.meta?.generated || { objetivas: numObjetivas, vf_sequenciais: numVF },
           coverage_map: quizData.coverage_map || [],
           quality_checks: quizData.quality_checks || {}
         })
@@ -243,39 +265,44 @@ Formato JSON (responda APENAS o JSON):
       const questionsToInsert = [];
 
       // Add objective questions
-      if (quizData.quiz.objetivas) {
+      if (quizData.quiz?.objetivas && Array.isArray(quizData.quiz.objetivas)) {
         for (const question of quizData.quiz.objetivas) {
           questionsToInsert.push({
             quiz_metadata_id: metadataRecord.id,
             tipo: 'objetiva',
-            enunciado: question.enunciado,
-            stem: question.stem,
+            enunciado: question.enunciado || '',
+            stem: question.stem || '',
             statements: null,
-            options: question.options,
-            correct_index: question.correct_index,
-            difficulty: question.difficulty,
-            cognitive_level: question.cognitive_level,
-            evidence: question.evidence
+            options: question.options || [],
+            correct_index: question.correct_index || 0,
+            difficulty: question.difficulty || 'medium',
+            cognitive_level: question.cognitive_level || 'understand',
+            evidence: question.evidence || ''
           });
         }
       }
 
       // Add V/F sequential questions
-      if (quizData.quiz.vf_sequenciais) {
+      if (quizData.quiz?.vf_sequenciais && Array.isArray(quizData.quiz.vf_sequenciais)) {
         for (const question of quizData.quiz.vf_sequenciais) {
           questionsToInsert.push({
             quiz_metadata_id: metadataRecord.id,
             tipo: 'vf_sequencial',
-            enunciado: question.enunciado,
+            enunciado: question.enunciado || '',
             stem: null,
-            statements: question.statements,
-            options: question.options,
-            correct_index: question.correct_index,
-            difficulty: question.difficulty,
-            cognitive_level: question.cognitive_level,
-            evidence: question.evidence
+            statements: question.statements || [],
+            options: question.options || [],
+            correct_index: question.correct_index || 0,
+            difficulty: question.difficulty || 'medium',
+            cognitive_level: question.cognitive_level || 'analyze',
+            evidence: question.evidence || ''
           });
         }
+      }
+
+      if (questionsToInsert.length === 0) {
+        console.error('❌ No questions generated');
+        throw new Error('No questions were generated from the content');
       }
 
       const { error: questionsError } = await supabase
@@ -296,8 +323,8 @@ Formato JSON (responda APENAS o JSON):
           quizMetadataId: metadataRecord.id,
           totalQuestions: questionsToInsert.length,
           breakdown: {
-            objetivas: quizData.quiz.objetivas?.length || 0,
-            vf_sequenciais: quizData.quiz.vf_sequenciais?.length || 0
+            objetivas: quizData.quiz?.objetivas?.length || 0,
+            vf_sequenciais: quizData.quiz?.vf_sequenciais?.length || 0
           }
         }),
         {

@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
@@ -7,44 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Função para obter configuração do modelo baseada no plano
-function getModelConfigForPlan(plan: string) {
-  switch (plan) {
-    case 'free':
-    case 'pro':
-    case 'edu':
-      return {
-        provider: 'huggingface',
-        model: 'deepseek-ai/DeepSeek-V2-Chat'
-      };
-    default:
-      return {
-        provider: 'huggingface',
-        model: 'deepseek-ai/DeepSeek-V2-Chat'
-      };
-  }
-}
-
-async function getUserPlan(supabase: any, userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('uso_usuarios')
-      .select('plano')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Erro ao buscar plano do usuário:', error);
-      return 'free'; // Fallback para plano free
-    }
-    
-    return data?.plano || 'free';
-  } catch (error) {
-    console.error('Erro ao buscar plano:', error);
-    return 'free';
-  }
-}
 
 // Detectar tema automático do conteúdo
 function detectTheme(content: string): string {
@@ -74,102 +35,12 @@ function detectTheme(content: string): string {
   return bestMatch;
 }
 
-// Obter idade do usuário (padrão 15 anos se não especificado)
-async function getUserAge(supabase: any, userId: string): Promise<number> {
-  try {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('date_of_birth')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (profile?.date_of_birth) {
-      const age = new Date().getFullYear() - new Date(profile.date_of_birth).getFullYear();
-      return age;
-    }
-  } catch (error) {
-    console.log('Erro ao obter idade do usuário:', error);
-  }
-  return 15; // Idade padrão
-}
-
 // Calcular quantidade ideal de cards baseada no tamanho
 function calculateTargetCards(wordCount: number): number {
   if (wordCount <= 300) return Math.min(10, Math.max(8, Math.floor(wordCount / 30)));
   if (wordCount <= 600) return Math.min(15, Math.max(12, Math.floor(wordCount / 40)));
   if (wordCount <= 900) return Math.min(20, Math.max(15, Math.floor(wordCount / 45)));
-  return Math.min(20, Math.max(18, Math.floor(wordCount / 50))); // Máximo 20 cards
-}
-
-async function generateWithHuggingFace(apiKey: string, model: string, prompt: string) {
-  const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 2000,
-        temperature: 0.4,
-        top_p: 0.9,
-        return_full_text: false,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('HuggingFace API error:', response.status, errorText);
-    throw new Error(`Erro na API HuggingFace: ${response.status} - ${errorText}`);
-  }
-
-  const result = await response.json();
-  
-  // HuggingFace retorna um array, pegamos o primeiro resultado
-  if (Array.isArray(result) && result.length > 0) {
-    return result[0].generated_text || result[0].text || '';
-  }
-  
-  throw new Error('Resposta inválida da API HuggingFace');
-}
-
-async function generateWithAnthropic(apiKey: string, model: string, prompt: string) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: model,
-      max_tokens: 4000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.4,
-      top_p: 0.9
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error('Anthropic API error:', response.status, errorData);
-    throw new Error(`Erro na API Anthropic: ${response.status} - ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  
-  if (!data.content || !data.content[0] || !data.content[0].text) {
-    throw new Error('Resposta inválida da API Anthropic');
-  }
-
-  return data.content[0].text;
+  return Math.min(20, Math.max(18, Math.floor(wordCount / 50)));
 }
 
 serve(async (req) => {
@@ -184,20 +55,32 @@ serve(async (req) => {
       throw new Error('ID do resumo e texto são obrigatórios');
     }
 
-    // Verificar APIs disponíveis
-    const huggingfaceApiKey = Deno.env.get('HUGGINGFACE_API_KEY');
+    // Verify Anthropic API key is available
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    console.log('Configurações disponíveis:');
-    console.log('- HUGGINGFACE_API_KEY:', huggingfaceApiKey ? '✅' : '❌');
+    console.log('🔑 Configurações disponíveis:');
     console.log('- ANTHROPIC_API_KEY:', anthropicApiKey ? '✅' : '❌');
 
-    // Inicializar Supabase
+    if (!anthropicApiKey) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'ANTHROPIC_API_KEY não configurada',
+          fallbackMessage: 'Serviço de IA não configurado. Contate o administrador.'
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Initialize Supabase
     const supabase = createClient(supabaseUrl!, supabaseKey!);
     
-    // NOVO: Consumir créditos antes de gerar flashcards
+    // Consume credits before generating flashcards
     if (userId) {
       const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
         target_user_id: userId,
@@ -224,31 +107,24 @@ serve(async (req) => {
 
       console.log(`💳 Créditos consumidos para flashcards: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
     }
-    
-    // Buscar plano do usuário
-    const userPlan = await getUserPlan(supabase, userId);
-    const modelConfig = getModelConfigForPlan(userPlan);
 
-    console.log('👤 Plano do usuário:', userPlan);
-    console.log('🤖 Modelo selecionado:', modelConfig);
     console.log('Gerando flashcards automaticamente para resumo:', resumoId);
     console.log('Tamanho do texto:', textoResumo.length, 'caracteres');
 
-    // SISTEMA AVANÇADO DE GERAÇÃO DE FLASHCARDS COM VARIÁVEIS DINÂMICAS
+    // Advanced flashcard generation with dynamic variables
     const theme = detectTheme(textoResumo);
-    const userAge = await getUserAge(supabase, userId);
     const wordCount = textoResumo.split(/\s+/).length;
     const targetCards = calculateTargetCards(wordCount);
 
     console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${targetCards} flashcards`);
-    console.log(`🎯 Tema detectado: ${theme}, Idade: ${userAge} anos`);
+    console.log(`🎯 Tema detectado: ${theme}`);
 
     const prompt = `Você é um elaborador de materiais didáticos no estilo Anki. Sua missão é gerar flashcards eficientes e claros apenas com base no RESUMO abaixo. Proibido inserir dados externos.
 
 — REGRAS:
 1) Use somente o conteúdo do resumo.
 2) Para cada macrotema, crie pelo menos 1–2 cards que cubram diferentes aspectos (definição, causa, consequência, exemplo, verdadeiro/falso).
-3) Linguagem adaptada para um estudante de ~${userAge} anos.
+3) Linguagem adaptada para um estudante de ensino médio (15-17 anos).
 4) Cada card:
    - front: pergunta clara (1 ideia)
    - back: resposta de 1–2 frases
@@ -263,7 +139,7 @@ serve(async (req) => {
 
 — RESUMO:
 """
-${textoResumo}
+${textoResumo.substring(0, 6000)}
 """
 
 — SAÍDA (JSON válido):
@@ -275,90 +151,84 @@ ${textoResumo}
   },
   "flashcards": [
     {
-      "front": "...",
-      "back": "...",
-      "explanation": "...",
-      "type": "...",
-      "difficulty": "...",
+      "front": "Pergunta clara sobre o conteúdo?",
+      "back": "Resposta concisa de 1-2 frases.",
+      "explanation": "Contexto adicional para entender melhor.",
+      "type": "definicao",
+      "difficulty": "medium",
       "tags": ["${theme}"],
-      "evidence": "..."
+      "evidence": "trecho do resumo"
     }
   ]
 }
 
 Responda APENAS com o JSON válido, sem texto adicional.`;
 
-    console.log('Iniciando chamada para API...', modelConfig.provider);
+    console.log('🤖 Iniciando chamada para API Anthropic Claude Haiku...');
     const startTime = Date.now();
 
-    let flashcardsText = '';
-    
-    try {
-      if (modelConfig.provider === 'huggingface' && huggingfaceApiKey) {
-        flashcardsText = await generateWithHuggingFace(huggingfaceApiKey, modelConfig.model, prompt);
-      } else if (modelConfig.provider === 'anthropic' && anthropicApiKey) {
-        flashcardsText = await generateWithAnthropic(anthropicApiKey, modelConfig.model, prompt);
-      } else {
-        // Fallback: tentar Anthropic se disponível, senão HuggingFace
-        if (anthropicApiKey) {
-          console.log('🔄 Usando Anthropic como fallback');
-          flashcardsText = await generateWithAnthropic(anthropicApiKey, 'claude-3-5-sonnet-20241022', prompt);
-        } else if (huggingfaceApiKey) {
-          console.log('🔄 Usando HuggingFace como fallback');
-          flashcardsText = await generateWithHuggingFace(huggingfaceApiKey, 'deepseek-ai/DeepSeek-V2-Chat', prompt);
-        } else {
-          throw new Error('Nenhuma API de IA está configurada. Contate o administrador.');
-        }
-      }
-    } catch (error) {
-      console.error('Erro na API principal, tentando fallback:', error.message);
-      
-      // Tentativa de fallback
-      try {
-        if (modelConfig.provider === 'huggingface' && anthropicApiKey) {
-          console.log('🔄 Fallback: Usando Anthropic');
-          flashcardsText = await generateWithAnthropic(anthropicApiKey, 'claude-3-5-sonnet-20241022', prompt);
-        } else if (modelConfig.provider === 'anthropic' && huggingfaceApiKey) {
-          console.log('🔄 Fallback: Usando HuggingFace');
-          flashcardsText = await generateWithHuggingFace(huggingfaceApiKey, 'deepseek-ai/DeepSeek-V2-Chat', prompt);
-        } else {
-          throw error; // Re-throw se não há fallback disponível
-        }
-      } catch (fallbackError) {
-        console.error('Fallback também falhou:', fallbackError.message);
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Serviços de IA temporariamente indisponíveis. Tente novamente em alguns minutos.',
-            fallbackMessage: 'Nossos serviços de IA estão temporariamente indisponíveis. Por favor, tente novamente mais tarde.'
-          }),
+    // Use Claude 3 Haiku for flashcards (cost-effective)
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 4000,
+        messages: [
           {
-            status: 503,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            role: 'user',
+            content: prompt
           }
-        );
-      }
-    }
+        ],
+        temperature: 0.4
+      })
+    });
 
     const endTime = Date.now();
-    console.log(`Tempo de resposta da API: ${endTime - startTime}ms`);
+    console.log(`⏱️ Tempo de resposta da API: ${endTime - startTime}ms`);
 
-    // Remover possível formatação markdown
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('❌ Anthropic API error:', response.status, errorData);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: `Erro na API Anthropic: ${response.status}`,
+          fallbackMessage: 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.'
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const data = await response.json();
+    
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      throw new Error('Resposta inválida da API Anthropic');
+    }
+
+    let flashcardsText = data.content[0].text.trim();
+
+    // Remove markdown formatting
     if (flashcardsText.startsWith('```json')) {
       flashcardsText = flashcardsText.replace(/^```json\s*/, '').replace(/```$/, '');
     } else if (flashcardsText.startsWith('```')) {
       flashcardsText = flashcardsText.replace(/^```\w*\s*/, '').replace(/```$/, '');
     }
 
-    // Tentar extrair JSON do texto - buscar objeto com array "flashcards"
+    // Try to extract JSON
     let jsonText = flashcardsText;
-    
-    // Se há um objeto com propriedade flashcards
     const objectMatch = flashcardsText.match(/\{[\s\S]*"flashcards"\s*:\s*\[[\s\S]*\]\s*[\s\S]*\}/);
     if (objectMatch) {
       jsonText = objectMatch[0];
     } else {
-      // Fallback: buscar apenas o array
       const jsonStart = flashcardsText.indexOf('[');
       const jsonEnd = flashcardsText.lastIndexOf(']');
       
@@ -367,13 +237,13 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       }
     }
 
-    console.log('Processando flashcards gerados...');
+    console.log('📝 Processando flashcards gerados...');
 
     let flashcardsData;
     try {
       flashcardsData = JSON.parse(jsonText);
     } catch (e) {
-      console.error('Erro ao parsear JSON dos flashcards:', e);
+      console.error('❌ Erro ao parsear JSON dos flashcards:', e);
       console.error('Texto recebido:', jsonText.substring(0, 500));
       throw new Error('Erro ao processar flashcards gerados pela IA');
     }
@@ -386,27 +256,25 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
 
     console.log(`${flashcards.length} flashcards gerados com sucesso`);
 
-    // VALIDAÇÃO DE FIDELIDADE AO CONTEÚDO
+    // Validate flashcards for content fidelity
     const validatedFlashcards = flashcards.filter((card: any) => {
-      // Verificações básicas de estrutura - nova estrutura com front/back
       const question = card.front || card.pergunta;
       const answer = card.back || card.resposta;
       
       if (!question || !answer || question.length < 10 || answer.length < 5) {
-        console.warn('❌ Flashcard rejeitado: estrutura inválida', card);
+        console.warn('❌ Flashcard rejeitado: estrutura inválida');
         return false;
       }
 
-      // Verificar se há palavras-chave do conteúdo original na resposta
+      // Check for keyword overlap with original content
       const contentWords = textoResumo.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const responseWords = answer.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const commonWords = responseWords.filter(word => contentWords.includes(word));
       
-      // Deve ter pelo menos 20% de overlap de palavras significativas
-      const overlapRatio = commonWords.length / responseWords.length;
-      if (overlapRatio < 0.2) {
+      const overlapRatio = responseWords.length > 0 ? commonWords.length / responseWords.length : 0;
+      if (overlapRatio < 0.15) {
         console.warn('❌ Flashcard rejeitado: baixa fidelidade ao conteúdo', {
-          pergunta: question,
+          pergunta: question.substring(0, 50),
           overlap: overlapRatio
         });
         return false;
@@ -415,20 +283,20 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       return true;
     });
 
-    if (validatedFlashcards.length < Math.ceil(targetCards * 0.6)) {
+    if (validatedFlashcards.length < Math.ceil(targetCards * 0.5)) {
       console.error('❌ Muitos flashcards rejeitados na validação');
       throw new Error('Qualidade insuficiente dos flashcards gerados. Tente novamente.');
     }
 
     console.log(`✅ ${validatedFlashcards.length}/${flashcards.length} flashcards aprovados na validação`);
 
-    // Salvar flashcards no banco de dados - mapear nova estrutura para schema existente
+    // Save flashcards to database
     const flashcardsToInsert = validatedFlashcards.map((card: any) => ({
       resumo_id: resumoId,
       pergunta: card.front || card.pergunta,
       resposta: card.back || card.resposta,
       exemplo: card.explanation || card.exemplo || null,
-      card_type: card.type || 'definicao', // Novo campo type mapeado
+      card_type: card.type || 'definicao',
       difficulty: card.difficulty === 'easy' ? 1 : card.difficulty === 'medium' ? 2 : 3,
       category: Array.isArray(card.tags) ? card.tags[0] || theme : theme
     }));
@@ -439,11 +307,11 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       .select();
 
     if (flashcardError) {
-      console.error('Erro ao salvar flashcards no banco:', flashcardError);
+      console.error('❌ Erro ao salvar flashcards no banco:', flashcardError);
       throw new Error(`Erro ao salvar flashcards: ${flashcardError.message}`);
     }
 
-    console.log(`${savedFlashcards.length} flashcards salvos com sucesso no banco`);
+    console.log(`✅ ${savedFlashcards.length} flashcards salvos com sucesso no banco`);
 
     return new Response(
       JSON.stringify({ 
@@ -454,8 +322,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
           total_aprovado: validatedFlashcards.length,
           total_rejeitado: flashcards.length - validatedFlashcards.length,
           tempo_processamento: `${endTime - startTime}ms`,
-          modelo_usado: modelConfig.model,
-          plano_usuario: userPlan,
+          modelo_usado: 'claude-3-haiku-20240307',
           palavras_analisadas: wordCount,
           cobertura_qualidade: Math.round((validatedFlashcards.length / targetCards) * 100)
         }
@@ -466,25 +333,24 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
     );
 
   } catch (error) {
-    console.error('Erro na função generate-flashcards:', error);
+    console.error('❌ Erro na função generate-flashcards:', error);
     
-    let userMessage = 'Erro ao gerar flashcards';
-    let fallbackMessage = 'Houve um problema ao gerar os flashcards. Tente novamente mais tarde.';
+    let errorMessage = 'Erro ao gerar flashcards';
+    let fallbackMessage = 'Erro inesperado. Tente novamente.';
     
-    if (error.message.includes('API')) {
-      userMessage = 'Serviço de IA temporariamente indisponível';
-      fallbackMessage = 'Nosso serviço de IA está temporariamente indisponível. Por favor, tente novamente em alguns minutos.';
-    } else if (error.message.includes('configurada')) {
-      userMessage = 'Configuração de IA necessária. Contate o administrador.';
-      fallbackMessage = 'O serviço precisa ser configurado. Entre em contato com o administrador.';
+    if (error.message?.includes('API')) {
+      fallbackMessage = 'Serviço de IA temporariamente indisponível.';
+    } else if (error.message?.includes('créditos')) {
+      fallbackMessage = error.message;
+    } else if (error.message?.includes('Qualidade')) {
+      fallbackMessage = 'Conteúdo muito curto ou genérico. Tente com mais detalhes.';
     }
     
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: userMessage,
-        fallbackMessage: fallbackMessage,
-        details: error.message
+        error: error.message || errorMessage,
+        fallbackMessage: fallbackMessage
       }),
       {
         status: 500,
