@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen, Trash2, ChevronDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen, Trash2, ChevronDown, Pencil, Check, X } from 'lucide-react';
 import { EnemQuizPlayer } from '@/components/enem/EnemQuizPlayer';
 import { useEnemQuiz } from '@/hooks/useEnemQuiz';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,7 +34,7 @@ const EnemQuiz: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { loading, generating, generateQuiz, getQuizMetadata, listQuizMetadata, getUserSessions } = useEnemQuiz();
+  const { loading, generating, generateQuiz, getQuizMetadata, listQuizMetadata, getUserSessions, renameQuiz, getQuizDisplayName } = useEnemQuiz();
   
   const [resumoData, setResumoData] = useState<any>(null);
   const [quizMetadata, setQuizMetadata] = useState<any>(null);
@@ -42,6 +43,8 @@ const EnemQuiz: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
     // Aguardar auth carregar antes de tentar carregar dados
@@ -176,6 +179,30 @@ const EnemQuiz: React.FC = () => {
     setIsPlaying(false);
   };
 
+  const handleStartEditing = () => {
+    setEditName(quizMetadata?.custom_name || getQuizDisplayName(quizMetadata));
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setEditName('');
+  };
+
+  const handleSaveQuizName = async () => {
+    if (!quizMetadata || !editName.trim()) return;
+    
+    const success = await renameQuiz(quizMetadata.id, editName.trim());
+    if (success) {
+      // Update local state
+      const updatedQuiz = { ...quizMetadata, custom_name: editName.trim() };
+      setQuizMetadata(updatedQuiz);
+      setAllQuizzes(prev => prev.map(q => q.id === quizMetadata.id ? updatedQuiz : q));
+    }
+    setIsEditing(false);
+    setEditName('');
+  };
+
   const handleDeleteQuiz = async () => {
     if (!quizMetadata) return;
     
@@ -290,35 +317,69 @@ const EnemQuiz: React.FC = () => {
           </Card>
         ) : (
           <>
-            {/* Quiz Selector (if multiple quizzes) */}
-            {allQuizzes.length > 1 && (
-              <Card className="mb-6 bg-muted/30">
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <span className="text-sm font-medium">Selecionar Quiz:</span>
-                    <Select
-                      value={quizMetadata?.id}
-                      onValueChange={(value) => {
-                        const selected = allQuizzes.find(q => q.id === value);
-                        if (selected) handleSelectQuiz(selected);
-                      }}
-                    >
-                      <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Selecione um quiz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allQuizzes.map((quiz, index) => (
-                          <SelectItem key={quiz.id} value={quiz.id}>
-                            Quiz {index + 1} - {formatDate(quiz.created_at)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Badge variant="outline">{allQuizzes.length} quiz(zes)</Badge>
+            {/* Quiz Name and Edit */}
+            <Card className="mb-6">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Nome do quiz..."
+                          className="max-w-xs"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveQuizName();
+                            if (e.key === 'Escape') handleCancelEditing();
+                          }}
+                        />
+                        <Button size="sm" onClick={handleSaveQuizName}>
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCancelEditing}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold truncate">
+                          {quizMetadata.custom_name || getQuizDisplayName(quizMetadata)}
+                        </h2>
+                        <Button size="sm" variant="ghost" onClick={handleStartEditing}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  
+                  {allQuizzes.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={quizMetadata?.id}
+                        onValueChange={(value) => {
+                          const selected = allQuizzes.find(q => q.id === value);
+                          if (selected) handleSelectQuiz(selected);
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allQuizzes.map((quiz) => (
+                            <SelectItem key={quiz.id} value={quiz.id}>
+                              {quiz.custom_name || getQuizDisplayName(quiz)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Badge variant="outline">{allQuizzes.length} quiz(zes)</Badge>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Quiz Info */}
             <div className="grid gap-6 md:grid-cols-2 mb-6">

@@ -33,6 +33,8 @@ interface QuizSession {
     id: string;
     tema: string;
     resumo_id: string;
+    custom_name: string | null;
+    created_at: string;
   };
 }
 
@@ -81,7 +83,9 @@ const QuizHistory: React.FC = () => {
           enem_quiz_metadata (
             id,
             tema,
-            resumo_id
+            resumo_id,
+            custom_name,
+            created_at
           )
         `)
         .eq('user_id', user.id)
@@ -152,6 +156,24 @@ const QuizHistory: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getQuizName = (session: QuizSession): string => {
+    // Priority: custom_name > auto-generated name
+    if (session.enem_quiz_metadata.custom_name) {
+      return session.enem_quiz_metadata.custom_name;
+    }
+    
+    // Generate name from tema + date
+    const date = new Date(session.enem_quiz_metadata.created_at);
+    const formattedDate = date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const tema = session.enem_quiz_metadata.tema;
+    return `${tema.charAt(0).toUpperCase() + tema.slice(1)} - ${formattedDate}`;
   };
 
   const getResumoName = (resumoId: string): string => {
@@ -283,10 +305,12 @@ const QuizHistory: React.FC = () => {
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold truncate">
-                        {getResumoName(session.enem_quiz_metadata.resumo_id)}
+                        {getQuizName(session)}
                       </h3>
+                      <p className="text-sm text-muted-foreground truncate">
+                        📄 {getResumoName(session.enem_quiz_metadata.resumo_id)}
+                      </p>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                        <Badge variant="secondary">{session.enem_quiz_metadata.tema}</Badge>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(session.started_at)}
