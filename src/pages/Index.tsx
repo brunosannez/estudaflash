@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
 import PageLayout from '@/components/navigation/PageLayout';
@@ -7,11 +8,28 @@ import GamificationCards from '@/components/dashboard/GamificationCards';
 import QuickActions from '@/components/dashboard/QuickActions';
 import StudyStatsGrid from '@/components/dashboard/StudyStatsGrid';
 import DailyMission from '@/components/dashboard/DailyMission';
+import BadgesPreview from '@/components/dashboard/BadgesPreview';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
+import BadgeUnlockAnimation from '@/components/badges/BadgeUnlockAnimation';
+import { BADGE_UNLOCK_EVENT } from '@/hooks/useAdvancedBadges';
+import { BadgeDefinition } from '@/data/badgesCatalog';
 
 const Index = () => {
   console.log('🏠 Dashboard Index page rendering...');
+  const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
+
+  // Listen for badge unlock events
+  useEffect(() => {
+    const handleBadgeUnlock = (event: CustomEvent<BadgeDefinition>) => {
+      setUnlockedBadge(event.detail);
+    };
+
+    window.addEventListener(BADGE_UNLOCK_EVENT, handleBadgeUnlock as EventListener);
+    return () => {
+      window.removeEventListener(BADGE_UNLOCK_EVENT, handleBadgeUnlock as EventListener);
+    };
+  }, []);
 
   return (
     <ProtectedRoute>
@@ -33,6 +51,9 @@ const Index = () => {
               </h2>
               <GamificationCards />
             </div>
+
+            {/* Conquistas Preview */}
+            <BadgesPreview />
             
             {/* Ações Rápidas */}
             <div className="space-y-2">
@@ -75,6 +96,13 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        {/* Badge Unlock Animation */}
+        <BadgeUnlockAnimation
+          badge={unlockedBadge}
+          isOpen={!!unlockedBadge}
+          onClose={() => setUnlockedBadge(null)}
+        />
       </PageLayout>
     </ProtectedRoute>
   );
