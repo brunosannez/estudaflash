@@ -1,359 +1,306 @@
 
-# Plano: Corrigir Erro dos Flashcards e Implementar Novo Fluxo com Gamificação
+# Relatório de Análise Completa do Estuda Flash
 
-## Diagnóstico do Problema
+## Sumário Executivo
 
-### Erro Identificado
-O erro "A component suspended while responding to synchronous input" ocorre porque:
-1. O `useFlashcardActions.ts` faz operações assíncronas (database calls) diretamente em resposta a cliques de botão
-2. O `realGamificationData.refreshData()` na linha 99 causa uma atualização de estado síncrona que dispara uma suspensão
-3. As atualizações de estado dentro de `handleAnswer` não estão encapsuladas em `startTransition`
-
-### Solução Técnica
-Envolver as atualizações de estado em `startTransition` do React para indicar que são atualizações não-urgentes.
+Após analisar todas as 18 páginas e 100+ componentes do aplicativo, identifiquei **35 oportunidades de melhoria** organizadas em 5 categorias principais. O aplicativo tem uma base sólida, mas pode evoluir significativamente para se tornar uma referência em apps de estudo para o público de 8-20 anos.
 
 ---
 
-## Nova Experiência do Usuário Solicitada
+## 1. Funcionalidades de Estudo (Prioridade Alta)
 
-### Fluxo Atual (Problemático)
-```text
-[Pergunta] → Clica no card → [Resposta] → Clica "Lembrei/Não Lembrei" → Próximo card
+### 1.1 Resumos - Melhorias na Geração de Conteúdo
+
+**Situação Atual:**
+- O prompt de geração usa método SQ3R e Técnica de Feynman
+- Gera texto corrido sem estrutura visual marcante
+- Não destaca conceitos-chave para fixação
+
+**Melhorias Propostas:**
+
+| Melhoria | Impacto | Esforço |
+|----------|---------|---------|
+| **Glossário automático** - Palavras difíceis explicadas ao final | Alto | Médio |
+| **Destaque de conceitos-chave** - Box colorido com definições importantes | Alto | Baixo |
+| **Perguntas de revisão** - 3-5 perguntas ao final para autoavaliação | Alto | Baixo |
+| **Mnemônicos** - Dicas de memorização para conteúdos complexos | Médio | Baixo |
+| **Conexões interdisciplinares** - Links entre matérias | Médio | Médio |
+
+**Prompt Aprimorado Sugerido:**
+```
+Adicionar ao final do resumo:
+- "📌 CONCEITOS-CHAVE" (box destacado com 3-5 definições essenciais)
+- "🧠 DICAS DE MEMORIZAÇÃO" (mnemônicos quando aplicável)
+- "❓ TESTE SEU CONHECIMENTO" (3 perguntas de revisão rápida)
+- "📚 GLOSSÁRIO" (termos técnicos explicados de forma simples)
 ```
 
-### Novo Fluxo Proposto
-```text
-┌─────────────────────────────────────────────────────┐
-│           PERGUNTA                                  │
-│                                                     │
-│   "Qual é a capital do Brasil?"                     │
-│                                                     │
-│   ┌──────────────────┐  ┌──────────────────┐       │
-│   │  😅 Não Lembrei  │  │  🎉 Lembrei!     │       │
-│   │     (+2 XP)      │  │     (+10 XP)     │       │
-│   └──────────────────┘  └──────────────────┘       │
-└─────────────────────────────────────────────────────┘
-                         ↓
-                    Clicou em um botão
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│           FEEDBACK + RESPOSTA                       │
-│                                                     │
-│   ┌───────────────────────────────────────────────┐│
-│   │ 🎉 Parabéns! Você acertou! (ou)               ││
-│   │ 💪 Não desista! Revise esta resposta:         ││
-│   └───────────────────────────────────────────────┘│
-│                                                     │
-│   ✅ Resposta Correta:                              │
-│   "Brasília é a capital do Brasil"                 │
-│                                                     │
-│   💡 Exemplo: "Brasília foi inaugurada em 1960..." │
-│                                                     │
-│              [Próximo Card →]                       │
-└─────────────────────────────────────────────────────┘
-```
+### 1.2 Quiz ENEM - Aprimoramentos
+
+**Situação Atual:**
+- Gera questões objetivas e V/F com evidence
+- Gamificação com XP implementada
+- Falta variedade de formatos
+
+**Melhorias Propostas:**
+
+| Melhoria | Descrição |
+|----------|-----------|
+| **Questões de associação** | Conectar colunas (termo ↔ definição) |
+| **Ordenação cronológica** | Para conteúdos de história |
+| **Lacunas/Cloze** | Completar frases com palavras-chave |
+| **Dificuldade adaptativa** | Ajustar com base no desempenho |
+| **Modo simulado** | Timer de 3 min/questão como no ENEM real |
+| **Revisão de erros** | Tela dedicada para revisar apenas erros |
+
+### 1.3 Flashcards - Funcionalidades Faltantes
+
+**Situação Atual:**
+- Fluxo básico de pergunta → resposta implementado
+- Gamificação com XP (+10 lembrei, +2 não lembrei)
+- Sistema de repetição espaçada parcial
+
+**Melhorias Propostas:**
+
+| Melhoria | Descrição |
+|----------|-----------|
+| **Áudio TTS** | Ler a pergunta/resposta em voz alta (acessibilidade) |
+| **Imagens nos cards** | Permitir flashcards visuais |
+| **Cards reversíveis** | Estudar pergunta→resposta E resposta→pergunta |
+| **Marcação de favoritos** | Destacar cards mais difíceis |
+| **Modo competição** | Desafiar amigos com mesmo deck |
+| **Algoritmo SM-2 completo** | Espaçamento científico de revisões |
 
 ---
 
-## Implementação Detalhada
+## 2. Design e Interface (Prioridade Alta)
 
-### Fase 1: Corrigir Erro de Suspense
+### 2.1 Problemas de Consistência Visual
 
-**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
+**Identificados:**
+- Gradientes diferentes em cada página (purple-blue, cyan-pink, green-blue)
+- Alguns componentes usam classes hardcoded, outros usam `designSystem.ts`
+- Landing page (Home) tem estilo diferente do dashboard logado
 
-Modificações:
-1. Importar `startTransition` do React
-2. Envolver atualizações de estado não-críticas em `startTransition`
-3. Separar operações de banco de dados das atualizações de UI
+**Paleta Unificada Proposta:**
 
-```typescript
-import { useCallback, startTransition } from 'react';
+```
+Cores Primárias (Estudo/Progresso):
+- Azul piscina suave: #67E8F9 (cyan-300)
+- Lilás soft: #C4B5FD (violet-300)
+- Verde água: #6EE7B7 (emerald-300)
 
-// Na função handleAnswer, envolver atualizações de estado:
-startTransition(() => {
-  updateStats(newStats);
-  updateScore(newScore);
-  addCompletedCard(currentCard.id);
-  realGamificationData.refreshData();
-});
+Cores de Ação:
+- Sucesso/Acerto: #22C55E (green-500)
+- Erro/Atenção: #F59E0B (amber-500)
+- Primário/CTA: #8B5CF6 (violet-500)
+
+Backgrounds:
+- Principal: from-sky-50 to-violet-50
+- Cards: white com borda sutil cyan-200
 ```
 
-### Fase 2: Alterar Fluxo do Flashcard (Botões na Pergunta)
+### 2.2 Acessibilidade para Crianças (8-12 anos)
 
-**Arquivo:** `src/components/flashcard-study/SwipeableFlashcard.tsx`
+**Problemas Atuais:**
+- Textos pequenos em algumas áreas
+- Ícones sem texto explicativo
+- Cores de baixo contraste em estados disabled
 
-Restruturar o componente para:
-1. **Face da Pergunta**: Mostrar pergunta + botões "Lembrei" e "Não Lembrei"
-2. **Face do Feedback**: Mostrar mensagem motivacional + resposta correta
-3. Adicionar novo estado `userChoice` para rastrear a escolha do usuário
-4. Remover necessidade de clicar no card para virar
+**Soluções:**
 
-Novo fluxo de props:
-```typescript
-interface SwipeableFlashcardProps {
-  currentCard: Flashcard;
-  currentIndex: number;
-  showFeedback: boolean; // NOVO: substitui showAnswer
-  userChoice: 'correct' | 'incorrect' | null; // NOVO
-  onAnswer: (remembered: boolean) => void;
-  onNextCard: () => void; // NOVO: avançar manualmente
-  isAnimating: boolean;
-  xpEarned: number; // NOVO: XP ganho nesta resposta
-}
-```
+| Problema | Solução |
+|----------|---------|
+| Textos pequenos | Mínimo 14px para body, 12px para captions |
+| Ícones sem texto | Sempre acompanhar com label visível |
+| Botões pequenos | Touch target mínimo de 44x44px |
+| Feedback de ações | Animações mais evidentes e sons opcionais |
+| Linguagem complexa | Substituir termos técnicos por equivalentes simples |
 
-### Fase 3: Atualizar Container e Lógica de Estado
+### 2.3 Redesign de Componentes Específicos
 
-**Arquivo:** `src/components/flashcard-study/FlashcardStudyContainer.tsx`
+**Dashboard (Index.tsx):**
+- Card "Atividade Recente" está vazio/placeholder
+- Falta indicador visual de "o que fazer agora"
+- Sugestão: adicionar "Missão do Dia" com objetivo simples
 
-Adicionar props:
-- `showFeedback`: controla se mostra feedback
-- `userChoice`: acerto ou erro
-- `onNextCard`: avançar para próximo
-- `xpEarned`: XP da resposta atual
+**Página de Progresso (MyProgress.tsx):**
+- Implementação recente está boa, mas precisa de:
+  - Gráfico visual de evolução semanal
+  - Medalhas/conquistas mais visíveis
+  - Comparativo "você vs média"
 
-**Arquivo:** `src/hooks/flashcard-study/useFlashcardState.ts`
-
-Adicionar novos estados:
-```typescript
-const [showFeedback, setShowFeedback] = useState(false);
-const [userChoice, setUserChoice] = useState<'correct' | 'incorrect' | null>(null);
-const [lastXpEarned, setLastXpEarned] = useState(0);
-```
-
-**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
-
-Modificar `handleAnswer`:
-1. Ao clicar no botão, registrar escolha e mostrar feedback
-2. **NÃO** avançar automaticamente para próximo card
-3. Aguardar clique em "Próximo Card"
-
-Adicionar `handleNextCard`:
-1. Resetar estados de feedback
-2. Avançar para próximo card ou completar sessão
-
-### Fase 4: Gamificação com XP (Similar ao Quiz)
-
-**Sistema de Pontuação:**
-| Evento | XP |
-|--------|-----|
-| Flashcard correto ("Lembrei") | +10 XP |
-| Flashcard incorreto ("Não Lembrei") | +2 XP (encorajamento) |
-| Sessão completa | +25 XP (bônus) |
-| Sessão perfeita (100%) | +50 XP (bônus extra) |
-
-**Arquivo:** `src/components/flashcard-study/FlashcardCompletionScreen.tsx`
-
-Já implementa a tela de conclusão - manter e garantir bônus:
-- Adicionar bônus de conclusão (+25 XP)
-- Adicionar bônus de perfeição (+50 XP) se 100% de acertos
-
-**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
-
-Integrar com `useGameification`:
-```typescript
-import { useGameification } from '@/hooks/useGameification';
-
-const { addXP } = useGameification();
-
-// No handleAnswer:
-const xpAmount = remembered ? 10 : 2;
-await addXP(xpAmount, remembered ? 'quiz_correct' : 'quiz_incorrect');
-```
-
-### Fase 5: Design Visual do Feedback
-
-**Feedback de Acerto (Verde):**
-```text
-┌─────────────────────────────────────────┐
-│  🎉 PARABÉNS! VOCÊ LEMBROU!             │
-│  ────────────────────────────           │
-│  +10 XP                                 │
-│                                         │
-│  ✅ Resposta:                           │
-│  "Brasília é a capital do Brasil"       │
-│                                         │
-│  💡 Exemplo:                            │
-│  "Inaugurada em 21 de abril de 1960..." │
-│                                         │
-│           [Próximo Card →]              │
-└─────────────────────────────────────────┘
-```
-
-**Feedback de Erro (Amarelo/Motivacional):**
-```text
-┌─────────────────────────────────────────┐
-│  💪 CONTINUE ESTUDANDO!                 │
-│  ────────────────────────────           │
-│  +2 XP por tentar                       │
-│                                         │
-│  📖 A resposta correta é:               │
-│  "Brasília é a capital do Brasil"       │
-│                                         │
-│  💡 Dica para lembrar:                  │
-│  "Inaugurada em 21 de abril de 1960..." │
-│                                         │
-│           [Próximo Card →]              │
-└─────────────────────────────────────────┘
-```
+**Página Social:**
+- Feed vazio se não há amigos
+- Falta onboarding de como adicionar amigos
+- Desafios parecem complicados para crianças
 
 ---
 
-## Arquivos a Serem Modificados
+## 3. Navegação e Fluxo do Usuário
 
-| Arquivo | Modificação |
-|---------|-------------|
-| `src/hooks/flashcard-study/useFlashcardActions.ts` | Adicionar startTransition, separar handleAnswer e handleNextCard, integrar XP |
-| `src/hooks/flashcard-study/useFlashcardState.ts` | Adicionar estados showFeedback, userChoice, lastXpEarned |
-| `src/hooks/flashcard-study/useFlashcardStudyManager.ts` | Expor novos estados e ações |
-| `src/components/flashcard-study/SwipeableFlashcard.tsx` | Restruturar para novo fluxo: botões na pergunta, feedback após escolha |
-| `src/components/flashcard-study/FlashcardContainer.tsx` | Passar novas props |
-| `src/components/flashcard-study/FlashcardStudyContainer.tsx` | Adicionar novas props e handler |
-| `src/components/FlashcardStudyModeImproved.tsx` | Conectar novos estados |
+### 3.1 Jornada de Primeiro Uso (Onboarding)
+
+**Atual:** Usuário cai direto no dashboard vazio
+
+**Proposta de Onboarding:**
+```
+1. "Olá! 👋 Bem-vindo ao Estuda Flash!"
+2. "Vamos fazer seu primeiro upload?" [Botão grande]
+3. Tour guiado: Upload → Resumo → Quiz → Flashcard
+4. "Parabéns! Você completou sua primeira sessão!" [Confetti]
+5. Definir meta diária: "Quantos minutos por dia?" [5|10|15|20]
+```
+
+### 3.2 Breadcrumbs e Navegação
+
+**Atual:** 
+- Sem breadcrumbs visíveis
+- Botão "Voltar" inconsistente
+
+**Proposta:**
+```
+Dashboard > Meus Resumos > [Nome do Resumo] > Quiz ENEM
+```
+
+### 3.3 Atalhos e Acesso Rápido
+
+**Sugestões:**
+- Teclas de atalho no quiz (1-5 para alternativas, Enter para confirmar)
+- Swipe para navegação em flashcards (já parcialmente implementado)
+- Botão flutuante "+" para novo upload de qualquer página
 
 ---
 
-## Detalhes Técnicos
+## 4. Performance e Experiência Técnica
 
-### startTransition para Corrigir Erro
-```typescript
-// useFlashcardActions.ts
-import { useCallback, startTransition } from 'react';
+### 4.1 Problemas Identificados
 
-const handleAnswer = async (remembered: boolean) => {
-  if (flashcards.length === 0 || isAnimating) return;
-  
-  const currentCard = flashcards[currentIndex];
-  const xpToAdd = remembered ? 10 : 2;
-  
-  // Mostrar feedback imediatamente (síncrono)
-  setShowFeedback(true);
-  setUserChoice(remembered ? 'correct' : 'incorrect');
-  setLastXpEarned(xpToAdd);
-  
-  // Operações de banco de dados em background
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('flashcard_reviews').insert({...});
-      await updateProgressAfterActivity('flashcard', xpToAdd);
-    }
-    
-    // Atualizações de estado não-urgentes
-    startTransition(() => {
-      updateStats(newStats);
-      updateScore(newScore);
-      addCompletedCard(currentCard.id);
-      realGamificationData.refreshData();
-    });
-    
-    // Toast de feedback
-    toast({
-      title: remembered ? "🎉 +10 XP!" : "💪 +2 XP por tentar!",
-      description: remembered 
-        ? "Excelente memória!" 
-        : "Continue praticando, você está evoluindo!",
-    });
-    
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};
+| Problema | Arquivo | Solução |
+|----------|---------|---------|
+| Erro de Suspense corrigido recentemente | useFlashcardActions.ts | ✅ Já resolvido com startTransition |
+| Cards de loading genéricos | Várias páginas | Adicionar skeletons específicos |
+| Sem cache de resumos | summaryDataService.ts | Implementar React Query cache |
+| Imagens pesadas no upload | EnhancedUpload.tsx | Compressão client-side antes de OCR |
 
-// Nova função para avançar
-const handleNextCard = () => {
-  setShowFeedback(false);
-  setUserChoice(null);
-  setLastXpEarned(0);
-  
-  if (currentIndex + 1 >= flashcards.length) {
-    onComplete?.();
-  } else {
-    setCurrentIndex(currentIndex + 1);
-  }
-};
-```
+### 4.2 Otimizações Sugeridas
 
-### Novo SwipeableFlashcard
-```typescript
-// Estrutura simplificada do novo componente
-const SwipeableFlashcard = ({ 
-  currentCard, 
-  currentIndex, 
-  showFeedback, 
-  userChoice,
-  onAnswer, 
-  onNextCard,
-  isAnimating,
-  xpEarned
-}: SwipeableFlashcardProps) => {
-  
-  return (
-    <div className="...">
-      {!showFeedback ? (
-        // PERGUNTA com botões de resposta
-        <Card className="...">
-          <CardContent>
-            <Badge>🤔 Pergunta {currentIndex + 1}</Badge>
-            <h2>{currentCard.pergunta}</h2>
-            
-            <div className="flex gap-4">
-              <Button onClick={() => onAnswer(false)} variant="outline" 
-                className="border-red-400 ...">
-                😅 Não Lembrei (+2 XP)
-              </Button>
-              <Button onClick={() => onAnswer(true)} 
-                className="bg-green-500 ...">
-                🎉 Lembrei! (+10 XP)
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        // FEEDBACK com resposta
-        <Card className={userChoice === 'correct' ? 'border-green-500 bg-green-50' : 'border-yellow-500 bg-yellow-50'}>
-          <CardContent>
-            {userChoice === 'correct' ? (
-              <div className="text-green-700">
-                🎉 Parabéns! Você lembrou!
-                <Badge>+{xpEarned} XP</Badge>
-              </div>
-            ) : (
-              <div className="text-yellow-700">
-                💪 Continue estudando!
-                <Badge>+{xpEarned} XP por tentar</Badge>
-              </div>
-            )}
-            
-            <div className="mt-4">
-              <h4>✅ Resposta:</h4>
-              <p>{currentCard.resposta}</p>
-              
-              {currentCard.exemplo && (
-                <div className="mt-2">
-                  <h4>💡 Exemplo:</h4>
-                  <p>{currentCard.exemplo}</p>
-                </div>
-              )}
-            </div>
-            
-            <Button onClick={onNextCard} className="w-full mt-4">
-              Próximo Card →
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-};
-```
+| Otimização | Impacto |
+|------------|---------|
+| **Prefetch de próxima questão** no quiz | Transições mais suaves |
+| **Service Worker** para offline parcial | Estudar sem internet |
+| **Lazy loading de imagens** nos resumos | Carregamento mais rápido |
+| **Debounce** em buscas e filtros | Menos requisições |
 
 ---
 
-## Resultado Esperado
+## 5. Gamificação e Engajamento
 
-1. **Erro corrigido**: Não haverá mais o erro de suspense
-2. **Fluxo intuitivo**: Usuário vê pergunta → escolhe se lembrou → vê feedback + resposta
-3. **Gamificação ativa**: XP em tempo real motiva o estudo
-4. **Fixação de conteúdo**: Resposta sempre exibida após cada tentativa
-5. **Mensagens motivacionais**: Feedback positivo independente do resultado
+### 5.1 Sistema de XP - Análise
+
+**Pontuação Atual:**
+- Quiz correto: +15 XP (objetiva) / +10 XP (V/F)
+- Quiz errado: +2 XP
+- Flashcard lembrou: +10 XP
+- Flashcard não lembrou: +2 XP
+- Bônus conclusão: +25 XP
+- Bônus perfeito: +50 XP
+
+**Melhorias Sugeridas:**
+
+| Novo Sistema | Descrição |
+|--------------|-----------|
+| **XP por tempo** | +1 XP a cada 5 min de estudo |
+| **Multiplicador de streak** | 2x XP após 7 dias, 3x após 30 dias |
+| **Desafios diários** | "Complete 10 flashcards hoje" = +100 XP |
+| **Conquistas secretas** | "Estudou às 6h da manhã" = badge especial |
+
+### 5.2 Badges/Conquistas Faltando
+
+**Sugestão de Badges:**
+```
+🌱 Primeiro Resumo - Seu primeiro upload!
+📚 Leitor Voraz - 10 resumos criados
+🧠 Memória de Elefante - 100 flashcards corretos seguidos
+⚡ Velocista - Quiz em menos de 2 min
+🎯 Precisão Total - 100% em 5 quizzes
+🔥 Fogo Eterno - 30 dias de streak
+🌙 Coruja - Estudou depois das 22h
+☀️ Madrugador - Estudou antes das 7h
+```
+
+### 5.3 Notificações e Lembretes
+
+**Atual:** NotificationCenter existe mas é passivo
+
+**Proposta:**
+- Push notifications: "Você estudou ontem, não perca seu streak!"
+- Email semanal: "Seu progresso esta semana"
+- Lembretes customizáveis pelo usuário
+
+---
+
+## 6. Arquivos que Precisam de Modificação
+
+### Prioridade Crítica (Funcionalidade)
+1. `supabase/functions/generate-summary/index.ts` - Enriquecer prompt
+2. `supabase/functions/generate-enem-quiz/index.ts` - Novos tipos de questão
+3. `src/components/ResumoContent.tsx` - Renderizar novos elementos
+
+### Prioridade Alta (Design)
+4. `src/utils/designSystem.ts` - Unificar paleta
+5. `src/pages/Index.tsx` - Dashboard redesign
+6. `src/components/home/HeroSection.tsx` - Landing page moderna
+7. `src/pages/MyProgress.tsx` - Adicionar gráficos
+
+### Prioridade Média (UX)
+8. `src/components/navigation/MainNavigation.tsx` - Breadcrumbs
+9. `src/pages/Login.tsx` - Onboarding flow
+10. `src/hooks/useGameification.ts` - Novas conquistas
+
+---
+
+## 7. Roadmap Sugerido
+
+### Fase 1 - Quick Wins (1-2 semanas)
+- [ ] Unificar paleta de cores
+- [ ] Adicionar breadcrumbs
+- [ ] Melhorar linguagem para crianças
+- [ ] Dashboard "Missão do Dia"
+
+### Fase 2 - Conteúdo Rico (2-3 semanas)
+- [ ] Prompt de resumo com glossário e perguntas
+- [ ] Novos tipos de questão no quiz
+- [ ] Badges e conquistas visuais
+
+### Fase 3 - Engajamento (3-4 semanas)
+- [ ] Onboarding guiado
+- [ ] Sistema de notificações
+- [ ] Modo offline
+- [ ] Desafios entre amigos
+
+---
+
+## 8. Referências de Apps Similares
+
+| App | Ponto Forte a Copiar |
+|-----|----------------------|
+| **Duolingo** | Streak, hearts, personagem mascote |
+| **Anki** | Algoritmo SM-2 de espaçamento |
+| **Quizlet** | Cards visuais e modo Match |
+| **Khan Academy** | Badges e árvore de conhecimento |
+| **Kahoot** | Competição em tempo real |
+
+---
+
+## Conclusão
+
+O Estuda Flash tem potencial para se tornar o melhor app de estudos em português brasileiro. As principais prioridades são:
+
+1. **Enriquecer os resumos** com elementos de fixação
+2. **Unificar o design** para uma identidade visual forte
+3. **Simplificar a linguagem** para crianças
+4. **Gamificar mais** com conquistas visíveis
+5. **Onboarding guiado** para novos usuários
+
+Recomendo começar pela Fase 1 (Quick Wins) para ter impacto imediato na experiência do usuário, enquanto desenvolvemos as melhorias mais complexas em paralelo.
