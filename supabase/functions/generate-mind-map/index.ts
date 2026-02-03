@@ -1,6 +1,6 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,13 +20,76 @@ interface MindMapData {
   nodes: MindMapNode[];
 }
 
+// Helper function to verify JWT and get user
+async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, error: 'Token de autenticação não fornecido' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { userId: null, error: 'Token inválido ou expirado' };
+    }
+    
+    return { userId: user.id, error: null };
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    return { userId: null, error: 'Erro ao verificar autenticação' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { content, resumoId } = await req.json();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Configuração do servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Verify authentication
+    const { userId: authUserId, error: authError } = await verifyAuth(req, supabase);
+    
+    if (authError || !authUserId) {
+      console.error('❌ Falha na autenticação:', authError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: authError || 'Não autorizado'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { content, resumoId, userId } = await req.json();
+
+    // SECURITY: Verify userId matches authenticated user (if provided)
+    if (userId && userId !== authUserId) {
+      console.error('❌ userId não corresponde ao usuário autenticado');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Acesso negado'
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
     if (!anthropicApiKey) {

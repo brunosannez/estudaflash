@@ -1,4 +1,3 @@
-
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useNavigate } from 'react-router-dom';
 import UserManagement from '@/components/admin/UserManagement';
@@ -11,13 +10,13 @@ import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import PageLayout from '@/components/navigation/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Loader2, BarChart3, Activity, Settings } from 'lucide-react';
+import { ArrowLeft, Shield, Loader2, BarChart3, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import GuardianAccessAudit from '@/components/admin/GuardianAccessAudit';
 import AdminSecurity from '@/components/admin/AdminSecurity';
 
 const AdminPanel = () => {
-  const { isAdmin, loading, makeCurrentUserAdmin } = useIsAdmin();
+  const { isAdmin, loading } = useIsAdmin();
   const navigate = useNavigate();
 
   // Mostrar loading enquanto verifica permissões
@@ -36,7 +35,7 @@ const AdminPanel = () => {
     );
   }
 
-  // Mostrar erro se não for admin, mas com opção de se tornar admin
+  // Mostrar erro se não for admin
   if (!isAdmin) {
     return (
       <PageLayout>
@@ -45,26 +44,21 @@ const AdminPanel = () => {
             <CardContent className="py-8 text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-red-500" />
               <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-              <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
+              <p className="text-gray-600 mb-4">
+                Você não tem permissão para acessar esta página.
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Entre em contato com um administrador existente para solicitar acesso.
+              </p>
               
-              <div className="space-y-3">
-                <Button 
-                  onClick={makeCurrentUserAdmin}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Tornar-me Administrador
-                </Button>
-                
-                <Button 
-                  onClick={() => navigate('/')} 
-                  variant="outline"
-                  className="w-full"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar ao Dashboard
-                </Button>
-              </div>
+              <Button 
+                onClick={() => navigate('/')} 
+                variant="outline"
+                className="w-full"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar ao Dashboard
+              </Button>
             </CardContent>
           </Card>
         </div>

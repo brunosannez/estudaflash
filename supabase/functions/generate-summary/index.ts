@@ -157,6 +157,30 @@ O texto deve:
 - Ter clareza e didática, adequado para a idade de ${idadeUsuario} anos.`;
 }
 
+// Helper function to verify JWT and get user
+async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, error: 'Token de autenticação não fornecido' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { userId: null, error: 'Token inválido ou expirado' };
+    }
+    
+    return { userId: user.id, error: null };
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    return { userId: null, error: 'Erro ao verificar autenticação' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -201,6 +225,24 @@ serve(async (req) => {
       );
     }
 
+    // Inicializar Supabase
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Verify authentication
+    const { userId: authUserId, error: authError } = await verifyAuth(req, supabase);
+    
+    if (authError || !authUserId) {
+      console.error('❌ Falha na autenticação:', authError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: authError || 'Não autorizado',
+          fallbackMessage: 'Você precisa estar logado para gerar resumos.'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Parse do request
     let requestBody;
     try {
@@ -222,12 +264,27 @@ serve(async (req) => {
 
     const { uploadId, textoExtraido, userId, schoolYear, isCombiningBatches = false, totalBatches = 1, totalImages = 1, extractedText, metadata } = requestBody;
     
+    // SECURITY: Verify userId matches authenticated user
+    if (userId && userId !== authUserId) {
+      console.error('❌ userId não corresponde ao usuário autenticado');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Acesso negado',
+          fallbackMessage: 'Você só pode gerar resumos para sua própria conta.'
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveUserId = userId || authUserId;
+    
     // Support both old format (textoExtraido) and new format (extractedText)
     const textContent = extractedText || textoExtraido;
     
     // Validações básicas
-    if (!userId || !textContent) {
-      console.error('❌ Parâmetros obrigatórios ausentes - userId:', !!userId, 'textContent:', !!textContent);
+    if (!textContent) {
+      console.error('❌ Parâmetros obrigatórios ausentes - textContent:', !!textContent);
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -275,14 +332,11 @@ serve(async (req) => {
         }
       );
     }
-
-    // Inicializar Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // NOVO: Consumir créditos apenas para resumos normais (não para combinações)
     if (!isCombiningBatches) {
       const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
-        target_user_id: userId,
+        target_user_id: effectiveUserId,
         action_type: 'summary'
       });
 

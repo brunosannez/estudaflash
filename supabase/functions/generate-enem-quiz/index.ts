@@ -10,6 +10,30 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Helper function to verify JWT and get user
+async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, error: 'Token de autenticação não fornecido' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { userId: null, error: 'Token inválido ou expirado' };
+    }
+    
+    return { userId: user.id, error: null };
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    return { userId: null, error: 'Erro ao verificar autenticação' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -17,6 +41,23 @@ serve(async (req) => {
 
   try {
     console.log('🚀 Starting ENEM quiz generation function...');
+    
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // SECURITY: Verify authentication
+    const { userId: authUserId, error: authError } = await verifyAuth(req, supabase);
+    
+    if (authError || !authUserId) {
+      console.error('❌ Falha na autenticação:', authError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: authError || 'Não autorizado'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Check if Anthropic API key is configured
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
@@ -45,12 +86,26 @@ serve(async (req) => {
 
     const { resumoId, resumoContent, userId } = requestBody;
 
-    if (!resumoId || !resumoContent || !userId) {
+    // SECURITY: Verify userId matches authenticated user
+    if (userId && userId !== authUserId) {
+      console.error('❌ userId não corresponde ao usuário autenticado');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Acesso negado'
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveUserId = userId || authUserId;
+
+    if (!resumoId || !resumoContent) {
       console.error('❌ Missing required parameters');
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing required parameters: resumoId, resumoContent, or userId'
+          error: 'Missing required parameters: resumoId or resumoContent'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,8 +114,6 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     console.log('✅ Supabase client initialized');
 
     // Simple theme detection

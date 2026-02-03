@@ -1,5 +1,5 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +20,30 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+// Helper function to verify JWT and get user
+async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, error: 'Token de autenticação não fornecido' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { userId: null, error: 'Token inválido ou expirado' };
+    }
+    
+    return { userId: user.id, error: null };
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    return { userId: null, error: 'Erro ao verificar autenticação' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -27,6 +51,31 @@ serve(async (req) => {
 
   try {
     console.log('🔍 OCR Function Started - ', new Date().toISOString());
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Supabase credentials missing');
+      throw new Error('Configuração do Supabase incompleta');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Verify authentication
+    const { userId: authUserId, error: authError } = await verifyAuth(req, supabase);
+    
+    if (authError || !authUserId) {
+      console.error('❌ Falha na autenticação:', authError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: authError || 'Não autorizado'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     let body;
     try {
@@ -42,6 +91,20 @@ serve(async (req) => {
     }
     
     const { imageUrl, userId } = body;
+
+    // SECURITY: Verify userId matches authenticated user
+    if (userId && userId !== authUserId) {
+      console.error('❌ userId não corresponde ao usuário autenticado');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Acesso negado'
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveUserId = userId || authUserId;
     
     if (!imageUrl) {
       console.error('❌ No image URL provided');
@@ -61,59 +124,40 @@ serve(async (req) => {
     
     console.log('✅ Google Vision API key found, length:', googleVisionApiKey.length);
 
-    // NOVO: Consumir créditos para OCR se userId fornecido
-    if (userId) {
-      console.log('💳 Starting credit consumption for user:', userId);
-      // Inicializar Supabase para consumir créditos
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-      
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('❌ Supabase credentials missing:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey });
-        throw new Error('Configuração do Supabase incompleta');
-      }
-      
-      console.log('✅ Supabase credentials found, initializing client...');
-      
-      if (supabaseUrl && supabaseKey) {
-        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.50.0');
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        console.log('📞 Calling consume_credits function...');
-        const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
-          target_user_id: userId,
-          action_type: 'ocr'
-        });
+    // Consume credits for OCR
+    console.log('💳 Starting credit consumption for user:', effectiveUserId);
+    
+    console.log('📞 Calling consume_credits function...');
+    const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+      target_user_id: effectiveUserId,
+      action_type: 'ocr'
+    });
 
-        console.log('💳 Credit consumption result:', { creditResult, creditError });
+    console.log('💳 Credit consumption result:', { creditResult, creditError });
 
-        if (creditError) {
-          console.error('❌ Erro RPC consume_credits:', creditError);
-          throw new Error('Erro interno ao consumir créditos. Tente novamente.');
-        }
-
-        if (!creditResult || creditResult.length === 0) {
-          console.error('❌ Resposta vazia da função consume_credits');
-          throw new Error('Erro interno ao verificar créditos. Tente novamente.');
-        }
-
-        const result = creditResult[0];
-        console.log('💳 Credit result details:', result);
-        
-        if (!result?.success) {
-          const message = result?.message || 'Créditos insuficientes';
-          console.error('❌ Falha ao consumir créditos:', message);
-          throw new Error(message.includes('insuficientes') 
-            ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
-            : 'Erro ao processar créditos. Tente novamente.'
-          );
-        }
-
-        console.log(`✅ Créditos consumidos para OCR: ${result.credits_consumed}. Restam: ${result.credits_remaining}`);
-      }
-    } else {
-      console.log('⚠️ No userId provided, skipping credit consumption');
+    if (creditError) {
+      console.error('❌ Erro RPC consume_credits:', creditError);
+      throw new Error('Erro interno ao consumir créditos. Tente novamente.');
     }
+
+    if (!creditResult || creditResult.length === 0) {
+      console.error('❌ Resposta vazia da função consume_credits');
+      throw new Error('Erro interno ao verificar créditos. Tente novamente.');
+    }
+
+    const result = creditResult[0];
+    console.log('💳 Credit result details:', result);
+    
+    if (!result?.success) {
+      const message = result?.message || 'Créditos insuficientes';
+      console.error('❌ Falha ao consumir créditos:', message);
+      throw new Error(message.includes('insuficientes') 
+        ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+        : 'Erro ao processar créditos. Tente novamente.'
+      );
+    }
+
+    console.log(`✅ Créditos consumidos para OCR: ${result.credits_consumed}. Restam: ${result.credits_remaining}`);
 
     console.log('🌐 Starting image download from:', imageUrl.substring(0, 100) + '...');
     
