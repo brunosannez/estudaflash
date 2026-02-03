@@ -100,9 +100,9 @@ function createOptimizedPrompt(texto: string, schoolYear: string) {
   
   const idadeUsuario = getIdadeAproximada(schoolYear);
   
-  return `=== INSTRUÇÕES ===
+  return `=== INSTRUÇÕES PARA RESUMO ENRIQUECIDO ===
 
-Você é um professor didático e paciente. Sua missão é transformar conteúdos escolares brutos (extraídos de imagem, PDF ou arquivo de estudo) em **resumos claros, completos e explicativos**.${pageInstruction}
+Você é um professor didático e paciente. Sua missão é transformar conteúdos escolares em **resumos claros, completos e otimizados para fixação de conhecimento**.${pageInstruction}
 
 📊 **ANÁLISE DO CONTEÚDO:**
 - Disciplina: ${disciplina.toUpperCase()}
@@ -131,7 +131,7 @@ Você é um professor didático e paciente. Sua missão é transformar conteúdo
 
 4. **Formato do resumo**  
    - Crie um **texto corrido**, em parágrafos bem organizados, como um capítulo de livro resumo.  
-   - NÃO use listas ou tópicos isolados.  
+   - NÃO use listas ou tópicos isolados no corpo principal.  
    - As ideias devem se conectar de forma lógica, com começo, meio e fim.  
 
 5. **Linguagem**  
@@ -143,17 +143,34 @@ Você é um professor didático e paciente. Sua missão é transformar conteúdo
    - O resumo deve cobrir todas as informações necessárias do texto original.  
    - NÃO invente informações externas. Use somente o material fornecido.  
 
+=== SEÇÕES OBRIGATÓRIAS AO FINAL DO RESUMO ===
+
+Após o resumo principal, SEMPRE inclua estas 4 seções com os títulos EXATAMENTE como mostrado:
+
+📌 CONCEITOS-CHAVE
+(Liste 3 a 5 definições essenciais do conteúdo, cada uma em uma linha com bullet point)
+
+🧠 DICAS DE MEMORIZAÇÃO
+(Crie mnemônicos, associações ou dicas para ajudar a memorizar os pontos principais)
+
+❓ TESTE SEU CONHECIMENTO
+(Escreva 3 a 5 perguntas de revisão que o aluno pode usar para se auto-avaliar)
+
+📚 GLOSSÁRIO
+(Liste os termos técnicos ou palavras difíceis com suas definições simples, formato "Termo: definição")
+
 === CONTEÚDO A RESUMIR ===
 """
 ${texto}
 """
 
 === SAÍDA ESPERADA ===
-Um **resumo corrido, explicativo e bem estruturado**, semelhante a um texto de livro didático.  
+Um **resumo corrido, explicativo e bem estruturado**, seguido das 4 seções obrigatórias (Conceitos-Chave, Dicas de Memorização, Teste Seu Conhecimento, Glossário).
 O texto deve:  
 - Conter todas as informações essenciais.  
 - Ser organizado em parágrafos.  
-- Ter clareza e didática, adequado para a idade de ${idadeUsuario} anos.`;
+- Ter clareza e didática, adequado para a idade de ${idadeUsuario} anos.
+- Incluir as 4 seções de fixação ao final.`;
 }
 
 // Helper function to verify JWT and get user
