@@ -1,306 +1,310 @@
 
-# Relatório de Análise Completa do Estuda Flash
 
-## Sumário Executivo
+# Plano: Sistema de Badges e Conquistas
 
-Após analisar todas as 18 páginas e 100+ componentes do aplicativo, identifiquei **35 oportunidades de melhoria** organizadas em 5 categorias principais. O aplicativo tem uma base sólida, mas pode evoluir significativamente para se tornar uma referência em apps de estudo para o público de 8-20 anos.
+## Visão Geral
 
----
+Implementar um sistema completo de badges/conquistas visuais que motive estudantes de 8-20 anos através de recompensas tangíveis por marcos de estudo.
 
-## 1. Funcionalidades de Estudo (Prioridade Alta)
+## Arquitetura Existente
 
-### 1.1 Resumos - Melhorias na Geração de Conteúdo
+O projeto já possui:
+- Tabela `user_badges` no Supabase
+- Hook `useAdvancedBadges.ts` com lógica básica de premiação
+- Componente `BadgeShowcaseEnhanced.tsx` (usado na página Social)
+- Algumas verificações de badges por nível/streak/XP
 
-**Situação Atual:**
-- O prompt de geração usa método SQ3R e Técnica de Feynman
-- Gera texto corrido sem estrutura visual marcante
-- Não destaca conceitos-chave para fixação
+## O Que Falta Implementar
 
-**Melhorias Propostas:**
-
-| Melhoria | Impacto | Esforço |
-|----------|---------|---------|
-| **Glossário automático** - Palavras difíceis explicadas ao final | Alto | Médio |
-| **Destaque de conceitos-chave** - Box colorido com definições importantes | Alto | Baixo |
-| **Perguntas de revisão** - 3-5 perguntas ao final para autoavaliação | Alto | Baixo |
-| **Mnemônicos** - Dicas de memorização para conteúdos complexos | Médio | Baixo |
-| **Conexões interdisciplinares** - Links entre matérias | Médio | Médio |
-
-**Prompt Aprimorado Sugerido:**
-```
-Adicionar ao final do resumo:
-- "📌 CONCEITOS-CHAVE" (box destacado com 3-5 definições essenciais)
-- "🧠 DICAS DE MEMORIZAÇÃO" (mnemônicos quando aplicável)
-- "❓ TESTE SEU CONHECIMENTO" (3 perguntas de revisão rápida)
-- "📚 GLOSSÁRIO" (termos técnicos explicados de forma simples)
-```
-
-### 1.2 Quiz ENEM - Aprimoramentos
-
-**Situação Atual:**
-- Gera questões objetivas e V/F com evidence
-- Gamificação com XP implementada
-- Falta variedade de formatos
-
-**Melhorias Propostas:**
-
-| Melhoria | Descrição |
-|----------|-----------|
-| **Questões de associação** | Conectar colunas (termo ↔ definição) |
-| **Ordenação cronológica** | Para conteúdos de história |
-| **Lacunas/Cloze** | Completar frases com palavras-chave |
-| **Dificuldade adaptativa** | Ajustar com base no desempenho |
-| **Modo simulado** | Timer de 3 min/questão como no ENEM real |
-| **Revisão de erros** | Tela dedicada para revisar apenas erros |
-
-### 1.3 Flashcards - Funcionalidades Faltantes
-
-**Situação Atual:**
-- Fluxo básico de pergunta → resposta implementado
-- Gamificação com XP (+10 lembrei, +2 não lembrei)
-- Sistema de repetição espaçada parcial
-
-**Melhorias Propostas:**
-
-| Melhoria | Descrição |
-|----------|-----------|
-| **Áudio TTS** | Ler a pergunta/resposta em voz alta (acessibilidade) |
-| **Imagens nos cards** | Permitir flashcards visuais |
-| **Cards reversíveis** | Estudar pergunta→resposta E resposta→pergunta |
-| **Marcação de favoritos** | Destacar cards mais difíceis |
-| **Modo competição** | Desafiar amigos com mesmo deck |
-| **Algoritmo SM-2 completo** | Espaçamento científico de revisões |
+1. **Badges para Atividades Específicas** - Primeiro resumo, primeiro quiz, etc.
+2. **Verificação Automática** - Integrar com fluxos de criação/completar tarefas
+3. **Exibição no Dashboard** - Mostrar badges recentes e próximas
+4. **Vitrine na Página de Progresso** - Coleção completa do usuário
+5. **Animações de Conquista** - Celebração visual ao ganhar badge
 
 ---
 
-## 2. Design e Interface (Prioridade Alta)
+## Definição de Badges (20 Conquistas)
 
-### 2.1 Problemas de Consistência Visual
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: PRIMEIROS PASSOS (Common)                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 🌱 Primeiro Upload    │ Fez seu primeiro upload de material                │
+│ 📝 Primeiro Resumo    │ Gerou seu primeiro resumo de estudos               │
+│ 🧠 Primeiro Quiz      │ Completou seu primeiro quiz ENEM                   │
+│ 💡 Primeiro Flash     │ Revisou seu primeiro flashcard                     │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-**Identificados:**
-- Gradientes diferentes em cada página (purple-blue, cyan-pink, green-blue)
-- Alguns componentes usam classes hardcoded, outros usam `designSystem.ts`
-- Landing page (Home) tem estilo diferente do dashboard logado
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: MEMÓRIA DE ELEFANTE - Flashcards (Rare)                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 🐘 Memória de Elefante│ 100 flashcards corretos                            │
+│ 🎯 Precisão Total     │ 10 sessões de flashcard com 100% de acerto         │
+│ 📚 Leitor Voraz       │ 500 flashcards revisados no total                  │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-**Paleta Unificada Proposta:**
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: MESTRE DO QUIZ (Rare/Epic)                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ⚡ Velocista          │ Quiz completo em menos de 2 minutos                │
+│ 🎯 Atirador Certeiro  │ 100% de acerto em 5 quizzes                        │
+│ 📖 Estudioso          │ 25 quizzes completados                             │
+│ 🏆 Mestre do Quiz     │ 100 quizzes completados                            │
+└─────────────────────────────────────────────────────────────────────────────┘
 
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: STREAK E CONSTÂNCIA (Epic/Legendary)                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ✨ Primeira Semana    │ 7 dias de streak                                   │
+│ 🔥 Fogo Eterno        │ 30 dias de streak consecutivos                     │
+│ 💎 Diamante           │ 100 dias de streak consecutivos                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: XP E NÍVEIS (Common/Rare/Epic/Legendary)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ⭐ Estudante Dedicado │ Alcançou nível 5                                   │
+│ 🎓 Acadêmico          │ Alcançou nível 10                                  │
+│ 👑 Mestre dos Estudos │ Alcançou nível 25                                  │
+│ 💰 Colecionador XP    │ 1.000 XP acumulados                                │
+│ 💯 Especialista       │ 10.000 XP acumulados                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORIA: HORÁRIOS ESPECIAIS (Seasonal)                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ☀️ Madrugador         │ Estudou antes das 7h da manhã                       │
+│ 🌙 Coruja             │ Estudou depois das 22h                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
-Cores Primárias (Estudo/Progresso):
-- Azul piscina suave: #67E8F9 (cyan-300)
-- Lilás soft: #C4B5FD (violet-300)
-- Verde água: #6EE7B7 (emerald-300)
-
-Cores de Ação:
-- Sucesso/Acerto: #22C55E (green-500)
-- Erro/Atenção: #F59E0B (amber-500)
-- Primário/CTA: #8B5CF6 (violet-500)
-
-Backgrounds:
-- Principal: from-sky-50 to-violet-50
-- Cards: white com borda sutil cyan-200
-```
-
-### 2.2 Acessibilidade para Crianças (8-12 anos)
-
-**Problemas Atuais:**
-- Textos pequenos em algumas áreas
-- Ícones sem texto explicativo
-- Cores de baixo contraste em estados disabled
-
-**Soluções:**
-
-| Problema | Solução |
-|----------|---------|
-| Textos pequenos | Mínimo 14px para body, 12px para captions |
-| Ícones sem texto | Sempre acompanhar com label visível |
-| Botões pequenos | Touch target mínimo de 44x44px |
-| Feedback de ações | Animações mais evidentes e sons opcionais |
-| Linguagem complexa | Substituir termos técnicos por equivalentes simples |
-
-### 2.3 Redesign de Componentes Específicos
-
-**Dashboard (Index.tsx):**
-- Card "Atividade Recente" está vazio/placeholder
-- Falta indicador visual de "o que fazer agora"
-- Sugestão: adicionar "Missão do Dia" com objetivo simples
-
-**Página de Progresso (MyProgress.tsx):**
-- Implementação recente está boa, mas precisa de:
-  - Gráfico visual de evolução semanal
-  - Medalhas/conquistas mais visíveis
-  - Comparativo "você vs média"
-
-**Página Social:**
-- Feed vazio se não há amigos
-- Falta onboarding de como adicionar amigos
-- Desafios parecem complicados para crianças
 
 ---
 
-## 3. Navegação e Fluxo do Usuário
+## Arquivos a Criar/Modificar
 
-### 3.1 Jornada de Primeiro Uso (Onboarding)
+### 1. NOVO: Catálogo de Badges
+**Arquivo:** `src/data/badgesCatalog.ts`
 
-**Atual:** Usuário cai direto no dashboard vazio
+Define todos os badges disponíveis com suas condições e metadados.
 
-**Proposta de Onboarding:**
-```
-1. "Olá! 👋 Bem-vindo ao Estuda Flash!"
-2. "Vamos fazer seu primeiro upload?" [Botão grande]
-3. Tour guiado: Upload → Resumo → Quiz → Flashcard
-4. "Parabéns! Você completou sua primeira sessão!" [Confetti]
-5. Definir meta diária: "Quantos minutos por dia?" [5|10|15|20]
-```
+### 2. NOVO: Componente de Vitrine de Badges para Progresso
+**Arquivo:** `src/components/progress/ProgressBadgesCard.tsx`
 
-### 3.2 Breadcrumbs e Navegação
+Card compacto mostrando:
+- Badges recentes conquistadas
+- Próximo badge a conquistar
+- Link para vitrine completa
 
-**Atual:** 
-- Sem breadcrumbs visíveis
-- Botão "Voltar" inconsistente
+### 3. NOVO: Componente de Animação de Badge
+**Arquivo:** `src/components/badges/BadgeUnlockAnimation.tsx`
 
-**Proposta:**
-```
-Dashboard > Meus Resumos > [Nome do Resumo] > Quiz ENEM
-```
+Modal/overlay com animação quando o usuário conquista um badge.
 
-### 3.3 Atalhos e Acesso Rápido
+### 4. MODIFICAR: Hook de Badges
+**Arquivo:** `src/hooks/useAdvancedBadges.ts`
 
-**Sugestões:**
-- Teclas de atalho no quiz (1-5 para alternativas, Enter para confirmar)
-- Swipe para navegação em flashcards (já parcialmente implementado)
-- Botão flutuante "+" para novo upload de qualquer página
+Adicionar:
+- Todos os 20 badges definidos
+- Verificações específicas (flashcards, quizzes, horários)
+- Função para buscar próximo badge disponível
+- Integração com dados de resumos e uploads
 
----
+### 5. MODIFICAR: Página de Progresso
+**Arquivo:** `src/pages/MyProgress.tsx`
 
-## 4. Performance e Experiência Técnica
+Adicionar seção de badges conquistadas.
 
-### 4.1 Problemas Identificados
+### 6. MODIFICAR: Dashboard Principal
+**Arquivo:** `src/pages/Index.tsx`
 
-| Problema | Arquivo | Solução |
-|----------|---------|---------|
-| Erro de Suspense corrigido recentemente | useFlashcardActions.ts | ✅ Já resolvido com startTransition |
-| Cards de loading genéricos | Várias páginas | Adicionar skeletons específicos |
-| Sem cache de resumos | summaryDataService.ts | Implementar React Query cache |
-| Imagens pesadas no upload | EnhancedUpload.tsx | Compressão client-side antes de OCR |
+Adicionar mini-vitrine de badges recentes.
 
-### 4.2 Otimizações Sugeridas
-
-| Otimização | Impacto |
-|------------|---------|
-| **Prefetch de próxima questão** no quiz | Transições mais suaves |
-| **Service Worker** para offline parcial | Estudar sem internet |
-| **Lazy loading de imagens** nos resumos | Carregamento mais rápido |
-| **Debounce** em buscas e filtros | Menos requisições |
+### 7. MODIFICAR: Fluxos de Atividade
+**Arquivos:**
+- `src/hooks/flashcard-study/useFlashcardActions.ts` - Verificar badges de flashcard
+- `src/hooks/useEnemQuiz.ts` - Verificar badges de quiz
+- `src/services/summaryGenerationService.ts` - Verificar badge de primeiro resumo
 
 ---
 
-## 5. Gamificação e Engajamento
+## Fluxo de Verificação de Badges
 
-### 5.1 Sistema de XP - Análise
-
-**Pontuação Atual:**
-- Quiz correto: +15 XP (objetiva) / +10 XP (V/F)
-- Quiz errado: +2 XP
-- Flashcard lembrou: +10 XP
-- Flashcard não lembrou: +2 XP
-- Bônus conclusão: +25 XP
-- Bônus perfeito: +50 XP
-
-**Melhorias Sugeridas:**
-
-| Novo Sistema | Descrição |
-|--------------|-----------|
-| **XP por tempo** | +1 XP a cada 5 min de estudo |
-| **Multiplicador de streak** | 2x XP após 7 dias, 3x após 30 dias |
-| **Desafios diários** | "Complete 10 flashcards hoje" = +100 XP |
-| **Conquistas secretas** | "Estudou às 6h da manhã" = badge especial |
-
-### 5.2 Badges/Conquistas Faltando
-
-**Sugestão de Badges:**
+```text
+Usuário completa atividade
+         │
+         ▼
+┌─────────────────────────────┐
+│  Ação concluída:            │
+│  - Flashcard revisado       │
+│  - Quiz completado          │
+│  - Resumo gerado            │
+│  - Login (verificar streak) │
+└─────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────┐
+│  checkBadgesForActivity()   │
+│  - Verifica condições       │
+│  - Busca badges não ganhos  │
+│  - Compara com requisitos   │
+└─────────────────────────────┘
+         │
+         ▼
+   ┌─────┴─────┐
+   │           │
+ Qualifica  Não qualifica
+   │           │
+   ▼           ▼
+┌────────┐  [Retorna]
+│ Award  │
+│ Badge  │
+└────────┘
+   │
+   ▼
+┌─────────────────────────────┐
+│  Mostrar Animação           │
+│  + Toast de celebração      │
+│  + Som (opcional)           │
+└─────────────────────────────┘
 ```
-🌱 Primeiro Resumo - Seu primeiro upload!
-📚 Leitor Voraz - 10 resumos criados
-🧠 Memória de Elefante - 100 flashcards corretos seguidos
-⚡ Velocista - Quiz em menos de 2 min
-🎯 Precisão Total - 100% em 5 quizzes
-🔥 Fogo Eterno - 30 dias de streak
-🌙 Coruja - Estudou depois das 22h
-☀️ Madrugador - Estudou antes das 7h
+
+---
+
+## Detalhes de Implementação
+
+### 1. Catálogo de Badges (`src/data/badgesCatalog.ts`)
+
+```typescript
+export interface BadgeDefinition {
+  id: string;
+  type: string;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: 'achievement' | 'social' | 'seasonal' | 'collaborative';
+  requirement: {
+    metric: string;
+    value: number;
+    comparator: 'gte' | 'eq' | 'lte';
+  };
+  // Descrição amigável para crianças
+  kidFriendlyDescription: string;
+}
+
+export const BADGES_CATALOG: BadgeDefinition[] = [
+  {
+    id: 'first_upload',
+    type: 'first_upload',
+    name: 'Primeiro Upload',
+    description: 'Fez seu primeiro upload de material',
+    kidFriendlyDescription: 'Você mandou seu primeiro arquivo! 📄',
+    icon: '🌱',
+    rarity: 'common',
+    category: 'achievement',
+    requirement: { metric: 'uploads_count', value: 1, comparator: 'gte' }
+  },
+  // ... outros 19 badges
+];
 ```
 
-### 5.3 Notificações e Lembretes
+### 2. Componente de Vitrine (`src/components/progress/ProgressBadgesCard.tsx`)
 
-**Atual:** NotificationCenter existe mas é passivo
+- Grid 3x2 com badges recentes
+- Badge "próximo a conquistar" com barra de progresso
+- Botão "Ver todas" que abre modal com BadgeShowcaseEnhanced
+- Design kid-friendly com cores vibrantes
 
-**Proposta:**
-- Push notifications: "Você estudou ontem, não perca seu streak!"
-- Email semanal: "Seu progresso esta semana"
-- Lembretes customizáveis pelo usuário
+### 3. Animação de Conquista (`src/components/badges/BadgeUnlockAnimation.tsx`)
 
----
+- Modal overlay com confetti
+- Badge grande no centro
+- Animação de "pop" com framer-motion
+- Som opcional (toggle nas configurações)
+- Auto-dismiss após 3 segundos
 
-## 6. Arquivos que Precisam de Modificação
+### 4. Integração com Atividades
 
-### Prioridade Crítica (Funcionalidade)
-1. `supabase/functions/generate-summary/index.ts` - Enriquecer prompt
-2. `supabase/functions/generate-enem-quiz/index.ts` - Novos tipos de questão
-3. `src/components/ResumoContent.tsx` - Renderizar novos elementos
+**Em `useFlashcardActions.ts`:**
+```typescript
+// Após cada resposta correta
+if (remembered) {
+  await checkBadgesForActivity('flashcard_correct', stats.totalCorrect);
+}
+```
 
-### Prioridade Alta (Design)
-4. `src/utils/designSystem.ts` - Unificar paleta
-5. `src/pages/Index.tsx` - Dashboard redesign
-6. `src/components/home/HeroSection.tsx` - Landing page moderna
-7. `src/pages/MyProgress.tsx` - Adicionar gráficos
-
-### Prioridade Média (UX)
-8. `src/components/navigation/MainNavigation.tsx` - Breadcrumbs
-9. `src/pages/Login.tsx` - Onboarding flow
-10. `src/hooks/useGameification.ts` - Novas conquistas
-
----
-
-## 7. Roadmap Sugerido
-
-### Fase 1 - Quick Wins (1-2 semanas)
-- [ ] Unificar paleta de cores
-- [ ] Adicionar breadcrumbs
-- [ ] Melhorar linguagem para crianças
-- [ ] Dashboard "Missão do Dia"
-
-### Fase 2 - Conteúdo Rico (2-3 semanas)
-- [ ] Prompt de resumo com glossário e perguntas
-- [ ] Novos tipos de questão no quiz
-- [ ] Badges e conquistas visuais
-
-### Fase 3 - Engajamento (3-4 semanas)
-- [ ] Onboarding guiado
-- [ ] Sistema de notificações
-- [ ] Modo offline
-- [ ] Desafios entre amigos
+**Em `useEnemQuiz.ts`:**
+```typescript
+// Após completar quiz
+await checkBadgesForActivity('quiz_complete', {
+  total: stats.totalQuizzes,
+  perfect: stats.perfectQuizzes,
+  duration: elapsedTime
+});
+```
 
 ---
 
-## 8. Referências de Apps Similares
+## Design Visual (Kid-Friendly)
 
-| App | Ponto Forte a Copiar |
-|-----|----------------------|
-| **Duolingo** | Streak, hearts, personagem mascote |
-| **Anki** | Algoritmo SM-2 de espaçamento |
-| **Quizlet** | Cards visuais e modo Match |
-| **Khan Academy** | Badges e árvore de conhecimento |
-| **Kahoot** | Competição em tempo real |
+### Cores por Raridade
+
+```text
+┌────────────┬───────────────────────────────────────┐
+│ Raridade   │ Estilo                                │
+├────────────┼───────────────────────────────────────┤
+│ Common     │ bg-gray-100 border-gray-300           │
+│ Rare       │ bg-blue-50 border-blue-400            │
+│ Epic       │ bg-purple-50 border-purple-400        │
+│ Legendary  │ bg-gradient-to-r from-yellow-100      │
+│            │ to-amber-100 border-yellow-400        │
+│            │ + glow effect                         │
+└────────────┴───────────────────────────────────────┘
+```
+
+### Layout do Card de Badge
+
+```text
+┌─────────────────────────────────────────────────────┐
+│  🏆 Minhas Conquistas                    [Ver mais] │
+├─────────────────────────────────────────────────────┤
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  │
+│  │  🌱  │  │  📝  │  │  ✨  │  │  ⭐  │  │  🔒  │  │
+│  │      │  │      │  │      │  │      │  │      │  │
+│  │Primei│  │Primei│  │Semana│  │Nível │  │??????│  │
+│  │ ro   │  │ro    │  │ de   │  │  5   │  │      │  │
+│  │Upload│  │Resumo│  │Fogo  │  │      │  │      │  │
+│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘  │
+│                                                     │
+│  ─────────────────────────────────────────────────  │
+│  📍 Próxima conquista:                              │
+│  🐘 Memória de Elefante (100 flashcards corretos)  │
+│  ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 67/100      │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Conclusão
+## Resultado Final
 
-O Estuda Flash tem potencial para se tornar o melhor app de estudos em português brasileiro. As principais prioridades são:
+1. **20 badges** organizados por categoria e raridade
+2. **Verificação automática** integrada aos fluxos existentes
+3. **Exibição no Dashboard** com badges recentes
+4. **Seção completa** na página de Progresso
+5. **Animação celebrativa** ao conquistar nova badge
+6. **Linguagem kid-friendly** em todas as descrições
+7. **Design gamificado** com cores por raridade
 
-1. **Enriquecer os resumos** com elementos de fixação
-2. **Unificar o design** para uma identidade visual forte
-3. **Simplificar a linguagem** para crianças
-4. **Gamificar mais** com conquistas visíveis
-5. **Onboarding guiado** para novos usuários
+---
 
-Recomendo começar pela Fase 1 (Quick Wins) para ter impacto imediato na experiência do usuário, enquanto desenvolvemos as melhorias mais complexas em paralelo.
+## Ordem de Implementação
+
+1. Criar catálogo de badges (`badgesCatalog.ts`)
+2. Expandir hook `useAdvancedBadges.ts` com novas verificações
+3. Criar componente `ProgressBadgesCard.tsx`
+4. Criar componente `BadgeUnlockAnimation.tsx`
+5. Integrar vitrine na página de Progresso
+6. Adicionar mini-vitrine no Dashboard
+7. Conectar verificações aos fluxos de atividade
+
