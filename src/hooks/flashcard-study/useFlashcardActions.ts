@@ -3,6 +3,7 @@ import { useCallback, startTransition } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useProgressUpdater } from '@/hooks/progress/useProgressUpdater';
+import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
 
 interface Flashcard {
   id: string;
@@ -61,6 +62,7 @@ export const useFlashcardActions = ({
 }: UseFlashcardActionsProps) => {
   const { toast } = useToast();
   const { updateProgressAfterActivity } = useProgressUpdater();
+  const { checkBadgesForActivity } = useAdvancedBadges();
 
   const handleFlip = () => {
     if (isAnimating) return;
@@ -139,6 +141,9 @@ export const useFlashcardActions = ({
         Array.from(new Set([...completedCards, currentCard.id])), 
         { ...newStats, correct: newScore.correct, incorrect: newScore.incorrect }
       );
+
+      // Check for new badges (async, non-blocking)
+      checkBadgesForActivity('flashcard', { remembered, totalReviewed: newStats.totalReviewed });
 
       // Visual feedback via toast
       toast({

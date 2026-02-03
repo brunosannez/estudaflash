@@ -1,7 +1,8 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useUnifiedProgress } from '@/hooks/useUnifiedProgress';
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAdvancedBadges, BADGE_UNLOCK_EVENT } from '@/hooks/useAdvancedBadges';
 import AuthGuard from "@/components/AuthGuard";
 import { Loader2 } from 'lucide-react';
 import ProgressStatsCards from "@/components/progress/ProgressStatsCards";
@@ -11,14 +12,33 @@ import ProgressStreakCard from "@/components/progress/ProgressStreakCard";
 import ProgressActivitiesCard from "@/components/progress/ProgressActivitiesCard";
 import PageLayout from "@/components/navigation/PageLayout";
 import ProgressCoachCard from '@/components/progress/ProgressCoachCard';
+import ProgressBadgesCard from '@/components/progress/ProgressBadgesCard';
+import BadgeUnlockAnimation from '@/components/badges/BadgeUnlockAnimation';
+import { BadgeDefinition } from '@/data/badgesCatalog';
 
 const MyProgress = () => {
   const { loading, getStats, refreshProgress, topicFocus } = useUnifiedProgress();
   const { getDisplayName } = useUserProfile();
+  const { checkAndAwardProgressBadges } = useAdvancedBadges();
+  const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
 
   useEffect(() => {
     refreshProgress();
-  }, [refreshProgress]);
+    // Check for any new badges when page loads
+    checkAndAwardProgressBadges();
+  }, [refreshProgress, checkAndAwardProgressBadges]);
+
+  // Listen for badge unlock events
+  useEffect(() => {
+    const handleBadgeUnlock = (event: CustomEvent<BadgeDefinition>) => {
+      setUnlockedBadge(event.detail);
+    };
+
+    window.addEventListener(BADGE_UNLOCK_EVENT, handleBadgeUnlock as EventListener);
+    return () => {
+      window.removeEventListener(BADGE_UNLOCK_EVENT, handleBadgeUnlock as EventListener);
+    };
+  }, []);
 
   const stats = getStats();
 
@@ -52,6 +72,17 @@ const MyProgress = () => {
     return "💫";
   };
 
+  // Prepare user stats for badges card
+  const userStats = {
+    flashcards_correct: stats.todayFlashcards || 0,
+    flashcards_reviewed: stats.todayFlashcards || 0,
+    quizzes_completed: stats.todayQuizzes || 0,
+    current_streak: stats.currentStreak || 0,
+    longest_streak: stats.longestStreak || 0,
+    current_level: stats.currentLevel || 1,
+    total_xp: stats.currentXp || 0
+  };
+
   return (
     <AuthGuard>
       <PageLayout>
@@ -69,6 +100,11 @@ const MyProgress = () => {
             <ProgressStatsCards stats={stats} getStreakEmoji={getStreakEmoji} />
           </section>
 
+          {/* Badges Section */}
+          <section>
+            <ProgressBadgesCard userStats={userStats} />
+          </section>
+
           {/* Main Content Grid */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <ProgressLevelCard stats={stats} />
@@ -82,6 +118,13 @@ const MyProgress = () => {
           </section>
 
         </div>
+
+        {/* Badge Unlock Animation */}
+        <BadgeUnlockAnimation
+          badge={unlockedBadge}
+          isOpen={!!unlockedBadge}
+          onClose={() => setUnlockedBadge(null)}
+        />
       </PageLayout>
     </AuthGuard>
   );
