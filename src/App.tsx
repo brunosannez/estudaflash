@@ -20,6 +20,7 @@ import MindMap from "./pages/MindMap";
 import MySummaries from "./pages/MySummaries";
 import Resumo from "./pages/Resumo";
 import EnemQuiz from "./pages/EnemQuiz";
+import QuizHistory from "./pages/QuizHistory";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -140,7 +141,15 @@ function App() {
               } 
             />
             <Route 
-              path="/admin" 
+              path="/quiz-history" 
+              element={
+                <ProtectedRoute>
+                  <QuizHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin"
               element={
                 <ProtectedRoute>
                   <AdminRoute>

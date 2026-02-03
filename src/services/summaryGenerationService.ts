@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 import { createSummaryPrompt } from '@/utils/improvedPrompts';
 
 export const summaryGenerationService = {
@@ -56,16 +57,14 @@ export const summaryGenerationService = {
         // Criar prompt personalizado focado no ENEM e Ari de Sá
         const improvedPrompt = createSummaryPrompt(textoExtraido, userSchoolYear);
         
-        const { data, error } = await supabase.functions
-          .invoke('generate-summary', {
-            body: { 
-              uploadId,
-              textoExtraido,
-              userId: user.id,
-              customPrompt: improvedPrompt,
-              schoolYear: userSchoolYear
-            }
-          });
+        // Usar o invoker com Authorization header explícito
+        const { data, error } = await edgeFunctionInvoker.invoke('generate-summary', {
+          uploadId,
+          textoExtraido,
+          userId: user.id,
+          customPrompt: improvedPrompt,
+          schoolYear: userSchoolYear
+        });
 
         if (error) {
           console.error(`❌ Erro na tentativa ${attempt}:`, error);

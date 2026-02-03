@@ -2,9 +2,10 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
+// CORS headers completos para garantir que Authorization seja aceito
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -12,21 +13,29 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // Helper function to verify JWT and get user
 async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
-  const authHeader = req.headers.get('Authorization');
+  // Tentar ambos os casos de header (case-insensitive na prática, mas para robustez)
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
+  
+  console.log('🔐 Verificando Authorization header...');
+  console.log('📋 Header presente:', !!authHeader);
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('❌ Token não fornecido ou formato inválido');
     return { userId: null, error: 'Token de autenticação não fornecido' };
   }
 
   const token = authHeader.replace('Bearer ', '');
+  console.log('🔑 Token length:', token.length);
   
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user) {
+      console.error('❌ Token inválido:', error?.message);
       return { userId: null, error: 'Token inválido ou expirado' };
     }
     
+    console.log('✅ Usuário autenticado:', user.id);
     return { userId: user.id, error: null };
   } catch (error) {
     console.error('❌ Erro ao verificar autenticação:', error);
@@ -35,8 +44,9 @@ async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {

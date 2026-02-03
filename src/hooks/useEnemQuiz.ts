@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -58,12 +59,11 @@ export const useEnemQuiz = () => {
       console.log('📊 Content length:', resumoContent?.length);
       console.log('👤 UserId:', user.id);
       
-      const { data, error } = await supabase.functions.invoke('generate-enem-quiz', {
-        body: {
-          resumoId,
-          resumoContent,
-          userId: user.id
-        }
+      // Usar o invoker com Authorization header explícito
+      const { data, error } = await edgeFunctionInvoker.invoke('generate-enem-quiz', {
+        resumoId,
+        resumoContent,
+        userId: user.id
       });
 
       console.log('🔍 Edge function response:', { data, error });
@@ -78,6 +78,8 @@ export const useEnemQuiz = () => {
           toast.error('Erro de configuração do sistema. Contate o suporte.');
         } else if (error.message?.includes('400')) {
           toast.error('Erro na requisição. Tente novamente com um resumo diferente.');
+        } else if (error.message?.includes('Sessão expirada')) {
+          toast.error('Sessão expirada. Faça login novamente.');
         } else {
           toast.error(`Erro na geração: ${error.message}`);
         }
@@ -147,20 +149,7 @@ export const useEnemQuiz = () => {
         return null;
       }
 
-      return {
-        ...data,
-        macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
-        targets: data.targets as { objetivas: number; vf_sequenciais: number },
-        generated: data.generated as { objetivas: number; vf_sequenciais: number },
-        coverage_map: Array.isArray(data.coverage_map) 
-          ? (data.coverage_map as any[]).map(item => ({
-              macrotema: typeof item === 'object' && item?.macrotema ? item.macrotema : String(item),
-              objetivas: typeof item === 'object' && item?.objetivas ? item.objetivas : 0,
-              vf_sequenciais: typeof item === 'object' && item?.vf_sequenciais ? item.vf_sequenciais : 0
-            }))
-          : [],
-        quality_checks: data.quality_checks as any
-      };
+      return parseQuizMetadata(data);
 
     } catch (error) {
       console.error('❌ Error fetching quiz metadata:', error);
@@ -168,6 +157,74 @@ export const useEnemQuiz = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Lista todos os quizzes de um resumo (suporte a múltiplos quizzes)
+   */
+  const listQuizMetadata = async (resumoId: string): Promise<EnemQuizMetadata[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('enem_quiz_metadata')
+        .select('*')
+        .eq('resumo_id', resumoId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Error listing quiz metadata:', error);
+        return [];
+      }
+
+      return (data || []).map(parseQuizMetadata);
+
+    } catch (error) {
+      console.error('❌ Error listing quiz metadata:', error);
+      return [];
+    }
+  };
+
+  /**
+   * Verifica se já existe quiz para um resumo
+   */
+  const checkExistingQuiz = async (resumoId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { count, error } = await supabase
+        .from('enem_quiz_metadata')
+        .select('id', { count: 'exact', head: true })
+        .eq('resumo_id', resumoId);
+
+      if (error) {
+        console.error('❌ Error checking existing quiz:', error);
+        return false;
+      }
+
+      return (count || 0) > 0;
+
+    } catch (error) {
+      console.error('❌ Error checking existing quiz:', error);
+      return false;
+    }
+  };
+
+  const parseQuizMetadata = (data: any): EnemQuizMetadata => {
+    return {
+      ...data,
+      macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
+      targets: data.targets as { objetivas: number; vf_sequenciais: number },
+      generated: data.generated as { objetivas: number; vf_sequenciais: number },
+      coverage_map: Array.isArray(data.coverage_map) 
+        ? (data.coverage_map as any[]).map(item => ({
+            macrotema: typeof item === 'object' && item?.macrotema ? item.macrotema : String(item),
+            objetivas: typeof item === 'object' && item?.objetivas ? item.objetivas : 0,
+            vf_sequenciais: typeof item === 'object' && item?.vf_sequenciais ? item.vf_sequenciais : 0
+          }))
+        : [],
+      quality_checks: data.quality_checks as any
+    };
   };
 
   const getQuizQuestions = async (quizMetadataId: string) => {
@@ -220,6 +277,8 @@ export const useEnemQuiz = () => {
     generating,
     generateQuiz,
     getQuizMetadata,
+    listQuizMetadata,
+    checkExistingQuiz,
     getQuizQuestions,
     getUserSessions
   };
