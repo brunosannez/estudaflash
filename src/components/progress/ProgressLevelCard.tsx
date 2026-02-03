@@ -9,28 +9,30 @@ interface ProgressLevelCardProps {
 }
 
 const ProgressLevelCard = ({ stats }: ProgressLevelCardProps) => {
+  const remaining = Math.max(0, stats.nextLevelXp - stats.currentXp);
+
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
-          Progresso do Nível
+          <Trophy className="h-5 w-5 mr-2 text-muted-foreground" />
+          Seu nível
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex justify-between items-center">
           <span className="text-lg font-medium">Nível {stats.currentLevel}</span>
-          <span className="text-sm text-gray-500">{stats.currentXp} / {stats.nextLevelXp} XP</span>
+          <span className="text-sm text-muted-foreground">{stats.currentXp} / {stats.nextLevelXp} XP</span>
         </div>
         <Progress value={stats.xpProgress} className="h-4" />
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>Faltam apenas {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!</strong>
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground">
+            Faltam <span className="font-medium text-foreground">{remaining} XP</span> para subir de nível.
           </p>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span>🎯 +5 XP por flashcard</span>
-            <span>🧠 +10 XP por quiz correto</span>
-            <span>📚 +2 XP por tentativa</span>
+          <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
+            <div>• Flashcard: +10 (Lembrei) ou +2 (Não lembrei)</div>
+            <div>• Quiz: até +15 quando acerta</div>
+            <div>• Bônus: você ganha mais XP ao completar uma sessão</div>
           </div>
         </div>
       </CardContent>

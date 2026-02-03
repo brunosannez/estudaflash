@@ -12,39 +12,39 @@ const ProgressActivitiesCard = ({ stats }: ProgressActivitiesCardProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Target className="h-5 w-5 mr-2 text-blue-600" />
-          Atividades de Hoje
+          <Target className="h-5 w-5 mr-2 text-muted-foreground" />
+          Hoje
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+        <div className="flex justify-between items-center p-4 rounded-lg border bg-muted/30">
           <div className="flex items-center gap-3">
-            <Brain className="h-5 w-5 text-blue-600" />
-            <span className="font-medium">Flashcards</span>
+            <Brain className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">Flashcards feitos</span>
           </div>
-          <div className="text-2xl font-bold text-blue-600">{stats.todayFlashcards}</div>
+          <div className="text-2xl font-semibold">{stats.todayFlashcards}</div>
         </div>
         
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+        <div className="flex justify-between items-center p-4 rounded-lg border bg-muted/30">
           <div className="flex items-center gap-3">
-            <TestTube className="h-5 w-5 text-green-600" />
-            <span className="font-medium">Quizzes</span>
+            <TestTube className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">Respostas no quiz</span>
           </div>
-          <div className="text-2xl font-bold text-green-600">{stats.todayQuizzes}</div>
+          <div className="text-2xl font-semibold">{stats.todayQuizzes}</div>
         </div>
         
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+        <div className="flex justify-between items-center p-4 rounded-lg border bg-muted/30">
           <div className="flex items-center gap-3">
-            <Award className="h-5 w-5 text-purple-600" />
-            <span className="font-medium">Acertos</span>
+            <Award className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">Acertos no quiz</span>
           </div>
-          <div className="text-2xl font-bold text-purple-600">{stats.todayCorrectAnswers}</div>
+          <div className="text-2xl font-semibold">{stats.todayCorrectAnswers}</div>
         </div>
 
         {stats.todayXp > 0 && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg text-white text-center">
-            <div className="text-lg font-bold">🎉 {stats.todayXp} XP ganhos hoje!</div>
-            <div className="text-sm opacity-90">Continue assim!</div>
+          <div className="mt-4 p-3 rounded-lg border bg-muted/30 text-center">
+            <div className="text-base font-semibold">Você ganhou {stats.todayXp} XP hoje</div>
+            <div className="text-sm text-muted-foreground">Muito bem. Amanhã dá pra fazer de novo.</div>
           </div>
         )}
       </CardContent>

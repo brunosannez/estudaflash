@@ -9,37 +9,39 @@ export const useProgressSubscriptions = (
   useEffect(() => {
     if (!isInitialized) return;
 
-    const setupSubscriptions = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
 
-      const channel = supabase
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      channel = supabase
         .channel(`progress-${user.id}`)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'flashcard_reviews',
+          table: 'user_progress',
           filter: `user_id=eq.${user.id}`
         }, () => {
-          console.log('🔄 Flashcard activity detected, refreshing...');
-          setTimeout(fetchProgressData, 1000);
+          console.log('🔄 user_progress updated, refreshing...');
+          setTimeout(fetchProgressData, 500);
         })
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'quiz_respostas',
+          table: 'daily_activities',
           filter: `user_id=eq.${user.id}`
         }, () => {
-          console.log('🔄 Quiz activity detected, refreshing...');
-          setTimeout(fetchProgressData, 1000);
+          console.log('🔄 daily_activities updated, refreshing...');
+          setTimeout(fetchProgressData, 500);
         })
         .subscribe();
+    })();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
-
-    setupSubscriptions();
   }, [isInitialized, fetchProgressData]);
 };

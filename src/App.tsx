@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { DataSeederService } from "@/services/dataSeederService";
 import { LazyUpload, LazyMyFlashcards, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
+import { PageLoading } from '@/components/common/LoadingStates';
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -43,10 +44,10 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Carregando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -59,119 +60,121 @@ function App() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-          <Routes>
-            {/* Rota principal - Dashboard para autenticados, Home para não autenticados */}
-            <Route path="/" element={user ? <Index /> : <Home />} />
-            
-            {/* Redirecionamentos para garantir que sempre use a interface atual */}
-            <Route path="/home" element={user ? <Navigate to="/" replace /> : <Home />} />
-            <Route path="/dashboard" element={user ? <Index /> : <Navigate to="/login" replace />} />
-            
-            {/* Rotas de autenticação */}
-            <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-            <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
-            <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
-            
-            {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            
-            {/* Rotas protegidas */}
-            <Route 
-              path="/upload" 
-              element={
-                <ProtectedRoute>
-                  <LazyUpload />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/my-flashcards" 
-              element={
-                <ProtectedRoute>
-                  <LazyMyFlashcards />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/my-progress" 
-              element={
-                <ProtectedRoute>
-                  <LazyMyProgress />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/social" 
-              element={
-                <ProtectedRoute>
-                  <LazySocial />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/my-summaries" 
-              element={
-                <ProtectedRoute>
-                  <MySummaries />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/resumo/:id" 
-              element={
-                <ProtectedRoute>
-                  <Resumo />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/quiz-enem/:id" 
-              element={
-                <ProtectedRoute>
-                  <EnemQuiz />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/mind-map/:id" 
-              element={
-                <ProtectedRoute>
-                  <MindMap />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/quiz-history" 
-              element={
-                <ProtectedRoute>
-                  <QuizHistory />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminRoute>
-                    <LazyAdminPanel />
-                  </AdminRoute>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/analytics" 
-              element={
-                <ProtectedRoute>
-                  <AdminRoute>
-                    <AdminAnalytics />
-                  </AdminRoute>
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Rota 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoading title="Carregando a página..." />}>
+            <Routes>
+              {/* Rota principal - Dashboard para autenticados, Home para não autenticados */}
+              <Route path="/" element={user ? <Index /> : <Home />} />
+              
+              {/* Redirecionamentos para garantir que sempre use a interface atual */}
+              <Route path="/home" element={user ? <Navigate to="/" replace /> : <Home />} />
+              <Route path="/dashboard" element={user ? <Index /> : <Navigate to="/login" replace />} />
+              
+              {/* Rotas de autenticação */}
+              <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+              <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
+              <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
+              
+              {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              
+              {/* Rotas protegidas */}
+              <Route 
+                path="/upload" 
+                element={
+                  <ProtectedRoute>
+                    <LazyUpload />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-flashcards" 
+                element={
+                  <ProtectedRoute>
+                    <LazyMyFlashcards />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-progress" 
+                element={
+                  <ProtectedRoute>
+                    <LazyMyProgress />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/social" 
+                element={
+                  <ProtectedRoute>
+                    <LazySocial />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-summaries" 
+                element={
+                  <ProtectedRoute>
+                    <MySummaries />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/resumo/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Resumo />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/quiz-enem/:id" 
+                element={
+                  <ProtectedRoute>
+                    <EnemQuiz />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/mind-map/:id" 
+                element={
+                  <ProtectedRoute>
+                    <MindMap />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/quiz-history" 
+                element={
+                  <ProtectedRoute>
+                    <QuizHistory />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <LazyAdminPanel />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/analytics" 
+                element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <AdminAnalytics />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Rota 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
