@@ -24,6 +24,7 @@ export const useUnifiedProgress = () => {
   return {
     progress: data.progress,
     todayActivity: data.todayActivity,
+    topicFocus: data.topicFocus,
     loading: data.loading,
     error: data.error,
     isInitialized: data.isInitialized,
