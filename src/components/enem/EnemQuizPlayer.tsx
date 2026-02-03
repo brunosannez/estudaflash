@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, Clock, CheckCircle, XCircle, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, CheckCircle, XCircle, Check, Star, Zap } from 'lucide-react';
 import { EnemObjectiveQuestion } from './EnemObjectiveQuestion';
 import { EnemVFQuestion } from './EnemVFQuestion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useGameification } from '@/hooks/useGameification';
 import { toast } from 'sonner';
 
 interface EnemQuestion {
@@ -29,12 +30,22 @@ interface EnemQuizPlayerProps {
   onExit: () => void;
 }
 
+// XP values for gamification
+const XP_VALUES = {
+  CORRECT_OBJETIVA: 15,
+  CORRECT_VF: 10,
+  INCORRECT: 2,
+  COMPLETION_BONUS: 25,
+  PERFECT_BONUS: 50,
+};
+
 export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
   quizMetadataId,
   onComplete,
   onExit
 }) => {
   const { user } = useAuth();
+  const { addXP } = useGameification();
   const [questions, setQuestions] = useState<EnemQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
@@ -44,6 +55,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [confirmedQuestions, setConfirmedQuestions] = useState<boolean[]>([]);
+  const [sessionXP, setSessionXP] = useState(0);
 
   // Timer effect
   useEffect(() => {
@@ -134,8 +146,32 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
     setUserAnswers(newAnswers);
   };
 
-  const handleConfirmAnswer = () => {
+  const handleConfirmAnswer = async () => {
     if (userAnswers[currentIndex] === -1) return;
+    
+    const currentQuestion = questions[currentIndex];
+    const userAnswer = userAnswers[currentIndex];
+    const isCorrect = userAnswer === currentQuestion.correct_index;
+    
+    // Calculate XP based on question type and correctness
+    let xpEarned = 0;
+    if (isCorrect) {
+      xpEarned = currentQuestion.tipo === 'objetiva' 
+        ? XP_VALUES.CORRECT_OBJETIVA 
+        : XP_VALUES.CORRECT_VF;
+    } else {
+      xpEarned = XP_VALUES.INCORRECT;
+    }
+    
+    // Add XP and update session total
+    setSessionXP(prev => prev + xpEarned);
+    
+    try {
+      await addXP(xpEarned, isCorrect ? 'quiz_correct' : 'quiz_incorrect');
+    } catch (error) {
+      console.error('Error adding XP:', error);
+    }
+    
     const newConfirmed = [...confirmedQuestions];
     newConfirmed[currentIndex] = true;
     setConfirmedQuestions(newConfirmed);
@@ -200,14 +236,33 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
         })
         .eq('id', sessionId);
 
+      // Add completion bonus XP
+      let bonusXP = XP_VALUES.COMPLETION_BONUS;
+      const percentage = Math.round((correctCount / questions.length) * 100);
+      
+      // Perfect score bonus
+      if (percentage === 100) {
+        bonusXP += XP_VALUES.PERFECT_BONUS;
+        toast.success(`🏆 Quiz Perfeito! +${XP_VALUES.PERFECT_BONUS} XP bônus!`, { duration: 4000 });
+      }
+      
+      try {
+        await addXP(bonusXP, 'quiz_complete');
+        setSessionXP(prev => prev + bonusXP);
+      } catch (error) {
+        console.error('Error adding completion bonus XP:', error);
+      }
+
       setShowResults(true);
 
+      const totalXPEarned = sessionXP + bonusXP;
       const results = {
         totalQuestions: questions.length,
         correctAnswers: correctCount,
-        score: Math.round((correctCount / questions.length) * 100),
+        score: percentage,
         timeElapsed,
-        sessionId
+        sessionId,
+        xpEarned: totalXPEarned
       };
 
       onComplete(results);
@@ -273,12 +328,18 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
+              {percentage === 100 ? (
+                <Star className="h-16 w-16 text-yellow-500 fill-yellow-500" />
+              ) : (
+                <CheckCircle className="h-16 w-16 text-green-500" />
+              )}
             </div>
-            <CardTitle className="text-2xl">Quiz ENEM Concluído!</CardTitle>
+            <CardTitle className="text-2xl">
+              {percentage === 100 ? '🏆 Quiz Perfeito!' : 'Quiz ENEM Concluído!'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
               <div className="p-4 rounded-lg bg-primary/5">
                 <div className="text-2xl font-bold text-primary">{correctCount}</div>
                 <div className="text-sm text-muted-foreground">Acertos</div>
@@ -294,6 +355,13 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
               <div className="p-4 rounded-lg bg-primary/5">
                 <div className="text-2xl font-bold text-primary">{formatTime(timeElapsed)}</div>
                 <div className="text-sm text-muted-foreground">Tempo</div>
+              </div>
+              <div className="p-4 rounded-lg bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 border border-yellow-300 dark:border-yellow-700">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center justify-center gap-1">
+                  <Zap className="h-5 w-5" />
+                  {sessionXP}
+                </div>
+                <div className="text-sm text-yellow-700 dark:text-yellow-500">XP Ganho</div>
               </div>
             </div>
 
@@ -323,7 +391,12 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
               <ArrowLeft className="h-4 w-4 mr-2" />
               Sair
             </Button>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* XP Counter */}
+              <Badge variant="default" className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                <Zap className="h-4 w-4" />
+                {sessionXP} XP
+              </Badge>
               <Badge variant="outline" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 {formatTime(timeElapsed)}

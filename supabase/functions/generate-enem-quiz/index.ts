@@ -300,12 +300,24 @@ Responda APENAS com o JSON válido, sem explicações adicionais.`;
     console.log('💾 Saving quiz to database...');
 
     try {
+      // Generate automatic name with tema + date
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const finalTema = quizData.meta?.tema || tema;
+      const autoName = `${finalTema.charAt(0).toUpperCase() + finalTema.slice(1)} - ${formattedDate}`;
+
       // Save metadata - allow multiple quizzes per resumo
       const { data: metadataRecord, error: metadataError } = await supabase
         .from('enem_quiz_metadata')
         .insert({
           resumo_id: resumoId,
-          tema: quizData.meta?.tema || tema,
+          tema: finalTema,
+          custom_name: autoName,
           idade_usuario: quizData.meta?.idade_usuario || 17,
           word_count: quizData.meta?.word_count || wordCount,
           macrothemes: quizData.meta?.macrothemes || [tema],

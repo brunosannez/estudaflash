@@ -8,6 +8,7 @@ export interface EnemQuizMetadata {
   id: string;
   resumo_id: string;
   tema: string;
+  custom_name: string | null;
   idade_usuario: number;
   word_count: number;
   macrothemes: string[];
@@ -213,6 +214,7 @@ export const useEnemQuiz = () => {
   const parseQuizMetadata = (data: any): EnemQuizMetadata => {
     return {
       ...data,
+      custom_name: data.custom_name || null,
       macrothemes: Array.isArray(data.macrothemes) ? data.macrothemes as string[] : [],
       targets: data.targets as { objetivas: number; vf_sequenciais: number },
       generated: data.generated as { objetivas: number; vf_sequenciais: number },
@@ -225,6 +227,51 @@ export const useEnemQuiz = () => {
         : [],
       quality_checks: data.quality_checks as any
     };
+  };
+
+  const renameQuiz = async (quizId: string, newName: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('enem_quiz_metadata')
+        .update({ 
+          custom_name: newName.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', quizId);
+
+      if (error) {
+        console.error('❌ Error renaming quiz:', error);
+        toast.error('Erro ao renomear quiz');
+        return false;
+      }
+
+      toast.success('Quiz renomeado com sucesso!');
+      return true;
+
+    } catch (error) {
+      console.error('❌ Error renaming quiz:', error);
+      toast.error('Erro ao renomear quiz');
+      return false;
+    }
+  };
+
+  /**
+   * Generate a display name for a quiz
+   */
+  const getQuizDisplayName = (quiz: EnemQuizMetadata): string => {
+    if (quiz.custom_name) return quiz.custom_name;
+    
+    const date = new Date(quiz.created_at);
+    const formattedDate = date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    return `${quiz.tema} - ${formattedDate}`;
   };
 
   const getQuizQuestions = async (quizMetadataId: string) => {
@@ -280,6 +327,8 @@ export const useEnemQuiz = () => {
     listQuizMetadata,
     checkExistingQuiz,
     getQuizQuestions,
-    getUserSessions
+    getUserSessions,
+    renameQuiz,
+    getQuizDisplayName
   };
 };
