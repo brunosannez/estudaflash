@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 import { useToast } from '@/hooks/use-toast';
 import { useUsageLimit } from '@/hooks/useUsageLimit';
 
@@ -28,14 +29,12 @@ export const useAutoFlashcards = () => {
         throw new Error('Usuário não autenticado');
       }
 
-      const { data, error } = await supabase.functions
-        .invoke('generate-flashcards', {
-          body: { 
-            resumoId,
-            textoResumo,
-            userId: user.id
-          }
-        });
+      // Usar o invoker com Authorization header explícito
+      const { data, error } = await edgeFunctionInvoker.invoke('generate-flashcards', {
+        resumoId,
+        textoResumo,
+        userId: user.id
+      });
 
       if (error) {
         console.error('Erro na invocação da função:', error);

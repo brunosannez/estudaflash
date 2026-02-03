@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 
 export interface BatchSummaryData {
   batchId: string;
@@ -32,15 +33,13 @@ export const combineBatchSummaries = async (
     // Preparar dados para a IA
     const combinationPrompt = createCombinationPrompt(sortedBatches, originalTitle);
     
-    // Chamar a função edge para combinar os resumos
-    const { data, error } = await supabase.functions.invoke('generate-summary', {
-      body: {
-        extractedText: combinationPrompt,
-        user_id: userId,
-        isCombiningBatches: true,
-        totalBatches: sortedBatches.length,
-        totalImages: sortedBatches.reduce((sum, batch) => sum + batch.images.length, 0)
-      }
+    // Usar o invoker com Authorization header explícito
+    const { data, error } = await edgeFunctionInvoker.invoke('generate-summary', {
+      extractedText: combinationPrompt,
+      user_id: userId,
+      isCombiningBatches: true,
+      totalBatches: sortedBatches.length,
+      totalImages: sortedBatches.reduce((sum, batch) => sum + batch.images.length, 0)
     });
 
     if (error) {

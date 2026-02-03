@@ -110,22 +110,37 @@ const Resumo = () => {
   const handleGenerateEnemQuiz = async () => {
     if (!resumo || generating) return;
     
-    console.log('🎯 Generate ENEM Quiz clicked');
+    console.log('🎯 Quiz ENEM button clicked');
     console.log('📋 Resumo ID:', resumo.id);
-    console.log('📄 Content length:', resumo.resumo_gerado?.length);
-    
-    if (!resumo.resumo_gerado || resumo.resumo_gerado.trim().length < 100) {
-      toast.error('Resumo muito pequeno para gerar quiz. Mínimo 100 caracteres.');
-      return;
-    }
     
     try {
+      // Verificar se já existe quiz
+      const { data: existingQuizzes, error: checkError } = await supabase
+        .from('enem_quiz_metadata')
+        .select('id')
+        .eq('resumo_id', resumo.id)
+        .limit(1);
+
+      if (!checkError && existingQuizzes && existingQuizzes.length > 0) {
+        // Já existe quiz, navegar diretamente
+        console.log('✅ Quiz existente encontrado, navegando...');
+        toast.info('Quiz existente encontrado! Abrindo...');
+        navigate(`/quiz-enem/${resumo.id}`);
+        return;
+      }
+
+      // Não existe quiz, gerar novo
+      console.log('📝 Nenhum quiz encontrado, gerando novo...');
+      
+      if (!resumo.resumo_gerado || resumo.resumo_gerado.trim().length < 100) {
+        toast.error('Resumo muito pequeno para gerar quiz. Mínimo 100 caracteres.');
+        return;
+      }
+      
       const quizMetadataId = await generateQuiz(resumo.id, resumo.resumo_gerado);
       
       if (quizMetadataId) {
         console.log('✅ Quiz generated, navigating to quiz page');
-        console.log('🆔 Quiz Metadata ID:', quizMetadataId);
-        
         // Small delay to ensure toast is visible before navigation
         setTimeout(() => {
           navigate(`/quiz-enem/${resumo.id}`);
@@ -135,7 +150,7 @@ const Resumo = () => {
       }
     } catch (error) {
       console.error('❌ Error in handleGenerateEnemQuiz:', error);
-      toast.error('Erro inesperado ao gerar quiz');
+      toast.error('Erro inesperado ao processar quiz');
     }
   };
 

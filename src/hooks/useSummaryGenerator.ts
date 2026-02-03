@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 import { useAuth } from '@/hooks/useAuth';
 import { OCRResult } from './useSequentialOCR';
 
@@ -48,19 +49,17 @@ export const useSummaryGenerator = () => {
     try {
       console.log(`📄 Generating summary from ${combinedText.length} characters of text`);
 
-      // Chamar a função de geração de resumo com parâmetros corretos
-      const { data, error } = await supabase.functions.invoke('generate-summary', {
-        body: {
-          extractedText: combinedText, // Corrigido: usar extractedText
-          userId: user.id,
-          schoolYear: 'Ensino Médio', // Adicionar nível escolar
+      // Usar o invoker com Authorization header explícito
+      const { data, error } = await edgeFunctionInvoker.invoke('generate-summary', {
+        extractedText: combinedText,
+        userId: user.id,
+        schoolYear: 'Ensino Médio',
+        totalImages: ocrResults.length,
+        metadata: {
           totalImages: ocrResults.length,
-          metadata: {
-            totalImages: ocrResults.length,
-            successfulImages: ocrResults.filter(r => r.success).length,
-            sourceType: 'enhanced_upload',
-            processingDate: new Date().toISOString()
-          }
+          successfulImages: ocrResults.filter(r => r.success).length,
+          sourceType: 'enhanced_upload',
+          processingDate: new Date().toISOString()
         }
       });
 

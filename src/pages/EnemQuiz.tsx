@@ -3,13 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen, Trash2 } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen, Trash2, ChevronDown } from 'lucide-react';
 import { EnemQuizPlayer } from '@/components/enem/EnemQuizPlayer';
 import { useEnemQuiz } from '@/hooks/useEnemQuiz';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { deleteService } from '@/services/deleteService';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,83 +32,129 @@ import {
 const EnemQuiz: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { loading, generating, generateQuiz, getQuizMetadata, getUserSessions } = useEnemQuiz();
+  const { user, loading: authLoading } = useAuth();
+  const { loading, generating, generateQuiz, getQuizMetadata, listQuizMetadata, getUserSessions } = useEnemQuiz();
   
   const [resumoData, setResumoData] = useState<any>(null);
   const [quizMetadata, setQuizMetadata] = useState<any>(null);
+  const [allQuizzes, setAllQuizzes] = useState<any[]>([]);
   const [userSessions, setUserSessions] = useState<any[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!id || !user) return;
+    // Aguardar auth carregar antes de tentar carregar dados
+    if (authLoading) {
+      console.log('🔄 Aguardando autenticação...');
+      return;
+    }
 
-      setLoadingData(true);
-      try {
-        // Load resumo data
-        const { data: resumo, error: resumoError } = await supabase
-          .from('resumos')
-          .select(`
-            id,
-            custom_name,
-            resumo_gerado,
-            data_criacao,
-            uploads (
-              arquivo_original_nome,
-              user_id
-            )
-          `)
-          .eq('id', id)
-          .single();
+    // Se auth carregou mas não há usuário, redirecionar
+    if (!user) {
+      console.log('❌ Usuário não autenticado após auth loading');
+      setLoadingData(false);
+      toast.error('Faça login para acessar o quiz');
+      navigate('/login');
+      return;
+    }
 
-        if (resumoError) {
-          throw new Error(resumoError.message);
-        }
-
-        if (!resumo || resumo.uploads?.user_id !== user.id) {
-          throw new Error('Resumo não encontrado ou acesso negado');
-        }
-
-        setResumoData(resumo);
-
-        // Check for existing quiz
-        const metadata = await getQuizMetadata(id);
-        if (metadata) {
-          setQuizMetadata(metadata);
-          
-          // Load user sessions
-          const sessions = await getUserSessions(metadata.id);
-          setUserSessions(sessions);
-        }
-
-      } catch (error) {
-        console.error('❌ Error loading data:', error);
-        toast.error('Erro ao carregar dados');
-        navigate('/my-summaries');
-      } finally {
-        setLoadingData(false);
-      }
-    };
+    // Se não há ID, redirecionar
+    if (!id) {
+      console.log('❌ ID não fornecido');
+      setLoadingData(false);
+      toast.error('ID do resumo não fornecido');
+      navigate('/my-summaries');
+      return;
+    }
 
     loadData();
-  }, [id, user, navigate, getQuizMetadata, getUserSessions]);
+  }, [id, user, authLoading, navigate]);
+
+  const loadData = async () => {
+    if (!id || !user) return;
+
+    setLoadingData(true);
+    try {
+      console.log('📄 Carregando dados do resumo:', id);
+      
+      // Load resumo data
+      const { data: resumo, error: resumoError } = await supabase
+        .from('resumos')
+        .select(`
+          id,
+          custom_name,
+          resumo_gerado,
+          data_criacao,
+          uploads (
+            arquivo_original_nome,
+            user_id
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (resumoError) {
+        console.error('❌ Erro ao carregar resumo:', resumoError);
+        throw new Error(resumoError.message);
+      }
+
+      if (!resumo || resumo.uploads?.user_id !== user.id) {
+        throw new Error('Resumo não encontrado ou acesso negado');
+      }
+
+      setResumoData(resumo);
+      console.log('✅ Resumo carregado:', resumo.id);
+
+      // Listar todos os quizzes para este resumo
+      const quizzes = await listQuizMetadata(id);
+      setAllQuizzes(quizzes);
+      console.log(`📚 ${quizzes.length} quiz(zes) encontrado(s)`);
+
+      // Usar o mais recente como selecionado
+      if (quizzes.length > 0) {
+        const latestQuiz = quizzes[0];
+        setQuizMetadata(latestQuiz);
+        
+        // Load user sessions for the selected quiz
+        const sessions = await getUserSessions(latestQuiz.id);
+        setUserSessions(sessions);
+      }
+
+    } catch (error) {
+      console.error('❌ Error loading data:', error);
+      toast.error('Erro ao carregar dados');
+      navigate('/my-summaries');
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const handleGenerateQuiz = async () => {
     if (!resumoData) return;
 
     const quizMetadataId = await generateQuiz(resumoData.id, resumoData.resumo_gerado);
     if (quizMetadataId) {
-      // Reload metadata
-      const metadata = await getQuizMetadata(resumoData.id);
-      setQuizMetadata(metadata);
+      // Recarregar lista de quizzes
+      const quizzes = await listQuizMetadata(resumoData.id);
+      setAllQuizzes(quizzes);
       
-      // Load sessions
-      const sessions = await getUserSessions(quizMetadataId);
-      setUserSessions(sessions);
+      // Selecionar o novo quiz (mais recente)
+      if (quizzes.length > 0) {
+        const newQuiz = quizzes[0];
+        setQuizMetadata(newQuiz);
+        
+        // Load sessions
+        const sessions = await getUserSessions(newQuiz.id);
+        setUserSessions(sessions);
+      }
     }
+  };
+
+  const handleSelectQuiz = async (quiz: any) => {
+    setQuizMetadata(quiz);
+    const sessions = await getUserSessions(quiz.id);
+    setUserSessions(sessions);
   };
 
   const handleStartQuiz = () => {
@@ -129,8 +182,19 @@ const EnemQuiz: React.FC = () => {
     setIsDeleting(true);
     const success = await deleteService.deleteQuiz(quizMetadata.id);
     if (success) {
-      setQuizMetadata(null);
-      setUserSessions([]);
+      // Remover da lista e selecionar próximo
+      const remainingQuizzes = allQuizzes.filter(q => q.id !== quizMetadata.id);
+      setAllQuizzes(remainingQuizzes);
+      
+      if (remainingQuizzes.length > 0) {
+        const nextQuiz = remainingQuizzes[0];
+        setQuizMetadata(nextQuiz);
+        const sessions = await getUserSessions(nextQuiz.id);
+        setUserSessions(sessions);
+      } else {
+        setQuizMetadata(null);
+        setUserSessions([]);
+      }
     }
     setIsDeleting(false);
   };
@@ -226,6 +290,36 @@ const EnemQuiz: React.FC = () => {
           </Card>
         ) : (
           <>
+            {/* Quiz Selector (if multiple quizzes) */}
+            {allQuizzes.length > 1 && (
+              <Card className="mb-6 bg-muted/30">
+                <CardContent className="py-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="text-sm font-medium">Selecionar Quiz:</span>
+                    <Select
+                      value={quizMetadata?.id}
+                      onValueChange={(value) => {
+                        const selected = allQuizzes.find(q => q.id === value);
+                        if (selected) handleSelectQuiz(selected);
+                      }}
+                    >
+                      <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Selecione um quiz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allQuizzes.map((quiz, index) => (
+                          <SelectItem key={quiz.id} value={quiz.id}>
+                            Quiz {index + 1} - {formatDate(quiz.created_at)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Badge variant="outline">{allQuizzes.length} quiz(zes)</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Quiz Info */}
             <div className="grid gap-6 md:grid-cols-2 mb-6">
               <Card>
@@ -259,6 +353,11 @@ const EnemQuiz: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Palavras Analisadas:</span>
                     <span>{quizMetadata.word_count}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Criado em:</span>
+                    <span>{formatDate(quizMetadata.created_at)}</span>
                   </div>
                 </CardContent>
               </Card>

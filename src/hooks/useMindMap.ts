@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
 import { toast } from 'sonner';
 
 export interface MindMapNode {
@@ -38,12 +39,10 @@ export const useMindMap = () => {
         throw new Error('Conteúdo muito curto para gerar mapa mental');
       }
 
-      // Chamar edge function para gerar mapa mental
-      const { data: generationData, error: generationError } = await supabase.functions.invoke(
+      // Usar o invoker com Authorization header explícito
+      const { data: generationData, error: generationError } = await edgeFunctionInvoker.invoke(
         'generate-mind-map',
-        {
-          body: { content: content.substring(0, 8000), resumoId } // Limitar tamanho
-        }
+        { content: content.substring(0, 8000), resumoId }
       );
 
       if (generationError) {
