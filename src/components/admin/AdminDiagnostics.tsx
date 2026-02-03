@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,18 +8,14 @@ import {
   AlertTriangle, 
   CheckCircle, 
   RefreshCw, 
-  Wrench, 
   Bug,
-  Database,
   Users,
-  HardDrive,
-  Settings
+  Shield
 } from 'lucide-react';
 
 const AdminDiagnostics = () => {
   const [diagnostics, setDiagnostics] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [fixing, setFixing] = useState(false);
   const { toast } = useToast();
 
   const runDiagnostics = async () => {
@@ -50,66 +45,12 @@ const AdminDiagnostics = () => {
     }
   };
 
-  const fixFileSizes = async () => {
-    try {
-      setFixing(true);
-      console.log('🔧 Corrigindo file sizes...');
-      
-      const result = await AdminDiagnosticsService.fixFileSizes();
-      
-      toast({
-        title: "Correção Concluída",
-        description: `${result.fixed} uploads corrigidos.`,
-      });
-
-      // Re-executar diagnósticos
-      await runDiagnostics();
-    } catch (error) {
-      console.error('❌ Erro ao corrigir:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao corrigir file sizes.",
-        variant: "destructive",
-      });
-    } finally {
-      setFixing(false);
-    }
-  };
-
-  const makeAdmin = async () => {
-    try {
-      if (!diagnostics?.currentUserId) return;
-      
-      const success = await AdminDiagnosticsService.ensureUserIsAdmin(diagnostics.currentUserId);
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Usuário promovido a administrador.",
-        });
-        await runDiagnostics();
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao promover usuário.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao promover usuário.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bug className="h-5 w-5 text-blue-600" />
+            <Bug className="h-5 w-5 text-primary" />
             <CardTitle>Diagnóstico do Sistema</CardTitle>
           </div>
           <Button
@@ -129,7 +70,7 @@ const AdminDiagnostics = () => {
       </CardHeader>
       <CardContent>
         {!diagnostics ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             Clique em "Executar Diagnóstico" para verificar o sistema
           </div>
         ) : (
@@ -139,31 +80,31 @@ const AdminDiagnostics = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-4 w-4 text-blue-600" />
+                    <Users className="h-4 w-4 text-primary" />
                     <span className="font-medium">Status Admin</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {diagnostics.isAdmin ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : (
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
                     )}
                     <Badge variant={diagnostics.isAdmin ? "default" : "destructive"}>
                       {diagnostics.isAdmin ? 'Admin' : 'Não Admin'}
                     </Badge>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       via {diagnostics.adminCheckMethod}
                     </span>
                   </div>
                   {!diagnostics.isAdmin && (
-                    <Button
-                      onClick={makeAdmin}
-                      size="sm"
-                      className="mt-2"
-                    >
-                      <Settings className="h-3 w-3 mr-1" />
-                      Promover a Admin
-                    </Button>
+                    <div className="mt-3 p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Shield className="h-4 w-4" />
+                        <span>
+                          Promoção de admin deve ser feita através de processos seguros no servidor.
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -171,61 +112,27 @@ const AdminDiagnostics = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Database className="h-4 w-4 text-purple-600" />
-                    <span className="font-medium">Dados do Sistema</span>
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Informações</span>
                   </div>
                   <div className="space-y-1 text-sm">
-                    <div>Uploads: {diagnostics.totalUploads}</div>
-                    <div>Usuários: {diagnostics.totalUsers}</div>
                     <div>Usuário ID: {diagnostics.currentUserId?.slice(0, 8)}...</div>
+                    <div>Método de verificação: {diagnostics.adminCheckMethod}</div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Sample Upload */}
-            {diagnostics.sampleUpload && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <HardDrive className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">Upload de Exemplo</span>
-                  </div>
-                  <div className="text-sm space-y-1">
-                    <div>ID: {diagnostics.sampleUpload.id}</div>
-                    <div>Arquivo: {diagnostics.sampleUpload.arquivo_original_nome}</div>
-                    <div>Tamanho: {diagnostics.sampleUpload.file_size || 0} bytes</div>
-                    <div>Data: {new Date(diagnostics.sampleUpload.data_upload).toLocaleDateString('pt-BR')}</div>
-                  </div>
-                  {(diagnostics.sampleUpload.file_size === 0 || !diagnostics.sampleUpload.file_size) && (
-                    <Button
-                      onClick={fixFileSizes}
-                      disabled={fixing}
-                      size="sm"
-                      className="mt-2"
-                    >
-                      {fixing ? (
-                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                      ) : (
-                        <Wrench className="h-3 w-3 mr-1" />
-                      )}
-                      Corrigir File Sizes
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
             {/* Erros */}
             {diagnostics.errors.length > 0 && (
-              <Card className="border-red-200 bg-red-50">
+              <Card className="border-destructive/50 bg-destructive/5">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="font-medium text-red-700">Problemas Encontrados</span>
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="font-medium text-destructive">Problemas Encontrados</span>
                   </div>
-                  <ul className="text-sm text-red-600 space-y-1">
-                    {diagnostics.errors.map((error, index) => (
+                  <ul className="text-sm text-destructive space-y-1">
+                    {diagnostics.errors.map((error: string, index: number) => (
                       <li key={index}>• {error}</li>
                     ))}
                   </ul>
@@ -233,20 +140,37 @@ const AdminDiagnostics = () => {
               </Card>
             )}
 
-            {/* Registro do Usuário */}
-            {diagnostics.userRecord && (
-              <Card>
+            {/* Warnings */}
+            {diagnostics.warnings && diagnostics.warnings.length > 0 && (
+              <Card className="border-yellow-500/50 bg-yellow-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Registro do Usuário</span>
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    <span className="font-medium text-yellow-700">Avisos</span>
                   </div>
-                  <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
-                    {JSON.stringify(diagnostics.userRecord, null, 2)}
-                  </pre>
+                  <ul className="text-sm text-yellow-600 space-y-1">
+                    {diagnostics.warnings.map((warning: string, index: number) => (
+                      <li key={index}>• {warning}</li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             )}
+
+            {/* Security Notice */}
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-primary">Nota de Segurança</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  A promoção de administradores foi restrita a processos seguros no servidor para prevenir 
+                  ataques de escalação de privilégios. Para adicionar um novo administrador, utilize o 
+                  painel do Supabase ou funções RPC autorizadas.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </CardContent>

@@ -7,6 +7,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to verify JWT and get user
+async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, error: 'Token de autenticação não fornecido' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return { userId: null, error: 'Token inválido ou expirado' };
+    }
+    
+    return { userId: user.id, error: null };
+  } catch (error) {
+    console.error('❌ Erro ao verificar autenticação:', error);
+    return { userId: null, error: 'Erro ao verificar autenticação' };
+  }
+}
+
 // Detectar tema automático do conteúdo
 function detectTheme(content: string): string {
   const keywords: { [key: string]: string[] } = {
@@ -49,7 +73,50 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Configuração do servidor incompleta' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // SECURITY: Verify authentication
+    const { userId: authUserId, error: authError } = await verifyAuth(req, supabase);
+    
+    if (authError || !authUserId) {
+      console.error('❌ Falha na autenticação:', authError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: authError || 'Não autorizado',
+          fallbackMessage: 'Você precisa estar logado para gerar flashcards.'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { resumoId, textoResumo, userId } = await req.json();
+    
+    // SECURITY: Verify userId matches authenticated user
+    if (userId && userId !== authUserId) {
+      console.error('❌ userId não corresponde ao usuário autenticado');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Acesso negado',
+          fallbackMessage: 'Você só pode gerar flashcards para sua própria conta.'
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const effectiveUserId = userId || authUserId;
     
     if (!resumoId || !textoResumo) {
       throw new Error('ID do resumo e texto são obrigatórios');
@@ -57,8 +124,6 @@ serve(async (req) => {
 
     // Verify Anthropic API key is available
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     console.log('🔑 Configurações disponíveis:');
     console.log('- ANTHROPIC_API_KEY:', anthropicApiKey ? '✅' : '❌');
@@ -76,37 +141,32 @@ serve(async (req) => {
         }
       );
     }
-
-    // Initialize Supabase
-    const supabase = createClient(supabaseUrl!, supabaseKey!);
     
     // Consume credits before generating flashcards
-    if (userId) {
-      const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
-        target_user_id: userId,
-        action_type: 'flashcards'
-      });
+    const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+      target_user_id: effectiveUserId,
+      action_type: 'flashcards'
+    });
 
-      if (creditError || !creditResult || !creditResult[0]?.success) {
-        console.error('❌ Erro ao consumir créditos:', creditError);
-        const message = creditResult?.[0]?.message || 'Créditos insuficientes';
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: message,
-            fallbackMessage: message.includes('insuficientes') 
-              ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
-              : 'Erro ao processar créditos. Tente novamente.'
-          }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
-
-      console.log(`💳 Créditos consumidos para flashcards: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+    if (creditError || !creditResult || !creditResult[0]?.success) {
+      console.error('❌ Erro ao consumir créditos:', creditError);
+      const message = creditResult?.[0]?.message || 'Créditos insuficientes';
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: message,
+          fallbackMessage: message.includes('insuficientes') 
+            ? 'Você não tem créditos suficientes. Faça upgrade do seu plano.'
+            : 'Erro ao processar créditos. Tente novamente.'
+        }),
+        {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
+
+    console.log(`💳 Créditos consumidos para flashcards: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
 
     console.log('Gerando flashcards automaticamente para resumo:', resumoId);
     console.log('Tamanho do texto:', textoResumo.length, 'caracteres');
