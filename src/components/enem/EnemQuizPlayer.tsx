@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, CheckCircle, XCircle, Check } from 'lucide-react';
 import { EnemObjectiveQuestion } from './EnemObjectiveQuestion';
 import { EnemVFQuestion } from './EnemVFQuestion';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +42,8 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
   const [loading, setLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [confirmedQuestions, setConfirmedQuestions] = useState<boolean[]>([]);
 
   // Timer effect
   useEffect(() => {
@@ -93,6 +95,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
 
         setQuestions(processedQuestions as EnemQuestion[]);
         setUserAnswers(new Array(processedQuestions.length).fill(-1));
+        setConfirmedQuestions(new Array(processedQuestions.length).fill(false));
 
         // Create session
         const { data: sessionData, error: sessionError } = await supabase
@@ -125,14 +128,25 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
   }, [quizMetadataId, user, onExit]);
 
   const handleAnswerSelect = (answerIndex: number) => {
+    if (showFeedback) return; // Block selection during feedback
     const newAnswers = [...userAnswers];
     newAnswers[currentIndex] = answerIndex;
     setUserAnswers(newAnswers);
   };
 
+  const handleConfirmAnswer = () => {
+    if (userAnswers[currentIndex] === -1) return;
+    const newConfirmed = [...confirmedQuestions];
+    newConfirmed[currentIndex] = true;
+    setConfirmedQuestions(newConfirmed);
+    setShowFeedback(true);
+  };
+
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      // Check if next question was already answered
+      setShowFeedback(confirmedQuestions[currentIndex + 1] || false);
     } else {
       finishQuiz();
     }
@@ -141,6 +155,8 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      // Check if previous question was already answered
+      setShowFeedback(confirmedQuestions[currentIndex - 1] || false);
     }
   };
 
@@ -351,12 +367,18 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
                 question={currentQuestion}
                 selectedAnswer={userAnswers[currentIndex]}
                 onAnswerSelect={handleAnswerSelect}
+                showFeedback={showFeedback}
+                correctIndex={currentQuestion.correct_index}
+                evidence={currentQuestion.evidence}
               />
             ) : (
               <EnemVFQuestion
                 question={currentQuestion}
                 selectedAnswer={userAnswers[currentIndex]}
                 onAnswerSelect={handleAnswerSelect}
+                showFeedback={showFeedback}
+                correctIndex={currentQuestion.correct_index}
+                evidence={currentQuestion.evidence}
               />
             )}
           </CardContent>
@@ -373,13 +395,25 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
             Anterior
           </Button>
 
-          <Button
-            onClick={handleNext}
-            disabled={userAnswers[currentIndex] === -1}
-          >
-            {currentIndex === questions.length - 1 ? 'Finalizar Quiz' : 'Próxima'}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+          <div className="flex gap-2">
+            {!showFeedback && (
+              <Button
+                onClick={handleConfirmAnswer}
+                disabled={userAnswers[currentIndex] === -1}
+                variant="secondary"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Confirmar Resposta
+              </Button>
+            )}
+
+            {showFeedback && (
+              <Button onClick={handleNext}>
+                {currentIndex === questions.length - 1 ? 'Finalizar Quiz' : 'Próxima Questão'}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
