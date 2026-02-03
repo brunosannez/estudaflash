@@ -31,7 +31,14 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     updateStats,
     updateScore,
     addCompletedCard,
-    syncWithSession
+    syncWithSession,
+    // New feedback states
+    showFeedback,
+    setShowFeedback,
+    userChoice,
+    setUserChoice,
+    lastXpEarned,
+    setLastXpEarned
   } = useFlashcardState();
 
   // Session management
@@ -51,7 +58,7 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
   const [isCompleted, setIsCompleted] = useState(false);
 
   // Actions
-  const { handleFlip, handleAnswer, getCurrentCard } = useFlashcardActions({
+  const { handleFlip, handleAnswer, handleNextCard, getCurrentCard } = useFlashcardActions({
     flashcards,
     currentIndex,
     setCurrentIndex,
@@ -69,7 +76,11 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     completedCards,
     saveProgress,
     realGamificationData,
-    onComplete: () => setIsCompleted(true)
+    onComplete: () => setIsCompleted(true),
+    // New feedback props
+    setShowFeedback,
+    setUserChoice,
+    setLastXpEarned
   });
 
   // Initialize session once flashcards are loaded
@@ -167,8 +178,14 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     realGamificationData,
     sessionId: activeSessionId,
     isCompleted,
+    // New feedback states
+    showFeedback,
+    userChoice,
+    lastXpEarned,
+    // Actions
     handleFlip,
     handleAnswer,
+    handleNextCard,
     handleShuffle,
     getCurrentCard,
     saveCurrentProgress,

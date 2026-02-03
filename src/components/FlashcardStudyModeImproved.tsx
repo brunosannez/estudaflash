@@ -38,8 +38,14 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
     realGamificationData,
     sessionId: activeSessionId,
     isCompleted,
+    // New feedback states
+    showFeedback,
+    userChoice,
+    lastXpEarned,
+    // Actions
     handleFlip,
     handleAnswer,
+    handleNextCard,
     handleShuffle,
     getCurrentCard,
     saveCurrentProgress,
@@ -172,20 +178,21 @@ const FlashcardStudyModeImproved = ({ resumoId, onBack, sessionId }: FlashcardSt
     <FlashcardStudyContainer
       flashcards={flashcards}
       currentIndex={currentIndex}
-      showAnswer={showAnswer}
+      showFeedback={showFeedback}
+      userChoice={userChoice}
       score={score}
       studyStats={studyStats}
-      isFlipped={isFlipped}
       completedCards={completedCards}
       isAnimating={isAnimating}
+      xpEarned={lastXpEarned}
       realGamificationData={realGamificationData}
       sessionId={activeSessionId}
       lastSaved={lastSaved}
       isOnline={isOnline}
       onBack={onBack}
       onShuffle={handleShuffle}
-      onFlip={handleFlip}
       onAnswer={handleAnswer}
+      onNextCard={handleNextCard}
       getCurrentCard={getCurrentCard}
     />
   );

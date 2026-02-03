@@ -28,40 +28,42 @@ interface Score {
 interface FlashcardStudyContainerProps {
   flashcards: Flashcard[];
   currentIndex: number;
-  showAnswer: boolean;
+  showFeedback: boolean;
+  userChoice: 'correct' | 'incorrect' | null;
   score: Score;
   studyStats: StudyStats;
-  isFlipped: boolean;
   completedCards: Set<string>;
   isAnimating: boolean;
+  xpEarned: number;
   realGamificationData: any;
   sessionId: string | null;
   lastSaved?: Date;
   isOnline: boolean;
   onBack: () => void;
   onShuffle: () => void;
-  onFlip: () => void;
   onAnswer: (remembered: boolean) => void;
+  onNextCard: () => void;
   getCurrentCard: () => Flashcard;
 }
 
 const FlashcardStudyContainer = ({
   flashcards,
   currentIndex,
-  showAnswer,
+  showFeedback,
+  userChoice,
   score,
   studyStats,
-  isFlipped,
   completedCards,
   isAnimating,
+  xpEarned,
   realGamificationData,
   sessionId,
   lastSaved,
   isOnline,
   onBack,
   onShuffle,
-  onFlip,
   onAnswer,
+  onNextCard,
   getCurrentCard
 }: FlashcardStudyContainerProps) => {
   const currentCard = getCurrentCard();
@@ -85,11 +87,12 @@ const FlashcardStudyContainer = ({
       <FlashcardContainer
         currentCard={currentCard}
         currentIndex={currentIndex}
-        showAnswer={showAnswer}
-        isFlipped={isFlipped}
-        onFlip={onFlip}
+        showFeedback={showFeedback}
+        userChoice={userChoice}
         onAnswer={onAnswer}
+        onNextCard={onNextCard}
         isAnimating={isAnimating}
+        xpEarned={xpEarned}
       />
 
       <FlashcardControls

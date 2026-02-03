@@ -1,7 +1,6 @@
 
 import React from 'react';
 import SwipeableFlashcard from './SwipeableFlashcard';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Flashcard {
   id: string;
@@ -13,33 +12,34 @@ interface Flashcard {
 interface FlashcardContainerProps {
   currentCard: Flashcard;
   currentIndex: number;
-  showAnswer: boolean;
-  isFlipped: boolean;
-  onFlip: () => void;
+  showFeedback: boolean;
+  userChoice: 'correct' | 'incorrect' | null;
   onAnswer: (remembered: boolean) => void;
+  onNextCard: () => void;
   isAnimating: boolean;
+  xpEarned: number;
 }
 
 const FlashcardContainer = ({ 
   currentCard, 
   currentIndex, 
-  showAnswer, 
-  isFlipped, 
-  onFlip, 
+  showFeedback,
+  userChoice,
   onAnswer, 
-  isAnimating 
+  onNextCard,
+  isAnimating,
+  xpEarned
 }: FlashcardContainerProps) => {
-  const isMobile = useIsMobile();
-
-  // Use swipeable version for all devices but optimize for mobile
   return (
     <SwipeableFlashcard
       currentCard={currentCard}
       currentIndex={currentIndex}
-      showAnswer={showAnswer}
-      onFlip={onFlip}
+      showFeedback={showFeedback}
+      userChoice={userChoice}
       onAnswer={onAnswer}
+      onNextCard={onNextCard}
       isAnimating={isAnimating}
+      xpEarned={xpEarned}
     />
   );
 };

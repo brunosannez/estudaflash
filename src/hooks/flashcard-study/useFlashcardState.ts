@@ -20,10 +20,18 @@ export const useFlashcardState = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // New states for feedback flow
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [userChoice, setUserChoice] = useState<'correct' | 'incorrect' | null>(null);
+  const [lastXpEarned, setLastXpEarned] = useState(0);
 
   const resetFlipState = () => {
     setShowAnswer(false);
     setIsFlipped(false);
+    setShowFeedback(false);
+    setUserChoice(null);
+    setLastXpEarned(0);
   };
 
   const updateStats = (newStats: StudyStats) => {
@@ -68,6 +76,13 @@ export const useFlashcardState = () => {
     updateStats,
     updateScore,
     addCompletedCard,
-    syncWithSession
+    syncWithSession,
+    // New feedback states
+    showFeedback,
+    setShowFeedback,
+    userChoice,
+    setUserChoice,
+    lastXpEarned,
+    setLastXpEarned
   };
 };
