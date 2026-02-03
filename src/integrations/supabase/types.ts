@@ -2236,7 +2236,7 @@ export type Database = {
       }
       get_guardian_by_user:
         | {
-            Args: { access_reason?: string; target_user_id: string }
+            Args: { target_user_id: string }
             Returns: {
               cpf: string
               email: string
@@ -2246,7 +2246,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: { target_user_id: string }
+            Args: { access_reason?: string; target_user_id: string }
             Returns: {
               cpf: string
               email: string
