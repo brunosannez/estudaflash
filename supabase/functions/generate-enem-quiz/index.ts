@@ -204,7 +204,7 @@ Responda APENAS com o JSON válido, sem explicações adicionais.`;
     console.log('🤖 Calling Anthropic Claude API...');
     console.log('📝 Prompt length:', promptText.length);
 
-    // Use Anthropic Claude 3.5 Sonnet for quiz generation
+    // Use Anthropic Claude Sonnet 4 (latest) for quiz generation
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -213,7 +213,7 @@ Responda APENAS com o JSON válido, sem explicações adicionais.`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         messages: [
           {

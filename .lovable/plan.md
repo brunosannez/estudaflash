@@ -5,8 +5,8 @@
 ### FASE 1: Corrigir Edge Functions ✅
 
 #### 1.1. `generate-enem-quiz/index.ts` ✅
-- ✅ Migrado de OpenAI para **Anthropic Claude 3.5 Sonnet**
-- ✅ Modelo: `claude-3-5-sonnet-20241022`
+- ✅ Migrado de OpenAI para **Anthropic Claude Sonnet 4**
+- ✅ Modelo: `claude-sonnet-4-20250514`
 - ✅ Suporte a múltiplos quizzes por resumo (sem constraint unique)
 - ✅ Detecção automática de tema e cálculo dinâmico de questões
 
@@ -17,7 +17,7 @@
 - ✅ Validação de qualidade dos flashcards mantida
 
 #### 1.3. `generate-summary/index.ts` ✅
-- ✅ Modelo atualizado para `claude-3-5-sonnet-20241022`
+- ✅ Modelo atualizado para `claude-sonnet-4-20250514`
 - ✅ Estrutura de créditos mantida
 
 #### 1.4. `generate-mind-map/index.ts` ✅
@@ -34,8 +34,30 @@
 
 #### 2.2. `aiModelService.ts` ✅
 - ✅ Atualizada configuração de modelos para usar apenas Anthropic
-- ✅ Removidas dependências de OpenAI e HuggingFace
+- ✅ Modelo atualizado para `claude-sonnet-4-20250514`
 - ✅ Interface tipada corretamente
+
+---
+
+### FASE 3: Funcionalidades de Exclusão ✅ (NOVA)
+
+#### 3.1. `deleteService.ts` ✅
+- ✅ Criado serviço centralizado de exclusão
+- ✅ `deleteResumo()` - deleta resumo e todos dados relacionados
+- ✅ `deleteFlashcardSet()` - deleta flashcards de um resumo
+- ✅ `deleteQuiz()` - deleta quiz ENEM e sessões
+
+#### 3.2. `MySummaries.tsx` ✅
+- ✅ Botão de lixeira com confirmação em cada card de resumo
+- ✅ Exclusão completa (resumo + flashcards + quizzes + uploads)
+
+#### 3.3. `FlashcardSetCard.tsx` ✅
+- ✅ Botão de lixeira para deletar conjunto de flashcards
+- ✅ Modal de confirmação antes de deletar
+
+#### 3.4. `EnemQuiz.tsx` ✅
+- ✅ Botão de deletar quiz na seção de opções
+- ✅ Deleta quiz, sessões e respostas
 
 ---
 
@@ -43,11 +65,15 @@
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `generate-enem-quiz/index.ts` | OpenAI → Anthropic Claude 3.5 Sonnet |
-| `generate-flashcards/index.ts` | HuggingFace → Anthropic Claude 3 Haiku |
-| `generate-summary/index.ts` | Modelo atualizado para claude-3-5-sonnet-20241022 |
+| `generate-enem-quiz/index.ts` | Modelo: claude-sonnet-4-20250514 |
+| `generate-flashcards/index.ts` | Modelo: claude-3-haiku-20240307 |
+| `generate-summary/index.ts` | Modelo: claude-sonnet-4-20250514 |
 | `useEnemQuiz.ts` | Query corrigida para múltiplos quizzes |
-| `aiModelService.ts` | Configuração unificada em Anthropic |
+| `aiModelService.ts` | Modelo atualizado para claude-sonnet-4-20250514 |
+| `deleteService.ts` | **NOVO** - Serviço de exclusão |
+| `MySummaries.tsx` | Botão de lixeira adicionado |
+| `FlashcardSetCard.tsx` | Botão de lixeira adicionado |
+| `EnemQuiz.tsx` | Botão de deletar quiz adicionado |
 
 ---
 
@@ -55,8 +81,8 @@
 
 | Função | Modelo | Custo/1M tokens |
 |--------|--------|-----------------|
-| **Resumo** | claude-3-5-sonnet-20241022 | $3.00 input / $15.00 output |
-| **Quiz ENEM** | claude-3-5-sonnet-20241022 | $3.00 input / $15.00 output |
+| **Resumo** | claude-sonnet-4-20250514 | ~$3.00 input / $15.00 output |
+| **Quiz ENEM** | claude-sonnet-4-20250514 | ~$3.00 input / $15.00 output |
 | **Flashcards** | claude-3-haiku-20240307 | $0.25 input / $1.25 output |
 | **Mapa Mental** | claude-3-haiku-20240307 | $0.25 input / $1.25 output |
 

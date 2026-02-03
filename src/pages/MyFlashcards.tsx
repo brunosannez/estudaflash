@@ -232,6 +232,7 @@ const MyFlashcards = () => {
                     key={flashcardSet.resumo_id}
                     flashcardSet={flashcardSet}
                     onStartStudy={handleStartStudy}
+                    onDeleted={loadFlashcards}
                   />
                 ))}
               </div>

@@ -10,11 +10,10 @@ const corsHeaders = {
 
 // Função para obter configuração do modelo baseada no plano - CORRIGIDA
 function getModelConfigForPlan(plan: string) {
-  // Usar sempre um modelo Anthropic válido e estável
-  // Modelo atualizado: claude-3-5-sonnet-20241022 (versão mais recente)
+  // Usar Anthropic Claude Sonnet 4 (modelo mais recente e estável)
   const baseConfig = {
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-20250514',
     maxTokens: 4000,
   } as const;
 

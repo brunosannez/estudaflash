@@ -3,12 +3,24 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Clock, Target, BookOpen, Trash2 } from 'lucide-react';
 import { EnemQuizPlayer } from '@/components/enem/EnemQuizPlayer';
 import { useEnemQuiz } from '@/hooks/useEnemQuiz';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteService } from '@/services/deleteService';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const EnemQuiz: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +33,7 @@ const EnemQuiz: React.FC = () => {
   const [userSessions, setUserSessions] = useState<any[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -108,6 +121,18 @@ const EnemQuiz: React.FC = () => {
 
   const handleExit = () => {
     setIsPlaying(false);
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!quizMetadata) return;
+    
+    setIsDeleting(true);
+    const success = await deleteService.deleteQuiz(quizMetadata.id);
+    if (success) {
+      setQuizMetadata(null);
+      setUserSessions([]);
+    }
+    setIsDeleting(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -318,35 +343,73 @@ const EnemQuiz: React.FC = () => {
               </Card>
             )}
 
-            {/* Regenerate Option */}
+            {/* Delete and Regenerate Options */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5" />
-                  Gerar Novo Quiz
+                  Opções do Quiz
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Quer um novo desafio? Gere um novo quiz com questões diferentes baseadas no mesmo resumo.
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={handleGenerateQuiz} 
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                      Gerando...
-                    </>
-                  ) : (
-                    <>
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Gerar Novo Quiz
-                    </>
-                  )}
-                </Button>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <p className="text-muted-foreground mb-2 text-sm">
+                      Gere um novo quiz com questões diferentes.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleGenerateQuiz} 
+                      disabled={generating}
+                    >
+                      {generating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Gerar Novo Quiz
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <p className="text-muted-foreground mb-2 text-sm">
+                      Exclua este quiz permanentemente.
+                    </p>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="border-destructive text-destructive hover:bg-destructive/10"
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Deletar Quiz
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Deletar quiz?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é irreversível. O quiz e todo o histórico de tentativas serão permanentemente excluídos.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteQuiz}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Deletar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </>
