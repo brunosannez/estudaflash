@@ -6,6 +6,7 @@ import PersonalizedGreeting from '@/components/dashboard/PersonalizedGreeting';
 import GamificationCards from '@/components/dashboard/GamificationCards';
 import QuickActions from '@/components/dashboard/QuickActions';
 import StudyStatsGrid from '@/components/dashboard/StudyStatsGrid';
+import DailyMission from '@/components/dashboard/DailyMission';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 
@@ -18,13 +19,16 @@ const Index = () => {
         <div className="relative min-h-screen">
           <FloatingBackground />
           
-          <div className="relative z-10 space-y-8 container mx-auto px-4 py-6">
+          <div className="relative z-10 space-y-6 container mx-auto px-4 py-6">
             {/* Saudação Personalizada */}
             <PersonalizedGreeting />
             
+            {/* Missão do Dia - Novo destaque */}
+            <DailyMission />
+            
             {/* Cards de Gamificação */}
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 🎮 Seu Progresso
               </h2>
               <GamificationCards />
@@ -32,16 +36,16 @@ const Index = () => {
             
             {/* Ações Rápidas */}
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                ⚡ Ações Rápidas
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                ⚡ O Que Fazer Agora?
               </h2>
               <QuickActions />
             </div>
             
             {/* Estatísticas de Estudo */}
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                📊 Estatísticas
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                📊 Como Você Está Indo
               </h2>
               <StudyStatsGrid />
             </div>
@@ -49,24 +53,24 @@ const Index = () => {
             {/* Grid Principal */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-sky-100">
                   <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    📈 Visão Geral de Uso
+                    📈 Uso do App
                   </h3>
                   <DashboardUsageOverview />
                 </div>
               </div>
               
               <div className="xl:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Atividade Recente</CardTitle>
-              <CardDescription>Suas atividades de estudo mais recentes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Seus estudos recentes aparecerão aqui</p>
-            </CardContent>
-          </Card>
+                <Card className="bg-white/90 backdrop-blur-sm border-sky-100 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">📝 Atividade Recente</CardTitle>
+                    <CardDescription>O que você fez ultimamente</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500 text-sm">Seus estudos recentes vão aparecer aqui!</p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
