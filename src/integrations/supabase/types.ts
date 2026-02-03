@@ -359,6 +359,7 @@ export type Database = {
         Row: {
           coverage_map: Json
           created_at: string
+          custom_name: string | null
           generated: Json
           id: string
           idade_usuario: number
@@ -373,6 +374,7 @@ export type Database = {
         Insert: {
           coverage_map?: Json
           created_at?: string
+          custom_name?: string | null
           generated?: Json
           id?: string
           idade_usuario: number
@@ -387,6 +389,7 @@ export type Database = {
         Update: {
           coverage_map?: Json
           created_at?: string
+          custom_name?: string | null
           generated?: Json
           id?: string
           idade_usuario?: number
