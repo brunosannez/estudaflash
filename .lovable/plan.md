@@ -1,238 +1,359 @@
 
-# Plano: Renomear Quizzes, Histórico Completo e Gamificação de Pontuação
+# Plano: Corrigir Erro dos Flashcards e Implementar Novo Fluxo com Gamificação
 
-## Visão Geral
-Implementar três funcionalidades interligadas:
-1. **Renomear quizzes** - permitir que o usuário personalize o nome
-2. **Nome automático com data** - IA gera nome padrão: "Tema - DD/MM HH:mm"
-3. **Gamificação de pontuação** - XP por respostas corretas/erradas durante o quiz
+## Diagnóstico do Problema
+
+### Erro Identificado
+O erro "A component suspended while responding to synchronous input" ocorre porque:
+1. O `useFlashcardActions.ts` faz operações assíncronas (database calls) diretamente em resposta a cliques de botão
+2. O `realGamificationData.refreshData()` na linha 99 causa uma atualização de estado síncrona que dispara uma suspensão
+3. As atualizações de estado dentro de `handleAnswer` não estão encapsuladas em `startTransition`
+
+### Solução Técnica
+Envolver as atualizações de estado em `startTransition` do React para indicar que são atualizações não-urgentes.
 
 ---
 
-## 1. Renomear Quizzes
+## Nova Experiência do Usuário Solicitada
 
-### 1.1 Alteração no Banco de Dados
-Adicionar coluna `custom_name` na tabela `enem_quiz_metadata`:
-- Tipo: `text`, nullable
-- Padrão: NULL (usa nome gerado automaticamente)
-
-**Migration SQL:**
-```sql
-ALTER TABLE enem_quiz_metadata 
-ADD COLUMN custom_name text DEFAULT NULL;
+### Fluxo Atual (Problemático)
+```text
+[Pergunta] → Clica no card → [Resposta] → Clica "Lembrei/Não Lembrei" → Próximo card
 ```
 
-### 1.2 Nome Automático Gerado pela IA
-Na Edge Function `generate-enem-quiz`, ao inserir o quiz metadata:
-- Gerar nome padrão: `{Tema} - {DD/MM/YYYY HH:mm}`
-- Exemplo: "História - 03/02/2026 13:35"
+### Novo Fluxo Proposto
+```text
+┌─────────────────────────────────────────────────────┐
+│           PERGUNTA                                  │
+│                                                     │
+│   "Qual é a capital do Brasil?"                     │
+│                                                     │
+│   ┌──────────────────┐  ┌──────────────────┐       │
+│   │  😅 Não Lembrei  │  │  🎉 Lembrei!     │       │
+│   │     (+2 XP)      │  │     (+10 XP)     │       │
+│   └──────────────────┘  └──────────────────┘       │
+└─────────────────────────────────────────────────────┘
+                         ↓
+                    Clicou em um botão
+                         ↓
+┌─────────────────────────────────────────────────────┐
+│           FEEDBACK + RESPOSTA                       │
+│                                                     │
+│   ┌───────────────────────────────────────────────┐│
+│   │ 🎉 Parabéns! Você acertou! (ou)               ││
+│   │ 💪 Não desista! Revise esta resposta:         ││
+│   └───────────────────────────────────────────────┘│
+│                                                     │
+│   ✅ Resposta Correta:                              │
+│   "Brasília é a capital do Brasil"                 │
+│                                                     │
+│   💡 Exemplo: "Brasília foi inaugurada em 1960..." │
+│                                                     │
+│              [Próximo Card →]                       │
+└─────────────────────────────────────────────────────┘
+```
 
-**Arquivo:** `supabase/functions/generate-enem-quiz/index.ts`
+---
 
-### 1.3 Interface de Renomear na Página do Quiz
-**Arquivo:** `src/pages/EnemQuiz.tsx`
+## Implementação Detalhada
 
-Adicionar botão de edição (ícone lápis) ao lado do nome do quiz que:
-- Abre um dialog/input inline
-- Permite editar `custom_name`
-- Salva via `useEnemQuiz.renameQuiz(quizId, newName)`
-- Atualiza a interface imediatamente
+### Fase 1: Corrigir Erro de Suspense
 
-### 1.4 Hook para Renomear
-**Arquivo:** `src/hooks/useEnemQuiz.ts`
+**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
 
-Nova função:
+Modificações:
+1. Importar `startTransition` do React
+2. Envolver atualizações de estado não-críticas em `startTransition`
+3. Separar operações de banco de dados das atualizações de UI
+
 ```typescript
-const renameQuiz = async (quizId: string, newName: string) => {
-  await supabase
-    .from('enem_quiz_metadata')
-    .update({ custom_name: newName, updated_at: new Date().toISOString() })
-    .eq('id', quizId);
+import { useCallback, startTransition } from 'react';
+
+// Na função handleAnswer, envolver atualizações de estado:
+startTransition(() => {
+  updateStats(newStats);
+  updateScore(newScore);
+  addCompletedCard(currentCard.id);
+  realGamificationData.refreshData();
+});
+```
+
+### Fase 2: Alterar Fluxo do Flashcard (Botões na Pergunta)
+
+**Arquivo:** `src/components/flashcard-study/SwipeableFlashcard.tsx`
+
+Restruturar o componente para:
+1. **Face da Pergunta**: Mostrar pergunta + botões "Lembrei" e "Não Lembrei"
+2. **Face do Feedback**: Mostrar mensagem motivacional + resposta correta
+3. Adicionar novo estado `userChoice` para rastrear a escolha do usuário
+4. Remover necessidade de clicar no card para virar
+
+Novo fluxo de props:
+```typescript
+interface SwipeableFlashcardProps {
+  currentCard: Flashcard;
+  currentIndex: number;
+  showFeedback: boolean; // NOVO: substitui showAnswer
+  userChoice: 'correct' | 'incorrect' | null; // NOVO
+  onAnswer: (remembered: boolean) => void;
+  onNextCard: () => void; // NOVO: avançar manualmente
+  isAnimating: boolean;
+  xpEarned: number; // NOVO: XP ganho nesta resposta
 }
 ```
 
-### 1.5 Exibição do Nome
-- Se `custom_name` existir: usar `custom_name`
-- Senão: gerar nome padrão "{tema} - {data formatada}"
+### Fase 3: Atualizar Container e Lógica de Estado
 
----
+**Arquivo:** `src/components/flashcard-study/FlashcardStudyContainer.tsx`
 
-## 2. Histórico de Quizzes Aprimorado
+Adicionar props:
+- `showFeedback`: controla se mostra feedback
+- `userChoice`: acerto ou erro
+- `onNextCard`: avançar para próximo
+- `xpEarned`: XP da resposta atual
 
-### 2.1 Atualizar QuizHistory.tsx
-**Arquivo:** `src/pages/QuizHistory.tsx`
+**Arquivo:** `src/hooks/flashcard-study/useFlashcardState.ts`
 
-- Exibir nome do quiz (custom_name ou nome gerado)
-- Mostrar estatísticas resumidas: tentativas, melhor score
-- Ordenar por data mais recente
-- Filtros: por tema, por data, completos/pendentes
+Adicionar novos estados:
+```typescript
+const [showFeedback, setShowFeedback] = useState(false);
+const [userChoice, setUserChoice] = useState<'correct' | 'incorrect' | null>(null);
+const [lastXpEarned, setLastXpEarned] = useState(0);
+```
 
-### 2.2 Seletor de Quiz na página EnemQuiz
-**Arquivo:** `src/pages/EnemQuiz.tsx`
+**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
 
-Melhorar o dropdown de seleção para exibir:
-- Nome customizado (se existir)
-- Ou nome padrão: "Quiz {tema} - {data}"
-- Badge com quantidade de questões
+Modificar `handleAnswer`:
+1. Ao clicar no botão, registrar escolha e mostrar feedback
+2. **NÃO** avançar automaticamente para próximo card
+3. Aguardar clique em "Próximo Card"
 
----
+Adicionar `handleNextCard`:
+1. Resetar estados de feedback
+2. Avançar para próximo card ou completar sessão
 
-## 3. Gamificação de Pontuação por Respostas
+### Fase 4: Gamificação com XP (Similar ao Quiz)
 
-### 3.1 Sistema de XP
-**Regras de pontuação:**
+**Sistema de Pontuação:**
 | Evento | XP |
 |--------|-----|
-| Resposta correta (objetiva) | +15 XP |
-| Resposta correta (V/F) | +10 XP |
-| Resposta incorreta | +2 XP (encorajamento) |
-| Quiz concluído | +25 XP (bônus) |
-| Quiz perfeito (100%) | +50 XP (bônus extra) |
+| Flashcard correto ("Lembrei") | +10 XP |
+| Flashcard incorreto ("Não Lembrei") | +2 XP (encorajamento) |
+| Sessão completa | +25 XP (bônus) |
+| Sessão perfeita (100%) | +50 XP (bônus extra) |
 
-### 3.2 Implementação no EnemQuizPlayer
-**Arquivo:** `src/components/enem/EnemQuizPlayer.tsx`
+**Arquivo:** `src/components/flashcard-study/FlashcardCompletionScreen.tsx`
 
-No `handleConfirmAnswer`:
-1. Verificar se resposta está correta
-2. Calcular XP baseado no tipo de questão
-3. Chamar `addXP(xpAmount, 'quiz_correct')` ou `addXP(xpAmount, 'quiz_incorrect')`
-4. Mostrar feedback visual: toast com XP ganho
+Já implementa a tela de conclusão - manter e garantir bônus:
+- Adicionar bônus de conclusão (+25 XP)
+- Adicionar bônus de perfeição (+50 XP) se 100% de acertos
 
-No `finishQuiz`:
-1. Adicionar bônus de conclusão (+25 XP)
-2. Se 100% de acertos: adicionar bônus perfeito (+50 XP extra)
-3. Atualizar `daily_activities.quizzes_completed` e `quiz_correct_answers`
+**Arquivo:** `src/hooks/flashcard-study/useFlashcardActions.ts`
 
-### 3.3 Hook de Gamificação
-**Arquivo:** `src/hooks/useGameification.ts`
-
-O hook já existe com:
-- `addXP(amount, activityType)` 
-- Activity types: 'quiz_correct', 'quiz_incorrect', 'quiz_complete', 'quiz_perfect'
-
-### 3.4 Feedback Visual Durante o Quiz
-**Arquivos:** 
-- `src/components/enem/EnemObjectiveQuestion.tsx`
-- `src/components/enem/EnemVFQuestion.tsx`
-- `src/components/enem/EnemQuizPlayer.tsx`
-
-Adicionar animação de XP ao confirmar resposta:
-- Toast colorido: verde (+15 XP) ou amarelo (+2 XP)
-- Contador de XP acumulado no header do quiz
-
-### 3.5 Atualização do Banco de Dados
-Na tabela `daily_activities`, já existem as colunas:
-- `quizzes_completed` (integer)
-- `quiz_correct_answers` (integer)
-- `xp_earned` (integer)
-
-Atualizar ao finalizar quiz:
+Integrar com `useGameification`:
 ```typescript
-await supabase
-  .from('daily_activities')
-  .update({ 
-    quizzes_completed: prev.quizzes_completed + 1,
-    quiz_correct_answers: prev.quiz_correct_answers + correctCount,
-    xp_earned: prev.xp_earned + totalXpEarned
-  })
-  .eq('user_id', userId)
-  .eq('activity_date', today);
+import { useGameification } from '@/hooks/useGameification';
+
+const { addXP } = useGameification();
+
+// No handleAnswer:
+const xpAmount = remembered ? 10 : 2;
+await addXP(xpAmount, remembered ? 'quiz_correct' : 'quiz_incorrect');
 ```
 
----
+### Fase 5: Design Visual do Feedback
 
-## 4. Arquivos a Serem Modificados
-
-### Frontend
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/EnemQuiz.tsx` | Adicionar botão de renomear, exibir nome customizado, integrar gamificação |
-| `src/components/enem/EnemQuizPlayer.tsx` | Integrar XP por resposta, mostrar contador de XP, bônus ao finalizar |
-| `src/pages/QuizHistory.tsx` | Exibir nomes customizados, melhorar estatísticas |
-| `src/hooks/useEnemQuiz.ts` | Adicionar `renameQuiz()`, atualizar `EnemQuizMetadata` interface |
-| `src/hooks/useGameification.ts` | Garantir activity types para quiz |
-| `src/components/enem/EnemObjectiveQuestion.tsx` | (Já implementado) feedback visual |
-| `src/components/enem/EnemVFQuestion.tsx` | (Já implementado) feedback visual |
-
-### Backend
-| Arquivo | Alteração |
-|---------|-----------|
-| `supabase/functions/generate-enem-quiz/index.ts` | Gerar nome padrão automaticamente |
-
-### Banco de Dados
-- Adicionar coluna `custom_name` em `enem_quiz_metadata`
-
----
-
-## 5. Fluxo de Usuário Final
-
+**Feedback de Acerto (Verde):**
 ```text
-1. Usuário gera quiz
-   ↓
-2. IA cria com nome automático: "História - 03/02/2026 13:35"
-   ↓
-3. Usuário pode renomear: "Quiz Chegada dos Portugueses"
-   ↓
-4. Ao responder cada questão:
-   - Correta → +15 XP (objetiva) ou +10 XP (V/F)
-   - Errada → +2 XP
-   - Toast mostra XP ganho
-   ↓
-5. Ao finalizar quiz:
-   - +25 XP bônus de conclusão
-   - +50 XP extra se 100%
-   - Atualiza estatísticas do dia
-   ↓
-6. Histórico mostra todos os quizzes com nomes personalizados
+┌─────────────────────────────────────────┐
+│  🎉 PARABÉNS! VOCÊ LEMBROU!             │
+│  ────────────────────────────           │
+│  +10 XP                                 │
+│                                         │
+│  ✅ Resposta:                           │
+│  "Brasília é a capital do Brasil"       │
+│                                         │
+│  💡 Exemplo:                            │
+│  "Inaugurada em 21 de abril de 1960..." │
+│                                         │
+│           [Próximo Card →]              │
+└─────────────────────────────────────────┘
+```
+
+**Feedback de Erro (Amarelo/Motivacional):**
+```text
+┌─────────────────────────────────────────┐
+│  💪 CONTINUE ESTUDANDO!                 │
+│  ────────────────────────────           │
+│  +2 XP por tentar                       │
+│                                         │
+│  📖 A resposta correta é:               │
+│  "Brasília é a capital do Brasil"       │
+│                                         │
+│  💡 Dica para lembrar:                  │
+│  "Inaugurada em 21 de abril de 1960..." │
+│                                         │
+│           [Próximo Card →]              │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## 6. Interface do Renomear (Design)
+## Arquivos a Serem Modificados
 
-Na página do quiz, ao lado do título:
-```
-[ Quiz ENEM 📝 ]  ← clicável
-        ↓
-[ Input: "Digite o nome..." ] [Salvar] [Cancelar]
-```
-
-Ou:
-- Ícone de lápis ao lado do dropdown de seleção de quiz
-- Ao clicar, transforma em input inline
-- Enter para salvar, Escape para cancelar
+| Arquivo | Modificação |
+|---------|-------------|
+| `src/hooks/flashcard-study/useFlashcardActions.ts` | Adicionar startTransition, separar handleAnswer e handleNextCard, integrar XP |
+| `src/hooks/flashcard-study/useFlashcardState.ts` | Adicionar estados showFeedback, userChoice, lastXpEarned |
+| `src/hooks/flashcard-study/useFlashcardStudyManager.ts` | Expor novos estados e ações |
+| `src/components/flashcard-study/SwipeableFlashcard.tsx` | Restruturar para novo fluxo: botões na pergunta, feedback após escolha |
+| `src/components/flashcard-study/FlashcardContainer.tsx` | Passar novas props |
+| `src/components/flashcard-study/FlashcardStudyContainer.tsx` | Adicionar novas props e handler |
+| `src/components/FlashcardStudyModeImproved.tsx` | Conectar novos estados |
 
 ---
 
-## 7. Tipos TypeScript Atualizados
+## Detalhes Técnicos
 
+### startTransition para Corrigir Erro
 ```typescript
-// src/hooks/useEnemQuiz.ts
-export interface EnemQuizMetadata {
-  id: string;
-  resumo_id: string;
-  tema: string;
-  custom_name: string | null; // NOVO
-  // ... resto
-}
+// useFlashcardActions.ts
+import { useCallback, startTransition } from 'react';
 
-// src/types/gamification.ts
-export type ActivityType = 
-  | 'flashcard' 
-  | 'quiz_correct' 
-  | 'quiz_incorrect'
-  | 'quiz_perfect'    // Já existe
-  | 'quiz_excellent'  // Já existe
-  | 'quiz_good'       // Já existe
-  | 'quiz_complete';  // Já existe
+const handleAnswer = async (remembered: boolean) => {
+  if (flashcards.length === 0 || isAnimating) return;
+  
+  const currentCard = flashcards[currentIndex];
+  const xpToAdd = remembered ? 10 : 2;
+  
+  // Mostrar feedback imediatamente (síncrono)
+  setShowFeedback(true);
+  setUserChoice(remembered ? 'correct' : 'incorrect');
+  setLastXpEarned(xpToAdd);
+  
+  // Operações de banco de dados em background
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('flashcard_reviews').insert({...});
+      await updateProgressAfterActivity('flashcard', xpToAdd);
+    }
+    
+    // Atualizações de estado não-urgentes
+    startTransition(() => {
+      updateStats(newStats);
+      updateScore(newScore);
+      addCompletedCard(currentCard.id);
+      realGamificationData.refreshData();
+    });
+    
+    // Toast de feedback
+    toast({
+      title: remembered ? "🎉 +10 XP!" : "💪 +2 XP por tentar!",
+      description: remembered 
+        ? "Excelente memória!" 
+        : "Continue praticando, você está evoluindo!",
+    });
+    
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
+// Nova função para avançar
+const handleNextCard = () => {
+  setShowFeedback(false);
+  setUserChoice(null);
+  setLastXpEarned(0);
+  
+  if (currentIndex + 1 >= flashcards.length) {
+    onComplete?.();
+  } else {
+    setCurrentIndex(currentIndex + 1);
+  }
+};
+```
+
+### Novo SwipeableFlashcard
+```typescript
+// Estrutura simplificada do novo componente
+const SwipeableFlashcard = ({ 
+  currentCard, 
+  currentIndex, 
+  showFeedback, 
+  userChoice,
+  onAnswer, 
+  onNextCard,
+  isAnimating,
+  xpEarned
+}: SwipeableFlashcardProps) => {
+  
+  return (
+    <div className="...">
+      {!showFeedback ? (
+        // PERGUNTA com botões de resposta
+        <Card className="...">
+          <CardContent>
+            <Badge>🤔 Pergunta {currentIndex + 1}</Badge>
+            <h2>{currentCard.pergunta}</h2>
+            
+            <div className="flex gap-4">
+              <Button onClick={() => onAnswer(false)} variant="outline" 
+                className="border-red-400 ...">
+                😅 Não Lembrei (+2 XP)
+              </Button>
+              <Button onClick={() => onAnswer(true)} 
+                className="bg-green-500 ...">
+                🎉 Lembrei! (+10 XP)
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        // FEEDBACK com resposta
+        <Card className={userChoice === 'correct' ? 'border-green-500 bg-green-50' : 'border-yellow-500 bg-yellow-50'}>
+          <CardContent>
+            {userChoice === 'correct' ? (
+              <div className="text-green-700">
+                🎉 Parabéns! Você lembrou!
+                <Badge>+{xpEarned} XP</Badge>
+              </div>
+            ) : (
+              <div className="text-yellow-700">
+                💪 Continue estudando!
+                <Badge>+{xpEarned} XP por tentar</Badge>
+              </div>
+            )}
+            
+            <div className="mt-4">
+              <h4>✅ Resposta:</h4>
+              <p>{currentCard.resposta}</p>
+              
+              {currentCard.exemplo && (
+                <div className="mt-2">
+                  <h4>💡 Exemplo:</h4>
+                  <p>{currentCard.exemplo}</p>
+                </div>
+              )}
+            </div>
+            
+            <Button onClick={onNextCard} className="w-full mt-4">
+              Próximo Card →
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
 ```
 
 ---
 
 ## Resultado Esperado
 
-1. **Organização**: Usuário pode renomear quizzes para fácil identificação
-2. **Nome automático inteligente**: Quizzes já vêm com nome "{tema} - {data}"
-3. **Motivação**: XP por cada resposta incentiva engajamento
-4. **Feedback instantâneo**: Toast mostra XP ganho em tempo real
-5. **Progressão visível**: XP acumulado aparece durante e após o quiz
+1. **Erro corrigido**: Não haverá mais o erro de suspense
+2. **Fluxo intuitivo**: Usuário vê pergunta → escolhe se lembrou → vê feedback + resposta
+3. **Gamificação ativa**: XP em tempo real motiva o estudo
+4. **Fixação de conteúdo**: Resposta sempre exibida após cada tentativa
+5. **Mensagens motivacionais**: Feedback positivo independente do resultado
