@@ -13,6 +13,9 @@ export interface UserWithPlan {
   created_at: string;
   storage_mb: number;
   is_admin: boolean;
+  is_active: boolean;
+  blocked_reason: string | null;
+  blocked_at: string | null;
 }
 
 export class AdminUserService {
@@ -20,7 +23,6 @@ export class AdminUserService {
     try {
       console.log('🔍 Carregando usuários via função Supabase...');
       
-      // Usar a função get_all_users_admin do Supabase
       const { data: usersData, error } = await supabase.rpc('get_all_users_admin');
 
       if (error) {
@@ -45,7 +47,10 @@ export class AdminUserService {
         data_ultimo_reset: user.created_at,
         created_at: user.created_at,
         storage_mb: Number(user.storage_mb) || 0,
-        is_admin: user.is_admin || false
+        is_admin: user.is_admin || false,
+        is_active: user.is_active !== false, // Default to true if not set
+        blocked_reason: user.blocked_reason || null,
+        blocked_at: user.blocked_at || null
       }));
     } catch (error) {
       console.error('💥 Erro ao carregar usuários:', error);
@@ -81,7 +86,7 @@ export class AdminUserService {
       
       const { error } = await supabase.rpc('admin_toggle_user_status', {
         target_user_id: userId,
-        is_active: isActive
+        new_is_active: isActive
       });
 
       if (error) {
@@ -93,6 +98,49 @@ export class AdminUserService {
       return true;
     } catch (error) {
       console.error('💥 Erro ao alterar status:', error);
+      throw error;
+    }
+  }
+
+  static async blockUser(userId: string, reason: string): Promise<boolean> {
+    try {
+      console.log('🚫 Bloqueando usuário:', userId, 'motivo:', reason);
+      
+      const { error } = await supabase.rpc('admin_block_user', {
+        target_user_id: userId,
+        block_reason: reason
+      });
+
+      if (error) {
+        console.error('❌ Erro ao bloquear usuário:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuário bloqueado com sucesso');
+      return true;
+    } catch (error) {
+      console.error('💥 Erro ao bloquear usuário:', error);
+      throw error;
+    }
+  }
+
+  static async unblockUser(userId: string): Promise<boolean> {
+    try {
+      console.log('✅ Desbloqueando usuário:', userId);
+      
+      const { error } = await supabase.rpc('admin_unblock_user', {
+        target_user_id: userId
+      });
+
+      if (error) {
+        console.error('❌ Erro ao desbloquear usuário:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuário desbloqueado com sucesso');
+      return true;
+    } catch (error) {
+      console.error('💥 Erro ao desbloquear usuário:', error);
       throw error;
     }
   }

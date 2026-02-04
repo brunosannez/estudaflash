@@ -14,6 +14,7 @@ import { ArrowLeft, Shield, Loader2, BarChart3, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import GuardianAccessAudit from '@/components/admin/GuardianAccessAudit';
 import AdminSecurity from '@/components/admin/AdminSecurity';
+import SubscriptionManagement from '@/components/admin/SubscriptionManagement';
 
 const AdminPanel = () => {
   const { isAdmin, loading } = useIsAdmin();
@@ -105,9 +106,10 @@ const AdminPanel = () => {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 min-w-fit gap-1">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10 min-w-fit gap-1">
               <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Usuários</TabsTrigger>
+              <TabsTrigger value="subscriptions" className="text-xs sm:text-sm">Assinaturas</TabsTrigger>
               <TabsTrigger value="plans" className="text-xs sm:text-sm">Planos</TabsTrigger>
               <TabsTrigger value="apis" className="text-xs sm:text-sm">APIs</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
@@ -124,6 +126,10 @@ const AdminPanel = () => {
           
           <TabsContent value="users" className="space-y-6 mt-6">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="space-y-6 mt-6">
+            <SubscriptionManagement />
           </TabsContent>
 
           <TabsContent value="plans" className="space-y-6 mt-6">
