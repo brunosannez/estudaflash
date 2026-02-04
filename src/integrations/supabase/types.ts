@@ -1921,12 +1921,15 @@ export type Database = {
       }
       uso_usuarios: {
         Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
           credits_remaining: number | null
           credits_used_this_month: number | null
           data_ultimo_reset: string
           flashcards_gerados: number
           id: string
+          is_active: boolean | null
           is_admin: boolean
           last_credits_reset: string | null
           plan_id: string
@@ -1937,12 +1940,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           credits_remaining?: number | null
           credits_used_this_month?: number | null
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
+          is_active?: boolean | null
           is_admin?: boolean
           last_credits_reset?: string | null
           plan_id: string
@@ -1953,12 +1959,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           credits_remaining?: number | null
           credits_used_this_month?: number | null
           data_ultimo_reset?: string
           flashcards_gerados?: number
           id?: string
+          is_active?: boolean | null
           is_admin?: boolean
           last_credits_reset?: string | null
           plan_id?: string
@@ -1984,6 +1993,10 @@ export type Database = {
     }
     Functions: {
       add_admin_by_email: { Args: { admin_email: string }; Returns: boolean }
+      admin_block_user: {
+        Args: { block_reason?: string; target_user_id: string }
+        Returns: boolean
+      }
       admin_change_user_plan: {
         Args: { new_plan: string; target_user_id: string }
         Returns: boolean
@@ -2020,9 +2033,10 @@ export type Database = {
         Returns: boolean
       }
       admin_toggle_user_status: {
-        Args: { is_active: boolean; target_user_id: string }
+        Args: { new_is_active: boolean; target_user_id: string }
         Returns: boolean
       }
+      admin_unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       admin_update_plan:
         | {
             Args: {
@@ -2178,12 +2192,31 @@ export type Database = {
           total_users: number
         }[]
       }
+      get_all_subscriptions_admin: {
+        Args: never
+        Returns: {
+          amount_paid_brl: number
+          created_at: string
+          id: string
+          payment_method: string
+          plan_id: string
+          plan_name: string
+          renewal_date: string
+          start_date: string
+          status: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_all_users_admin: {
         Args: never
         Returns: {
+          blocked_at: string
+          blocked_reason: string
           created_at: string
           email: string
           flashcards_gerados: number
+          is_active: boolean
           is_admin: boolean
           plano: string
           quizzes_realizados: number
@@ -2268,6 +2301,16 @@ export type Database = {
           subject_area: string
           target_cards: number
           title: string
+        }[]
+      }
+      get_subscription_stats: {
+        Args: never
+        Returns: {
+          active_count: number
+          canceled_count: number
+          mrr: number
+          pending_count: number
+          total_revenue: number
         }[]
       }
       get_usage_analytics: {
