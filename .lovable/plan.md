@@ -1,262 +1,179 @@
 
-
-# Plano: Auditoria e Aprimoramento do Painel Administrativo
-
-## Status Atual - Análise Completa
-
-### Funcionalidades Existentes
-
-| Área | Status | Observações |
-|------|--------|-------------|
-| **Dashboard Geral** | Parcial | AdminDashboard.tsx passa valores fixos (0) para AdminStatsGrid |
-| **Gerenciamento de Usuários** | Funcional | Lista usuários, filtra por plano, busca por email |
-| **Ações de Usuário** | Parcial | Toggle status usa `is_admin` ao invés de campo de status real |
-| **Gerenciamento de Planos** | Funcional | CRUD completo, edição inline, ativar/desativar |
-| **Monitoramento de APIs** | Funcional | Gráficos, custos, tokens por provedor |
-| **Analytics de Uso** | Funcional | Uso diário, exportação CSV, filtros por data |
-| **Gerenciamento de Dados** | Funcional | Storage, real-time, limpeza |
-| **Auditoria de Acesso** | Funcional | Logs de acesso a dados sensíveis (CPF) |
-| **Segurança** | Funcional | Rotação de chaves, rate limiting |
-| **Assinaturas** | Não existe | Tabela existe mas sem componente |
-| **Bloqueio por Inadimplência** | Não existe | Falta campo e lógica |
-| **Alterar Plano do Usuário** | Parcial | Falta UI no UserManagement |
-
----
+# Plano: Correção Completa do Painel Administrativo
 
 ## Problemas Identificados
 
-### 1. AdminDashboard não carrega dados reais
+Após análise detalhada do banco de dados e código, identifiquei 4 problemas principais:
 
-```typescript
-// AdminDashboard.tsx (linha 7-10)
-<AdminStatsGrid 
-  totalUsers={0}        // ← Valor fixo!
-  totalStorageMB={0}    // ← Valor fixo!
-  activeUsers7Days={0}  // ← Valor fixo!
-/>
+### 1. Erro ao Carregar Usuários
+**Causa**: A política RLS da tabela `admin_users` tem **recursão infinita**:
+```sql
+-- A política verifica se o usuário é admin consultando admin_users
+-- Isso causa loop infinito quando tentamos acessar admin_users
+EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid())
 ```
 
-**Problema**: AdminDashboard não usa o AdminStatsService para carregar dados, passa sempre 0.
+### 2. APIs com Custo Zero
+**Causa**: A tabela `api_usage_tracking` está **completamente vazia**. As edge functions não estão registrando o uso de tokens e custos das APIs (OpenAI, Anthropic, etc).
 
-**Solução**: O AdminStatsGrid já carrega dados internamente via `fetchStats()`, mas os props não são usados quando os dados são carregados. A lógica está correta, apenas os props iniciais são confusos.
+### 3. Analytics sem Dados Reais  
+**Causa**: A função `get_usage_analytics` lê da tabela `usage_logs` que está vazia, mas os dados reais de créditos estão em `credits_usage_log` (com 10+ registros).
 
-### 2. Toggle de Status do Usuário Incorreto
-
-```typescript
-// UserManagement.tsx (linha 259-273)
-<Button onClick={() => handleToggleUserStatus(user.user_id, !user.is_admin)}>
-  {user.is_admin ? 'Desativar' : 'Ativar'}
-</Button>
-```
-
-**Problema**: O botão "Ativar/Desativar" usa `is_admin` ao invés de um campo `is_active`. A função `admin_toggle_user_status` espera um campo de status, não admin.
-
-**Solução**: Criar campo `is_active` na tabela `uso_usuarios` ou ajustar a lógica para usar corretamente.
-
-### 3. Falta Gerenciamento de Assinaturas
-
-A tabela `subscriptions` existe no banco mas não há componente para visualizá-la.
-
-**Tabela existente:**
-- user_id, plan_id, amount_paid_brl, start_date, renewal_date, status, payment_method
-
-### 4. Falta Função de Bloqueio por Inadimplência
-
-Não existe campo nem lógica para bloquear usuário por falta de pagamento.
-
-### 5. Falta Opção de Alterar Plano Diretamente no UserManagement
-
-A tabela de usuários mostra o plano atual mas não permite alterá-lo inline.
-
-### 6. Falta Real-Time no Painel Admin
-
-Os componentes usam `refetchInterval` (polling) ao invés de real-time do Supabase.
+### 4. Assinaturas Vazias
+**Causa**: A tabela `subscriptions` não tem dados. Isso é esperado se ainda não há pagamentos processados, mas o sistema deveria ter um fallback.
 
 ---
 
-## Plano de Implementação
+## Plano de Correção
 
-### Fase 1: Corrigir Problemas Existentes
+### Fase 1: Corrigir RLS da Tabela admin_users
 
-#### 1.1 Adicionar campo `is_active` e lógica de bloqueio
-
-**Arquivo:** Nova migration SQL
+**Problema**: Recursão infinita na política RLS
+**Solução**: Recriar a política RLS usando `uso_usuarios.is_admin` ao invés de consultar `admin_users`
 
 ```sql
--- Adicionar campo de status ativo
-ALTER TABLE uso_usuarios ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE uso_usuarios ADD COLUMN IF NOT EXISTS blocked_reason TEXT;
-ALTER TABLE uso_usuarios ADD COLUMN IF NOT EXISTS blocked_at TIMESTAMP WITH TIME ZONE;
+-- Remover políticas problemáticas
+DROP POLICY IF EXISTS "Admins can manage admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Admins can view admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Admins can view all admin_users" ON admin_users;
+
+-- Criar nova política sem recursão
+CREATE POLICY "Admin users only" ON admin_users
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM uso_usuarios 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
 ```
-
-#### 1.2 Corrigir UserManagement.tsx
-
-- Adicionar coluna "Status" na tabela
-- Corrigir botão Ativar/Desativar para usar `is_active`
-- Adicionar botão "Bloquear" com motivo (inadimplência, etc)
-- Adicionar dropdown para alterar plano do usuário
-- Adicionar botão "Ver Detalhes" que abre o modal existente
-
-#### 1.3 Corrigir AdminDashboard.tsx
-
-- Remover props hardcoded
-- Deixar AdminStatsGrid buscar dados sozinho (já faz isso)
 
 ---
 
-### Fase 2: Adicionar Gerenciamento de Assinaturas
+### Fase 2: Registrar Uso de API nas Edge Functions
 
-#### 2.1 Criar SubscriptionManagement.tsx
+**Problema**: Edge functions não registram tokens/custos
+**Solução**: Adicionar logging de API após cada chamada bem-sucedida
 
-Novo componente com:
-- Lista de assinaturas ativas
-- Filtros por status (active, canceled, pending)
-- Valor total de receita
-- Próximas renovações
-- Ações: cancelar, estender, alterar plano
+Arquivos a modificar:
+- `supabase/functions/generate-summary/index.ts`
+- `supabase/functions/generate-flashcards/index.ts`
+- `supabase/functions/generate-quiz/index.ts`
+- `supabase/functions/generate-mind-map/index.ts`
 
-#### 2.2 Adicionar aba "Assinaturas" no AdminPanel
+Código a adicionar após cada chamada de API:
+```typescript
+// Após response.json() bem-sucedido
+const tokensUsed = data.usage?.input_tokens + data.usage?.output_tokens || 0;
+const estimatedCost = calculateCost(modelConfig.model, tokensUsed);
+
+await supabase
+  .from('api_usage_tracking')
+  .insert({
+    user_id: userId,
+    api_provider: 'anthropic',
+    action_type: 'summary', // ou 'flashcard', 'quiz', etc
+    tokens_used: tokensUsed,
+    estimated_cost_usd: estimatedCost,
+    model_used: modelConfig.model,
+    success: true
+  });
+```
+
+Função auxiliar para calcular custo:
+```typescript
+function calculateCost(model: string, tokens: number): number {
+  const costs: Record<string, number> = {
+    'claude-sonnet-4-20250514': 0.003 / 1000, // $3 per 1M tokens (input)
+    'gpt-4o': 0.005 / 1000,
+    'gpt-4o-mini': 0.00015 / 1000
+  };
+  return tokens * (costs[model] || 0.003 / 1000);
+}
+```
+
+---
+
+### Fase 3: Corrigir Analytics para Usar Dados Reais
+
+**Problema**: `get_usage_analytics` lê de `usage_logs` (vazia) ao invés de `credits_usage_log`
+**Solução**: Atualizar a função para usar a tabela correta
+
+```sql
+CREATE OR REPLACE FUNCTION get_usage_analytics(...)
+RETURNS TABLE (...)
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    cul.action_type,
+    cul.created_at::DATE as usage_date,
+    COUNT(*) as total_actions,
+    COUNT(DISTINCT cul.user_id) as unique_users,
+    SUM(cul.credits_consumed) as total_credits
+  FROM public.credits_usage_log cul  -- Tabela correta!
+  WHERE cul.created_at::DATE >= start_date 
+    AND cul.created_at::DATE <= end_date
+  GROUP BY cul.action_type, cul.created_at::DATE
+  ORDER BY usage_date DESC;
+END;
+$$;
+```
+
+---
+
+### Fase 4: Adicionar Fallback para Assinaturas Vazias
+
+**Problema**: UI quebra quando não há assinaturas
+**Solução**: Atualizar `SubscriptionManagement.tsx` para mostrar estado vazio amigável
 
 ```typescript
-<TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
-<TabsContent value="subscriptions">
-  <SubscriptionManagement />
-</TabsContent>
+// Se não há assinaturas, mostrar mensagem informativa
+if (subscriptions.length === 0) {
+  return (
+    <Card>
+      <CardContent className="py-8 text-center">
+        <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3>Nenhuma assinatura encontrada</h3>
+        <p>As assinaturas aparecerão aqui quando usuários fizerem upgrade.</p>
+      </CardContent>
+    </Card>
+  );
+}
 ```
-
----
-
-### Fase 3: Implementar Real-Time para Admin
-
-#### 3.1 Criar useAdminRealTime.ts
-
-Hook centralizado para monitorar mudanças em:
-- uso_usuarios (novos usuários, alterações)
-- subscriptions (novas assinaturas, cancelamentos)
-- api_usage_tracking (uso de API)
-- uploads (novos uploads)
-
-#### 3.2 Integrar no AdminDashboard
-
-Callbacks para atualizar estatísticas automaticamente.
-
----
-
-### Fase 4: Funcionalidades Adicionais
-
-#### 4.1 Exportação de Dados
-
-- Exportar lista de usuários (CSV)
-- Exportar relatório de receita (CSV)
-- Exportar logs de API (CSV)
-
-#### 4.2 Alertas e Notificações
-
-- Alerta quando usuário está próximo do limite
-- Alerta de renovação de assinatura
-- Alerta de uso anormal de API
-
-#### 4.3 Gráficos de Receita
-
-- MRR (Monthly Recurring Revenue)
-- Crescimento de usuários
-- Churn rate
-
----
-
-## Arquivos a Criar
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/admin/SubscriptionManagement.tsx` | Gerenciar assinaturas |
-| `src/components/admin/UserBlockModal.tsx` | Modal para bloquear usuário |
-| `src/components/admin/ChangePlanModal.tsx` | Modal para alterar plano |
-| `src/components/admin/AdminRevenueStats.tsx` | Estatísticas de receita |
-| `src/hooks/admin/useAdminRealTime.ts` | Real-time para admin |
-| `src/services/subscriptionService.ts` | Serviço de assinaturas |
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Mudanças |
-|---------|----------|
-| `src/pages/AdminPanel.tsx` | Adicionar aba Assinaturas, reorganizar tabs |
-| `src/components/admin/AdminDashboard.tsx` | Adicionar cards de receita, real-time |
-| `src/components/admin/UserManagement.tsx` | Botão bloquear, alterar plano, status correto |
-| `src/services/adminUserService.ts` | Adicionar métodos blockUser, unblockUser |
-| `supabase/migrations/` | Nova migration para campos de bloqueio |
+| Arquivo | Mudança |
+|---------|---------|
+| Nova migration SQL | Corrigir RLS admin_users, atualizar get_usage_analytics |
+| `generate-summary/index.ts` | Adicionar logging de API |
+| `generate-flashcards/index.ts` | Adicionar logging de API |
+| `generate-quiz/index.ts` | Adicionar logging de API |
+| `generate-mind-map/index.ts` | Adicionar logging de API |
+| `SubscriptionManagement.tsx` | Melhorar estado vazio |
+| `ApiUsageMonitoring.tsx` | Adicionar fallback quando sem dados |
 
 ---
 
-## Detalhes Técnicos
+## Resultado Esperado
 
-### Nova Estrutura do UserManagement
+Após as correções:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Gerenciamento de Usuários                              [🔍 Buscar] [Filtro] │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ Usuário          │ Plano │ Status   │ Uploads │ Criado em │ Ações          │
-├──────────────────┼───────┼──────────┼─────────┼───────────┼────────────────┤
-│ user@email.com   │ Pro   │ ✅ Ativo │   15    │ 01/01/25  │ [▼ Ações]      │
-│  └ Admin         │       │          │         │           │  ├ Ver detalhes│
-│                  │       │          │         │           │  ├ Alterar plano│
-│                  │       │          │         │           │  ├ Resetar uso │
-│                  │       │          │         │           │  ├ Bloquear    │
-│                  │       │          │         │           │  └ Excluir dados│
-├──────────────────┼───────┼──────────┼─────────┼───────────┼────────────────┤
-│ outro@email.com  │ Free  │ ⛔ Bloq. │    3    │ 15/01/25  │ [▼ Ações]      │
-│                  │       │ (pag.)   │         │           │  ├ Desbloquear │
-│                  │       │          │         │           │  ├ ...         │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Componente SubscriptionManagement
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Assinaturas                                [Ativas ▼] [Este Mês ▼]          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
-│  │ Ativas     │  │ Receita    │  │ Canceladas │  │ MRR        │            │
-│  │    24      │  │ R$ 1.250   │  │     3      │  │ R$ 890     │            │
-│  └────────────┘  └────────────┘  └────────────┘  └────────────┘            │
-│                                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ Usuário        │ Plano    │ Valor    │ Início   │ Renovação  │ Status     │
-├────────────────┼──────────┼──────────┼──────────┼────────────┼────────────┤
-│ user@email.com │ Pro      │ R$ 29,90 │ 01/01/25 │ 01/02/25   │ ✅ Ativo   │
-│ test@email.com │ Edu      │ R$ 59,90 │ 15/01/25 │ 15/02/25   │ ✅ Ativo   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+1. **Usuários**: Lista carrega normalmente mostrando todos os usuários
+2. **APIs**: Gráficos mostram tokens consumidos e custos reais por provedor
+3. **Analytics**: Dados reais de uso (flashcards, resumos, quizzes) aparecem nos gráficos
+4. **Assinaturas**: Mensagem amigável quando não há assinaturas
 
 ---
 
-## Resultado Final
+## Dados Já Existentes no Banco
 
-Após implementação, o painel administrativo terá:
+A tabela `credits_usage_log` JÁ TEM dados reais:
+- 10+ registros de uso de flashcards
+- Usuário: cfef2417-fa37-4b91-a351-6c8fde933658
+- Créditos consumidos: 3 por ação
+- Datas: agosto 2025 - fevereiro 2026
 
-1. **Dashboard Completo** - Estatísticas em tempo real, receita, crescimento
-2. **Gerenciamento de Usuários Avançado** - Bloquear, alterar plano, ver detalhes
-3. **Gerenciamento de Assinaturas** - Visualizar, cancelar, estender
-4. **Bloqueio por Inadimplência** - Campo e UI para bloquear/desbloquear
-5. **Real-Time** - Atualizações instantâneas sem refresh
-6. **Exportação** - CSV de usuários, receita, logs
-7. **Alertas** - Notificações de eventos importantes
-
----
-
-## Ordem de Implementação
-
-1. Criar migration para campos `is_active`, `blocked_reason`, `blocked_at`
-2. Atualizar `get_all_users_admin` para retornar novos campos
-3. Corrigir UserManagement.tsx (toggle status, dropdown plano)
-4. Criar SubscriptionManagement.tsx
-5. Adicionar aba Assinaturas no AdminPanel
-6. Criar useAdminRealTime.ts
-7. Integrar real-time nos componentes
-8. Adicionar exportação CSV
-9. Adicionar cards de receita no Dashboard
-
+Após a correção, esses dados aparecerão automaticamente no painel de Analytics.
