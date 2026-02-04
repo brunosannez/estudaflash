@@ -2,6 +2,7 @@
 import { useToast } from '@/hooks/use-toast';
 import { useMultipleUploadState } from './useMultipleUploadState';
 import { useUsageLimit } from './useUsageLimit';
+import { useAdvancedBadges } from './useAdvancedBadges';
 import { validateFiles } from '@/utils/fileValidator';
 import { 
   verifyUserAndBucket, 
@@ -16,6 +17,7 @@ export { ImageUploadResult };
 export const useMultipleUpload = () => {
   const { toast } = useToast();
   const { checkCanProceed, incrementUsage } = useUsageLimit();
+  const { checkBadgesForActivity } = useAdvancedBadges();
   const {
     uploadResults,
     isProcessing,
@@ -128,6 +130,13 @@ export const useMultipleUpload = () => {
         await incrementUsage('uploads');
         console.log('✅ Usage counter incremented');
         
+        // Verificar badges após upload bem-sucedido
+        console.log('🏆 Verificando badges de upload...');
+        try {
+          await checkBadgesForActivity('upload');
+        } catch (badgeError) {
+          console.error('Error checking upload badges:', badgeError);
+        }
       } catch (dbError) {
         console.error('❌ Database save failed:', dbError);
         // Don't throw here - the uploads succeeded, just the DB save failed

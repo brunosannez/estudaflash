@@ -4,11 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 import { summaryGenerationService } from '@/services/summaryGenerationService';
 import { summaryDataService } from '@/services/summaryDataService';
 import { useUsageManager } from '@/hooks/useUsageManager';
+import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
 
 export const useSummary = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const { checkCanProceed, incrementUsage } = useUsageManager();
+  const { checkBadgesForActivity } = useAdvancedBadges();
 
   const generateSummary = async (uploadId: string, textoExtraido: string, maxRetries = 3) => {
     console.log('🚀 Iniciando processo de geração de resumo...');
@@ -39,6 +41,14 @@ export const useSummary = () => {
         // Incrementar uso após sucesso
         console.log('📈 Incrementando contador de uso...');
         await incrementUsage('summaries');
+        
+        // Verificar badges após gerar resumo com sucesso
+        console.log('🏆 Verificando badges de resumo...');
+        try {
+          await checkBadgesForActivity('summary');
+        } catch (badgeError) {
+          console.error('Error checking summary badges:', badgeError);
+        }
         
         toast({
           title: "✅ Sucesso!",
