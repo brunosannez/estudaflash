@@ -126,24 +126,29 @@ export const useAdvancedBadges = () => {
       const [
         progressData,
         dailyData,
-        uploadsData,
         resumosData,
         quizData,
         flashcardReviewsData
       ] = await Promise.all([
         supabase.from('user_progress').select('*').eq('user_id', user.id).single(),
         supabase.from('daily_activities').select('*').eq('user_id', user.id),
-        supabase.from('uploads').select('id').eq('user_id', user.id),
-        supabase.from('resumos').select('id, upload_id').eq('upload_id', user.id),
+        // Get resumos via uploads that belong to the user
+        supabase.from('uploads').select('id, resumos(id)').eq('user_id', user.id),
         supabase.from('enem_quiz_sessions').select('*').eq('user_id', user.id).eq('status', 'completed'),
         supabase.from('flashcard_reviews').select('*').eq('user_id', user.id)
       ]);
 
       const progress = progressData.data;
       const dailyActivities = dailyData.data || [];
-      const uploads = uploadsData.data || [];
+      const uploadsWithResumos = resumosData.data || [];
       const quizSessions = quizData.data || [];
       const flashcardReviews = flashcardReviewsData.data || [];
+
+      // Count uploads and resumos correctly
+      const uploadsCount = uploadsWithResumos.length;
+      const summariesCount = uploadsWithResumos.reduce((sum, upload: any) => {
+        return sum + (upload.resumos?.length || 0);
+      }, 0);
 
       // Calculate metrics
       const totalFlashcardsReviewed = dailyActivities.reduce((sum, d) => sum + (d.flashcards_reviewed || 0), 0);
@@ -164,8 +169,8 @@ export const useAdvancedBadges = () => {
       const hasNightStudy = currentHour >= 22 ? 1 : 0;
 
       return {
-        uploads_count: uploads.length,
-        summaries_count: 0, // Will count from resumos via join
+        uploads_count: uploadsCount,
+        summaries_count: summariesCount,
         quizzes_completed: totalQuizzesCompleted,
         perfect_quizzes: perfectQuizzes,
         flashcards_reviewed: totalFlashcardsReviewed,

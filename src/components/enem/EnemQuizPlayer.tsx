@@ -9,6 +9,7 @@ import { EnemVFQuestion } from './EnemVFQuestion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameification } from '@/hooks/useGameification';
+import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
 import { toast } from 'sonner';
 
 interface EnemQuestion {
@@ -46,6 +47,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
 }) => {
   const { user } = useAuth();
   const { addXP } = useGameification();
+  const { checkBadgesForActivity } = useAdvancedBadges();
   const [questions, setQuestions] = useState<EnemQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
@@ -251,6 +253,16 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
         setSessionXP(prev => prev + bonusXP);
       } catch (error) {
         console.error('Error adding completion bonus XP:', error);
+      }
+
+      // Check badges for quiz completion
+      try {
+        await checkBadgesForActivity('quiz', {
+          isPerfect: percentage === 100,
+          isFast: timeElapsed < 120
+        });
+      } catch (error) {
+        console.error('Error checking quiz badges:', error);
       }
 
       setShowResults(true);
