@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UsageDataService, type UsageData } from '@/services/usageDataService';
+import { useUsageRealTime } from './realtime/useUnifiedRealTime';
 
 export const useUsageData = () => {
   const { user } = useAuth();
@@ -32,6 +33,9 @@ export const useUsageData = () => {
       setLoading(false);
     }
   }, [user]);
+
+  // Real-time subscription for usage updates
+  useUsageRealTime(fetchUsageData);
 
   useEffect(() => {
     fetchUsageData();

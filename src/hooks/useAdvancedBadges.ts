@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { BADGES_CATALOG, BadgeDefinition, getRarityStyles } from '@/data/badgesCatalog';
+import { useBadgesRealTime } from './realtime/useUnifiedRealTime';
 
 interface UserBadge {
   id: string;
@@ -308,6 +309,9 @@ export const useAdvancedBadges = () => {
     // Return any unearned badge
     return BADGES_CATALOG.find(b => !earnedTypes.has(b.id)) || null;
   }, [userBadges]);
+
+  // Real-time subscription for badges
+  useBadgesRealTime(loadUserBadges);
 
   useEffect(() => {
     if (user) {
