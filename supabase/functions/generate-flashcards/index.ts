@@ -274,6 +274,35 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       throw new Error('Resposta inválida da API Anthropic');
     }
 
+    // 📊 Track API usage for cost monitoring
+    try {
+      const inputTokens = data.usage?.input_tokens || 0;
+      const outputTokens = data.usage?.output_tokens || 0;
+      const totalTokens = inputTokens + outputTokens;
+      
+      // Claude Haiku: $0.25/1M input, $1.25/1M output
+      const inputCost = (inputTokens * 0.00025) / 1000;
+      const outputCost = (outputTokens * 0.00125) / 1000;
+      const estimatedCost = inputCost + outputCost;
+      
+      await supabase
+        .from('api_usage_tracking')
+        .insert({
+          user_id: effectiveUserId,
+          api_provider: 'anthropic',
+          action_type: 'flashcard',
+          tokens_used: totalTokens,
+          estimated_cost_usd: estimatedCost,
+          model_used: 'claude-3-haiku-20240307',
+          success: true,
+          timestamp: new Date().toISOString()
+        });
+      
+      console.log(`📊 API tracked: ${totalTokens} tokens, $${estimatedCost.toFixed(6)}`);
+    } catch (trackError) {
+      console.warn('⚠️ Failed to track API usage:', trackError);
+    }
+
     let flashcardsText = data.content[0].text.trim();
 
     // Remove markdown formatting

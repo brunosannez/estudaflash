@@ -2356,6 +2356,19 @@ export type Database = {
       }
       is_admin: { Args: { user_uuid?: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
+      log_api_usage: {
+        Args: {
+          target_action_type: string
+          target_api_provider: string
+          target_error_message?: string
+          target_estimated_cost_usd: number
+          target_model_used: string
+          target_success?: boolean
+          target_tokens_used: number
+          target_user_id: string
+        }
+        Returns: boolean
+      }
       log_sensitive_access: {
         Args: {
           action_type_param: string

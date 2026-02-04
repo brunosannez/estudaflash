@@ -90,6 +90,125 @@ const UsageAnalytics = () => {
     exportAnalyticsToCSV(analytics);
   };
 
+  // Empty state when no analytics data
+  if (!loading && analytics.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Controls */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-600" />
+                Analytics de Uso
+              </CardTitle>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-auto"
+                  />
+                  <span className="text-sm text-gray-500">até</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Summary Cards with zeros */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total de Ações</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                </div>
+                <Activity className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Usuários Únicos</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                </div>
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total de Créditos</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Média por Dia</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                </div>
+                <Calendar className="h-8 w-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Empty state message */}
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                <Activity className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Nenhum dado de uso no período
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto mb-4">
+                Os dados de analytics aparecerão aqui quando usuários utilizarem funcionalidades como uploads, resumos, flashcards e quizzes.
+              </p>
+              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mb-4">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">📤 Uploads</span>
+                <span className="px-2 py-1 bg-green-100 text-green-800 rounded">📝 Resumos</span>
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">🎴 Flashcards</span>
+                <span className="px-2 py-1 bg-red-100 text-red-800 rounded">❓ Quizzes</span>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => getUsageAnalytics(startDate, endDate)}
+              >
+                <Loader2 className="h-4 w-4 mr-2" />
+                Atualizar Dados
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <Card>
