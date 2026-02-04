@@ -222,6 +222,35 @@ GERE EXATAMENTE ${expectedQuestions}+ questões. Use APENAS informações do res
 
     console.log('📝 Quiz response received, length:', content.length)
     console.log('📝 Full AI Response:', content) // Log full response for debugging
+
+    // 📊 Track API usage for cost monitoring
+    try {
+      const promptTokens = openaiData.usage?.prompt_tokens || 0;
+      const completionTokens = openaiData.usage?.completion_tokens || 0;
+      const totalTokens = promptTokens + completionTokens;
+      
+      // GPT-5 estimated pricing: $10/1M input, $30/1M output
+      const inputCost = (promptTokens * 0.01) / 1000;
+      const outputCost = (completionTokens * 0.03) / 1000;
+      const estimatedCost = inputCost + outputCost;
+      
+      await supabase
+        .from('api_usage_tracking')
+        .insert({
+          user_id: userId,
+          api_provider: 'openai',
+          action_type: 'quiz',
+          tokens_used: totalTokens,
+          estimated_cost_usd: estimatedCost,
+          model_used: 'gpt-5-2025-08-07',
+          success: true,
+          timestamp: new Date().toISOString()
+        });
+      
+      console.log(`📊 API tracked: ${totalTokens} tokens, $${estimatedCost.toFixed(6)}`);
+    } catch (trackError) {
+      console.warn('⚠️ Failed to track API usage:', trackError);
+    }
     
     // Parse and validate JSON response
     let quizData

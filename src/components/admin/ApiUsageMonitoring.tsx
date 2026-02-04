@@ -84,6 +84,130 @@ const ApiUsageMonitoring = () => {
     }
   };
 
+  // Empty state when no API data
+  if (!loading && apiStats.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header e Controles */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-600" />
+                Monitoramento de APIs em Tempo Real
+              </CardTitle>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-1">
+                  {['24h', '7d', '30d'].map((range) => (
+                    <Button
+                      key={range}
+                      variant={timeRange === range ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeRange(range)}
+                    >
+                      {range}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Summary cards with zeros */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total de Tokens</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-xs text-gray-500 mt-1">Últimas {timeRange}</p>
+                </div>
+                <Zap className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Custo Total</p>
+                  <p className="text-2xl font-bold text-gray-900">$0.00</p>
+                  <p className="text-xs text-gray-500 mt-1">Estimativa USD</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Requisições</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-xs text-gray-500 mt-1">Total de chamadas</p>
+                </div>
+                <Activity className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Taxa de Sucesso</p>
+                  <p className="text-2xl font-bold text-gray-900">-</p>
+                  <p className="text-xs text-gray-500 mt-1">Nenhum dado</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Empty state message */}
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mb-4">
+                <Zap className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Nenhum uso de API registrado
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto mb-4">
+                Os custos e tokens das APIs (OpenAI, Anthropic) aparecerão aqui quando os usuários gerarem resumos, flashcards, quizzes ou mapas mentais.
+              </p>
+              <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <span className="text-lg">🧠</span>
+                  <span>Anthropic (Claude)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-lg">🤖</span>
+                  <span>OpenAI (GPT)</span>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="mt-4" 
+                onClick={() => getApiStats(timeRange)}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Atualizar Dados
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <Card>

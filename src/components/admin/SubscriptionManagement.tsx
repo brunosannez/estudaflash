@@ -124,6 +124,107 @@ const SubscriptionManagement = () => {
     });
   };
 
+  // Empty state for no subscriptions at all
+  if (!loading && subscriptions.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Stats Cards - show zeros */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-green-50">
+                  <Users className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Ativas</p>
+                  <p className="text-xl font-bold">0</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Receita Total</p>
+                  <p className="text-xl font-bold">{formatCurrency(0)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-purple-50">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">MRR</p>
+                  <p className="text-xl font-bold">{formatCurrency(0)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-yellow-50">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pendentes</p>
+                  <p className="text-xl font-bold">0</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-red-50">
+                  <CreditCard className="h-4 w-4 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Canceladas</p>
+                  <p className="text-xl font-bold">0</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Empty state message */}
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                <CreditCard className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Nenhuma assinatura ainda
+              </h3>
+              <p className="text-gray-600 max-w-sm mx-auto">
+                As assinaturas aparecerão aqui quando usuários fizerem upgrade para planos pagos via Stripe.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={fetchData}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Atualizar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <Card>
