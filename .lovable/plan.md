@@ -1,283 +1,152 @@
 
+# Plano: Correção do Erro "useLocation() outside Router"
 
-# Plano: Consolidação Real-Time e Status do Aplicativo
+## Problema Identificado
 
-## Status Atual do Aplicativo
-
-### ✅ Funcionalidades Completas
-1. **Sistema de Badges** - 22 conquistas com verificação automática
-2. **Gamificação** - XP, níveis, streaks funcionando
-3. **Missões Diárias** - Dashboard com missões de flashcards e quizzes
-4. **Integração de Badges** - Quiz, Resumo, Upload e Flashcards conectados
-5. **Animação de Conquistas** - BadgeUnlockAnimation com confetti
-6. **Vitrines de Badges** - Dashboard e página de Progresso
-
-### ⚠️ Real-Time Parcialmente Implementado
-
-O projeto já possui infraestrutura de real-time, mas nem todas as tabelas estão sendo monitoradas:
-
-**Tabelas COM real-time:**
-- `user_progress` (useProgressSubscriptions)
-- `daily_activities` (useProgressSubscriptions)
-- `quiz_sessions` (useRealTimeSubscriptions)
-- `flashcard_reviews` (useRealTimeSubscriptions)
-- `resumos` (useRealTimeSubscriptions - sem filtro de usuário)
-
-**Tabelas SEM real-time:**
-- `user_badges` - Badges não atualizam automaticamente
-- `uso_usuarios` - Contadores de uso não atualizam em tempo real
-- `enem_quiz_sessions` - Quiz ENEM não monitora mudanças
-- `uploads` - Uploads não disparam atualização
-
----
-
-## Problema Principal
-
-Quando o usuário ganha um badge ou completa uma atividade, os componentes que mostram essas informações não atualizam automaticamente. É preciso recarregar a página para ver as mudanças.
-
----
-
-## Solução: Hook Centralizado de Real-Time
-
-Criar um hook unificado que monitore TODAS as tabelas relevantes e dispare callbacks apropriados para cada tipo de dado.
-
----
-
-## Arquivos a Criar/Modificar
-
-### 1. NOVO: Hook Unificado de Real-Time
-**Arquivo:** `src/hooks/realtime/useUnifiedRealTime.ts`
-
-Centraliza todas as subscrições em um único hook:
-- Monitora `user_badges` para atualizar vitrines
-- Monitora `uso_usuarios` para atualizar estatísticas
-- Monitora `enem_quiz_sessions` para quiz ENEM
-- Reutiliza lógica existente de progress/activities
-
-### 2. MODIFICAR: Hook de Badges
-**Arquivo:** `src/hooks/useAdvancedBadges.ts`
-
-Adicionar subscrição real-time para `user_badges`:
-- Quando um badge é inserido, atualizar lista local
-- Disparar animação automaticamente
-
-### 3. MODIFICAR: Hook de Uso
-**Arquivo:** `src/hooks/useUsageData.ts`
-
-Adicionar subscrição real-time para `uso_usuarios`:
-- Quando contadores mudam, atualizar UI automaticamente
-- Útil para quando múltiplas abas estão abertas
-
-### 4. MODIFICAR: Dashboard Principal
-**Arquivo:** `src/pages/Index.tsx`
-
-Integrar hook unificado para garantir que todos os componentes recebam atualizações.
-
----
-
-## Arquitetura do Real-Time
+O erro `useLocation() may be used only in the context of a <Router> component` ocorre porque a estrutura atual do `App.tsx` está incorreta:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     useUnifiedRealTime (NOVO)                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
-│  │   user_badges       │  │   uso_usuarios      │  │  enem_quiz_sessions │  │
-│  │   INSERT → animate  │  │   UPDATE → refresh  │  │   INSERT → refresh  │  │
-│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
-│                                                                             │
-│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
-│  │   user_progress     │  │   daily_activities  │  │   flashcard_reviews │  │
-│  │   * → refresh       │  │   * → refresh       │  │   * → refresh       │  │
-│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-                    ┌───────────────────────────────┐
-                    │        Callbacks              │
-                    │  - onBadgeEarned()            │
-                    │  - onUsageChanged()           │
-                    │  - onProgressChanged()        │
-                    │  - onQuizCompleted()          │
-                    └───────────────────────────────┘
+App.tsx (atual):
+┌────────────────────────────────────────────────────────┐
+│  useAuth() ← chamado FORA do BrowserRouter             │
+│      │                                                 │
+│      ▼                                                 │
+│  if (loading) → loading spinner                       │
+│  else → renderiza                                      │
+│            │                                           │
+│            ▼                                           │
+│      <BrowserRouter>                                   │
+│         <Routes>                                       │
+│           <Index> ou <Home>                            │
+│              │                                         │
+│              ▼                                         │
+│         MainNavigation → useLocation() ❌ ERRO!        │
+│         (chamado fora do contexto esperado)            │
+│         </Routes>                                      │
+│      </BrowserRouter>                                  │
+└────────────────────────────────────────────────────────┘
 ```
 
----
+O problema específico é:
+1. `App.tsx` chama `useAuth()` na linha 32
+2. `PageLayout` usa `MainNavigation` que chama `useLocation()` na linha 46
+3. Quando o componente `Index` é renderizado, ele usa `PageLayout` que tenta usar `useLocation()` 
+4. Mas o `BrowserRouter` só é adicionado na linha 62, criando uma ordem incorreta
 
-## Código do Hook Unificado
+## Solução
+
+Reestruturar `App.tsx` para separar a lógica de autenticação em um componente filho que só é renderizado **dentro** do `BrowserRouter`.
+
+```text
+App.tsx (corrigido):
+┌────────────────────────────────────────────────────────┐
+│  <ErrorBoundary>                                       │
+│    <QueryClientProvider>                               │
+│      <TooltipProvider>                                 │
+│        <Toaster />                                     │
+│        <BrowserRouter>   ← Router vem PRIMEIRO         │
+│          <AppRoutes />   ← componente separado         │
+│        </BrowserRouter>                                │
+│      </TooltipProvider>                                │
+│    </QueryClientProvider>                              │
+│  </ErrorBoundary>                                      │
+│                                                        │
+│  AppRoutes (novo componente interno):                  │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  useAuth() ← agora DENTRO do BrowserRouter       │  │
+│  │      │                                           │  │
+│  │  if (loading) → loading spinner                  │  │
+│  │  else → <Routes>                                 │  │
+│  │           <Index> → PageLayout → MainNavigation  │  │
+│  │                           → useLocation() ✓ OK!  │  │
+│  │         </Routes>                                │  │
+│  └──────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────┘
+```
+
+## Arquivo a Modificar
+
+### `src/App.tsx`
+
+**Mudanças:**
+1. Mover `BrowserRouter` para o nível mais externo (antes de qualquer uso de hooks de router)
+2. Criar componente interno `AppRoutes` que contém a lógica de autenticação
+3. Garantir que todos os hooks que dependem do Router estejam dentro do `BrowserRouter`
+
+**Código Proposto:**
 
 ```typescript
-// src/hooks/realtime/useUnifiedRealTime.ts
+import React, { Suspense, useEffect } from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { DataSeederService } from "@/services/dataSeederService";
+// ... outros imports
 
-interface RealTimeCallbacks {
-  onBadgeEarned?: () => void;
-  onUsageChanged?: () => void;
-  onProgressChanged?: () => void;
-  onActivityChanged?: () => void;
+const queryClient = new QueryClient();
+
+// Componente interno que usa hooks de router
+const AppRoutes = () => {
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    DataSeederService.seedInitialData();
+    if (user?.id) {
+      DataSeederService.seedUserInitialData(user.id);
+    }
+  }, [user?.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<PageLoading title="Carregando..." />}>
+      <Routes>
+        <Route path="/" element={user ? <Index /> : <Home />} />
+        {/* ... todas as outras rotas ... */}
+      </Routes>
+    </Suspense>
+  );
+};
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>      {/* Router vem PRIMEIRO */}
+            <AppRoutes />       {/* Auth check DENTRO do Router */}
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
 }
 
-export const useUnifiedRealTime = (callbacks: RealTimeCallbacks) => {
-  useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    
-    const setup = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      channel = supabase
-        .channel(`unified-realtime-${user.id}`)
-        // Badges
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_badges',
-          filter: `user_id=eq.${user.id}`
-        }, () => {
-          console.log('🏆 New badge earned!');
-          callbacks.onBadgeEarned?.();
-        })
-        // Usage
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'uso_usuarios',
-          filter: `user_id=eq.${user.id}`
-        }, () => {
-          console.log('📊 Usage updated');
-          callbacks.onUsageChanged?.();
-        })
-        // Progress
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'user_progress',
-          filter: `user_id=eq.${user.id}`
-        }, () => {
-          callbacks.onProgressChanged?.();
-        })
-        // Daily activities
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'daily_activities',
-          filter: `user_id=eq.${user.id}`
-        }, () => {
-          callbacks.onActivityChanged?.();
-        })
-        .subscribe();
-    };
-
-    setup();
-    return () => {
-      if (channel) supabase.removeChannel(channel);
-    };
-  }, [callbacks]);
-};
+export default App;
 ```
 
----
+## Por Que Isso Resolve
 
-## Modificações no useAdvancedBadges
+1. **BrowserRouter primeiro**: O Router é estabelecido antes de qualquer componente que use hooks de router
+2. **useAuth dentro do Router**: A verificação de autenticação agora acontece dentro do contexto do Router
+3. **useLocation funciona**: Quando `MainNavigation` chama `useLocation()`, o contexto do Router já existe
+4. **Hooks de real-time seguros**: Os hooks `useBadgesRealTime` e `useUsageRealTime` que usam `useAuth` agora funcionam corretamente
 
-Adicionar subscrição para atualizar badges automaticamente:
+## Resultado Esperado
 
-```typescript
-// Dentro do useAdvancedBadges
-
-useEffect(() => {
-  if (!user) return;
-  
-  const channel = supabase
-    .channel(`badges-${user.id}`)
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'user_badges',
-      filter: `user_id=eq.${user.id}`
-    }, (payload) => {
-      console.log('🏆 Real-time: New badge detected');
-      loadUserBadges(); // Refresh badges list
-    })
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [user, loadUserBadges]);
-```
-
----
-
-## Modificações no useUsageData
-
-Adicionar subscrição para atualizar contadores:
-
-```typescript
-// Dentro do useUsageData
-
-useEffect(() => {
-  if (!user) return;
-  
-  const channel = supabase
-    .channel(`usage-${user.id}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'uso_usuarios',
-      filter: `user_id=eq.${user.id}`
-    }, () => {
-      console.log('📊 Real-time: Usage updated');
-      fetchUsageData();
-    })
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [user, fetchUsageData]);
-```
-
----
-
-## Resultado Final
-
-Após implementação:
-
-1. **Badges em tempo real** - Vitrine atualiza automaticamente ao ganhar conquista
-2. **Contadores em tempo real** - Dashboard mostra números atualizados
-3. **Progresso sincronizado** - XP, nível e streak atualizam imediatamente
-4. **Missões dinâmicas** - Progresso das missões atualiza conforme atividade
-5. **Multi-tab sync** - Múltiplas abas do navegador ficam sincronizadas
-
----
-
-## O Aplicativo Já Está Funcional?
-
-**SIM**, o aplicativo já está funcional! As funcionalidades principais estão implementadas:
-
-- Upload de materiais
-- Geração de resumos com AI
-- Criação de flashcards automáticos
-- Quiz ENEM com questões inteligentes
-- Sistema de gamificação completo
-- Badges e conquistas
-
-**O que falta é refinamento:**
-1. Real-time para badges e contadores (este plano)
-2. Mais tipos de questão no Quiz (drag-and-drop, associação)
-3. Modo simulado ENEM com timer
-4. Algoritmo SM-2 completo nos flashcards
-5. Breadcrumbs de navegação
-
----
-
-## Ordem de Implementação
-
-1. Criar `useUnifiedRealTime.ts`
-2. Adicionar real-time ao `useAdvancedBadges.ts`
-3. Adicionar real-time ao `useUsageData.ts`
-4. Testar sincronização em tempo real
-5. Remover hooks duplicados (cleanup)
-
+- App carrega normalmente sem erros
+- Todas as funcionalidades de real-time continuam funcionando
+- Navegação e breadcrumbs funcionam corretamente
+- Badge animations e toasts aparecem quando conquistas são desbloqueadas
