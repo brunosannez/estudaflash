@@ -1,231 +1,283 @@
 
 
-# Plano: Integração de Badges nos Fluxos de Quiz, Resumo e Upload
+# Plano: Consolidação Real-Time e Status do Aplicativo
 
-## Objetivo
+## Status Atual do Aplicativo
 
-Conectar o sistema de badges existente (`useAdvancedBadges`) aos fluxos de atividade para que a verificação automática de conquistas ocorra sempre que o usuário completar ações importantes.
+### ✅ Funcionalidades Completas
+1. **Sistema de Badges** - 22 conquistas com verificação automática
+2. **Gamificação** - XP, níveis, streaks funcionando
+3. **Missões Diárias** - Dashboard com missões de flashcards e quizzes
+4. **Integração de Badges** - Quiz, Resumo, Upload e Flashcards conectados
+5. **Animação de Conquistas** - BadgeUnlockAnimation com confetti
+6. **Vitrines de Badges** - Dashboard e página de Progresso
 
----
+### ⚠️ Real-Time Parcialmente Implementado
 
-## Status Atual
+O projeto já possui infraestrutura de real-time, mas nem todas as tabelas estão sendo monitoradas:
 
-### Já Implementado
-- Catálogo com 22 badges em `src/data/badgesCatalog.ts`
-- Hook `useAdvancedBadges` com `checkBadgesForActivity()` e `awardBadge()`
-- Animação de desbloqueio `BadgeUnlockAnimation.tsx`
-- Vitrines de badges no Dashboard e Progresso
-- Integração parcial no fluxo de Flashcards
+**Tabelas COM real-time:**
+- `user_progress` (useProgressSubscriptions)
+- `daily_activities` (useProgressSubscriptions)
+- `quiz_sessions` (useRealTimeSubscriptions)
+- `flashcard_reviews` (useRealTimeSubscriptions)
+- `resumos` (useRealTimeSubscriptions - sem filtro de usuário)
 
-### Faltando Integrar
-1. **Quiz ENEM** - Quando o usuário finaliza um quiz
-2. **Resumos** - Quando um resumo é gerado com sucesso
-3. **Uploads** - Quando um upload é processado com sucesso
-
----
-
-## Arquivos a Modificar
-
-### 1. `src/components/enem/EnemQuizPlayer.tsx`
-**Linha de integração:** Após a linha 254 (após adicionar XP de conclusão)
-
-**Mudanças:**
-- Importar `useAdvancedBadges`
-- Chamar `checkBadgesForActivity('quiz')` no `finishQuiz()`
-- Passar dados de performance (tempo, acertos) para verificar badges como "Velocista"
-
-### 2. `src/hooks/useSummary.ts`
-**Linha de integração:** Após a linha 40 (após incrementar uso)
-
-**Mudanças:**
-- Importar `useAdvancedBadges`
-- Chamar `checkBadgesForActivity('summary')` após gerar resumo com sucesso
-
-### 3. `src/hooks/useMultipleUpload.ts`
-**Linha de integração:** Após a linha 128 (após incrementar contador de uso)
-
-**Mudanças:**
-- Importar `useAdvancedBadges`
-- Chamar `checkBadgesForActivity('upload')` após upload bem-sucedido
-
-### 4. `src/hooks/useAdvancedBadges.ts`
-**Melhorias na lógica de métricas:**
-
-**Problema atual:** A métrica `summaries_count` busca resumos pelo `upload_id` incorretamente (linha 137)
-
-**Correção:**
-- Modificar a query para buscar resumos corretamente pelo `user_id`
-- Adicionar verificação de badges de tempo (early_study, night_study) baseada na hora atual
+**Tabelas SEM real-time:**
+- `user_badges` - Badges não atualizam automaticamente
+- `uso_usuarios` - Contadores de uso não atualizam em tempo real
+- `enem_quiz_sessions` - Quiz ENEM não monitora mudanças
+- `uploads` - Uploads não disparam atualização
 
 ---
 
-## Fluxo de Integração
+## Problema Principal
+
+Quando o usuário ganha um badge ou completa uma atividade, os componentes que mostram essas informações não atualizam automaticamente. É preciso recarregar a página para ver as mudanças.
+
+---
+
+## Solução: Hook Centralizado de Real-Time
+
+Criar um hook unificado que monitore TODAS as tabelas relevantes e dispare callbacks apropriados para cada tipo de dado.
+
+---
+
+## Arquivos a Criar/Modificar
+
+### 1. NOVO: Hook Unificado de Real-Time
+**Arquivo:** `src/hooks/realtime/useUnifiedRealTime.ts`
+
+Centraliza todas as subscrições em um único hook:
+- Monitora `user_badges` para atualizar vitrines
+- Monitora `uso_usuarios` para atualizar estatísticas
+- Monitora `enem_quiz_sessions` para quiz ENEM
+- Reutiliza lógica existente de progress/activities
+
+### 2. MODIFICAR: Hook de Badges
+**Arquivo:** `src/hooks/useAdvancedBadges.ts`
+
+Adicionar subscrição real-time para `user_badges`:
+- Quando um badge é inserido, atualizar lista local
+- Disparar animação automaticamente
+
+### 3. MODIFICAR: Hook de Uso
+**Arquivo:** `src/hooks/useUsageData.ts`
+
+Adicionar subscrição real-time para `uso_usuarios`:
+- Quando contadores mudam, atualizar UI automaticamente
+- Útil para quando múltiplas abas estão abertas
+
+### 4. MODIFICAR: Dashboard Principal
+**Arquivo:** `src/pages/Index.tsx`
+
+Integrar hook unificado para garantir que todos os componentes recebam atualizações.
+
+---
+
+## Arquitetura do Real-Time
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUXO DE QUIZ ENEM                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   Usuário finaliza quiz                                         │
-│          │                                                      │
-│          ▼                                                      │
-│   finishQuiz() calcula:                                         │
-│   - correctCount                                                │
-│   - timeElapsed                                                 │
-│   - percentage (100% = perfeito)                                │
-│          │                                                      │
-│          ▼                                                      │
-│   checkBadgesForActivity('quiz', {                              │
-│     isCompleted: true,                                          │
-│     isPerfect: percentage === 100,                              │
-│     isFast: timeElapsed < 120 // menos de 2 min                 │
-│   })                                                            │
-│          │                                                      │
-│          ▼                                                      │
-│   Badges possíveis:                                             │
-│   - first_quiz (primeiro quiz)                                  │
-│   - speedster (quiz rápido)                                     │
-│   - sharpshooter (quiz perfeito)                                │
-│   - studious (25 quizzes)                                       │
-│   - quiz_master (100 quizzes)                                   │
-│   - early_bird/night_owl (horário)                              │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUXO DE RESUMO                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   summaryGenerationService.generateSummary()                    │
-│          │                                                      │
-│          ▼                                                      │
-│   Resumo salvo no banco                                         │
-│          │                                                      │
-│          ▼                                                      │
-│   useSummary.generateSummary() retorna                          │
-│          │                                                      │
-│          ▼                                                      │
-│   checkBadgesForActivity('summary')                             │
-│          │                                                      │
-│          ▼                                                      │
-│   Badges possíveis:                                             │
-│   - first_summary (primeiro resumo)                             │
-│   - early_bird/night_owl (horário)                              │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUXO DE UPLOAD                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   useMultipleUpload.uploadMultipleImages()                      │
-│          │                                                      │
-│          ▼                                                      │
-│   Imagens processadas e salvas                                  │
-│          │                                                      │
-│          ▼                                                      │
-│   incrementUsage('uploads')                                     │
-│          │                                                      │
-│          ▼                                                      │
-│   checkBadgesForActivity('upload')                              │
-│          │                                                      │
-│          ▼                                                      │
-│   Badges possíveis:                                             │
-│   - first_upload (primeiro upload)                              │
-│   - early_bird/night_owl (horário)                              │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     useUnifiedRealTime (NOVO)                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
+│  │   user_badges       │  │   uso_usuarios      │  │  enem_quiz_sessions │  │
+│  │   INSERT → animate  │  │   UPDATE → refresh  │  │   INSERT → refresh  │  │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
+│                                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
+│  │   user_progress     │  │   daily_activities  │  │   flashcard_reviews │  │
+│  │   * → refresh       │  │   * → refresh       │  │   * → refresh       │  │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │        Callbacks              │
+                    │  - onBadgeEarned()            │
+                    │  - onUsageChanged()           │
+                    │  - onProgressChanged()        │
+                    │  - onQuizCompleted()          │
+                    └───────────────────────────────┘
 ```
 
 ---
 
-## Detalhes Técnicos
-
-### 1. Modificação no EnemQuizPlayer.tsx
+## Código do Hook Unificado
 
 ```typescript
-// Adicionar import
-import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
+// src/hooks/realtime/useUnifiedRealTime.ts
 
-// Dentro do componente
-const { checkBadgesForActivity } = useAdvancedBadges();
+interface RealTimeCallbacks {
+  onBadgeEarned?: () => void;
+  onUsageChanged?: () => void;
+  onProgressChanged?: () => void;
+  onActivityChanged?: () => void;
+}
 
-// Em finishQuiz(), após salvar a sessão:
-await checkBadgesForActivity('quiz', {
-  isPerfect: percentage === 100,
-  isFast: timeElapsed < 120
-});
-```
+export const useUnifiedRealTime = (callbacks: RealTimeCallbacks) => {
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setup = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-### 2. Modificação no useSummary.ts
+      channel = supabase
+        .channel(`unified-realtime-${user.id}`)
+        // Badges
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_badges',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          console.log('🏆 New badge earned!');
+          callbacks.onBadgeEarned?.();
+        })
+        // Usage
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'uso_usuarios',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          console.log('📊 Usage updated');
+          callbacks.onUsageChanged?.();
+        })
+        // Progress
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'user_progress',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          callbacks.onProgressChanged?.();
+        })
+        // Daily activities
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'daily_activities',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          callbacks.onActivityChanged?.();
+        })
+        .subscribe();
+    };
 
-```typescript
-// Adicionar import
-import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
-
-// Dentro do hook
-const { checkBadgesForActivity } = useAdvancedBadges();
-
-// Após incrementUsage('summaries'):
-await checkBadgesForActivity('summary');
-```
-
-### 3. Modificação no useMultipleUpload.ts
-
-```typescript
-// Adicionar import
-import { useAdvancedBadges } from '@/hooks/useAdvancedBadges';
-
-// Dentro do hook
-const { checkBadgesForActivity } = useAdvancedBadges();
-
-// Após incrementUsage('uploads'):
-await checkBadgesForActivity('upload');
-```
-
-### 4. Correção no useAdvancedBadges.ts
-
-```typescript
-// Linha 137 - Corrigir query de resumos
-// DE:
-const resumosData = await supabase.from('resumos').select('id, upload_id').eq('upload_id', user.id);
-
-// PARA:
-const resumosData = await supabase.from('resumos').select('id').eq('user_id', user.id);
+    setup();
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [callbacks]);
+};
 ```
 
 ---
 
-## Badges que Serão Verificados por Fluxo
+## Modificações no useAdvancedBadges
 
-| Fluxo | Badges Verificados |
-|-------|-------------------|
-| **Upload** | first_upload, early_bird, night_owl |
-| **Resumo** | first_summary, early_bird, night_owl |
-| **Quiz** | first_quiz, speedster, sharpshooter, studious, quiz_master, early_bird, night_owl |
-| **Flashcard** | first_flashcard, elephant_memory, perfect_accuracy, voracious_reader, early_bird, night_owl |
-| **Login/Streak** | first_week, eternal_fire, diamond, level_5/10/25, xp_1000/10000 |
+Adicionar subscrição para atualizar badges automaticamente:
+
+```typescript
+// Dentro do useAdvancedBadges
+
+useEffect(() => {
+  if (!user) return;
+  
+  const channel = supabase
+    .channel(`badges-${user.id}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'user_badges',
+      filter: `user_id=eq.${user.id}`
+    }, (payload) => {
+      console.log('🏆 Real-time: New badge detected');
+      loadUserBadges(); // Refresh badges list
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [user, loadUserBadges]);
+```
 
 ---
 
-## Comportamento Esperado
+## Modificações no useUsageData
 
-1. **Usuário faz primeiro upload** → Recebe badge "Primeiro Upload" 🌱
-2. **Usuário gera primeiro resumo** → Recebe badge "Primeiro Resumo" 📝
-3. **Usuário completa primeiro quiz** → Recebe badge "Primeiro Quiz" 🧠
-4. **Usuário completa quiz em menos de 2 min** → Recebe badge "Velocista" ⚡
-5. **Usuário gabarita quiz** → Progresso para "Atirador Certeiro" 🎯
-6. **Usuário estuda após 22h** → Recebe badge "Coruja" 🌙
+Adicionar subscrição para atualizar contadores:
 
-Cada badge desbloqueado mostrará:
-- Toast de celebração com nome e descrição kid-friendly
-- Animação overlay com confetti (BadgeUnlockAnimation)
-- Atualização automática nas vitrines do Dashboard e Progresso
+```typescript
+// Dentro do useUsageData
+
+useEffect(() => {
+  if (!user) return;
+  
+  const channel = supabase
+    .channel(`usage-${user.id}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'uso_usuarios',
+      filter: `user_id=eq.${user.id}`
+    }, () => {
+      console.log('📊 Real-time: Usage updated');
+      fetchUsageData();
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [user, fetchUsageData]);
+```
 
 ---
 
 ## Resultado Final
 
-Após esta integração:
-- **100% dos fluxos de atividade** verificarão badges automaticamente
-- Sistema de gamificação **completamente funcional**
-- Usuários receberão feedback imediato de conquistas
-- Motivação aumentada para continuar estudando
+Após implementação:
+
+1. **Badges em tempo real** - Vitrine atualiza automaticamente ao ganhar conquista
+2. **Contadores em tempo real** - Dashboard mostra números atualizados
+3. **Progresso sincronizado** - XP, nível e streak atualizam imediatamente
+4. **Missões dinâmicas** - Progresso das missões atualiza conforme atividade
+5. **Multi-tab sync** - Múltiplas abas do navegador ficam sincronizadas
+
+---
+
+## O Aplicativo Já Está Funcional?
+
+**SIM**, o aplicativo já está funcional! As funcionalidades principais estão implementadas:
+
+- Upload de materiais
+- Geração de resumos com AI
+- Criação de flashcards automáticos
+- Quiz ENEM com questões inteligentes
+- Sistema de gamificação completo
+- Badges e conquistas
+
+**O que falta é refinamento:**
+1. Real-time para badges e contadores (este plano)
+2. Mais tipos de questão no Quiz (drag-and-drop, associação)
+3. Modo simulado ENEM com timer
+4. Algoritmo SM-2 completo nos flashcards
+5. Breadcrumbs de navegação
+
+---
+
+## Ordem de Implementação
+
+1. Criar `useUnifiedRealTime.ts`
+2. Adicionar real-time ao `useAdvancedBadges.ts`
+3. Adicionar real-time ao `useUsageData.ts`
+4. Testar sincronização em tempo real
+5. Remover hooks duplicados (cleanup)
 
