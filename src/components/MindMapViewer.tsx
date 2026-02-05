@@ -20,8 +20,10 @@ const MindMapViewer = ({ mindMapData, onBack }: MindMapViewerProps) => {
     const width = 1000;
     const height = 600;
     
-    // Clear previous content
-    svg.innerHTML = '';
+    // Clear previous content safely (avoid innerHTML for security)
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
 
     // Create a map of nodes by ID
     const nodeMap = new Map<string, MindMapNode>();
