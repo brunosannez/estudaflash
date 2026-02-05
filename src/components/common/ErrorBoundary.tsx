@@ -45,22 +45,35 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   logError = (error: Error, errorInfo: any) => {
+    // Sanitize error data - remove potentially sensitive paths
+    const sanitizedStack = error.stack?.replace(/\/[^\s:]+:/g, '<path>:') || '';
+    const sanitizedUrl = window.location.pathname; // Only pathname, not full URL with query params
+    
     const errorData = {
       message: error.message,
-      stack: error.stack,
+      stack: sanitizedStack,
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href
+      // Don't log full userAgent in production
+      userAgent: process.env.NODE_ENV === 'development' ? navigator.userAgent : 'hidden',
+      url: sanitizedUrl
     };
 
-    // Salvar no localStorage para debug
-    const existingErrors = JSON.parse(localStorage.getItem('app_errors') || '[]');
-    existingErrors.push(errorData);
+    // Use sessionStorage in production (clears on tab close) for better security
+    // Use localStorage in development for persistent debugging
+    const storage = process.env.NODE_ENV === 'development' ? localStorage : sessionStorage;
     
-    // Manter apenas os últimos 10 erros
-    const recentErrors = existingErrors.slice(-10);
-    localStorage.setItem('app_errors', JSON.stringify(recentErrors));
+    try {
+      const existingErrors = JSON.parse(storage.getItem('app_errors') || '[]');
+      existingErrors.push(errorData);
+      
+      // Manter apenas os últimos 10 erros
+      const recentErrors = existingErrors.slice(-10);
+      storage.setItem('app_errors', JSON.stringify(recentErrors));
+    } catch (e) {
+      // Storage might be full or disabled
+      console.warn('Failed to log error to storage:', e);
+    }
 
     // Em produção, aqui seria enviado para um serviço de monitoramento
     console.error('Error logged:', errorData);

@@ -151,6 +151,9 @@ export const useAuth = () => {
         throw error;
       }
 
+      // Clear all cached data on logout for security
+      clearCacheOnLogout();
+
       console.log('✅ Sign out successful');
       setAuthState({
         user: null,
@@ -166,6 +169,28 @@ export const useAuth = () => {
         error: error.message 
       }));
       throw error;
+    }
+  };
+
+  // Security: Clear all cached data when user logs out
+  const clearCacheOnLogout = () => {
+    try {
+      // Clear offline manager cache
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cache_') || key === 'pending_actions')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Clear error logs (they may contain session-specific URLs)
+      localStorage.removeItem('app_errors');
+      
+      console.log('🧹 Cleared cached data on logout');
+    } catch (error) {
+      console.warn('Failed to clear cache on logout:', error);
     }
   };
 
