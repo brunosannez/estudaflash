@@ -172,19 +172,29 @@ export class ErrorBoundary extends Component<Props, State> {
 // Hook para reportar erros manualmente
 export const useErrorReporting = () => {
   const reportError = (error: Error, context?: string) => {
+    // Sanitize error data
+    const sanitizedStack = error.stack?.replace(/\/[^\s:]+:/g, '<path>:') || '';
+    const sanitizedUrl = window.location.pathname;
+    
     const errorData = {
       message: error.message,
-      stack: error.stack,
+      stack: sanitizedStack,
       context: context || 'Manual report',
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href
+      userAgent: process.env.NODE_ENV === 'development' ? navigator.userAgent : 'hidden',
+      url: sanitizedUrl
     };
 
-    // Salvar no localStorage
-    const existingErrors = JSON.parse(localStorage.getItem('app_errors') || '[]');
-    existingErrors.push(errorData);
-    localStorage.setItem('app_errors', JSON.stringify(existingErrors.slice(-10)));
+    // Use sessionStorage in production for better security
+    const storage = process.env.NODE_ENV === 'development' ? localStorage : sessionStorage;
+    
+    try {
+      const existingErrors = JSON.parse(storage.getItem('app_errors') || '[]');
+      existingErrors.push(errorData);
+      storage.setItem('app_errors', JSON.stringify(existingErrors.slice(-10)));
+    } catch (e) {
+      console.warn('Failed to log error to storage:', e);
+    }
 
     console.error('Manual error report:', errorData);
   };

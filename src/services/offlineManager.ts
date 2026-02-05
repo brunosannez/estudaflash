@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * OfflineManager - Handles offline caching and sync
+ * 
+ * SECURITY NOTES:
+ * - Approved for caching: study content, UI preferences, progress stats, flashcard reviews
+ * - NEVER cache: auth tokens, passwords, PII, payment data, guardian data
+ * - Cache is cleared on logout via useAuth hook
+ * - TTL of 24 hours limits exposure window
+ */
+
 class OfflineManager {
   private static instance: OfflineManager;
   private isOnline = navigator.onLine;
@@ -113,7 +123,6 @@ class OfflineManager {
     for (const action of actionsToSync) {
       try {
         // Here you would implement the actual sync logic
-        // For now, just log the action
         console.log('Syncing action:', action);
         await new Promise(resolve => setTimeout(resolve, 100)); // Simulate API call
       } catch (error) {
@@ -126,10 +135,11 @@ class OfflineManager {
     this.savePendingActions();
   }
 
+  // Security: Clear all cached data (called on logout)
   clearCache() {
     const keys = Object.keys(localStorage);
     keys.forEach(key => {
-      if (key.startsWith('cache_')) {
+      if (key.startsWith('cache_') || key === 'pending_actions') {
         localStorage.removeItem(key);
       }
     });
