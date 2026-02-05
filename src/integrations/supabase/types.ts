@@ -1624,6 +1624,13 @@ export type Database = {
             referencedRelation: "plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "public_plans"
+            referencedColumns: ["id"]
+          },
         ]
       }
       team_challenges: {
@@ -1985,11 +1992,68 @@ export type Database = {
             referencedRelation: "plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "uso_usuarios_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "public_plans"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      public_plans: {
+        Row: {
+          created_at: string | null
+          credits_per_month: number | null
+          description: string | null
+          features: string[] | null
+          flashcards_limit: number | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          price_brl: number | null
+          price_brl_yearly: number | null
+          quizzes_limit: number | null
+          summaries_limit: number | null
+          updated_at: string | null
+          uploads_limit: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits_per_month?: number | null
+          description?: string | null
+          features?: string[] | null
+          flashcards_limit?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          price_brl?: number | null
+          price_brl_yearly?: number | null
+          quizzes_limit?: number | null
+          summaries_limit?: number | null
+          updated_at?: string | null
+          uploads_limit?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          credits_per_month?: number | null
+          description?: string | null
+          features?: string[] | null
+          flashcards_limit?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          price_brl?: number | null
+          price_brl_yearly?: number | null
+          quizzes_limit?: number | null
+          summaries_limit?: number | null
+          updated_at?: string | null
+          uploads_limit?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_admin_by_email: { Args: { admin_email: string }; Returns: boolean }
