@@ -1,192 +1,162 @@
 
+# Plano de Correcoes: Admin, 404, e Acesso ao Plano
 
-# Pagina de Escolha de Plano
+## Problemas Identificados
 
-## Resumo
+### Problema 1: Erro 404 em algumas paginas (publicado)
+A pagina 404 aparece no site publicado (`estudaflash.lovable.app`) ao acessar rotas diretamente (por exemplo, `/my-summaries`). Isso e um problema classico de SPAs (Single Page Applications): o servidor tenta buscar um arquivo fisico para a rota, mas como tudo e gerenciado pelo React Router no navegador, ele retorna 404. No ambiente de preview do Lovable isso ja e tratado automaticamente, mas no site publicado pode ocorrer se o service worker (`sw.js`) estiver cacheando respostas incorretas ou se a navegacao nao estiver usando o React Router corretamente.
 
-Criar uma pagina dedicada de selecao de plano (`/choose-plan`) que sera usada em dois cenarios:
+**Causa raiz**: O service worker (`sw.js`) nao tem logica de fallback para rotas SPA. Quando o usuario acessa uma rota como `/my-summaries` diretamente, o SW tenta buscar no cache ou na rede, e se nao encontrar, nao redireciona para `index.html`.
 
-1. **Apos cadastro com Google**: o usuario que se cadastra via OAuth nao passa pelo fluxo de selecao de plano do signup. Quando o sistema detecta que ele nao tem um plano escolhido (ou esta no plano Free por padrao), ele sera redirecionado para essa pagina.
-2. **Na pagina inicial (landing page)**: adicionar uma secao de planos visivel publicamente, onde visitantes podem ver os planos e, ao selecionar um, serem direcionados ao cadastro ja com o plano pre-selecionado.
+**Solucao**: Atualizar o service worker para incluir um fallback de navegacao que retorna `/index.html` para requisicoes de navegacao (tipo `navigate`). Isso garante que o React Router assuma o controle.
 
-## Como Funciona Hoje
+### Problema 2: Painel Admin nao carrega usuarios ("Erro ao carregar usuarios")
+A funcao RPC `get_all_users_admin` esta corretamente configurada como `SECURITY DEFINER` e verifica se o usuario e admin via `is_current_user_admin()`. A funcao existe e a logica esta correta.
 
-- Quando um usuario se cadastra via Google, o trigger `handle_new_user_setup` no banco cria automaticamente um registro em `uso_usuarios` com o plano **Free** (pois o metadata do Google nao inclui `plan_id`).
-- O fluxo de signup manual ja tem a selecao de plano integrada (passo 3 ou 4 do formulario).
-- A tabela `uso_usuarios` tem as colunas `plan_id` (UUID) e `plano` (texto) que controlam o plano do usuario.
+**Causa provavel**: O usuario admin (`cfef2417-fa37-4b91-a351-6c8fde933658` / `brunosannez@hotmail.com`) tem `is_admin = true` no banco. A funcao `is_current_user_admin` verifica esse campo. O erro pode estar vindo de:
+- A funcao `get_all_users_admin` faz `LEFT JOIN auth.users` que requer privilegios especiais. Embora seja `SECURITY DEFINER`, o owner da funcao precisa ter acesso a `auth.users`.
+- Possivel problema de tipagem entre o que a funcao retorna e o que o TypeScript espera.
+
+**Solucao**: Recriar a funcao `get_all_users_admin` garantindo que o owner seja o `postgres` (superuser) para poder acessar `auth.users`. Tambem adicionar melhor tratamento de erro no frontend com logs mais detalhados.
+
+### Problema 3: Usuario Free nao ve opcao de trocar/assinar plano
+Atualmente, nao existe NENHUM link ou botao para `/choose-plan` acessivel no app para usuarios ja logados. A unica forma de chegar la e:
+- Via redirect do Google OAuth (novo cadastro)
+- Digitando a URL manualmente
+
+O dashboard mostra o plano atual ("Free") mas nao oferece acao para mudar.
+
+**Solucao**: Adicionar multiplos pontos de acesso a pagina `/choose-plan`:
+1. No menu lateral (navegacao principal), adicionar item "Meu Plano"
+2. No card de plano do dashboard (que mostra "Free"), tornar clicavel com botao "Fazer Upgrade"
+3. No `UpgradeModal`, adicionar opcao de navegar para `/choose-plan` alem do Stripe checkout
+
+---
 
 ## Mudancas Planejadas
 
-### 1. Nova Pagina: `src/pages/ChoosePlan.tsx`
+### 1. Corrigir Service Worker para SPA routing
 
-Pagina protegida (requer login) com:
-- Titulo e descricao explicativa
-- Toggle mensal/anual (reutilizando o padrao do signup)
-- Grid de cards de planos (reutilizando `PlanCard` existente)
-- Botao "Confirmar Plano" que atualiza o plano do usuario no banco
-- Opcao de pular e continuar com o plano Free
+**Arquivo**: `public/sw.js`
 
-### 2. Nova Funcao RPC: `user_select_plan`
+Adicionar logica de navigation fallback: quando o SW intercepta uma requisicao do tipo `navigate` (o usuario digitou uma URL ou atualizou a pagina), retornar o `index.html` do cache em vez de tentar buscar o arquivo da rota.
 
-Como a funcao `admin_change_user_plan_new` exige ser administrador, sera criada uma nova funcao que permite ao proprio usuario alterar **apenas o seu** plano:
+### 2. Recriar funcao admin com melhor tratamento de erro
 
-```sql
-CREATE OR REPLACE FUNCTION public.user_select_plan(new_plan_id UUID)
-RETURNS BOOLEAN
-LANGUAGE plpgsql SECURITY DEFINER
-AS $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM public.plans WHERE id = new_plan_id AND is_active = true) THEN
-    RAISE EXCEPTION 'Plano nao encontrado ou inativo';
-  END IF;
+**Migracao SQL**: Recriar `get_all_users_admin` com `SET search_path = public` e garantir ownership correto. Adicionar tratamento para caso o JOIN com `auth.users` falhe.
 
-  UPDATE public.uso_usuarios
-  SET plan_id = new_plan_id,
-      plano = (SELECT LOWER(name) FROM public.plans WHERE id = new_plan_id),
-      updated_at = now()
-  WHERE user_id = auth.uid();
+### 3. Adicionar link "Meu Plano" na navegacao
 
-  RETURN TRUE;
-END;
-$$;
-```
+**Arquivo**: `src/components/navigation/MainNavigation.tsx`
 
-### 3. Nova Secao na Landing Page: `src/components/home/PricingSection.tsx`
+Adicionar item de navegacao "Meu Plano" com icone `Crown` que aponta para `/choose-plan`. Ficara visivel para todos os usuarios logados.
 
-Secao publica que mostra os planos disponiveis na pagina inicial, entre `BenefitsSection` e `HomeFooter`. Ao clicar em um plano, o visitante e direcionado para `/new-signup?plan={planId}`.
+### 4. Tornar card de plano do dashboard clicavel
 
-### 4. Redirecionamento Automatico para Novos Usuarios Google
+**Arquivo**: `src/components/dashboard/DashboardUsageOverview.tsx`
 
-No `AppRoutes` dentro de `App.tsx`, adicionar logica para detectar usuarios recem-cadastrados via Google que ainda nao escolheram um plano (estao no Free por padrao) e redireciona-los para `/choose-plan`.
+No card que mostra o plano atual ("Free"), adicionar botao/link "Fazer Upgrade" ou "Mudar Plano" que navega para `/choose-plan`.
 
-Isso sera feito verificando o `uso_usuarios` do usuario logado: se o `plan_id` aponta para o plano Free **e** o usuario acabou de se cadastrar (conta criada nos ultimos 5 minutos), redirecionar para a pagina de escolha de plano.
+### 5. Atualizar UpgradeModal com opcao de ver planos
 
-### 5. Rota `/new-signup` com Plano Pre-Selecionado
+**Arquivo**: `src/components/usage/UpgradeModal.tsx`
 
-Quando o usuario chega via `/new-signup?plan={planId}`, o formulario de signup ja inicia com o plano selecionado automaticamente.
+Adicionar botao "Ver todos os planos" que navega para `/choose-plan`, como alternativa ao checkout direto do Stripe.
 
-## Arquivos a Criar
+### 6. Melhorar pagina ChoosePlan para usuarios existentes
 
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/ChoosePlan.tsx` | Pagina de selecao de plano para usuarios logados |
-| `src/components/home/PricingSection.tsx` | Secao de planos na landing page publica |
+**Arquivo**: `src/pages/ChoosePlan.tsx`
+
+Adicionar indicacao visual do plano atual do usuario (buscar via `useUserPlan`) e destacar o plano que ele ja possui.
+
+---
 
 ## Arquivos a Modificar
 
 | Arquivo | Mudanca |
-|---------|-----------|
-| `src/App.tsx` | Adicionar rota `/choose-plan` protegida |
-| `src/pages/Home.tsx` | Incluir `PricingSection` entre Benefits e Footer |
-| `src/hooks/useSignupForm.ts` | Ler parametro `plan` da URL para pre-selecionar plano |
-| `src/services/plansService.ts` | Adicionar metodo `selectPlan()` que chama a nova RPC |
+|---------|---------|
+| `public/sw.js` | Adicionar navigation fallback para SPA |
+| `src/components/navigation/MainNavigation.tsx` | Adicionar link "Meu Plano" no menu |
+| `src/components/dashboard/DashboardUsageOverview.tsx` | Botao de upgrade no card de plano |
+| `src/components/usage/UpgradeModal.tsx` | Link para ver todos os planos |
+| `src/pages/ChoosePlan.tsx` | Mostrar plano atual do usuario |
 
 ## Migracao SQL
 
-Criar a funcao `user_select_plan` no Supabase para permitir que o usuario altere seu proprio plano de forma segura.
+Recriar a funcao `get_all_users_admin` com tratamento de erro melhorado e garantir que ela tem as permissoes corretas para acessar `auth.users`.
 
-## Fluxo do Usuario
-
-```text
-Cenario 1: Cadastro com Google
-  Usuario na landing page
-    -> Clica "Entrar com Google"
-    -> Google autentica e retorna ao app
-    -> Trigger cria conta com plano Free
-    -> App detecta usuario novo sem plano escolhido
-    -> Redireciona para /choose-plan
-    -> Usuario escolhe plano e confirma
-    -> Vai para o Dashboard
-
-Cenario 2: Landing page com plano pre-selecionado
-  Visitante na landing page
-    -> Desce ate secao de Planos
-    -> Clica em "Escolher" no plano Pro
-    -> Redirecionado para /new-signup?plan={proId}
-    -> Formulario ja tem o plano Pro selecionado
-    -> Completa o cadastro normalmente
-
-Cenario 3: Usuario logado quer trocar de plano
-  Usuario no Dashboard
-    -> Navega para /choose-plan (via menu ou settings)
-    -> Ve planos disponiveis com o atual destacado
-    -> Seleciona novo plano e confirma
-    -> Plano atualizado instantaneamente
-```
+---
 
 ## Detalhes Tecnicos
 
-### ChoosePlan.tsx - Estrutura Principal
+### sw.js - Navigation Fallback
 
-```typescript
-// Busca planos ativos via useActivePlans()
-// Busca plano atual do usuario via query em uso_usuarios
-// Permite selecionar e confirmar novo plano
-// Chama PlansService.selectPlan() para gravar
-// Redireciona para "/" apos confirmacao
+Adicionar no handler de `fetch` uma verificacao para requests de tipo `navigate`. Quando detectado, retornar o `index.html` cacheado:
+
+```javascript
+// Na secao fetch do service worker
+if (event.request.mode === 'navigate') {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match('/index.html'))
+  );
+  return;
+}
 ```
 
-### PricingSection.tsx - Cards Publicos
+### MainNavigation.tsx - Novo Item
 
-Componente que usa `useActivePlans()` para buscar planos do banco e exibi-los em cards visuais. Cada card tem botao "Escolher este plano" que leva a `/new-signup?plan={id}`. Filtra planos internos (como "Admin Unlimited") para nao exibi-los publicamente.
-
-### App.tsx - Nova Rota
+Adicionar entre "Social" e "Admin" (se admin):
 
 ```typescript
-<Route
-  path="/choose-plan"
-  element={
-    <ProtectedRoute>
-      <ChoosePlan />
-    </ProtectedRoute>
-  }
-/>
+{ href: '/choose-plan', icon: Crown, label: 'Meu Plano' },
 ```
 
-### useSignupForm.ts - Leitura do Query Param
+### DashboardUsageOverview.tsx - Card Clicavel
 
-No `useSignupForm`, ao inicializar, verificar se existe `?plan=` na URL e pre-preencher `selectedPlanId`.
+Transformar o card de plano existente para incluir um botao de acao:
 
-### Migracao SQL
+```typescript
+<Card className="..." onClick={() => navigate('/choose-plan')}>
+  <CardContent className="p-4 text-center">
+    <Trophy className="w-6 h-6 mx-auto mb-2 text-orange-600" />
+    <div className="text-2xl font-bold text-orange-600">
+      {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
+    </div>
+    <div className="text-sm text-gray-600">Plano</div>
+    <Button variant="link" size="sm" className="mt-1 text-xs text-violet-600">
+      Mudar Plano
+    </Button>
+  </CardContent>
+</Card>
+```
+
+### ChoosePlan.tsx - Plano Atual
+
+Buscar o plano atual do usuario e mostrar badge "Plano Atual" no card correspondente:
+
+```typescript
+const { userPlan, loading: userPlanLoading } = useUserPlan(user?.id);
+// No PlanCardChoose, verificar se plan.name.toLowerCase() === userPlan?.plan_name?.toLowerCase()
+```
+
+### SQL - Funcao Admin Robusta
 
 ```sql
-CREATE OR REPLACE FUNCTION public.user_select_plan(new_plan_id UUID)
-RETURNS BOOLEAN
-LANGUAGE plpgsql SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.get_all_users_admin()
+RETURNS TABLE(...)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM public.plans
-    WHERE id = new_plan_id AND is_active = true
-  ) THEN
-    RAISE EXCEPTION 'Plano nao encontrado ou inativo';
+  IF NOT is_current_user_admin() THEN
+    RAISE EXCEPTION 'Acesso negado';
   END IF;
-
-  UPDATE public.uso_usuarios
-  SET
-    plan_id = new_plan_id,
-    plano = (SELECT LOWER(name) FROM public.plans WHERE id = new_plan_id),
-    updated_at = now()
-  WHERE user_id = auth.uid();
-
-  RETURN TRUE;
+  
+  RETURN QUERY
+  SELECT ... FROM uso_usuarios u
+  LEFT JOIN auth.users au ON u.user_id = au.id
+  ORDER BY u.created_at DESC;
 END;
 $$;
 ```
-
-### Google OAuth - Redirecionamento
-
-Alterar o `redirectTo` do `signInWithGoogle` para apontar para `/choose-plan` em vez de `/`, garantindo que o usuario passe pela selecao de plano apos o cadastro via Google:
-
-```typescript
-const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/choose-plan`,
-    },
-  });
-  // ...
-};
-```
-
