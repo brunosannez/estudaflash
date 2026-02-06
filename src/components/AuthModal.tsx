@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserPlus, LogIn } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import GoogleIcon from '@/components/common/GoogleIcon';
 
 interface AuthModalProps {
   children: React.ReactNode;
@@ -18,7 +20,9 @@ const AuthModal = ({ children }: AuthModalProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSignIn = async () => {
@@ -77,6 +81,42 @@ const AuthModal = ({ children }: AuthModalProps) => {
               </Button>
             </Link>
           </div>
+
+          {/* Separador */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">ou continue com</span>
+            </div>
+          </div>
+
+          {/* Botão Google */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+            onClick={async () => {
+              setGoogleLoading(true);
+              try {
+                await signInWithGoogle();
+                setOpen(false);
+              } catch (error: any) {
+                toast({
+                  title: "Erro no login com Google",
+                  description: error.message || "Tente novamente.",
+                  variant: "destructive",
+                });
+              } finally {
+                setGoogleLoading(false);
+              }
+            }}
+            disabled={googleLoading}
+          >
+            <GoogleIcon className="h-5 w-5 mr-2" />
+            {googleLoading ? 'Conectando...' : 'Entrar com Google'}
+          </Button>
         </div>
         
         <Tabs defaultValue="signin" className="w-full">
