@@ -3,13 +3,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivePlans } from '@/hooks/usePlans';
+import { useUsageData } from '@/hooks/useUsageData';
 import { PlansService } from '@/services/plansService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Check, Loader2, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 import { designColors } from '@/utils/designSystem';
 import { ActivePlan } from '@/types/plans';
 
@@ -17,6 +19,7 @@ const ChoosePlan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { plans, loading: plansLoading } = useActivePlans();
+  const { usageData, loading: usageLoading } = useUsageData();
   const { toast } = useToast();
 
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
@@ -27,6 +30,9 @@ const ChoosePlan = () => {
   const publicPlans = plans.filter(
     (p) => !p.name.toLowerCase().includes('admin')
   );
+  
+  // Get current user's plan name (lowercase for comparison)
+  const currentPlanName = usageData?.plan_name?.toLowerCase() || usageData?.plano?.toLowerCase() || 'free';
 
   const handleConfirm = async () => {
     if (!selectedPlanId) {
@@ -62,7 +68,7 @@ const ChoosePlan = () => {
     navigate('/');
   };
 
-  if (plansLoading) {
+  if (plansLoading || usageLoading) {
     return (
       <div className={`min-h-screen ${designColors.backgrounds.main} flex items-center justify-center`}>
         <div className="text-center">
@@ -76,16 +82,29 @@ const ChoosePlan = () => {
   return (
     <div className={`min-h-screen ${designColors.backgrounds.main} py-8 px-4`}>
       <div className="max-w-5xl mx-auto">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-6 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-8 w-8 text-violet-500" />
             <h1 className={`${designColors.responsive.pageTitle} bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent`}>
-              Escolha seu Plano
+              {currentPlanName !== 'free' ? 'Gerenciar Plano' : 'Escolha seu Plano'}
             </h1>
           </div>
           <p className={`${designColors.responsive.bodyText} text-muted-foreground max-w-lg mx-auto`}>
-            Selecione o plano ideal para turbinar seus estudos com IA. Você pode mudar a qualquer momento!
+            {currentPlanName !== 'free' 
+              ? `Você está no plano ${currentPlanName.toUpperCase()}. Veja outras opções abaixo.`
+              : 'Selecione o plano ideal para turbinar seus estudos com IA. Você pode mudar a qualquer momento!'
+            }
           </p>
         </div>
 
@@ -116,6 +135,7 @@ const ChoosePlan = () => {
               key={plan.id}
               plan={plan}
               isSelected={selectedPlanId === plan.id}
+              isCurrentPlan={plan.name.toLowerCase() === currentPlanName}
               onSelect={setSelectedPlanId}
               showYearlyPrice={showYearlyPricing}
             />
@@ -160,11 +180,12 @@ const ChoosePlan = () => {
 interface PlanCardChooseProps {
   plan: ActivePlan;
   isSelected: boolean;
+  isCurrentPlan: boolean;
   onSelect: (planId: string) => void;
   showYearlyPrice: boolean;
 }
 
-const PlanCardChoose = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCardChooseProps) => {
+const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyPrice }: PlanCardChooseProps) => {
   const price = showYearlyPrice ? plan.price_brl_yearly : plan.price_brl;
   const period = showYearlyPrice ? '/ano' : '/mês';
   const isFree = price === 0;
@@ -184,10 +205,18 @@ const PlanCardChoose = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCar
         isSelected
           ? 'ring-2 ring-violet-500 shadow-xl scale-[1.03]'
           : 'hover:shadow-lg hover:scale-[1.01] border-border'
-      } ${isPopular ? 'border-2 border-violet-300' : ''}`}
+      } ${isPopular ? 'border-2 border-violet-300' : ''} ${isCurrentPlan ? 'bg-violet-50/50' : ''}`}
       onClick={() => onSelect(plan.id)}
     >
-      {isPopular && (
+      {isCurrentPlan && (
+        <div className="absolute -top-3 -left-3 z-10">
+          <Badge className="bg-emerald-500 text-white shadow-md">
+            ✓ Plano Atual
+          </Badge>
+        </div>
+      )}
+      
+      {isPopular && !isCurrentPlan && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
           <span className="bg-gradient-to-r from-violet-500 to-violet-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">
             🌟 Mais Popular

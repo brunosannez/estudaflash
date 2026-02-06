@@ -2,12 +2,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, GraduationCap, Zap, Loader2 } from 'lucide-react';
+import { Crown, GraduationCap, Zap, Loader2, ArrowRight } from 'lucide-react';
 import { PlanType } from '@/types/plans';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { usePlansData } from '@/hooks/usePlansData';
+import { useNavigate } from 'react-router-dom';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface UpgradeModalProps {
 
 const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModalProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { getNextPlan, loading: plansLoading } = usePlansData();
   const getPlanIcon = (plan: PlanType) => {
@@ -147,27 +149,39 @@ const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModal
             </ul>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={onClose}
+                className="flex-1"
+              >
+                Continuar no plano atual
+              </Button>
+              <Button 
+                className={`flex-1 bg-gradient-to-r ${recommendedPlan.color} hover:opacity-90`}
+                onClick={handleUpgrade}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  `Assinar plano ${recommendedPlan.displayName}`
+                )}
+              </Button>
+            </div>
             <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="flex-1"
+              variant="ghost" 
+              onClick={() => {
+                onClose();
+                navigate('/choose-plan');
+              }}
+              className="text-muted-foreground hover:text-violet-600"
             >
-              Continuar no plano atual
-            </Button>
-            <Button 
-              className={`flex-1 bg-gradient-to-r ${recommendedPlan.color} hover:opacity-90`}
-              onClick={handleUpgrade}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                `Assinar plano ${recommendedPlan.displayName}`
-              )}
+              Ver todos os planos <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>

@@ -33,7 +33,8 @@ import {
   Target,
   Zap,
   Users,
-  Bell
+  Bell,
+  Crown
 } from 'lucide-react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -55,6 +56,7 @@ const MainNavigation = () => {
     { href: '/quiz-history', icon: History, label: 'Histórico Quiz' },
     { href: '/my-progress', icon: Target, label: 'Progresso' },
     { href: '/social', icon: Users, label: 'Social' },
+    { href: '/choose-plan', icon: Crown, label: 'Meu Plano' },
   ];
 
   if (isAdmin) {
