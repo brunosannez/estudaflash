@@ -23,6 +23,30 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
+  // SPA Navigation fallback - return index.html for navigation requests
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone and cache the successful response
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cached index.html for SPA routing
+          return caches.match('/index.html').then(cachedResponse => {
+            return cachedResponse || caches.match('/');
+          });
+        })
+    );
+    return;
+  }
+
   // Network first for API calls
   if (NETWORK_FIRST_URLS.some(pattern => url.includes(pattern))) {
     event.respondWith(
