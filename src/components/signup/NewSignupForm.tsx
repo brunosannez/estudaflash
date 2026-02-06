@@ -45,7 +45,7 @@ const NewSignupForm = () => {
           return formData.guardian?.full_name && formData.guardian?.email && 
                  formData.guardian?.phone && formData.guardian?.relation_to_student;
         }
-        return true;
+        return !!formData.selectedPlanId;
       case 4:
         return formData.selectedPlanId;
       default:

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileArchive, Image, AlertCircle, Check, Eye } from 'lucide-react';
@@ -9,6 +10,7 @@ import EnhancedUploadPreview from './EnhancedUploadPreview';
 import { toast } from 'sonner';
 
 const EnhancedUpload = () => {
+  const navigate = useNavigate();
   const {
     files,
     isProcessing,
@@ -89,7 +91,7 @@ const EnhancedUpload = () => {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
-              onClick={() => window.location.href = `/resumo/${results.summaryId}`} 
+              onClick={() => navigate(`/resumo/${results.summaryId}`)} 
               className="flex-1 h-12 text-base font-semibold shadow-md hover:shadow-lg transition-shadow"
             >
               <Eye className="w-5 h-5 mr-2" />
@@ -97,7 +99,7 @@ const EnhancedUpload = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/my-summaries'}
+              onClick={() => navigate('/my-summaries')}
               className="h-12"
             >
               Meus Resumos
