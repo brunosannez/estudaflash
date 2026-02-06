@@ -1,100 +1,87 @@
 
 
-# Plano: Correcao de Navegacao com Full Page Reload
+# Correcao: "useNavigate() may be used only in the context of a Router component"
 
-## Resumo
+## Causa Raiz
 
-Apos testar todas as rotas e verificar que as correcoes anteriores estao funcionando corretamente (sem erros 401, login redireciona para `/`, upload usa SPA navigation, validacao de plano no signup), foram encontrados 2 pontos restantes onde links usam `<a href>` em vez de React Router, causando recarregamento completo da pagina.
+No arquivo `App.tsx`, os componentes `Toaster` e `Sonner` estao renderizados **fora** do `BrowserRouter`:
 
-## Problemas Encontrados
+```text
+ErrorBoundary
+  QueryClientProvider
+    TooltipProvider
+      Toaster        <-- FORA do BrowserRouter
+      Sonner         <-- FORA do BrowserRouter
+      BrowserRouter
+        AppRoutes
+```
 
-### 1. NotFound.tsx usa `<a href="/">` em vez de React Router Link
+Quando qualquer componente renderizado pelos toasters (como acoes de toast ou callbacks) tenta acessar hooks do React Router, o erro "useNavigate() may be used only in the context of a Router component" e lancado. Isso pode acontecer durante re-renders parciais do HMR ou quando o React tenta reconciliar a arvore de componentes.
 
-**Onde**: `src/pages/NotFound.tsx` linha 19
+## Solucao
 
-**Problema**: O link "Return to Home" na pagina 404 usa uma tag HTML `<a href="/">`, o que causa um recarregamento completo da pagina ao clicar. Isso perde todo o estado da aplicacao, subscricoes do Supabase, e causa um ciclo desnecessario de autenticacao.
+Mover `Toaster` e `Sonner` para **dentro** do `BrowserRouter`, garantindo que todos os componentes tenham acesso ao contexto do Router:
 
-**Solucao**: Substituir `<a href="/">` por `<Link to="/">` do React Router.
+```text
+ErrorBoundary
+  QueryClientProvider
+    TooltipProvider
+      BrowserRouter
+        Toaster      <-- DENTRO do BrowserRouter
+        Sonner       <-- DENTRO do BrowserRouter
+        AppRoutes
+```
 
----
-
-### 2. AdminRoute.tsx usa `<a href="/">` em vez de React Router Link
-
-**Onde**: `src/components/AdminRoute.tsx` linha 38
-
-**Problema**: Quando um usuario sem permissoes de admin tenta acessar a area administrativa, o link "Voltar ao inicio" usa `<a href="/">`. Mesmo problema - full page reload desnecessario.
-
-**Solucao**: Substituir `<a href="/">` por `<Link to="/">` do React Router (que ja esta importado no arquivo).
-
----
-
-## Verificacoes Anteriores (Funcionando Corretamente)
-
-Todos os itens corrigidos anteriormente foram testados e estao funcionando:
-
-1. Sem erros 401 no console da pagina inicial (visitantes nao autenticados)
-2. Login redireciona para `/` diretamente com `replace: true`
-3. `emailRedirectTo` usa `window.location.origin` dinamicamente
-4. Upload pos-processamento usa `useNavigate()` para navegacao SPA
-5. ApiUsageMonitoring mostra estado vazio corretamente quando nao ha dados de API
-6. Validacao no signup exige selecao de plano para usuarios nao menores
-
----
-
-## Arquivos a Modificar
+## Arquivo a Modificar
 
 | Arquivo | Mudanca |
 |---------|---------|
-| `src/pages/NotFound.tsx` | Substituir `<a href="/">` por `<Link to="/">` e importar Link do react-router-dom |
-| `src/components/AdminRoute.tsx` | Substituir `<a href="/">` por `<Link to="/">` (Link ja importado via react-router-dom) |
+| `src/App.tsx` | Mover `Toaster` e `Sonner` para dentro do `BrowserRouter` |
 
----
+## Detalhe Tecnico
 
-## Detalhes Tecnicos
+### App.tsx (funcao App, linhas 175-189)
 
-### Mudanca 1: NotFound.tsx
 ```typescript
 // ANTES
-import { useLocation } from "react-router-dom";
+function App() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
 
 // DEPOIS
-import { useLocation, Link } from "react-router-dom";
-
-// ANTES
-<a href="/" className="text-blue-500 hover:text-blue-700 underline">
-  Return to Home
-</a>
-
-// DEPOIS
-<Link to="/" className="text-blue-500 hover:text-blue-700 underline">
-  Voltar ao Inicio
-</Link>
+function App() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Toaster />
+            <Sonner />
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
 ```
-
-### Mudanca 2: AdminRoute.tsx
-```typescript
-// ANTES (Navigate ja importado, Link nao)
-import { Navigate } from 'react-router-dom';
-
-// DEPOIS
-import { Navigate, Link } from 'react-router-dom';
-
-// ANTES
-<a href="/" className="inline-block mt-4 text-blue-600 hover:underline">
-  Voltar ao inicio
-</a>
-
-// DEPOIS
-<Link to="/" className="inline-block mt-4 text-blue-600 hover:underline">
-  Voltar ao inicio
-</Link>
-```
-
----
 
 ## Resultado Esperado
 
-1. Navegacao da pagina 404 para a home mantem o estado da aplicacao
-2. Navegacao da pagina de acesso negado mantem o estado da aplicacao
-3. Todas as rotas testadas agora usam navegacao SPA consistente
+1. O erro "useNavigate() may be used only in the context of a Router component" sera eliminado
+2. Todos os componentes renderizados por toasts terao acesso ao contexto do Router
+3. Re-renders parciais durante HMR nao causarao mais conflitos de contexto
+4. A aplicacao abrira normalmente em todos os cenarios
 
