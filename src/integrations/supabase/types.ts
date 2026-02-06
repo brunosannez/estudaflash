@@ -2462,6 +2462,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      user_select_plan: { Args: { new_plan_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

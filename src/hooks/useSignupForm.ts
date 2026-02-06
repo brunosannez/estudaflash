@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SignupFormData, UserProfile, Guardian } from '@/types/signup';
 import { supabase } from '@/integrations/supabase/client';
 import { isMinor } from '@/utils/signupValidation';
@@ -7,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const useSignupForm = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   
@@ -24,6 +26,14 @@ export const useSignupForm = () => {
     guardian: undefined,
     selectedPlanId: ''
   });
+
+  // Pre-select plan from URL query param
+  useEffect(() => {
+    const planFromUrl = searchParams.get('plan');
+    if (planFromUrl && !formData.selectedPlanId) {
+      setFormData(prev => ({ ...prev, selectedPlanId: planFromUrl }));
+    }
+  }, [searchParams]);
 
   const updateProfile = (profile: Partial<UserProfile>) => {
     const updatedProfile = { ...formData.profile, ...profile };

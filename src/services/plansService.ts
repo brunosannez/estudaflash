@@ -161,4 +161,22 @@ export class PlansService {
       status: item.status as 'active' | 'canceled' | 'pending'
     }));
   }
+
+  static async selectPlan(planId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('user_select_plan', {
+        new_plan_id: planId,
+      });
+
+      if (error) {
+        console.error('Erro ao selecionar plano:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erro no selectPlan:', error);
+      throw error;
+    }
+  }
 }
