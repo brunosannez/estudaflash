@@ -54,7 +54,7 @@ const Login = () => {
           title: "Sucesso!",
           description: "Login realizado com sucesso.",
         });
-        navigate('/dashboard');
+        navigate('/', { replace: true });
       }
     } catch (error) {
       console.error('❌ Login error:', error);
