@@ -1,6 +1,8 @@
 
 import React from 'react';
 import MainNavigation from './MainNavigation';
+import UpgradeModal from '@/components/usage/UpgradeModal';
+import { useUsageLimit } from '@/hooks/useUsageLimit';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -8,6 +10,8 @@ interface PageLayoutProps {
 }
 
 const PageLayout = ({ children, showBackground = false }: PageLayoutProps) => {
+  const { upgradeModalData } = useUsageLimit();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNavigation />
@@ -19,6 +23,13 @@ const PageLayout = ({ children, showBackground = false }: PageLayoutProps) => {
           </div>
         </div>
       </main>
+
+      <UpgradeModal
+        isOpen={upgradeModalData.isOpen}
+        onClose={upgradeModalData.onClose}
+        currentPlan={upgradeModalData.currentPlan}
+        actionType={upgradeModalData.actionType}
+      />
     </div>
   );
 };

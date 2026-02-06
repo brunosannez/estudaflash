@@ -12,6 +12,7 @@ import BadgesPreview from '@/components/dashboard/BadgesPreview';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 import BadgeUnlockAnimation from '@/components/badges/BadgeUnlockAnimation';
+import UpgradeBanner from '@/components/dashboard/UpgradeBanner';
 import { BADGE_UNLOCK_EVENT } from '@/hooks/useAdvancedBadges';
 import { BadgeDefinition } from '@/data/badgesCatalog';
 
@@ -40,8 +41,11 @@ const Index = () => {
           <div className="relative z-10 space-y-6 container mx-auto px-4 py-6">
             {/* Saudação Personalizada */}
             <PersonalizedGreeting />
+
+            {/* Banner de Upgrade para Free */}
+            <UpgradeBanner />
             
-            {/* Missão do Dia - Novo destaque */}
+            {/* Missão do Dia */}
             <DailyMission />
             
             {/* Cards de Gamificação */}

@@ -76,17 +76,17 @@ const DashboardUsageOverview = () => {
         </Card>
 
         <Card 
-          className="bg-white/70 backdrop-blur-sm border-purple-100 cursor-pointer hover:shadow-md transition-all hover:border-violet-300"
+          className="bg-gradient-to-br from-violet-50 to-purple-100 backdrop-blur-sm border-violet-300 cursor-pointer hover:shadow-lg transition-all hover:border-violet-400 ring-1 ring-violet-200"
           onClick={() => navigate('/choose-plan')}
         >
           <CardContent className="p-4 text-center">
-            <Trophy className="w-6 h-6 mx-auto mb-2 text-orange-600" />
-            <div className="text-2xl font-bold text-orange-600">
+            <Trophy className="w-6 h-6 mx-auto mb-2 text-violet-600" />
+            <div className="text-2xl font-bold text-violet-700">
               {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
             </div>
-            <div className="text-sm text-gray-600">Plano</div>
-            <Button variant="link" size="sm" className="mt-1 p-0 h-auto text-xs text-violet-600">
-              Mudar Plano →
+            <div className="text-sm text-violet-600/80">Plano</div>
+            <Button variant="default" size="sm" className="mt-2 bg-violet-600 hover:bg-violet-700 text-white text-xs px-3 h-7">
+              {usageData?.plano === 'free' ? '⭐ Fazer Upgrade' : 'Mudar Plano'}
             </Button>
           </CardContent>
         </Card>
