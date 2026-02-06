@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
@@ -35,7 +35,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
           <Lock className="h-10 w-10 text-red-600 mx-auto mb-3" />
           <h1 className="text-xl font-semibold text-gray-900 mb-1">Acesso negado</h1>
           <p className="text-sm text-gray-600">Você precisa de permissões de administrador para acessar esta página.</p>
-          <a href="/" className="inline-block mt-4 text-blue-600 hover:underline">Voltar ao início</a>
+          <Link to="/" className="inline-block mt-4 text-blue-600 hover:underline">Voltar ao início</Link>
         </div>
       </div>
     );
