@@ -8,6 +8,7 @@ import HeroSection from '@/components/home/HeroSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
 import BenefitsSection from '@/components/home/BenefitsSection';
 import HomeFooter from '@/components/home/HomeFooter';
+import PricingSection from '@/components/home/PricingSection';
 import { Loader2 } from 'lucide-react';
 
 const Home = () => {
@@ -39,6 +40,7 @@ const Home = () => {
       <HeroSection />
       <FeaturesSection />
       <BenefitsSection />
+      <PricingSection />
       <HomeFooter />
     </div>
   );

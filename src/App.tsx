@@ -23,6 +23,7 @@ import Resumo from "./pages/Resumo";
 import EnemQuiz from "./pages/EnemQuiz";
 import QuizHistory from "./pages/QuizHistory";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import ChoosePlan from "./pages/ChoosePlan";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -70,6 +71,16 @@ const AppRoutes = () => {
         
         {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        
+        {/* Rota de escolha de plano */}
+        <Route 
+          path="/choose-plan" 
+          element={
+            <ProtectedRoute>
+              <ChoosePlan />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Rotas protegidas */}
         <Route 
