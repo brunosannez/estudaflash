@@ -84,8 +84,9 @@ const ApiUsageMonitoring = () => {
     }
   };
 
-  // Empty state when no API data
-  if (!loading && apiStats.length === 0) {
+  // Empty state when no API data (apiStats always has 3 providers, check actual data)
+  const hasData = apiStats.some(stat => stat.requests_count > 0);
+  if (!loading && !hasData) {
     return (
       <div className="space-y-6">
         {/* Header e Controles */}
