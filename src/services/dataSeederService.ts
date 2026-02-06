@@ -7,9 +7,16 @@ export class DataSeederService {
     if (this.hasSeeded) return;
 
     try {
+      // Verify user is authenticated before seeding
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('⏭️ Skipping data seeding - user not authenticated');
+        return;
+      }
+
       console.log('🌱 Starting data seeding...');
 
-      // Verificar se já existem dados
+      // Check if data already exists
       const [challengesResult, leaderboardResult] = await Promise.all([
         supabase.from('challenges').select('id').limit(1),
         supabase.from('leaderboards').select('id').limit(1)
@@ -23,10 +30,8 @@ export class DataSeederService {
       }
 
       if (needsLeaderboard) {
-        await this.seedLeaderboards();
+        await this.seedLeaderboardForUser(user.id);
       }
-
-      await this.seedSampleActivities();
 
       this.hasSeeded = true;
       console.log('✅ Data seeding completed');
@@ -98,18 +103,6 @@ export class DataSeederService {
         is_active: true
       },
       {
-        title: 'XP Collector',
-        description: 'Acumule 1000 pontos de experiência neste mês',
-        type: 'monthly',
-        category: 'xp',
-        target_value: 1000,
-        xp_reward: 1000,
-        badge_reward: '💎 XP Collector',
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        is_active: true
-      },
-      {
         title: 'Daily Grind',
         description: 'Complete pelo menos 1 atividade hoje',
         type: 'daily',
@@ -126,22 +119,18 @@ export class DataSeederService {
       .from('challenges')
       .insert(challenges);
 
-    if (error) throw error;
-    console.log('📝 Challenges seeded');
+    if (error) {
+      console.warn('⚠️ Could not seed challenges (may need admin privileges):', error.message);
+    } else {
+      console.log('📝 Challenges seeded');
+    }
   }
 
-  private static async seedLeaderboards() {
-    // Buscar usuários existentes
-    const { data: users } = await supabase
-      .from('uso_usuarios')
-      .select('user_id')
-      .limit(10);
-
-    if (!users || users.length === 0) return;
-
-    const leaderboardEntries = [];
+  private static async seedLeaderboardForUser(userId: string) {
     const categories = ['xp', 'flashcards', 'quiz', 'streak'];
     const periods = ['daily', 'weekly', 'monthly', 'all_time'];
+
+    const leaderboardEntries = [];
 
     for (const category of categories) {
       for (const period of periods) {
@@ -150,7 +139,6 @@ export class DataSeederService {
 
         switch (period) {
           case 'daily':
-            // Hoje
             break;
           case 'weekly':
             periodStart.setDate(periodStart.getDate() - 7);
@@ -164,16 +152,14 @@ export class DataSeederService {
             break;
         }
 
-        users.forEach((user, index) => {
-          leaderboardEntries.push({
-            user_id: user.user_id,
-            period_type: period,
-            category: category,
-            value: Math.floor(Math.random() * 1000) + 100,
-            rank_position: index + 1,
-            period_start: periodStart.toISOString().split('T')[0],
-            period_end: periodEnd.toISOString().split('T')[0]
-          });
+        leaderboardEntries.push({
+          user_id: userId,
+          period_type: period,
+          category: category,
+          value: 0,
+          rank_position: 1,
+          period_start: periodStart.toISOString().split('T')[0],
+          period_end: periodEnd.toISOString().split('T')[0]
         });
       }
     }
@@ -182,87 +168,16 @@ export class DataSeederService {
       .from('leaderboards')
       .insert(leaderboardEntries);
 
-    if (error) throw error;
-    console.log('🏆 Leaderboards seeded');
-  }
-
-  private static async seedSampleActivities() {
-    const { data: users } = await supabase
-      .from('uso_usuarios')
-      .select('user_id')
-      .limit(10);
-
-    if (!users || users.length === 0) return;
-
-    const activities = [
-      {
-        user_id: users[0]?.user_id,
-        activity_type: 'achievement',
-        title: 'Subiu de Nível!',
-        description: 'Alcançou o nível 5 nos estudos!',
-        metadata: {
-          type: 'level_up',
-          level: 5
-        },
-        is_public: true
-      },
-      {
-        user_id: users[1]?.user_id || users[0]?.user_id,
-        activity_type: 'badge_earned',
-        title: 'Novo Badge!',
-        description: 'Conquistou o badge Quiz Master!',
-        metadata: {
-          badge: 'Quiz Master',
-          accuracy: 95
-        },
-        is_public: true
-      },
-      {
-        user_id: users[2]?.user_id || users[0]?.user_id,
-        activity_type: 'streak_milestone',
-        title: 'Sequência Incrível!',
-        description: 'Completou 7 dias de estudos consecutivos!',
-        metadata: {
-          streak: 7
-        },
-        is_public: true
-      },
-      {
-        user_id: users[3]?.user_id || users[0]?.user_id,
-        activity_type: 'challenge_completed',
-        title: 'Desafio Completado!',
-        description: 'Completou o desafio Mestre dos Flashcards!',
-        metadata: {
-          challenge: 'Mestre dos Flashcards'
-        },
-        is_public: true
-      },
-      {
-        user_id: users[4]?.user_id || users[0]?.user_id,
-        activity_type: 'quiz_achievement',
-        title: 'Quiz Perfeito!',
-        description: 'Acertou 100% no quiz de Matemática!',
-        metadata: {
-          score: 100,
-          subject: 'Matemática'
-        },
-        is_public: true
-      }
-    ].filter(activity => activity.user_id);
-
-    if (activities.length > 0) {
-      const { error } = await supabase
-        .from('social_activities')
-        .upsert(activities, { onConflict: 'id' });
-
-      if (error) console.warn('Warning: Could not seed activities:', error);
-      else console.log('📱 Sample activities seeded');
+    if (error) {
+      console.warn('⚠️ Could not seed leaderboard:', error.message);
+    } else {
+      console.log('🏆 Leaderboard seeded for current user');
     }
   }
 
   static async seedUserInitialData(userId: string) {
     try {
-      // Criar progresso inicial se não existir
+      // Create initial progress if not exists
       const { data: existingProgress } = await supabase
         .from('user_progress')
         .select('id')
@@ -281,7 +196,7 @@ export class DataSeederService {
           });
       }
 
-      // Criar atividade diária se não existir
+      // Create daily activity if not exists
       const today = new Date().toISOString().split('T')[0];
       const { data: existingActivity } = await supabase
         .from('daily_activities')
@@ -314,13 +229,13 @@ export class DataSeederService {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Limpar atividades sociais antigas
+      // Clean old social activities
       await supabase
         .from('social_activities')
         .delete()
         .lt('created_at', thirtyDaysAgo.toISOString());
 
-      // Limpar desafios expirados
+      // Deactivate expired challenges
       await supabase
         .from('challenges')
         .update({ is_active: false })

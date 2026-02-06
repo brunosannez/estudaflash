@@ -35,10 +35,9 @@ const AppRoutes = () => {
   console.log('🚀 AppRoutes rendering - User:', !!user, 'Loading:', loading);
 
   useEffect(() => {
-    // Initialize data seeding and user setup
-    DataSeederService.seedInitialData();
-    
     if (user?.id) {
+      // Only seed data when user is authenticated to avoid RLS errors
+      DataSeederService.seedInitialData();
       DataSeederService.seedUserInitialData(user.id);
     }
   }, [user?.id]);
