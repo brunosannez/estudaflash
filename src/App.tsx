@@ -177,9 +177,9 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
+            <Toaster />
+            <Sonner />
             <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
