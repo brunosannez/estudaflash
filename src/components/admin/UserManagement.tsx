@@ -29,13 +29,14 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
   Users, 
   Search, 
-  UserCheck, 
-  UserX, 
   Trash2, 
   RotateCcw,
   Loader2,
@@ -44,13 +45,16 @@ import {
   ShieldX,
   ShieldCheck,
   RefreshCw,
-  Download
+  Download,
+  AlertTriangle,
+  CreditCard
 } from 'lucide-react';
 import { AdminUserService, type UserWithPlan } from '@/services/adminUserService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import UserBlockModal from './UserBlockModal';
 import { useAdminRealTime } from '@/hooks/admin/useAdminRealTime';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,6 +62,7 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
+  const [changingPlanUserId, setChangingPlanUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -148,9 +153,31 @@ const UserManagement = () => {
     }
   };
 
+  const handleChangePlan = async (userId: string, newPlanId: string) => {
+    try {
+      setChangingPlanUserId(userId);
+      await AdminUserService.changeUserPlan(userId, newPlanId);
+
+      toast({
+        title: "Plano alterado",
+        description: `Plano alterado para ${newPlanId.toUpperCase()} com sucesso.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    } catch (error) {
+      console.error('Erro ao alterar plano:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar plano do usuário.",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPlanUserId(null);
+    }
+  };
+
   const handleResetUserUsage = async (userId: string) => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { error } = await supabase.rpc('admin_reset_user_usage', {
         target_user_id: userId
       });
@@ -175,7 +202,6 @@ const UserManagement = () => {
 
   const handleDeleteUserData = async (userId: string) => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { error } = await supabase.rpc('admin_delete_user_data', {
         target_user_id: userId
       });
@@ -276,7 +302,17 @@ const UserManagement = () => {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-center text-destructive">Erro ao carregar usuários.</p>
+          <div className="flex flex-col items-center gap-4">
+            <AlertTriangle className="h-10 w-10 text-destructive" />
+            <p className="text-center text-destructive font-medium">Erro ao carregar usuários</p>
+            <p className="text-center text-sm text-muted-foreground max-w-md">
+              {error instanceof Error ? error.message : 'Erro desconhecido ao acessar o banco de dados.'}
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Tentar novamente
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -405,6 +441,27 @@ const UserManagement = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger disabled={changingPlanUserId === user.user_id}>
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              {changingPlanUserId === user.user_id ? 'Alterando...' : 'Alterar Plano'}
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              {['free', 'pro', 'edu'].map((plan) => (
+                                <DropdownMenuItem
+                                  key={plan}
+                                  disabled={user.plano === plan}
+                                  onClick={() => handleChangePlan(user.user_id, plan)}
+                                >
+                                  <Badge className={`mr-2 ${getPlanBadgeColor(plan)}`}>
+                                    {plan.toUpperCase()}
+                                  </Badge>
+                                  {user.plano === plan ? '(atual)' : ''}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
                           
                           {user.is_active ? (
                             <DropdownMenuItem 
