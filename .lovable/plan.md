@@ -1,186 +1,192 @@
 
-# Plano: Adicionar Login com Google
+
+# Pagina de Escolha de Plano
 
 ## Resumo
 
-Adicionar a opcao de login com conta Google na pagina de Login e na pagina de Signup, usando o Supabase Auth com o provider OAuth do Google.
+Criar uma pagina dedicada de selecao de plano (`/choose-plan`) que sera usada em dois cenarios:
 
-## Pre-requisitos (configuracao no Google e Supabase)
+1. **Apos cadastro com Google**: o usuario que se cadastra via OAuth nao passa pelo fluxo de selecao de plano do signup. Quando o sistema detecta que ele nao tem um plano escolhido (ou esta no plano Free por padrao), ele sera redirecionado para essa pagina.
+2. **Na pagina inicial (landing page)**: adicionar uma secao de planos visivel publicamente, onde visitantes podem ver os planos e, ao selecionar um, serem direcionados ao cadastro ja com o plano pre-selecionado.
 
-Antes que o login com Google funcione, voce precisara configurar dois servicos:
+## Como Funciona Hoje
 
-### Passo 1: Criar credenciais no Google Cloud Console
-1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
-2. Crie um novo projeto (ou use um existente)
-3. Va em **APIs e Servicos** > **Tela de consentimento OAuth**
-   - Adicione o dominio `wevafattotpzozkmgpwm.supabase.co` como dominio autorizado
-4. Va em **APIs e Servicos** > **Credenciais** > **Criar Credenciais** > **ID do cliente OAuth**
-   - Tipo: **Aplicativo da Web**
-   - **Origens JavaScript autorizadas**: adicione `https://estudaflash.lovable.app`
-   - **URIs de redirecionamento autorizados**: adicione `https://wevafattotpzozkmgpwm.supabase.co/auth/v1/callback`
-5. Copie o **Client ID** e **Client Secret** gerados
+- Quando um usuario se cadastra via Google, o trigger `handle_new_user_setup` no banco cria automaticamente um registro em `uso_usuarios` com o plano **Free** (pois o metadata do Google nao inclui `plan_id`).
+- O fluxo de signup manual ja tem a selecao de plano integrada (passo 3 ou 4 do formulario).
+- A tabela `uso_usuarios` tem as colunas `plan_id` (UUID) e `plano` (texto) que controlam o plano do usuario.
 
-### Passo 2: Configurar no Supabase Dashboard
-1. Acesse o [Supabase Dashboard - Auth Providers](https://supabase.com/dashboard/project/wevafattotpzozkmgpwm/auth/providers)
-2. Encontre o provider **Google** e ative-o
-3. Cole o **Client ID** e **Client Secret** do Google
-4. Salve
+## Mudancas Planejadas
 
-### Passo 3: Configurar URLs de redirecionamento no Supabase
-1. Acesse [Authentication > URL Configuration](https://supabase.com/dashboard/project/wevafattotpzozkmgpwm/auth/url-configuration)
-2. Defina o **Site URL** como: `https://estudaflash.lovable.app`
-3. Em **Redirect URLs**, adicione:
-   - `https://estudaflash.lovable.app`
-   - `https://estudaflash.lovable.app/`
-   - A URL de preview do Lovable: `https://id-preview--749a0c0b-978b-4fc9-9e00-c70854beef31.lovable.app`
+### 1. Nova Pagina: `src/pages/ChoosePlan.tsx`
 
----
+Pagina protegida (requer login) com:
+- Titulo e descricao explicativa
+- Toggle mensal/anual (reutilizando o padrao do signup)
+- Grid de cards de planos (reutilizando `PlanCard` existente)
+- Botao "Confirmar Plano" que atualiza o plano do usuario no banco
+- Opcao de pular e continuar com o plano Free
 
-## Mudancas no Codigo
+### 2. Nova Funcao RPC: `user_select_plan`
 
-### 1. Adicionar funcao `signInWithGoogle` no hook useAuth
+Como a funcao `admin_change_user_plan_new` exige ser administrador, sera criada uma nova funcao que permite ao proprio usuario alterar **apenas o seu** plano:
 
-**Arquivo**: `src/hooks/useAuth.tsx`
+```sql
+CREATE OR REPLACE FUNCTION public.user_select_plan(new_plan_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.plans WHERE id = new_plan_id AND is_active = true) THEN
+    RAISE EXCEPTION 'Plano nao encontrado ou inativo';
+  END IF;
 
-Adicionar uma nova funcao que chama `supabase.auth.signInWithOAuth` com o provider Google:
+  UPDATE public.uso_usuarios
+  SET plan_id = new_plan_id,
+      plano = (SELECT LOWER(name) FROM public.plans WHERE id = new_plan_id),
+      updated_at = now()
+  WHERE user_id = auth.uid();
+
+  RETURN TRUE;
+END;
+$$;
+```
+
+### 3. Nova Secao na Landing Page: `src/components/home/PricingSection.tsx`
+
+Secao publica que mostra os planos disponiveis na pagina inicial, entre `BenefitsSection` e `HomeFooter`. Ao clicar em um plano, o visitante e direcionado para `/new-signup?plan={planId}`.
+
+### 4. Redirecionamento Automatico para Novos Usuarios Google
+
+No `AppRoutes` dentro de `App.tsx`, adicionar logica para detectar usuarios recem-cadastrados via Google que ainda nao escolheram um plano (estao no Free por padrao) e redireciona-los para `/choose-plan`.
+
+Isso sera feito verificando o `uso_usuarios` do usuario logado: se o `plan_id` aponta para o plano Free **e** o usuario acabou de se cadastrar (conta criada nos ultimos 5 minutos), redirecionar para a pagina de escolha de plano.
+
+### 5. Rota `/new-signup` com Plano Pre-Selecionado
+
+Quando o usuario chega via `/new-signup?plan={planId}`, o formulario de signup ja inicia com o plano selecionado automaticamente.
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/ChoosePlan.tsx` | Pagina de selecao de plano para usuarios logados |
+| `src/components/home/PricingSection.tsx` | Secao de planos na landing page publica |
+
+## Arquivos a Modificar
+
+| Arquivo | Mudanca |
+|---------|-----------|
+| `src/App.tsx` | Adicionar rota `/choose-plan` protegida |
+| `src/pages/Home.tsx` | Incluir `PricingSection` entre Benefits e Footer |
+| `src/hooks/useSignupForm.ts` | Ler parametro `plan` da URL para pre-selecionar plano |
+| `src/services/plansService.ts` | Adicionar metodo `selectPlan()` que chama a nova RPC |
+
+## Migracao SQL
+
+Criar a funcao `user_select_plan` no Supabase para permitir que o usuario altere seu proprio plano de forma segura.
+
+## Fluxo do Usuario
+
+```text
+Cenario 1: Cadastro com Google
+  Usuario na landing page
+    -> Clica "Entrar com Google"
+    -> Google autentica e retorna ao app
+    -> Trigger cria conta com plano Free
+    -> App detecta usuario novo sem plano escolhido
+    -> Redireciona para /choose-plan
+    -> Usuario escolhe plano e confirma
+    -> Vai para o Dashboard
+
+Cenario 2: Landing page com plano pre-selecionado
+  Visitante na landing page
+    -> Desce ate secao de Planos
+    -> Clica em "Escolher" no plano Pro
+    -> Redirecionado para /new-signup?plan={proId}
+    -> Formulario ja tem o plano Pro selecionado
+    -> Completa o cadastro normalmente
+
+Cenario 3: Usuario logado quer trocar de plano
+  Usuario no Dashboard
+    -> Navega para /choose-plan (via menu ou settings)
+    -> Ve planos disponiveis com o atual destacado
+    -> Seleciona novo plano e confirma
+    -> Plano atualizado instantaneamente
+```
+
+## Detalhes Tecnicos
+
+### ChoosePlan.tsx - Estrutura Principal
+
+```typescript
+// Busca planos ativos via useActivePlans()
+// Busca plano atual do usuario via query em uso_usuarios
+// Permite selecionar e confirmar novo plano
+// Chama PlansService.selectPlan() para gravar
+// Redireciona para "/" apos confirmacao
+```
+
+### PricingSection.tsx - Cards Publicos
+
+Componente que usa `useActivePlans()` para buscar planos do banco e exibi-los em cards visuais. Cada card tem botao "Escolher este plano" que leva a `/new-signup?plan={id}`. Filtra planos internos (como "Admin Unlimited") para nao exibi-los publicamente.
+
+### App.tsx - Nova Rota
+
+```typescript
+<Route
+  path="/choose-plan"
+  element={
+    <ProtectedRoute>
+      <ChoosePlan />
+    </ProtectedRoute>
+  }
+/>
+```
+
+### useSignupForm.ts - Leitura do Query Param
+
+No `useSignupForm`, ao inicializar, verificar se existe `?plan=` na URL e pre-preencher `selectedPlanId`.
+
+### Migracao SQL
+
+```sql
+CREATE OR REPLACE FUNCTION public.user_select_plan(new_plan_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.plans
+    WHERE id = new_plan_id AND is_active = true
+  ) THEN
+    RAISE EXCEPTION 'Plano nao encontrado ou inativo';
+  END IF;
+
+  UPDATE public.uso_usuarios
+  SET
+    plan_id = new_plan_id,
+    plano = (SELECT LOWER(name) FROM public.plans WHERE id = new_plan_id),
+    updated_at = now()
+  WHERE user_id = auth.uid();
+
+  RETURN TRUE;
+END;
+$$;
+```
+
+### Google OAuth - Redirecionamento
+
+Alterar o `redirectTo` do `signInWithGoogle` para apontar para `/choose-plan` em vez de `/`, garantindo que o usuario passe pela selecao de plano apos o cadastro via Google:
 
 ```typescript
 const signInWithGoogle = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo: `${window.location.origin}/choose-plan`,
     },
   });
-
-  if (error) throw error;
-  return data;
+  // ...
 };
 ```
 
-Exportar a funcao junto com as demais no return do hook.
-
----
-
-### 2. Adicionar botao "Entrar com Google" na pagina de Login
-
-**Arquivo**: `src/pages/Login.tsx`
-
-Adicionar um botao estilizado abaixo do formulario de login, com um separador visual "ou":
-
-- Separador com texto "ou continue com"
-- Botao com icone do Google (SVG inline) e texto "Entrar com Google"
-- Ao clicar, chama `signInWithGoogle()` do hook `useAuth`
-- Estado de loading especifico para o botao Google
-
----
-
-### 3. Adicionar botao "Cadastrar com Google" na pagina de Signup
-
-**Arquivo**: `src/components/signup/NewSignupForm.tsx`
-
-No primeiro passo do formulario (step 1), adicionar a opcao de cadastro com Google como alternativa ao preenchimento manual:
-
-- Separador com texto "ou cadastre-se com"
-- Botao com icone do Google e texto "Cadastrar com Google"
-- Ao clicar, chama a mesma funcao `signInWithGoogle()` (o Supabase cria a conta automaticamente se nao existir)
-
----
-
-### 4. Atualizar o AuthModal (modal de autenticacao rapida)
-
-**Arquivo**: `src/components/AuthModal.tsx`
-
-Adicionar a opcao de Google login tambem no modal, para consistencia.
-
----
-
-## Arquivos a Modificar
-
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/hooks/useAuth.tsx` | Adicionar funcao `signInWithGoogle` |
-| `src/pages/Login.tsx` | Adicionar botao Google + separador |
-| `src/components/signup/NewSignupForm.tsx` | Adicionar botao Google no step 1 |
-| `src/components/AuthModal.tsx` | Adicionar botao Google no modal |
-
----
-
-## Detalhes Tecnicos
-
-### useAuth.tsx - Nova funcao
-
-```typescript
-const signInWithGoogle = async () => {
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-
-    if (error) {
-      console.error('Google sign in error:', error);
-      throw error;
-    }
-
-    return data;
-  } catch (error: any) {
-    console.error('signInWithGoogle error:', error);
-    throw error;
-  }
-};
-
-// No return, adicionar:
-return {
-  ...authState,
-  signIn,
-  signUp,
-  signOut,
-  signInWithGoogle,  // NOVO
-};
-```
-
-### Login.tsx - Botao Google
-
-Apos o formulario existente e antes do link "Nao tem conta", adicionar:
-
-```typescript
-{/* Separador */}
-<div className="relative my-6">
-  <div className="absolute inset-0 flex items-center">
-    <span className="w-full border-t border-gray-300" />
-  </div>
-  <div className="relative flex justify-center text-xs uppercase">
-    <span className="bg-white px-2 text-gray-500">ou continue com</span>
-  </div>
-</div>
-
-{/* Botao Google */}
-<Button
-  type="button"
-  variant="outline"
-  className="w-full"
-  onClick={handleGoogleLogin}
-  disabled={loading}
->
-  <GoogleIcon /> Entrar com Google
-</Button>
-```
-
-### NewSignupForm.tsx - Botao Google no Step 1
-
-No `renderCurrentStep`, quando `currentStep === 1`, apos o `StudentInfoSection`, adicionar o botao Google como alternativa rapida.
-
----
-
-## Resultado Esperado
-
-1. Botao "Entrar com Google" na pagina de login
-2. Botao "Cadastrar com Google" na pagina de signup (step 1)
-3. Botao Google no modal de autenticacao
-4. Ao clicar, o usuario e redirecionado para a tela de consentimento do Google
-5. Apos autorizar, o usuario e redirecionado de volta ao app ja autenticado
-6. Se for um novo usuario, a conta e criada automaticamente pelo Supabase
-7. O `onAuthStateChange` no `useAuth` detecta a sessao e atualiza o estado do app
