@@ -1,16 +1,23 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSignupForm } from '@/hooks/useSignupForm';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import FormStepIndicator from './FormStepIndicator';
 import StudentInfoSection from './StudentInfoSection';
 import GuardianInfoSection from './GuardianInfoSection';
 import PlanSelection from './PlanSelection';
+import GoogleIcon from '@/components/common/GoogleIcon';
 import { Zap } from 'lucide-react';
 
 const NewSignupForm = () => {
   const navigate = useNavigate();
+  const { signInWithGoogle } = useAuth();
+  const { toast } = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
   const {
     formData,
     currentStep,
@@ -53,10 +60,27 @@ const NewSignupForm = () => {
     }
   };
 
+  const handleGoogleSignup = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error('❌ Google signup error:', error);
+      toast({
+        title: "Erro no cadastro com Google",
+        description: error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const renderCurrentStep = () => {
     if (currentStep <= 2) {
       return (
-        <StudentInfoSection
+        <>
+          <StudentInfoSection
           profile={formData.profile}
           email={formData.email}
           password={formData.password}
@@ -64,8 +88,31 @@ const NewSignupForm = () => {
           username={formData.username}
           onProfileChange={updateProfile}
           onBasicInfoChange={updateBasicInfo}
-          step={currentStep}
-        />
+            step={currentStep}
+          />
+          {currentStep === 1 && (
+            <>
+              <div className="relative my-5">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">ou cadastre-se com</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+                onClick={handleGoogleSignup}
+                disabled={googleLoading}
+              >
+                <GoogleIcon className="h-5 w-5 mr-2" />
+                {googleLoading ? 'Conectando...' : 'Cadastrar com Google'}
+              </Button>
+            </>
+          )}
+        </>
       );
     }
     

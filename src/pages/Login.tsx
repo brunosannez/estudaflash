@@ -9,13 +9,17 @@ import { ArrowLeft, LogIn, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { designColors } from '@/utils/designSystem';
+import { useAuth } from '@/hooks/useAuth';
+import GoogleIcon from '@/components/common/GoogleIcon';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signInWithGoogle } = useAuth();
 
   console.log('🔐 Login page rendering');
 
@@ -65,6 +69,22 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error('❌ Google login error:', error);
+      toast({
+        title: "Erro no login com Google",
+        description: error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -162,6 +182,28 @@ const Login = () => {
                   {loading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </form>
+
+              {/* Separador */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">ou continue com</span>
+                </div>
+              </div>
+
+              {/* Botão Google */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+              >
+                <GoogleIcon className="h-5 w-5 mr-2" />
+                {googleLoading ? 'Conectando...' : 'Entrar com Google'}
+              </Button>
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
