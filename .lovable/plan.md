@@ -1,121 +1,94 @@
 
-# Correcao: Pagina de Planos e Popup de Upgrade Funcionais
+# Correcao Completa do Painel Administrativo
 
-## Problemas Encontrados
+## Problema Raiz Identificado
 
-### 1. UpgradeModal nunca aparece (Bug Critico)
-O componente `UsageIndicator` contem o `UpgradeModal` mas **nao e importado nem renderizado em NENHUM lugar do app**. Ele e um componente orfao. Isso significa que, mesmo quando o usuario atinge o limite do plano Free, o popup de upgrade nunca sera mostrado.
+A analise dos logs do banco de dados revelou o erro exato:
 
-### 2. Usuario nao ve opcoes de upgrade no dashboard
-Embora o codigo ja tenha o link "Meu Plano" no sidebar e um card clicavel no `DashboardUsageOverview`, esses elementos ficam muito discretos. O card do plano esta enterrado na parte inferior da pagina (secao "Uso do App") e nao chama a atencao do usuario Free.
+**"structure of query does not match function result type"**
 
-### 3. Publicacao pendente
-As mudancas feitas anteriormente (link "Meu Plano" no sidebar, card clicavel, botao "Ver todos os planos" no UpgradeModal) estao no codigo mas podem nao estar publicadas no site ao vivo (`estudaflash.lovable.app`). O usuario precisa clicar em **Publish > Update** para que as mudancas aparecam no site publicado.
+Isso significa que a funcao `get_all_users_admin()` retorna tipos de dados que nao correspondem exatamente ao que esta declarado no `RETURNS TABLE(...)`. Especificamente:
 
----
+- O campo `email` em `auth.users` e do tipo `character varying` (varchar)
+- A funcao declara `email text` no `RETURNS TABLE`
+- PostgreSQL e estrito nessa comparacao e rejeita a execucao
 
-## Mudancas Planejadas
+## Solucao
 
-### 1. Adicionar UpgradeModal ao PageLayout (correcao critica)
+### 1. Corrigir a funcao SQL `get_all_users_admin` (Migracao)
 
-**Arquivo**: `src/components/navigation/PageLayout.tsx`
+Recriar a funcao com casts explicitos `::text` em todos os campos que podem ter tipos ambiguos (especialmente `au.email`). Isso garante que cada coluna do SELECT corresponda exatamente ao tipo declarado no `RETURNS TABLE`.
 
-O `UpgradeModal` sera integrado diretamente ao layout principal. Assim, qualquer pagina do app podera disparar o modal de upgrade. Sera utilizado o hook `useUsageLimit` para conectar os dados.
+Campos que precisam de cast explicito:
+- `COALESCE(au.email, u.user_id::text)::text` - forcar para `text`
+- `COALESCE(u.plano, 'free')::text` - garantir `text`
+- `u.blocked_reason::text` - garantir `text`
 
-### 2. Banner de Upgrade para usuarios Free no Dashboard
+### 2. Melhorar o tratamento de erro no frontend
 
-**Arquivo**: `src/pages/Index.tsx`
+**Arquivo**: `src/components/admin/UserManagement.tsx`
 
-Adicionar um banner visivel e atrativo no topo do dashboard (logo abaixo da saudacao) para usuarios no plano Free. O banner mostrara:
-- Plano atual do usuario (Free)
-- Botao "Fazer Upgrade" que leva a `/choose-plan`
-- Mensagem incentivando a mudanca de plano
+A tela de erro atual mostra apenas "Erro ao carregar usuarios." sem detalhes. Adicionar:
+- Mensagem de erro detalhada vinda do servidor
+- Botao "Tentar novamente" para recarregar
+- Log do erro no console para depuracao
 
-Este banner so aparece para usuarios no plano Free.
+### 3. Adicionar botao de alterar plano na tabela de usuarios
 
-### 3. Novo componente: UpgradeBanner
+**Arquivo**: `src/components/admin/UserManagement.tsx`
 
-**Arquivo**: `src/components/dashboard/UpgradeBanner.tsx` (novo)
-
-Componente que mostra um card atrativo com gradiente, icone de coroa, e botao de acao. Usa `useUsageData` para verificar o plano atual e so renderiza se o usuario estiver no plano Free.
-
-### 4. Garantir que o Plano card fique mais visivel
-
-**Arquivo**: `src/components/dashboard/DashboardUsageOverview.tsx`
-
-O card "Plano" ja existe com o link "Mudar Plano", mas vamos torna-lo mais proeminente com um destaque visual (gradiente violeta) para chamar mais atencao.
+Atualmente a tabela mostra o plano mas nao permite alterar diretamente. Adicionar no dropdown de acoes:
+- Opcao "Alterar Plano" que abre um selector para Free/Pro/EDU
+- Usar a funcao `admin_change_user_plan_new` que ja existe no banco
 
 ---
-
-## Arquivos a Criar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/dashboard/UpgradeBanner.tsx` | Banner de upgrade para usuarios Free |
 
 ## Arquivos a Modificar
 
 | Arquivo | Mudanca |
 |---------|---------|
-| `src/components/navigation/PageLayout.tsx` | Integrar UpgradeModal ao layout global |
-| `src/pages/Index.tsx` | Adicionar UpgradeBanner no topo do dashboard |
-| `src/components/dashboard/DashboardUsageOverview.tsx` | Destacar visualmente o card de plano |
-
----
+| Nova migracao SQL | Recriar `get_all_users_admin` com casts explicitos |
+| `src/components/admin/UserManagement.tsx` | Melhorar erro + adicionar troca de plano |
 
 ## Detalhes Tecnicos
 
-### PageLayout.tsx - Integrar UpgradeModal
+### SQL - Funcao Corrigida
 
 ```text
-Importar:
-- useUsageLimit (para obter upgradeModalData)
-- UpgradeModal
+CREATE OR REPLACE FUNCTION public.get_all_users_admin()
+RETURNS TABLE(
+  user_id uuid, 
+  email text, 
+  plano text, 
+  uploads_realizados integer, 
+  flashcards_gerados integer, 
+  quizzes_realizados integer, 
+  storage_mb numeric, 
+  created_at timestamp with time zone, 
+  is_admin boolean, 
+  is_active boolean, 
+  blocked_reason text, 
+  blocked_at timestamp with time zone
+)
 
-Adicionar o UpgradeModal ao final do layout, usando os dados
-de upgradeModalData do hook useUsageLimit.
-Isso garante que qualquer acao que chame openUpgradeModal()
-(via checkCanProceed) mostrara o popup em qualquer pagina.
+SELECT:
+  - u.user_id
+  - COALESCE(au.email::text, u.user_id::text) AS email  -- cast explicito
+  - COALESCE(u.plano, 'free')::text AS plano
+  - COALESCE(u.uploads_realizados, 0)
+  - COALESCE(u.flashcards_gerados, 0)
+  - COALESCE(u.quizzes_realizados, 0)
+  - COALESCE(subquery_storage, 0)::numeric
+  - u.created_at
+  - COALESCE(u.is_admin, false)
+  - COALESCE(u.is_active, true)
+  - u.blocked_reason::text  -- cast explicito
+  - u.blocked_at
+
+Owner: postgres (para acesso ao schema auth)
 ```
 
-### UpgradeBanner.tsx - Novo Componente
+### UserManagement.tsx - Melhorias
 
-```text
-Estrutura:
-- Card com gradiente from-violet-500 to-purple-600
-- Icone Crown + texto "Voce esta no plano Free"
-- Subtexto "Desbloqueie mais recursos com um plano premium"
-- Botao "Ver Planos" que navega para /choose-plan
-- Botao "X" para fechar temporariamente (estado local)
-
-Logica:
-- Usa useUsageData para buscar o plano atual
-- So renderiza se plano === 'free'
-- Pode ser fechado (estado local, reaparece ao recarregar)
-```
-
-### Index.tsx - Posicionar Banner
-
-```text
-Adicionar <UpgradeBanner /> logo apos <PersonalizedGreeting />
-e antes de <DailyMission />. Isso garante que seja a segunda
-coisa que o usuario ve ao abrir o dashboard.
-```
-
-### DashboardUsageOverview.tsx - Destaque no Card de Plano
-
-```text
-Alterar o card "Plano" de:
-  bg-white/70 border-purple-100
-Para:
-  bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200
-
-Adicionar um icone Crown e texto mais visivel "Fazer Upgrade"
-com estilo de botao mais proeminente.
-```
-
----
-
-## Nota Importante sobre Publicacao
-
-Apos implementar essas mudancas, o usuario precisara clicar no botao **Publish** (canto superior direito) e depois **Update** para que as alteracoes aparecam no site publicado (`estudaflash.lovable.app`). As mudancas ficam imediatamente visiveis no preview do Lovable.
+1. **Tela de erro melhorada**: Mostrar mensagem do erro + botao "Tentar novamente" que chama `refetch()`
+2. **Troca de plano inline**: No dropdown de acoes, adicionar item "Alterar Plano" com sub-opcoes Free/Pro/EDU. Usar `AdminUserService.changeUserPlan()` (que chama `admin_change_user_plan_new`). Precisa buscar os planos disponiveis via `usePlans` ou `supabase.from('plans').select()`.
