@@ -1,184 +1,108 @@
 
-# Funcionalidade: Exportar Resumo em PDF + Controle de Creditos Visivel para o Usuario
 
-## Resumo das Mudancas
+# Correcao: Erro na Pagina do Resumo e Estabilidade do App
 
-Duas funcionalidades principais serao implementadas:
+## Problema Identificado
 
-1. **Exportar/Imprimir Resumo em PDF** - Botao na pagina do resumo para salvar ou imprimir como PDF
-2. **Painel de Creditos Visivel** - O usuario vera seus creditos em tempo real no dashboard e antes de cada acao, com debito automatico integrado ao banco de dados
+A pagina do Resumo (e potencialmente o Dashboard) esta crashando com o ErrorBoundary ("Oops! Algo deu errado"). A investigacao revelou os seguintes problemas:
 
----
+### 1. Excesso de instancias do hook `useCreditsSystem`
+O componente `CreditsCostBadge` cria sua propria instancia de `useCreditsSystem()` internamente. Na pagina do Resumo, existem 3 badges + o proprio Resumo + o PageLayout, resultando em **5+ instancias** do hook, cada uma disparando 3 chamadas API ao banco (config, creditos, historico). Isso cria **15+ chamadas paralelas** ao montar a pagina, podendo causar race conditions e erros.
 
-## 1. Exportar Resumo em PDF
+### 2. CreditsCostBadge deve receber custo como prop
+Em vez de cada badge buscar o custo do banco independentemente, o componente pai (Resumo) ja tem acesso ao `useCreditsSystem` e pode passar o custo diretamente.
 
-### Abordagem
-Usar a API nativa do navegador `window.print()` com CSS de impressao otimizado. Isso permite ao usuario tanto imprimir quanto salvar como PDF (via "Salvar como PDF" na janela de impressao), sem necessidade de bibliotecas externas.
+### 3. Header.tsx modificado mas nao utilizado
+O arquivo `Header.tsx` foi modificado para incluir `useCreditsSystem`, mas nao e importado em nenhum lugar do app (o `MainNavigation` e usado no lugar). As mudancas no Header sao codigo morto.
 
-### Mudancas
-
-**Arquivo: `src/pages/Resumo.tsx`**
-- Adicionar botao "Salvar PDF / Imprimir" na area de acoes rapidas
-- Implementar funcao `handlePrintResumo()` que:
-  - Cria uma janela de impressao com o conteudo formatado do resumo
-  - Aplica estilos de impressao para manter a formatacao bonita
-  - Inclui titulo, data de criacao e rodape com marca "Estuda Flash"
-
-**Arquivo: `src/components/ResumoContent.tsx`**
-- Adicionar `id="resumo-content-print"` ao container principal para referencia no print
-
-**Novo arquivo: `src/utils/printResumo.ts`**
-- Funcao utilitaria `printResumo(title, content, date)` que:
-  - Abre uma nova janela com o conteudo formatado
-  - Aplica CSS de impressao (fonte legivel, margens, quebras de pagina)
-  - Chama `window.print()` automaticamente
-  - Inclui cabecalho com titulo e data
-  - Inclui rodape com "Gerado por Estuda Flash"
+### 4. Falta de protecao contra erros de render no Resumo
+Se qualquer componente filho do Resumo crashar, o ErrorBoundary global captura e derruba o app inteiro. Um ErrorBoundary local no Resumo protegeria melhor.
 
 ---
 
-## 2. Painel de Creditos Visivel para o Usuario
+## Mudancas Planejadas
 
-### Estado Atual
-- O `CreditsIndicator` ja existe em `src/components/usage/CreditsIndicator.tsx` com informacoes completas
-- O `CreditsHistoryModal` ja existe em `src/components/usage/CreditsHistoryModal.tsx`
-- As Edge Functions (`generate-summary`, `generate-flashcards`, `generate-quiz`, `extract-text-from-image`) ja consomem creditos via `consume_credits` RPC
-- **Problema encontrado**: A edge function `generate-enem-quiz` NAO consome creditos (bug)
-- Os custos por acao estao configurados no banco: OCR=1, Flashcards=3, Quiz=5, Resumo=8
+### 1. Refatorar CreditsCostBadge para receber custo como prop
 
-### Mudancas
+**Arquivo**: `src/components/usage/CreditsCostBadge.tsx`
 
-#### A. Adicionar Indicador de Creditos no Dashboard e Header
+Remover a dependencia interna de `useCreditsSystem`. O componente passara a receber `cost` e `hasEnough` como props opcionais, com fallback para buscar do hook apenas se nao forem fornecidos.
 
-**Arquivo: `src/pages/Index.tsx`**
-- Importar e adicionar o `CreditsIndicator` no dashboard principal, abaixo da saudacao
-- Adicionar `CreditsHistoryModal` com toggle de abertura
+### 2. Passar custos como props no Resumo
 
-**Arquivo: `src/components/Header.tsx`**
-- Adicionar um badge compacto com creditos restantes ao lado do nome do usuario
-- Mostrar icone de moeda + numero de creditos
-- Clicar abre o historico de creditos
+**Arquivo**: `src/pages/Resumo.tsx`
 
-#### B. Mostrar Custo ANTES de Cada Acao
+O componente Resumo ja tem `useCreditsSystem` - ele passara os valores de custo e saldo para cada `CreditsCostBadge`, eliminando 3 instancias desnecessarias do hook.
 
-**Arquivo: `src/pages/Resumo.tsx`**
-- Nos botoes de acao (Quiz ENEM, Flashcards, Mapa Mental), mostrar o custo em creditos
-- Exemplo: "Quiz ENEM (5 creditos)" em vez de apenas "Quiz ENEM"
-- Ao clicar, mostrar confirmacao: "Esta acao custara X creditos. Voce tem Y restantes. Continuar?"
+### 3. Reverter Header.tsx (remover codigo morto)
 
-**Novo componente: `src/components/usage/CreditsCostBadge.tsx`**
-- Badge compacto que mostra o custo de uma acao: icone moeda + "X creditos"
-- Recebe `actionType` como prop e busca o custo da configuracao
-- Cor verde se tem creditos suficientes, vermelho se nao
+**Arquivo**: `src/components/Header.tsx`
 
-**Novo componente: `src/components/usage/CreditsConfirmDialog.tsx`**
-- Dialog de confirmacao antes de executar acao
-- Mostra: acao, custo, creditos disponiveis, creditos restantes apos
-- Botoes: "Cancelar" e "Confirmar"
+Remover as importacoes e uso de `useCreditsSystem` e `Coins` do Header, ja que este componente nao e utilizado no app. Isso elimina uma instancia desnecessaria do hook.
 
-#### C. Integrar Consumo de Creditos nos Hooks
+### 4. Adicionar protecao de erro no CreditsIndicator do Dashboard
 
-**Arquivo: `src/hooks/useEnemQuiz.ts`**
-- Adicionar verificacao de creditos ANTES de gerar quiz (usar `CreditsService.checkCreditsForAction`)
-- Nao sera necessario consumir no frontend pois a edge function `generate-quiz` ja faz isso
-- Para `generate-enem-quiz`, adicionar consumo de creditos na edge function
+**Arquivo**: `src/pages/Index.tsx`
 
-**Arquivo: `supabase/functions/generate-enem-quiz/index.ts`**
-- Adicionar consumo de creditos via `consume_credits` RPC (igual as outras edge functions)
-- Retornar erro 402 se creditos insuficientes
+Envolver o `CreditsIndicator` em um try-catch no render ou usar o padrao de fallback para evitar que um erro no carregamento de creditos derrube o dashboard inteiro.
 
-**Arquivo: `src/hooks/useMindMap.ts`**
-- Adicionar verificacao de creditos antes de gerar mapa mental
-- Nota: A edge function `generate-mind-map` pode nao estar consumindo creditos tambem - sera verificado e corrigido
+### 5. Tornar useCreditsSystem mais defensivo
 
-#### D. Atualizar Creditos em Tempo Real
+**Arquivo**: `src/hooks/useCreditsSystem.ts`
 
-O sistema ja usa `useUnifiedRealTime` para monitorar mudancas na tabela `uso_usuarios`. Quando a edge function consome creditos (atualizando `credits_remaining`), o frontend ja recebe a notificacao e atualiza automaticamente. Nenhuma mudanca adicional necessaria aqui.
-
-#### E. Dados no Painel Administrativo
-
-O painel admin ja recebe os dados de `credits_remaining` e `credits_used_this_month` via `get_all_users_admin()`. O `credits_usage_log` ja registra cada consumo. Nenhuma mudanca adicional necessaria no admin.
+Adicionar verificacoes para evitar chamadas desnecessarias quando o usuario ainda nao esta carregado, e garantir que erros em qualquer chamada nao propaguem.
 
 ---
 
-## Tabela de Custos por Acao (configuracao atual no banco)
+## Arquivos a Modificar
 
-| Acao | Custo | Descricao |
-|------|-------|-----------|
-| OCR (imagem) | 1 credito | Processamento de cada imagem |
-| Flashcards | 3 creditos | Geracao de flashcards por IA |
-| Quiz | 5 creditos | Geracao de quiz por IA |
-| Resumo | 8 creditos | Geracao de resumo por IA |
-
----
-
-## Arquivos a Criar/Modificar
-
-| Arquivo | Tipo | Mudanca |
-|---------|------|---------|
-| `src/utils/printResumo.ts` | Novo | Funcao de impressao/PDF |
-| `src/components/usage/CreditsCostBadge.tsx` | Novo | Badge de custo por acao |
-| `src/components/usage/CreditsConfirmDialog.tsx` | Novo | Dialog de confirmacao |
-| `src/pages/Resumo.tsx` | Editar | Botao PDF + custos nos botoes |
-| `src/pages/Index.tsx` | Editar | Adicionar CreditsIndicator |
-| `src/components/Header.tsx` | Editar | Badge de creditos compacto |
-| `src/hooks/useEnemQuiz.ts` | Editar | Verificacao pre-creditos |
-| `src/hooks/useMindMap.ts` | Editar | Verificacao pre-creditos |
-| `supabase/functions/generate-enem-quiz/index.ts` | Editar | Adicionar consume_credits |
-| `src/components/ResumoContent.tsx` | Editar | Adicionar ID para print |
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/components/usage/CreditsCostBadge.tsx` | Aceitar cost/hasEnough como props opcionais |
+| `src/pages/Resumo.tsx` | Passar custos como props para CreditsCostBadge |
+| `src/components/Header.tsx` | Remover useCreditsSystem (codigo morto) |
+| `src/pages/Index.tsx` | Proteger CreditsIndicator contra erros |
+| `src/hooks/useCreditsSystem.ts` | Tornar mais defensivo contra erros |
 
 ## Detalhes Tecnicos
 
-### printResumo.ts
+### CreditsCostBadge - Nova interface
 
 ```text
-export function printResumo(title: string, content: string, date: string) {
-  - Cria nova janela do navegador
-  - Injeta HTML formatado com:
-    - CSS de impressao (font-family, margens, cores)
-    - Cabecalho: logo + titulo + data
-    - Conteudo: HTML do resumo (convertido de markdown)
-    - Rodape: "Gerado por Estuda Flash - estudaflash.lovable.app"
-  - Chama window.print()
-  - Fecha janela apos impressao
-}
+Props atuais: { actionType: string; className?: string }
+Novas props: { actionType: string; className?: string; cost?: number; hasEnough?: boolean }
+
+Se cost for fornecido, usa direto. Se nao, faz fallback para useCreditsSystem.
+Isso permite uso sem hook em contextos onde o pai ja tem os dados.
 ```
 
-### CreditsCostBadge.tsx
+### Resumo.tsx - Passar custos
 
 ```text
-Props: { actionType: string; className?: string }
-- Usa useCreditsSystem().getActionCreditsCost(actionType)
-- Renderiza: [icone moeda] X creditos
-- Cor: verde se userCredits.remaining >= custo, vermelho caso contrario
+const quizCost = getActionCreditsCost('quiz');
+const flashcardsCost = getActionCreditsCost('flashcards');
+const mindMapCost = getActionCreditsCost('mind_map');
+const hasEnough = (cost: number) => (userCredits?.remaining ?? 0) >= cost;
+
+<CreditsCostBadge actionType="quiz" cost={quizCost} hasEnough={hasEnough(quizCost)} />
+<CreditsCostBadge actionType="flashcards" cost={flashcardsCost} hasEnough={hasEnough(flashcardsCost)} />
+<CreditsCostBadge actionType="mind_map" cost={mindMapCost} hasEnough={hasEnough(mindMapCost)} />
 ```
 
-### CreditsConfirmDialog.tsx
+### Header.tsx - Limpar codigo morto
 
 ```text
-Props: { 
-  isOpen, onClose, onConfirm,
-  actionType, actionName,
-  creditsCost, creditsAvailable 
-}
-- Mostra titulo: "Confirmar {actionName}"
-- Mostra custo e saldo
-- Mostra saldo apos operacao
-- Botoes: Cancelar / Confirmar
+Remover:
+- import { useCreditsSystem } from '@/hooks/useCreditsSystem'
+- import { Coins } from 'lucide-react' (se nao usado em outro lugar)
+- const { userCredits } = useCreditsSystem()
+- O bloco {userCredits && (...)}
 ```
 
-### generate-enem-quiz - Adicionar consumo de creditos
+### Index.tsx - Protecao do CreditsIndicator
 
 ```text
-// Apos validacao de auth e antes de chamar a API Anthropic:
-const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
-  target_user_id: effectiveUserId,
-  action_type: 'quiz'
-});
-
-if (creditError || !creditResult || !creditResult[0]?.success) {
-  return Response(JSON.stringify({ 
-    success: false, error: 'Creditos insuficientes' 
-  }), { status: 402 });
-}
+Envolver CreditsIndicator em um wrapper com ErrorBoundary local:
+- Se falhar, mostra mensagem simples em vez de derrubar o dashboard
 ```
+
