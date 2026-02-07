@@ -165,9 +165,10 @@ export const useCreditsSystem = () => {
     return getUsagePercentage() >= 80;
   }, [getUsagePercentage]);
 
-  // Verificar se atingiu o limite
+  // Verificar se atingiu o limite (não reportar durante carregamento)
   const isAtLimit = useCallback((): boolean => {
-    return !userCredits || userCredits.remaining <= 0;
+    if (!userCredits) return false; // Don't assume at limit while loading
+    return userCredits.remaining <= 0;
   }, [userCredits]);
 
   // Carregar dados iniciais - só quando user estiver disponível

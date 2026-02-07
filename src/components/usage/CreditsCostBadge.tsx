@@ -9,8 +9,9 @@ interface CreditsCostBadgeProps {
 }
 
 const CreditsCostBadge = ({ actionType, className, cost, hasEnough }: CreditsCostBadgeProps) => {
-  // If cost is not provided or is 0, render nothing
-  if (cost === undefined || cost === 0) return null;
+  // If cost is not provided, render nothing; if 0, still loading config
+  if (cost === undefined) return null;
+  if (cost === 0) return null;
 
   const enough = hasEnough ?? false;
 
