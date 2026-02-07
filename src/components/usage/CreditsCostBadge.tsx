@@ -1,25 +1,24 @@
 import { Coins } from 'lucide-react';
-import { useCreditsSystem } from '@/hooks/useCreditsSystem';
 import { cn } from '@/lib/utils';
 
 interface CreditsCostBadgeProps {
   actionType: string;
   className?: string;
+  cost?: number;
+  hasEnough?: boolean;
 }
 
-const CreditsCostBadge = ({ actionType, className }: CreditsCostBadgeProps) => {
-  const { getActionCreditsCost, userCredits } = useCreditsSystem();
+const CreditsCostBadge = ({ actionType, className, cost, hasEnough }: CreditsCostBadgeProps) => {
+  // If cost is not provided or is 0, render nothing
+  if (cost === undefined || cost === 0) return null;
 
-  const cost = getActionCreditsCost(actionType);
-  if (cost === 0) return null;
-
-  const hasEnough = userCredits ? userCredits.remaining >= cost : false;
+  const enough = hasEnough ?? false;
 
   return (
     <span
       className={cn(
         'inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full',
-        hasEnough
+        enough
           ? 'bg-emerald-100 text-emerald-700'
           : 'bg-red-100 text-red-700',
         className

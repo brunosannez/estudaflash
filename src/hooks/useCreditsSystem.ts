@@ -170,17 +170,14 @@ export const useCreditsSystem = () => {
     return !userCredits || userCredits.remaining <= 0;
   }, [userCredits]);
 
-  // Carregar dados iniciais
-  useEffect(() => {
-    loadCreditsConfig();
-  }, [loadCreditsConfig]);
-
+  // Carregar dados iniciais - só quando user estiver disponível
   useEffect(() => {
     if (user) {
+      loadCreditsConfig();
       refreshUserCredits();
       loadCreditsHistory();
     }
-  }, [user, refreshUserCredits, loadCreditsHistory]);
+  }, [user, loadCreditsConfig, refreshUserCredits, loadCreditsHistory]);
 
   return {
     // Estado

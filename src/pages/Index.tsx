@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
@@ -18,6 +18,25 @@ import CreditsIndicator from '@/components/usage/CreditsIndicator';
 import CreditsHistoryModal from '@/components/usage/CreditsHistoryModal';
 import { BADGE_UNLOCK_EVENT } from '@/hooks/useAdvancedBadges';
 import { BadgeDefinition } from '@/data/badgesCatalog';
+
+// Safe wrapper to prevent CreditsIndicator errors from crashing the dashboard
+class CreditsErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+const CreditsIndicatorSafe = (props: { onViewHistory: () => void; onUpgrade: () => void }) => (
+  <CreditsErrorBoundary>
+    <CreditsIndicator {...props} />
+  </CreditsErrorBoundary>
+);
 
 const Index = () => {
   console.log('🏠 Dashboard Index page rendering...');
@@ -51,10 +70,12 @@ const Index = () => {
             <UpgradeBanner />
 
             {/* Indicador de Créditos */}
-            <CreditsIndicator
-              onViewHistory={() => setShowCreditsHistory(true)}
-              onUpgrade={() => navigate('/choose-plan')}
-            />
+            <React.Suspense fallback={null}>
+              <CreditsIndicatorSafe
+                onViewHistory={() => setShowCreditsHistory(true)}
+                onUpgrade={() => navigate('/choose-plan')}
+              />
+            </React.Suspense>
             
             {/* Missão do Dia */}
             <DailyMission />
