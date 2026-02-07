@@ -85,20 +85,15 @@ export const useFlashcardSessionManager = () => {
       if (!user) return false;
 
       await saveProgress(state.sessionId, cardIndex, completedCardIds, stats);
-
-      updateState({
-        currentCardIndex: cardIndex,
-        completedCards: completedCardIds,
-        sessionStats: stats
-      });
-
+      // Do NOT updateState here — local study state is the source of truth during active study.
+      // Updating session state here would re-trigger sync and cause card skipping.
       console.log('💾 Flashcard progress saved');
       return true;
     } catch (err) {
       console.error('❌ Save progress error:', err);
       return false;
     }
-  }, [state.sessionId, updateState, saveProgress]);
+  }, [state.sessionId, saveProgress]);
 
   const completeCurrentSession = useCallback(async () => {
     if (!state.sessionId) return false;
