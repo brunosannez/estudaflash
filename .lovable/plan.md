@@ -1,159 +1,184 @@
 
-# Correcao: Erro no Processamento de Arquivos
+# Funcionalidade: Exportar Resumo em PDF + Controle de Creditos Visivel para o Usuario
 
-## Causa Raiz Identificada
+## Resumo das Mudancas
 
-A investigacao revelou que **todas as 9 imagens foram uploadadas com sucesso** ao storage (confirmado no banco), mas a Edge Function `extract-text-from-image` retorna **500 em TODAS as chamadas** com tempo de execucao muito curto (~200ms).
+Duas funcionalidades principais serao implementadas:
 
-A causa raiz e: **o usuario tem 0 creditos**.
-
-### Por que 0 creditos?
-
-Quando um novo usuario e criado (via `useSyncManager.ts` ou `usageDataService.ts`), o campo `credits_remaining` **nao e definido** no INSERT, ficando com o valor padrao 0. O plano Free deveria dar 50 creditos/mes, mas a funcao `reset_monthly_credits` so executa apos 30 dias do ultimo reset. Resultado: usuario recem-criado nunca recebe creditos iniciais.
-
-```text
-Dados do usuario no banco:
-- plano: free
-- plan_id: c3449c9b (Free, 50 creditos/mes)
-- credits_remaining: 0      <-- PROBLEMA
-- credits_used_this_month: 0
-- last_credits_reset: 2026-02-06
-```
-
-### Fluxo do erro:
-
-```text
-1. Usuario seleciona 9 imagens (OK)
-2. Upload das imagens ao storage (OK - 9 arquivos no bucket)
-3. Edge Function extract-text-from-image e chamada
-4. Funcao chama consume_credits(user_id, 'ocr')
-5. consume_credits ve credits_remaining = 0 -> retorna success=false
-6. Edge function lanca erro "Creditos insuficientes" -> retorna 500
-7. useSequentialOCR captura o erro, marca imagem como failed
-8. Apos todas falharem: "Nenhuma imagem foi processada com sucesso"
-```
-
-### Bugs secundarios encontrados:
-
-1. **Caminho duplicado no storage**: `useSequentialOCR.ts` adiciona prefixo `study-images/` ao path ao fazer upload para o bucket `study-images`, criando `study-images/study-images/userId/...`. Funciona mas desperdia espaco com caminhos desnecessarios.
-
-2. **Mensagem de erro generica**: O erro especifico ("Creditos insuficientes") e engolido e substituido por "Nenhuma imagem foi processada com sucesso", sem informar o usuario do real problema.
+1. **Exportar/Imprimir Resumo em PDF** - Botao na pagina do resumo para salvar ou imprimir como PDF
+2. **Painel de Creditos Visivel** - O usuario vera seus creditos em tempo real no dashboard e antes de cada acao, com debito automatico integrado ao banco de dados
 
 ---
 
-## Mudancas Planejadas
+## 1. Exportar Resumo em PDF
 
-### 1. Migracao SQL: Corrigir creditos dos usuarios existentes + trigger para novos
+### Abordagem
+Usar a API nativa do navegador `window.print()` com CSS de impressao otimizado. Isso permite ao usuario tanto imprimir quanto salvar como PDF (via "Salvar como PDF" na janela de impressao), sem necessidade de bibliotecas externas.
 
-- Atualizar usuarios com `credits_remaining = 0` e `credits_used_this_month = 0` para receber os creditos do plano
-- Criar trigger `on INSERT` na tabela `uso_usuarios` que automaticamente define `credits_remaining` baseado no `plan_id`
-- Isso garante que todo usuario novo receba creditos imediatamente
+### Mudancas
 
-### 2. Corrigir inicializacao de creditos no frontend
+**Arquivo: `src/pages/Resumo.tsx`**
+- Adicionar botao "Salvar PDF / Imprimir" na area de acoes rapidas
+- Implementar funcao `handlePrintResumo()` que:
+  - Cria uma janela de impressao com o conteudo formatado do resumo
+  - Aplica estilos de impressao para manter a formatacao bonita
+  - Inclui titulo, data de criacao e rodape com marca "Estuda Flash"
 
-**Arquivos**: `src/hooks/useSyncManager.ts` e `src/services/usageDataService.ts`
+**Arquivo: `src/components/ResumoContent.tsx`**
+- Adicionar `id="resumo-content-print"` ao container principal para referencia no print
 
-Ao criar registro de novo usuario, incluir `credits_remaining` com o valor de `credits_per_month` do plano Free.
-
-### 3. Corrigir caminho duplicado no storage
-
-**Arquivo**: `src/hooks/useSequentialOCR.ts`
-
-Remover o prefixo `study-images/` da linha 69:
-- De: `study-images/${fileName}` 
-- Para: `${fileName}`
-
-### 4. Melhorar mensagens de erro
-
-**Arquivo**: `src/hooks/useSequentialOCR.ts`
-
-Quando todas as imagens falham, exibir o erro especifico da primeira imagem (ex: "Creditos insuficientes") em vez da mensagem generica.
-
-### 5. Verificacao pre-processamento de creditos
-
-**Arquivo**: `src/hooks/useEnhancedUpload.ts`
-
-Antes de iniciar o processamento, verificar se o usuario tem creditos suficientes para TODAS as imagens (1 credito x N imagens) e mostrar aviso claro se nao tiver.
-
-### 6. Reimplantar a Edge Function
-
-Reimplantar `extract-text-from-image` para garantir que o codigo mais recente esta ativo.
+**Novo arquivo: `src/utils/printResumo.ts`**
+- Funcao utilitaria `printResumo(title, content, date)` que:
+  - Abre uma nova janela com o conteudo formatado
+  - Aplica CSS de impressao (fonte legivel, margens, quebras de pagina)
+  - Chama `window.print()` automaticamente
+  - Inclui cabecalho com titulo e data
+  - Inclui rodape com "Gerado por Estuda Flash"
 
 ---
 
-## Arquivos a Modificar
+## 2. Painel de Creditos Visivel para o Usuario
 
-| Arquivo | Mudanca |
-|---------|---------|
-| Nova migracao SQL | Corrigir creditos existentes + trigger |
-| `src/hooks/useSyncManager.ts` | Incluir `credits_remaining` no INSERT |
-| `src/services/usageDataService.ts` | Incluir `credits_remaining` no INSERT |
-| `src/hooks/useSequentialOCR.ts` | Corrigir path duplicado + melhorar erros |
-| `src/hooks/useEnhancedUpload.ts` | Verificacao pre-processamento de creditos |
-| `supabase/functions/extract-text-from-image/index.ts` | Reimplantar (sem mudancas de codigo) |
+### Estado Atual
+- O `CreditsIndicator` ja existe em `src/components/usage/CreditsIndicator.tsx` com informacoes completas
+- O `CreditsHistoryModal` ja existe em `src/components/usage/CreditsHistoryModal.tsx`
+- As Edge Functions (`generate-summary`, `generate-flashcards`, `generate-quiz`, `extract-text-from-image`) ja consomem creditos via `consume_credits` RPC
+- **Problema encontrado**: A edge function `generate-enem-quiz` NAO consome creditos (bug)
+- Os custos por acao estao configurados no banco: OCR=1, Flashcards=3, Quiz=5, Resumo=8
+
+### Mudancas
+
+#### A. Adicionar Indicador de Creditos no Dashboard e Header
+
+**Arquivo: `src/pages/Index.tsx`**
+- Importar e adicionar o `CreditsIndicator` no dashboard principal, abaixo da saudacao
+- Adicionar `CreditsHistoryModal` com toggle de abertura
+
+**Arquivo: `src/components/Header.tsx`**
+- Adicionar um badge compacto com creditos restantes ao lado do nome do usuario
+- Mostrar icone de moeda + numero de creditos
+- Clicar abre o historico de creditos
+
+#### B. Mostrar Custo ANTES de Cada Acao
+
+**Arquivo: `src/pages/Resumo.tsx`**
+- Nos botoes de acao (Quiz ENEM, Flashcards, Mapa Mental), mostrar o custo em creditos
+- Exemplo: "Quiz ENEM (5 creditos)" em vez de apenas "Quiz ENEM"
+- Ao clicar, mostrar confirmacao: "Esta acao custara X creditos. Voce tem Y restantes. Continuar?"
+
+**Novo componente: `src/components/usage/CreditsCostBadge.tsx`**
+- Badge compacto que mostra o custo de uma acao: icone moeda + "X creditos"
+- Recebe `actionType` como prop e busca o custo da configuracao
+- Cor verde se tem creditos suficientes, vermelho se nao
+
+**Novo componente: `src/components/usage/CreditsConfirmDialog.tsx`**
+- Dialog de confirmacao antes de executar acao
+- Mostra: acao, custo, creditos disponiveis, creditos restantes apos
+- Botoes: "Cancelar" e "Confirmar"
+
+#### C. Integrar Consumo de Creditos nos Hooks
+
+**Arquivo: `src/hooks/useEnemQuiz.ts`**
+- Adicionar verificacao de creditos ANTES de gerar quiz (usar `CreditsService.checkCreditsForAction`)
+- Nao sera necessario consumir no frontend pois a edge function `generate-quiz` ja faz isso
+- Para `generate-enem-quiz`, adicionar consumo de creditos na edge function
+
+**Arquivo: `supabase/functions/generate-enem-quiz/index.ts`**
+- Adicionar consumo de creditos via `consume_credits` RPC (igual as outras edge functions)
+- Retornar erro 402 se creditos insuficientes
+
+**Arquivo: `src/hooks/useMindMap.ts`**
+- Adicionar verificacao de creditos antes de gerar mapa mental
+- Nota: A edge function `generate-mind-map` pode nao estar consumindo creditos tambem - sera verificado e corrigido
+
+#### D. Atualizar Creditos em Tempo Real
+
+O sistema ja usa `useUnifiedRealTime` para monitorar mudancas na tabela `uso_usuarios`. Quando a edge function consome creditos (atualizando `credits_remaining`), o frontend ja recebe a notificacao e atualiza automaticamente. Nenhuma mudanca adicional necessaria aqui.
+
+#### E. Dados no Painel Administrativo
+
+O painel admin ja recebe os dados de `credits_remaining` e `credits_used_this_month` via `get_all_users_admin()`. O `credits_usage_log` ja registra cada consumo. Nenhuma mudanca adicional necessaria no admin.
+
+---
+
+## Tabela de Custos por Acao (configuracao atual no banco)
+
+| Acao | Custo | Descricao |
+|------|-------|-----------|
+| OCR (imagem) | 1 credito | Processamento de cada imagem |
+| Flashcards | 3 creditos | Geracao de flashcards por IA |
+| Quiz | 5 creditos | Geracao de quiz por IA |
+| Resumo | 8 creditos | Geracao de resumo por IA |
+
+---
+
+## Arquivos a Criar/Modificar
+
+| Arquivo | Tipo | Mudanca |
+|---------|------|---------|
+| `src/utils/printResumo.ts` | Novo | Funcao de impressao/PDF |
+| `src/components/usage/CreditsCostBadge.tsx` | Novo | Badge de custo por acao |
+| `src/components/usage/CreditsConfirmDialog.tsx` | Novo | Dialog de confirmacao |
+| `src/pages/Resumo.tsx` | Editar | Botao PDF + custos nos botoes |
+| `src/pages/Index.tsx` | Editar | Adicionar CreditsIndicator |
+| `src/components/Header.tsx` | Editar | Badge de creditos compacto |
+| `src/hooks/useEnemQuiz.ts` | Editar | Verificacao pre-creditos |
+| `src/hooks/useMindMap.ts` | Editar | Verificacao pre-creditos |
+| `supabase/functions/generate-enem-quiz/index.ts` | Editar | Adicionar consume_credits |
+| `src/components/ResumoContent.tsx` | Editar | Adicionar ID para print |
 
 ## Detalhes Tecnicos
 
-### SQL Migration
+### printResumo.ts
 
 ```text
--- 1. Corrigir usuarios existentes com 0 creditos
-UPDATE uso_usuarios uu
-SET credits_remaining = p.credits_per_month
-FROM plans p
-WHERE uu.plan_id = p.id
-  AND uu.credits_remaining = 0
-  AND uu.credits_used_this_month = 0;
-
--- 2. Trigger para inicializar creditos em novos usuarios
-CREATE FUNCTION initialize_user_credits()
-RETURNS TRIGGER AS $$
-BEGIN
-  SELECT credits_per_month INTO NEW.credits_remaining
-  FROM plans WHERE id = NEW.plan_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER tr_initialize_credits
-BEFORE INSERT ON uso_usuarios
-FOR EACH ROW
-WHEN (NEW.credits_remaining IS NULL OR NEW.credits_remaining = 0)
-EXECUTE FUNCTION initialize_user_credits();
+export function printResumo(title: string, content: string, date: string) {
+  - Cria nova janela do navegador
+  - Injeta HTML formatado com:
+    - CSS de impressao (font-family, margens, cores)
+    - Cabecalho: logo + titulo + data
+    - Conteudo: HTML do resumo (convertido de markdown)
+    - Rodape: "Gerado por Estuda Flash - estudaflash.lovable.app"
+  - Chama window.print()
+  - Fecha janela apos impressao
+}
 ```
 
-### useSyncManager.ts - Incluir creditos
+### CreditsCostBadge.tsx
 
 ```text
-Ao fazer INSERT em uso_usuarios, buscar credits_per_month
-do plano Free e incluir:
-  credits_remaining: freePlan.credits_per_month
+Props: { actionType: string; className?: string }
+- Usa useCreditsSystem().getActionCreditsCost(actionType)
+- Renderiza: [icone moeda] X creditos
+- Cor: verde se userCredits.remaining >= custo, vermelho caso contrario
 ```
 
-### useSequentialOCR.ts - Correcoes
+### CreditsConfirmDialog.tsx
 
 ```text
-Linha 69 - Corrigir path:
-  De: const filePath = `study-images/${fileName}`;
-  Para: const filePath = fileName;
-
-Linha 209-211 - Melhorar erro:
-  Coletar o erro especifico da primeira imagem com falha
-  e incluir na mensagem de erro final.
+Props: { 
+  isOpen, onClose, onConfirm,
+  actionType, actionName,
+  creditsCost, creditsAvailable 
+}
+- Mostra titulo: "Confirmar {actionName}"
+- Mostra custo e saldo
+- Mostra saldo apos operacao
+- Botoes: Cancelar / Confirmar
 ```
 
-### useEnhancedUpload.ts - Verificacao de creditos
+### generate-enem-quiz - Adicionar consumo de creditos
 
 ```text
-Antes de chamar processImages(), verificar creditos:
-  const creditCheck = await CreditsService.checkCreditsForAction(user.id, 'ocr');
-  const totalCreditsNeeded = files.length * creditCheck.creditsRequired;
-  
-  if (creditCheck.creditsAvailable < totalCreditsNeeded) {
-    toast.error('Creditos insuficientes', {
-      description: `Voce precisa de ${totalCreditsNeeded} creditos 
-                    mas tem apenas ${creditCheck.creditsAvailable}.`
-    });
-    return;
-  }
+// Apos validacao de auth e antes de chamar a API Anthropic:
+const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+  target_user_id: effectiveUserId,
+  action_type: 'quiz'
+});
+
+if (creditError || !creditResult || !creditResult[0]?.success) {
+  return Response(JSON.stringify({ 
+    success: false, error: 'Creditos insuficientes' 
+  }), { status: 402 });
+}
 ```
