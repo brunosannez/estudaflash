@@ -77,17 +77,12 @@ export const useMindMap = () => {
         throw new Error('Estrutura do mapa mental inválida');
       }
 
-      // Salvar mapa mental no banco
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        throw new Error('Usuário não autenticado');
-      }
-
+      // Salvar mapa mental no banco (reuse userData from credit check)
       const { data: savedMindMap, error: saveError } = await supabase
         .from('mind_maps')
         .insert({
           resumo_id: resumoId,
-          user_id: user.user.id,
+          user_id: userData.user.id,
           title: mindMapData.title,
           content: mindMapData
         })
