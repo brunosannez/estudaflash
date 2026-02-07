@@ -66,7 +66,7 @@ export const useSequentialOCR = () => {
 
     const fileExt = processedFile.type.split('/')[1] || 'jpg';
     const fileName = `${user.id}/${Date.now()}_${index}.${fileExt}`;
-    const filePath = `study-images/${fileName}`;
+    const filePath = fileName;
 
     console.log(`⬆️ Uploading image ${index + 1}:`, processedFile.name, `(${(processedFile.size / 1024).toFixed(2)}KB)`);
 
@@ -207,7 +207,20 @@ export const useSequentialOCR = () => {
     console.log(`📊 OCR processing complete: ${totalSuccess}/${files.length} images processed successfully`);
     
     if (totalSuccess === 0) {
-      throw new Error('Nenhuma imagem foi processada com sucesso. Verifique as imagens e tente novamente.');
+      // Buscar erro específico da primeira imagem com falha para mensagem mais útil
+      const firstFailedResult = results.find(r => !r.success && r.error);
+      const specificError = firstFailedResult?.error || '';
+      
+      // Detectar erro de créditos insuficientes
+      if (specificError.toLowerCase().includes('crédit') || specificError.toLowerCase().includes('credit') || specificError.toLowerCase().includes('insuficiente')) {
+        throw new Error('Créditos insuficientes para processar as imagens. Verifique seu saldo de créditos.');
+      }
+      
+      throw new Error(
+        specificError 
+          ? `Erro no processamento: ${specificError}` 
+          : 'Nenhuma imagem foi processada com sucesso. Verifique as imagens e tente novamente.'
+      );
     }
     
     return results;

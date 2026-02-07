@@ -36,7 +36,7 @@ export const useSyncManager = () => {
         // Get Free plan ID
         const { data: freePlan } = await supabase
           .from('plans')
-          .select('id')
+          .select('id, credits_per_month')
           .eq('name', 'Free')
           .single();
 
@@ -48,7 +48,10 @@ export const useSyncManager = () => {
             uploads_realizados: 0,
             flashcards_gerados: 0,
             quizzes_realizados: 0,
-            plano: 'free'
+            plano: 'free',
+            credits_remaining: freePlan?.credits_per_month || 50,
+            credits_used_this_month: 0,
+            last_credits_reset: new Date().toISOString().split('T')[0]
           });
 
         if (insertError) {
