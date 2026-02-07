@@ -5,6 +5,7 @@ import { useUsageValidation } from '@/hooks/useUsageValidation';
 import { useZipExtractor } from './useZipExtractor';
 import { useSequentialOCR } from './useSequentialOCR';
 import { useSummaryGenerator } from './useSummaryGenerator';
+import { CreditsService } from '@/services/creditsService';
 
 // Função helper para detectar número de página
 const extractPageNumber = (fileName: string): number | null => {
@@ -194,6 +195,22 @@ export const useEnhancedUpload = () => {
     const canProceed = await checkCanProceed('uploads');
     if (!canProceed) {
       return;
+    }
+
+    // Verificar créditos suficientes para todas as imagens antes de iniciar
+    try {
+      const creditCheck = await CreditsService.checkCreditsForAction(user.id, 'ocr');
+      const totalCreditsNeeded = files.length * creditCheck.creditsRequired;
+      
+      if (!creditCheck.canProceed || creditCheck.creditsAvailable < totalCreditsNeeded) {
+        toast.error('Créditos insuficientes', {
+          description: `Você precisa de ${totalCreditsNeeded} crédito(s) para processar ${files.length} imagem(ns), mas possui apenas ${creditCheck.creditsAvailable} crédito(s) disponíveis.`
+        });
+        return;
+      }
+    } catch (creditError) {
+      console.error('❌ Error checking credits:', creditError);
+      // Se não conseguir verificar créditos, deixa prosseguir (o backend vai validar)
     }
 
     setIsProcessing(true);

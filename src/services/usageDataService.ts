@@ -111,7 +111,10 @@ export class UsageDataService {
           uploads_realizados: 0,
           flashcards_gerados: 0,
           quizzes_realizados: 0,
-          is_admin: false
+          is_admin: false,
+          credits_remaining: freePlan.credits_per_month || 50,
+          credits_used_this_month: 0,
+          last_credits_reset: new Date().toISOString().split('T')[0]
         })
         .select(`
           *,
