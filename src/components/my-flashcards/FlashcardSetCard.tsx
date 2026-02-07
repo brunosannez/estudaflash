@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brain, Trash2 } from 'lucide-react';
+import { Brain, Trash2, PlayCircle, RotateCcw } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { deleteService } from '@/services/deleteService';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +24,13 @@ interface FlashcardSet {
   flashcards: any[];
 }
 
+interface ActiveSession {
+  id: string;
+  completedCount: number;
+  score: { correct: number; incorrect: number };
+  xpEarned: number;
+}
+
 interface FlashcardSetCardProps {
   flashcardSet: FlashcardSet;
   onStartStudy: (flashcardSet: FlashcardSet, sessionId?: string) => void;
@@ -30,6 +39,46 @@ interface FlashcardSetCardProps {
 
 const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSetCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+
+  useEffect(() => {
+    checkActiveSession();
+  }, [flashcardSet.resumo_id]);
+
+  const checkActiveSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('flashcard_sessions')
+        .select('id, current_card_index, completed_cards, session_stats')
+        .eq('user_id', user.id)
+        .eq('resumo_id', flashcardSet.resumo_id)
+        .eq('status', 'active')
+        .order('last_activity_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data && !error) {
+        const completedCards = Array.isArray(data.completed_cards) ? data.completed_cards as string[] : [];
+        const stats = data.session_stats && typeof data.session_stats === 'object'
+          ? data.session_stats as any
+          : { correct: 0, incorrect: 0, xpEarned: 0 };
+
+        if (completedCards.length > 0 || data.current_card_index > 0) {
+          setActiveSession({
+            id: data.id,
+            completedCount: completedCards.length,
+            score: { correct: stats.correct || 0, incorrect: stats.incorrect || 0 },
+            xpEarned: stats.xpEarned || 0,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking active session:', error);
+    }
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -39,6 +88,33 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
     }
     setIsDeleting(false);
   };
+
+  const handleContinue = () => {
+    if (activeSession) {
+      onStartStudy(flashcardSet, activeSession.id);
+    }
+  };
+
+  const handleNewStudy = async () => {
+    // Mark old session as abandoned before starting new
+    if (activeSession) {
+      try {
+        await supabase
+          .from('flashcard_sessions')
+          .update({ status: 'abandoned' })
+          .eq('id', activeSession.id);
+      } catch (e) {
+        console.error('Error abandoning old session:', e);
+      }
+      setActiveSession(null);
+    }
+    onStartStudy(flashcardSet);
+  };
+
+  const totalCards = flashcardSet.flashcards.length;
+  const progressPercent = activeSession
+    ? Math.round((activeSession.completedCount / totalCards) * 100)
+    : 0;
 
   return (
     <Card 
@@ -85,7 +161,7 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span className="flex items-center gap-2">
             <Brain className="h-4 w-4" />
-            {flashcardSet.flashcards.length} cards
+            {totalCards} cards
           </span>
           <span>
             {new Date(flashcardSet.data_criacao).toLocaleDateString('pt-BR', {
@@ -94,20 +170,60 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
             })}
           </span>
         </div>
-        
-        <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg">
-          <p className="text-sm text-gray-700 font-medium">
-            💡 {flashcardSet.flashcards.length} conceitos prontos para revisar
-          </p>
-        </div>
-        
-        <Button 
-          onClick={() => onStartStudy(flashcardSet)}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
-        >
-          <Brain className="h-4 w-4 mr-2" />
-          🚀 Estudar Agora
-        </Button>
+
+        {activeSession ? (
+          <>
+            {/* Progress bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>📊 {activeSession.completedCount} de {totalCards} cards</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <Progress value={progressPercent} className="h-2" />
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <span>✅ {activeSession.score.correct}</span>
+                <span>❌ {activeSession.score.incorrect}</span>
+                <span>⚡ {activeSession.xpEarned} XP</span>
+              </div>
+            </div>
+
+            {/* Continue / New buttons */}
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleContinue}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium"
+              >
+                <PlayCircle className="h-4 w-4 mr-2" />
+                ▶️ Continuar de onde parou
+              </Button>
+              <Button
+                onClick={handleNewStudy}
+                variant="outline"
+                size="sm"
+                className="w-full text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Novo Estudo
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg">
+              <p className="text-sm text-gray-700 font-medium">
+                💡 {totalCards} conceitos prontos para revisar
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => onStartStudy(flashcardSet)}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              🚀 Estudar Agora
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

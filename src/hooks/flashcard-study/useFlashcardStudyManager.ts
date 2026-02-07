@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useFlashcardSession } from '@/hooks/useFlashcardSession';
 import { useRealGamificationData } from '@/hooks/useRealGamificationData';
 import { useFlashcardData } from './useFlashcardData';
@@ -32,7 +32,6 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     updateScore,
     addCompletedCard,
     syncWithSession,
-    // New feedback states
     showFeedback,
     setShowFeedback,
     userChoice,
@@ -57,6 +56,22 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
   // Study completion state
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Refs for cleanup to avoid stale closures
+  const activeSessionIdRef = useRef<string | null>(null);
+  const currentIndexRef = useRef(0);
+  const completedCardsRef = useRef<Set<string>>(new Set());
+  const studyStatsRef = useRef(studyStats);
+  const scoreRef = useRef(score);
+  const saveProgressRef = useRef(saveProgress);
+
+  // Keep refs in sync
+  useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { completedCardsRef.current = completedCards; }, [completedCards]);
+  useEffect(() => { studyStatsRef.current = studyStats; }, [studyStats]);
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { saveProgressRef.current = saveProgress; }, [saveProgress]);
+
   // Actions
   const { handleFlip, handleAnswer, handleNextCard, getCurrentCard } = useFlashcardActions({
     flashcards,
@@ -77,7 +92,6 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     saveProgress,
     realGamificationData,
     onComplete: () => setIsCompleted(true),
-    // New feedback props
     setShowFeedback,
     setUserChoice,
     setLastXpEarned
@@ -98,17 +112,17 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     }
   }, [activeSessionId, sessionLoading, sessionCurrentIndex, sessionCompletedCards, sessionStats]);
 
-  // Auto-save on page unload
+  // Auto-save on page unload / visibility change
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (activeSessionId) {
-        saveCurrentProgress();
+      if (activeSessionIdRef.current) {
+        saveCurrentProgressFromRef();
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && activeSessionId) {
-        saveCurrentProgress();
+      if (document.visibilityState === 'hidden' && activeSessionIdRef.current) {
+        saveCurrentProgressFromRef();
       }
     };
 
@@ -119,12 +133,32 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [activeSessionId]);
+  }, []); // empty deps is fine — we use refs
 
   const initializeSession = async () => {
     console.log('🔄 Initializing flashcard session:', { resumoId, sessionId });
     await createOrResumeSession(resumoId, sessionId);
   };
+
+  // Ref-based save for cleanup/unmount (no stale closure)
+  const saveCurrentProgressFromRef = useCallback(async () => {
+    const sid = activeSessionIdRef.current;
+    if (!sid) return;
+
+    const updatedStats = {
+      streak: studyStatsRef.current.streak,
+      totalReviewed: studyStatsRef.current.totalReviewed,
+      xpEarned: studyStatsRef.current.xpEarned,
+      correct: scoreRef.current.correct,
+      incorrect: scoreRef.current.incorrect
+    };
+
+    await saveProgressRef.current(
+      currentIndexRef.current,
+      Array.from(completedCardsRef.current),
+      updatedStats
+    );
+  }, []);
 
   const saveCurrentProgress = useCallback(async () => {
     if (!activeSessionId) return;
@@ -150,14 +184,14 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     });
   };
 
-  // Cleanup on unmount
+  // Cleanup on unmount — uses refs
   useEffect(() => {
     return () => {
-      if (activeSessionId) {
-        saveCurrentProgress();
+      if (activeSessionIdRef.current) {
+        saveCurrentProgressFromRef();
       }
     };
-  }, []);
+  }, [saveCurrentProgressFromRef]);
 
   const handleStudyAgain = () => {
     setIsCompleted(false);
@@ -178,11 +212,9 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     realGamificationData,
     sessionId: activeSessionId,
     isCompleted,
-    // New feedback states
     showFeedback,
     userChoice,
     lastXpEarned,
-    // Actions
     handleFlip,
     handleAnswer,
     handleNextCard,

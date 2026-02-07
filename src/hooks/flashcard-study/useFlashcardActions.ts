@@ -135,9 +135,12 @@ export const useFlashcardActions = ({
         realGamificationData.refreshData();
       });
 
-      // Save session progress
+      // Save session progress - save NEXT index so user resumes at the right card
+      const nextIndex = currentIndex + 1 < flashcards.length 
+        ? currentIndex + 1 
+        : currentIndex;
       await saveProgress(
-        currentIndex, 
+        nextIndex, 
         Array.from(new Set([...completedCards, currentCard.id])), 
         { ...newStats, correct: newScore.correct, incorrect: newScore.incorrect }
       );
