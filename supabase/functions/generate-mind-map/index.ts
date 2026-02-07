@@ -96,6 +96,32 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY não configurada');
     }
 
+    // 💰 Consume credits before proceeding
+    console.log('💰 Consuming credits for mind map generation...');
+    const { data: creditResult, error: creditError } = await supabase.rpc('consume_credits', {
+      target_user_id: authUserId,
+      action_type: 'mind_map'
+    });
+
+    if (creditError) {
+      console.error('❌ Credit consumption error:', creditError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erro ao verificar créditos' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const creditData = creditResult?.[0];
+    if (!creditData?.success) {
+      console.error('❌ Insufficient credits:', creditData);
+      return new Response(
+        JSON.stringify({ success: false, error: creditData?.message || 'Créditos insuficientes para gerar mapa mental' }),
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`✅ Credits consumed: ${creditData.credits_consumed}, remaining: ${creditData.credits_remaining}`);
+
     console.log('🧠 Generating mind map for resumo:', resumoId);
 
     // Usar Anthropic Claude para gerar um mapa mental estruturado

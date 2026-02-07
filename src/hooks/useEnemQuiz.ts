@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
+import { CreditsService } from '@/services/creditsService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -55,6 +56,14 @@ export const useEnemQuiz = () => {
     setGenerating(true);
     
     try {
+      // Pre-check credits before calling edge function
+      const creditCheck = await CreditsService.checkCreditsForAction(user.id, 'quiz');
+      if (!creditCheck.canProceed) {
+        toast.error('Créditos insuficientes', {
+          description: `Você precisa de ${creditCheck.creditsRequired} crédito(s) mas tem ${creditCheck.creditsAvailable}.`
+        });
+        return null;
+      }
       console.log('🚀 Starting ENEM quiz generation...');
       console.log('📝 ResumoId:', resumoId);
       console.log('📊 Content length:', resumoContent?.length);
