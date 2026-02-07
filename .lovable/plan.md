@@ -1,143 +1,111 @@
 
-# Memoria de Flashcards: Continuar Exatamente de Onde Parou
+# Correcao: Flashcard Travando no Segundo Card
 
-## Problema Atual
+## Problema Identificado
 
-O sistema de sessoes de flashcards tem a infraestrutura (tabela `flashcard_sessions`, hooks, dialog de continuar), mas nao funciona corretamente por varios motivos:
+O efeito de sincronizacao (`syncWithSession`) roda **a cada salvamento de progresso**, nao apenas na carga inicial da sessao. Isso causa um ciclo destrutivo:
 
-- O botao "Estudar Agora" no card nunca verifica se existe uma sessao ativa -- sempre começa do zero
-- Ha uma corrida (race condition) que cria sessoes novas antes de verificar as existentes
-- O indice do card salvo esta errado: salva o card ja respondido em vez do proximo
-- Sessoes antigas nunca sao encerradas -- um resumo tem ate 10 sessoes "ativas" simultaneas
-- O dialog de "Continuar Sessao" nao mostra informacoes uteis (quantos cards faltam, pontuacao)
+```text
+1. Usuario ve card 0 (pergunta)
+2. Clica "Lembrei" -> handleAnswer salva nextIndex=1 no banco
+3. Session manager atualiza estado -> sessionCurrentIndex = 1
+4. Efeito de sync dispara -> setCurrentIndex(1) -> card muda para 1
+5. Mas o feedback ainda esta aberto! A tela de feedback agora mostra
+   a pergunta e resposta do card 1 (errado!)
+6. Usuario clica "Proximo Card" -> currentIndex ja e 1, sobe para 2
+7. Card 1 foi PULADO completamente
+8. Com poucos cards, a sessao "termina" antes da hora
+```
 
-## Mudancas Planejadas
+## Correcao
 
-### 1. FlashcardSetCard com Indicador de Sessao Ativa
-
-**Arquivo**: `src/components/my-flashcards/FlashcardSetCard.tsx`
-
-O card de cada conjunto de flashcards vai verificar no banco se existe uma sessao ativa e mostrar:
-- Barra de progresso com "X de Y cards respondidos"
-- Botao "Continuar" (verde) quando ha sessao ativa, com o sessionId
-- Botao "Novo Estudo" (azul) como opcao secundaria
-- Se nao ha sessao ativa, mostra apenas "Estudar Agora" como hoje
-
-### 2. Corrigir o Indice Salvo no handleAnswer
-
-**Arquivo**: `src/hooks/flashcard-study/useFlashcardActions.ts`
-
-O `handleAnswer` atualmente salva `currentIndex` (o card que acabou de ser respondido). Isso faz o usuario ver o mesmo card ao retomar. A correcao e salvar `currentIndex + 1` quando nao for o ultimo card, ou manter `currentIndex` se for o ultimo (pois a sessao sera concluida).
-
-### 3. Eliminar Race Condition na Inicializacao
-
-**Arquivo**: `src/components/FlashcardStudyModeImproved.tsx`
-
-Atualmente, `useFlashcardStudy` e chamado imediatamente com `existingSessionId` que começa como `null`. A verificacao de sessao existente e async e roda depois.
-
-A correcao:
-- Adicionar um estado `initializing` que bloqueia o render ate a verificacao completar
-- Somente apos saber se ha sessao ativa (ou nao), inicializar o `useFlashcardStudy`
-- Se `sessionId` for passado como prop (vindo do FlashcardSetCard), pular a verificacao
-
-### 4. Limpar Sessoes Orfas
-
-**Arquivo**: `src/hooks/flashcard-session/useFlashcardSessionDatabase.ts`
-
-Adicionar funcao `cleanupOldSessions` que, ao criar uma nova sessao:
-- Marca todas as sessoes ativas antigas do mesmo resumo como "abandoned"
-- Garante que so exista 1 sessao ativa por resumo por usuario
-
-### 5. Dialog de Continuar com Informacoes de Progresso
-
-**Arquivo**: `src/components/flashcard-study/FlashcardContinueDialog.tsx`
-
-Exibir no dialog:
-- Quantos cards foram respondidos e quantos faltam
-- Pontuacao parcial (acertos/erros)
-- XP acumulado na sessao
-- Data da ultima atividade
-
-### 6. Corrigir Stale Closure no Cleanup
+### 1. Limitar sincronizacao apenas a carga inicial
 
 **Arquivo**: `src/hooks/flashcard-study/useFlashcardStudyManager.ts`
 
-O efeito de cleanup no unmount usa `[]` como dependencias, capturando os valores iniciais para sempre. Corrigir para usar `useRef` que sempre tem o valor atualizado.
+O efeito de sync (linhas 108-113) precisa rodar **apenas uma vez**, quando a sessao e carregada pela primeira vez. Adicionar um `useRef` chamado `hasSyncedRef` que:
+- Comeca como `false`
+- Muda para `true` apos o primeiro sync
+- Impede que `syncWithSession` rode novamente durante o estudo normal
+
+```text
+Antes (roda a cada save):
+  useEffect => syncWithSession(sessionCurrentIndex, ...)
+  deps: [activeSessionId, sessionLoading, sessionCurrentIndex, sessionCompletedCards, sessionStats]
+
+Depois (roda apenas 1 vez):
+  useEffect => if (!hasSyncedRef.current && activeSessionId) { syncWithSession(...); hasSyncedRef.current = true; }
+  deps: [activeSessionId, sessionLoading]
+```
+
+### 2. Nao atualizar estado da sessao apos cada save
+
+**Arquivo**: `src/hooks/flashcard-session/useFlashcardSessionManager.ts`
+
+Na funcao `saveCurrentProgress` (linhas 80-101), o `updateState` atualiza `currentCardIndex`, `completedCards` e `sessionStats` no estado do hook de sessao apos cada save. Isso dispara o efeito de sync.
+
+A correcao e **remover** o `updateState` do `saveCurrentProgress`. O estado local (no `useFlashcardState`) ja e a fonte de verdade durante o estudo. O estado da sessao so precisa ser atualizado na carga inicial.
+
+```text
+Antes:
+  saveCurrentProgress -> save to DB -> updateState({ currentCardIndex, completedCards, sessionStats })
+
+Depois:
+  saveCurrentProgress -> save to DB -> (sem updateState, apenas salva no banco)
+```
+
+### 3. Resetar flag de sync ao iniciar nova sessao
+
+**Arquivo**: `src/hooks/flashcard-study/useFlashcardStudyManager.ts`
+
+Na funcao `handleStudyAgain`, resetar `hasSyncedRef.current = false` para que uma nova sessao possa fazer o sync inicial corretamente.
 
 ---
 
 ## Detalhes Tecnicos
 
-### FlashcardSetCard - Nova logica de sessao
+### useFlashcardStudyManager.ts - Mudancas
 
 ```text
-Ao montar o card:
-1. Buscar sessao ativa: SELECT id, current_card_index, completed_cards, session_stats 
-   FROM flashcard_sessions 
-   WHERE resumo_id = X AND user_id = Y AND status = 'active'
-   ORDER BY last_activity_at DESC LIMIT 1
+// Adicionar ref de controle
+const hasSyncedRef = useRef(false);
 
-2. Se encontrar com progresso (completed_cards.length > 0):
-   - Mostrar barra de progresso: "7 de 12 cards"
-   - Botao verde: "Continuar de onde parou" -> onStartStudy(set, sessionId)
-   - Botao secundario: "Novo Estudo" -> limpa sessao antiga, onStartStudy(set)
+// Sync limitado a carga inicial
+useEffect(() => {
+  if (activeSessionId && !sessionLoading && !hasSyncedRef.current) {
+    console.log('Syncing with session state (initial load)');
+    syncWithSession(sessionCurrentIndex, sessionCompletedCards, sessionStats);
+    hasSyncedRef.current = true;
+  }
+}, [activeSessionId, sessionLoading]);
 
-3. Se nao encontrar:
-   - Botao padrao: "Estudar Agora" -> onStartStudy(set)
+// Reset no handleStudyAgain
+const handleStudyAgain = () => {
+  setIsCompleted(false);
+  setCurrentIndex(0);
+  resetFlipState();
+  hasSyncedRef.current = false; // permitir novo sync
+};
 ```
 
-### handleAnswer - Indice corrigido
+### useFlashcardSessionManager.ts - Mudancas
 
 ```text
-Antes:
-  saveProgress(currentIndex, completedIds, stats)
-  
-Depois:
-  const nextIndex = currentIndex + 1 < flashcards.length 
-    ? currentIndex + 1 
-    : currentIndex;
-  saveProgress(nextIndex, completedIds, stats)
-```
-
-### FlashcardStudyModeImproved - Eliminacao da race condition
-
-```text
-Fluxo atual (problematico):
-  1. Render -> useFlashcardStudy(resumoId, null) -> cria sessao nova
-  2. useEffect -> checkForExistingSession -> encontra sessao antiga -> tarde demais
-
-Fluxo corrigido:
-  1. Render com initializing=true -> mostra loading
-  2. Se sessionId prop existe -> pula verificacao, usa direto
-  3. Se nao -> checkForExistingSession async
-  4. Ao resolver -> seta resolvedSessionId e initializing=false
-  5. useFlashcardStudy(resumoId, resolvedSessionId) so e chamado quando pronto
-```
-
-### cleanupOldSessions - Nova funcao
-
-```text
-async cleanupOldSessions(resumoId, userId, keepSessionId?):
-  UPDATE flashcard_sessions 
-  SET status = 'abandoned'
-  WHERE resumo_id = X 
-    AND user_id = Y 
-    AND status = 'active'
-    AND id != keepSessionId (se fornecido)
-```
-
-### FlashcardContinueDialog - Props expandidas
-
-```text
-Props atuais: { onContinue, onStartNew }
-Props novas: { 
-  onContinue, onStartNew,
-  completedCount: number,
-  totalCards: number,
-  score: { correct: number, incorrect: number },
-  xpEarned: number,
-  lastActivityAt: string
-}
+// saveCurrentProgress simplificado
+const saveCurrentProgress = useCallback(async (cardIndex, completedCardIds, stats) => {
+  if (!state.sessionId) return false;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    await saveProgress(state.sessionId, cardIndex, completedCardIds, stats);
+    // REMOVIDO: updateState(...) - nao atualizar estado local apos save
+    console.log('Flashcard progress saved');
+    return true;
+  } catch (err) {
+    console.error('Save progress error:', err);
+    return false;
+  }
+}, [state.sessionId, saveProgress]);
 ```
 
 ---
@@ -146,17 +114,13 @@ Props novas: {
 
 | Arquivo | Mudanca |
 |---------|---------|
-| `src/components/my-flashcards/FlashcardSetCard.tsx` | Verificar sessao ativa, mostrar progresso, botao continuar |
-| `src/hooks/flashcard-study/useFlashcardActions.ts` | Salvar currentIndex + 1 em vez de currentIndex |
-| `src/components/FlashcardStudyModeImproved.tsx` | Eliminar race condition com estado initializing |
-| `src/hooks/flashcard-session/useFlashcardSessionDatabase.ts` | Adicionar cleanupOldSessions |
-| `src/components/flashcard-study/FlashcardContinueDialog.tsx` | Mostrar progresso, score, XP no dialog |
-| `src/hooks/flashcard-study/useFlashcardStudyManager.ts` | Corrigir stale closure no cleanup com useRef |
+| `src/hooks/flashcard-study/useFlashcardStudyManager.ts` | Adicionar `hasSyncedRef`, limitar sync a carga inicial, resetar no studyAgain |
+| `src/hooks/flashcard-session/useFlashcardSessionManager.ts` | Remover `updateState` do `saveCurrentProgress` |
 
 ## Resultado Esperado
 
-- Ao abrir "Meus Flashcards", cada card mostra se ha sessao em andamento com progresso visual
-- Clicar "Continuar" abre exatamente no proximo card nao respondido
-- O dialog mostra quantos cards faltam e a pontuacao parcial
-- Sessoes antigas sao automaticamente limpas ao iniciar nova sessao
-- O progresso e salvo corretamente a cada resposta, troca de aba e saida da pagina
+- Usuario responde card 0 -> feedback mostra conteudo do card 0 (correto)
+- Clica "Proximo" -> ve card 1 (nao pula nenhum)
+- Progresso continua normalmente ate o ultimo card
+- Ao retomar sessao, comeca exatamente no card certo (sync inicial funciona)
+- Nenhum card e pulado durante o estudo
