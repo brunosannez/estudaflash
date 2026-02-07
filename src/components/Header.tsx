@@ -1,10 +1,9 @@
 
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield, Zap, Coins } from 'lucide-react';
+import { User, LogOut, Settings, BookOpen, Trophy, Brain, FileText, BarChart3, Target, Shield, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
-import { useCreditsSystem } from '@/hooks/useCreditsSystem';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -20,7 +19,6 @@ const Header = () => {
   const { signOut } = useAuth();
   const { getDisplayName } = useUserProfile();
   const { isAdmin } = useIsAdmin();
-  const { userCredits } = useCreditsSystem();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -100,17 +98,6 @@ const Header = () => {
 
           {/* Credits Badge + User Menu */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Credits compact badge */}
-            {userCredits && (
-              <button
-                onClick={() => navigate('/')}
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 hover:border-amber-300 transition-colors text-sm font-medium text-amber-700"
-                title="Créditos restantes"
-              >
-                <Coins className="h-3.5 w-3.5" />
-                <span>{userCredits.remaining}</span>
-              </button>
-            )}
             {/* Mobile Navigation */}
             <div className="lg:hidden">
               <DropdownMenu>

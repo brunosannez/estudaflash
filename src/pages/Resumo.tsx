@@ -320,7 +320,7 @@ const Resumo = () => {
                   <>
                     <Target className="h-4 w-4 mr-2" />
                     Quiz ENEM
-                    <CreditsCostBadge actionType="quiz" className="ml-1" />
+                    <CreditsCostBadge actionType="quiz" cost={getActionCreditsCost('quiz')} hasEnough={(userCredits?.remaining ?? 0) >= getActionCreditsCost('quiz')} className="ml-1" />
                   </>
                 )}
               </Button>
@@ -339,7 +339,7 @@ const Resumo = () => {
                   <>
                     <Brain className="h-4 w-4 mr-2" />
                     Flashcards
-                    <CreditsCostBadge actionType="flashcards" className="ml-1" />
+                    <CreditsCostBadge actionType="flashcards" cost={getActionCreditsCost('flashcards')} hasEnough={(userCredits?.remaining ?? 0) >= getActionCreditsCost('flashcards')} className="ml-1" />
                   </>
                 )}
               </Button>
@@ -358,7 +358,7 @@ const Resumo = () => {
                   <>
                     <Map className="h-4 w-4 mr-2" />
                     Mapa Mental
-                    <CreditsCostBadge actionType="mind_map" className="ml-1" />
+                    <CreditsCostBadge actionType="mind_map" cost={getActionCreditsCost('mind_map')} hasEnough={(userCredits?.remaining ?? 0) >= getActionCreditsCost('mind_map')} className="ml-1" />
                   </>
                 )}
               </Button>
