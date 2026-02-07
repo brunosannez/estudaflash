@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { edgeFunctionInvoker } from '@/services/edgeFunctionInvoker';
+import { CreditsService } from '@/services/creditsService';
 import { toast } from 'sonner';
 
 export interface MindMapNode {
@@ -37,6 +38,20 @@ export const useMindMap = () => {
 
       if (!content || content.trim().length < 50) {
         throw new Error('Conteúdo muito curto para gerar mapa mental');
+      }
+
+      // Pre-check credits
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      const creditCheck = await CreditsService.checkCreditsForAction(userData.user.id, 'mind_map');
+      if (!creditCheck.canProceed) {
+        toast.error('Créditos insuficientes', {
+          description: `Você precisa de ${creditCheck.creditsRequired} crédito(s) mas tem ${creditCheck.creditsAvailable}.`
+        });
+        return null;
       }
 
       // Usar o invoker com Authorization header explícito

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import FloatingBackground from '@/components/dashboard/FloatingBackground';
 import PageLayout from '@/components/navigation/PageLayout';
@@ -13,12 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
 import BadgeUnlockAnimation from '@/components/badges/BadgeUnlockAnimation';
 import UpgradeBanner from '@/components/dashboard/UpgradeBanner';
+import CreditsIndicator from '@/components/usage/CreditsIndicator';
+import CreditsHistoryModal from '@/components/usage/CreditsHistoryModal';
 import { BADGE_UNLOCK_EVENT } from '@/hooks/useAdvancedBadges';
 import { BadgeDefinition } from '@/data/badgesCatalog';
 
 const Index = () => {
   console.log('🏠 Dashboard Index page rendering...');
+  const navigate = useNavigate();
   const [unlockedBadge, setUnlockedBadge] = useState<BadgeDefinition | null>(null);
+  const [showCreditsHistory, setShowCreditsHistory] = useState(false);
 
   // Listen for badge unlock events
   useEffect(() => {
@@ -44,6 +49,12 @@ const Index = () => {
 
             {/* Banner de Upgrade para Free */}
             <UpgradeBanner />
+
+            {/* Indicador de Créditos */}
+            <CreditsIndicator
+              onViewHistory={() => setShowCreditsHistory(true)}
+              onUpgrade={() => navigate('/choose-plan')}
+            />
             
             {/* Missão do Dia */}
             <DailyMission />
@@ -106,6 +117,12 @@ const Index = () => {
           badge={unlockedBadge}
           isOpen={!!unlockedBadge}
           onClose={() => setUnlockedBadge(null)}
+        />
+
+        {/* Credits History Modal */}
+        <CreditsHistoryModal
+          isOpen={showCreditsHistory}
+          onClose={() => setShowCreditsHistory(false)}
         />
       </PageLayout>
     </ProtectedRoute>

@@ -3,15 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, Calendar, Zap, Target, Brain, Map, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, Zap, Target, Brain, Map, Loader2, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnemQuiz } from '@/hooks/useEnemQuiz';
 import { useAutoFlashcards } from '@/hooks/useAutoFlashcards';
 import { useMindMap } from '@/hooks/useMindMap';
 import { useAuth } from '@/hooks/useAuth';
+import { useCreditsSystem } from '@/hooks/useCreditsSystem';
+import { CreditsService } from '@/services/creditsService';
 import { toast } from 'sonner';
 import PageLayout from '@/components/navigation/PageLayout';
 import ResumoContent from '@/components/ResumoContent';
+import CreditsCostBadge from '@/components/usage/CreditsCostBadge';
+import CreditsConfirmDialog from '@/components/usage/CreditsConfirmDialog';
+import { printResumo } from '@/utils/printResumo';
 
 interface ResumoData {
   id: string;
@@ -21,6 +26,8 @@ interface ResumoData {
   upload_id: string;
 }
 
+type PendingAction = 'quiz' | 'flashcards' | 'mind_map' | null;
+
 const Resumo = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -28,16 +35,19 @@ const Resumo = () => {
   const { generateQuiz, loading: quizLoading, generating } = useEnemQuiz();
   const { generateAutoFlashcards, isGenerating: flashcardsLoading } = useAutoFlashcards();
   const { generateMindMap, loading: mindMapLoading } = useMindMap();
+  const { userCredits, getActionCreditsCost } = useCreditsSystem();
 
   const [resumo, setResumo] = useState<ResumoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Credits confirmation dialog state
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [confirmCost, setConfirmCost] = useState(0);
+  const [confirmName, setConfirmName] = useState('');
+
   useEffect(() => {
-    // Debug logs
     console.log('🔍 Resumo useEffect - ID:', id, 'User:', !!user, 'AuthLoading:', authLoading);
-    
-    // Only try to load resumo when auth is not loading
     if (!authLoading) {
       loadResumo();
     }
@@ -46,17 +56,13 @@ const Resumo = () => {
   const loadResumo = async () => {
     console.log('📄 loadResumo called - ID:', id, 'User:', !!user);
     
-    // Check if ID is provided
     if (!id) {
-      console.error('❌ No ID provided');
       setError('ID do resumo não fornecido');
       setLoading(false);
       return;
     }
 
-    // Check if user is authenticated
     if (!user) {
-      console.error('❌ No user authenticated');
       setError('Usuário não autenticado');
       setLoading(false);
       return;
@@ -65,7 +71,6 @@ const Resumo = () => {
     try {
       setLoading(true);
       
-      // Get resumo with upload info to check ownership
       const { data, error } = await supabase
         .from('resumos')
         .select(`
@@ -89,7 +94,6 @@ const Resumo = () => {
         return;
       }
 
-      // Set resumo data without the uploads relation for our interface
       setResumo({
         id: data.id,
         custom_name: data.custom_name,
@@ -107,14 +111,45 @@ const Resumo = () => {
     }
   };
 
-  const handleGenerateEnemQuiz = async () => {
+  // --- Credit-gated action helpers ---
+  const requestAction = async (action: PendingAction, actionType: string, actionLabel: string) => {
+    if (!user || !resumo) return;
+
+    const check = await CreditsService.checkCreditsForAction(user.id, actionType);
+    if (!check.canProceed) {
+      toast.error('Créditos insuficientes', {
+        description: `Você precisa de ${check.creditsRequired} crédito(s) mas tem ${check.creditsAvailable}.`,
+      });
+      return;
+    }
+
+    setConfirmCost(check.creditsRequired);
+    setConfirmName(actionLabel);
+    setPendingAction(action);
+  };
+
+  const confirmAction = () => {
+    const action = pendingAction;
+    setPendingAction(null);
+
+    switch (action) {
+      case 'quiz':
+        executeGenerateEnemQuiz();
+        break;
+      case 'flashcards':
+        executeGenerateFlashcards();
+        break;
+      case 'mind_map':
+        executeGenerateMindMap();
+        break;
+    }
+  };
+
+  // --- Action executors (called after credit confirmation) ---
+  const executeGenerateEnemQuiz = async () => {
     if (!resumo || generating) return;
     
-    console.log('🎯 Quiz ENEM button clicked');
-    console.log('📋 Resumo ID:', resumo.id);
-    
     try {
-      // Verificar se já existe quiz
       const { data: existingQuizzes, error: checkError } = await supabase
         .from('enem_quiz_metadata')
         .select('id')
@@ -122,16 +157,11 @@ const Resumo = () => {
         .limit(1);
 
       if (!checkError && existingQuizzes && existingQuizzes.length > 0) {
-        // Já existe quiz, navegar diretamente
-        console.log('✅ Quiz existente encontrado, navegando...');
         toast.info('Quiz existente encontrado! Abrindo...');
         navigate(`/quiz-enem/${resumo.id}`);
         return;
       }
 
-      // Não existe quiz, gerar novo
-      console.log('📝 Nenhum quiz encontrado, gerando novo...');
-      
       if (!resumo.resumo_gerado || resumo.resumo_gerado.trim().length < 100) {
         toast.error('Resumo muito pequeno para gerar quiz. Mínimo 100 caracteres.');
         return;
@@ -140,13 +170,9 @@ const Resumo = () => {
       const quizMetadataId = await generateQuiz(resumo.id, resumo.resumo_gerado);
       
       if (quizMetadataId) {
-        console.log('✅ Quiz generated, navigating to quiz page');
-        // Small delay to ensure toast is visible before navigation
         setTimeout(() => {
           navigate(`/quiz-enem/${resumo.id}`);
         }, 2000);
-      } else {
-        console.log('❌ Quiz generation failed - no metadata ID returned');
       }
     } catch (error) {
       console.error('❌ Error in handleGenerateEnemQuiz:', error);
@@ -154,7 +180,7 @@ const Resumo = () => {
     }
   };
 
-  const handleGenerateFlashcards = async () => {
+  const executeGenerateFlashcards = async () => {
     if (!resumo) return;
 
     try {
@@ -167,7 +193,7 @@ const Resumo = () => {
     }
   };
 
-  const handleGenerateMindMap = async () => {
+  const executeGenerateMindMap = async () => {
     if (!resumo) return;
 
     try {
@@ -180,6 +206,20 @@ const Resumo = () => {
       console.error('Erro ao gerar mapa mental:', error);
       toast.error('Erro ao gerar mapa mental');
     }
+  };
+
+  // --- Public handlers with credit gate ---
+  const handleGenerateEnemQuiz = () => requestAction('quiz', 'quiz', 'Quiz ENEM');
+  const handleGenerateFlashcards = () => requestAction('flashcards', 'flashcards', 'Gerar Flashcards');
+  const handleGenerateMindMap = () => requestAction('mind_map', 'mind_map', 'Mapa Mental');
+
+  const handlePrint = () => {
+    if (!resumo) return;
+    printResumo(
+      resumo.custom_name || 'Resumo Didático',
+      resumo.resumo_gerado,
+      resumo.data_criacao
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -265,7 +305,7 @@ const Resumo = () => {
             <CardTitle className="text-lg">Ações Rápidas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-4">
               <Button 
                 onClick={handleGenerateEnemQuiz}
                 disabled={generating || !resumo}
@@ -280,6 +320,7 @@ const Resumo = () => {
                   <>
                     <Target className="h-4 w-4 mr-2" />
                     Quiz ENEM
+                    <CreditsCostBadge actionType="quiz" className="ml-1" />
                   </>
                 )}
               </Button>
@@ -297,7 +338,8 @@ const Resumo = () => {
                 ) : (
                   <>
                     <Brain className="h-4 w-4 mr-2" />
-                    Gerar Flashcards
+                    Flashcards
+                    <CreditsCostBadge actionType="flashcards" className="ml-1" />
                   </>
                 )}
               </Button>
@@ -316,8 +358,18 @@ const Resumo = () => {
                   <>
                     <Map className="h-4 w-4 mr-2" />
                     Mapa Mental
+                    <CreditsCostBadge actionType="mind_map" className="ml-1" />
                   </>
                 )}
+              </Button>
+
+              <Button
+                onClick={handlePrint}
+                variant="outline"
+                className="border-blue-300 hover:bg-blue-50 text-blue-700"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Salvar PDF
               </Button>
             </div>
           </CardContent>
@@ -364,6 +416,16 @@ const Resumo = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Credits Confirmation Dialog */}
+      <CreditsConfirmDialog
+        isOpen={!!pendingAction}
+        onClose={() => setPendingAction(null)}
+        onConfirm={confirmAction}
+        actionName={confirmName}
+        creditsCost={confirmCost}
+        creditsAvailable={userCredits?.remaining ?? 0}
+      />
     </PageLayout>
   );
 };
