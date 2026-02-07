@@ -38,28 +38,31 @@ refresh_token_rotation_enabled = true
 security_update_password_require_reauthentication = true
 
 [functions.generate-summary]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate-quiz]
-verify_jwt = true
+verify_jwt = false
+
+[functions.generate-enem-quiz]
+verify_jwt = false
 
 [functions.generate-flashcards]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate-mind-map]
-verify_jwt = true
+verify_jwt = false
 
 [functions.extract-text-from-image]
-verify_jwt = true
+verify_jwt = false
 
 [functions.reset-usage-counters]
 verify_jwt = false
 
 [functions.admin-rotate-guardian-key]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-stripe-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.verify-payment]
 verify_jwt = false

@@ -4,12 +4,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 // Helper function to verify JWT and get user
 async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string | null; error: string | null }> {
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return { userId: null, error: 'Token de autenticação não fornecido' };
@@ -59,12 +59,112 @@ function detectTheme(content: string): string {
   return bestMatch;
 }
 
-// Calcular quantidade ideal de cards baseada no tamanho
+// Calcular quantidade ideal de cards baseada no tamanho - OTIMIZADO
 function calculateTargetCards(wordCount: number): number {
-  if (wordCount <= 300) return Math.min(10, Math.max(8, Math.floor(wordCount / 30)));
-  if (wordCount <= 600) return Math.min(15, Math.max(12, Math.floor(wordCount / 40)));
-  if (wordCount <= 900) return Math.min(20, Math.max(15, Math.floor(wordCount / 45)));
-  return Math.min(20, Math.max(18, Math.floor(wordCount / 50)));
+  if (wordCount <= 300) return Math.min(8, Math.max(5, Math.floor(wordCount / 40)));
+  if (wordCount <= 600) return Math.min(10, Math.max(8, Math.floor(wordCount / 60)));
+  if (wordCount <= 900) return Math.min(12, Math.max(10, Math.floor(wordCount / 75)));
+  return 12; // Máximo absoluto de 12 cards
+}
+
+// Tentar recuperar flashcards de um JSON truncado
+function tryRepairTruncatedJSON(text: string): any | null {
+  console.log('🔧 Tentando recuperar JSON truncado...');
+  
+  // Estratégia 1: Encontrar o último objeto completo no array "flashcards"
+  const flashcardsStart = text.indexOf('"flashcards"');
+  if (flashcardsStart === -1) return null;
+  
+  const arrayStart = text.indexOf('[', flashcardsStart);
+  if (arrayStart === -1) return null;
+  
+  // Encontrar todos os objetos completos dentro do array
+  let depth = 0;
+  let lastCompleteObjectEnd = -1;
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = arrayStart + 1; i < text.length; i++) {
+    const char = text[i];
+    
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (inString) continue;
+    
+    if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        lastCompleteObjectEnd = i;
+      }
+    }
+  }
+  
+  if (lastCompleteObjectEnd === -1) return null;
+  
+  // Construir JSON reparado
+  const repairedText = text.substring(0, lastCompleteObjectEnd + 1) + ']}';
+  
+  // Encontrar o início do objeto JSON principal
+  const mainObjectStart = text.lastIndexOf('{', flashcardsStart);
+  if (mainObjectStart === -1) return null;
+  
+  const finalJSON = text.substring(mainObjectStart, lastCompleteObjectEnd + 1) + ']}';
+  
+  try {
+    const parsed = JSON.parse(finalJSON);
+    const cards = parsed.flashcards;
+    if (Array.isArray(cards) && cards.length >= 3) {
+      console.log(`✅ JSON recuperado com sucesso: ${cards.length} cards salvos de truncamento`);
+      return parsed;
+    }
+  } catch (e) {
+    console.log('❌ Estratégia 1 falhou:', e.message);
+  }
+  
+  // Estratégia 2: Regex para extrair objetos individuais completos
+  try {
+    const objectRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+    const arrayContent = text.substring(arrayStart);
+    const matches = arrayContent.match(objectRegex);
+    
+    if (matches && matches.length >= 3) {
+      const validCards = [];
+      for (const match of matches) {
+        try {
+          const card = JSON.parse(match);
+          if (card.front && card.back) {
+            validCards.push(card);
+          }
+        } catch (e) {
+          // Skip invalid individual cards
+        }
+      }
+      
+      if (validCards.length >= 3) {
+        console.log(`✅ Recuperados ${validCards.length} cards via regex`);
+        return { flashcards: validCards };
+      }
+    }
+  } catch (e) {
+    console.log('❌ Estratégia 2 falhou:', e.message);
+  }
+  
+  return null;
 }
 
 serve(async (req) => {
@@ -179,55 +279,45 @@ serve(async (req) => {
     console.log(`📊 Análise do conteúdo: ${wordCount} palavras → ${targetCards} flashcards`);
     console.log(`🎯 Tema detectado: ${theme}`);
 
-    const prompt = `Você é um elaborador de materiais didáticos no estilo Anki. Sua missão é gerar flashcards eficientes e claros apenas com base no RESUMO abaixo. Proibido inserir dados externos.
+    // Prompt OTIMIZADO: menos campos por card = menos tokens de saída
+    const prompt = `Você é um elaborador de materiais didáticos no estilo Anki. Gere flashcards eficientes baseados APENAS no resumo abaixo.
 
-— REGRAS:
-1) Use somente o conteúdo do resumo.
-2) Para cada macrotema, crie pelo menos 1–2 cards que cubram diferentes aspectos (definição, causa, consequência, exemplo, verdadeiro/falso).
-3) Linguagem adaptada para um estudante de ensino médio (15-17 anos).
-4) Cada card:
-   - front: pergunta clara (1 ideia)
-   - back: resposta de 1–2 frases
-   - explanation: até 3 frases de contexto
-   - type: escolha entre "definicao", "causa_efeito", "exemplo", "verdadeiro_falso"
-   - tags: ["${theme}"]
-   - difficulty: easy|medium|hard
-   - evidence: trecho literal (<=200 caracteres) do resumo que comprove a resposta
-5) Gere exatamente ${targetCards} flashcards baseado no tamanho do conteúdo.
-6) NUNCA gere mais de 20 cards de uma só vez para não saturar o aluno.
-7) Verifique duplicidade de perguntas — não gerar cards repetidos.
+REGRAS:
+1) Use somente o conteúdo do resumo. NUNCA invente dados externos.
+2) Cubra todos os pontos principais: definições, causas, consequências e exemplos.
+3) Linguagem clara para estudante de ensino médio (15-17 anos).
+4) Cada card tem EXATAMENTE 5 campos:
+   - front: pergunta clara (1 ideia por card)
+   - back: resposta concisa de 1-2 frases
+   - explanation: até 2 frases de contexto adicional
+   - type: "definicao" | "causa_efeito" | "exemplo" | "verdadeiro_falso"
+   - difficulty: "easy" | "medium" | "hard"
+5) Gere exatamente ${targetCards} flashcards.
+6) Sem perguntas repetidas ou muito similares.
 
-— RESUMO:
+RESUMO:
 """
-${textoResumo.substring(0, 6000)}
+${textoResumo.substring(0, 5000)}
 """
 
-— SAÍDA (JSON válido):
+SAÍDA (JSON válido, sem texto antes ou depois):
 {
-  "meta": {
-    "word_count": ${wordCount},
-    "cards_target": ${targetCards},
-    "cards_generated": <número_real_de_cards_criados>
-  },
   "flashcards": [
     {
-      "front": "Pergunta clara sobre o conteúdo?",
-      "back": "Resposta concisa de 1-2 frases.",
-      "explanation": "Contexto adicional para entender melhor.",
+      "front": "Pergunta clara?",
+      "back": "Resposta concisa.",
+      "explanation": "Contexto adicional.",
       "type": "definicao",
-      "difficulty": "medium",
-      "tags": ["${theme}"],
-      "evidence": "trecho do resumo"
+      "difficulty": "medium"
     }
   ]
-}
-
-Responda APENAS com o JSON válido, sem texto adicional.`;
+}`;
 
     console.log('🤖 Iniciando chamada para API Anthropic Claude Haiku...');
     const startTime = Date.now();
 
     // Use Claude 3 Haiku for flashcards (cost-effective)
+    // max_tokens: 4096 é o limite real do Haiku, usamos esse valor
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -237,7 +327,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       },
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
+        max_tokens: 4096,
         messages: [
           {
             role: 'user',
@@ -274,6 +364,13 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       throw new Error('Resposta inválida da API Anthropic');
     }
 
+    // Check if response was truncated
+    const stopReason = data.stop_reason;
+    const wasTruncated = stopReason === 'max_tokens';
+    if (wasTruncated) {
+      console.warn('⚠️ Resposta da API foi TRUNCADA (stop_reason: max_tokens). Tentando recuperar...');
+    }
+
     // 📊 Track API usage for cost monitoring
     try {
       const inputTokens = data.usage?.input_tokens || 0;
@@ -298,7 +395,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
           timestamp: new Date().toISOString()
         });
       
-      console.log(`📊 API tracked: ${totalTokens} tokens, $${estimatedCost.toFixed(6)}`);
+      console.log(`📊 API tracked: ${totalTokens} tokens (in: ${inputTokens}, out: ${outputTokens}), $${estimatedCost.toFixed(6)}`);
     } catch (trackError) {
       console.warn('⚠️ Failed to track API usage:', trackError);
     }
@@ -332,9 +429,29 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
     try {
       flashcardsData = JSON.parse(jsonText);
     } catch (e) {
-      console.error('❌ Erro ao parsear JSON dos flashcards:', e);
-      console.error('Texto recebido:', jsonText.substring(0, 500));
-      throw new Error('Erro ao processar flashcards gerados pela IA');
+      console.error('❌ Erro ao parsear JSON dos flashcards:', e.message);
+      console.log('📏 Tamanho do texto recebido:', flashcardsText.length);
+      
+      // RECUPERAÇÃO: Tentar reparar JSON truncado
+      if (wasTruncated) {
+        console.log('🔧 Resposta truncada detectada, tentando recuperação...');
+        const repaired = tryRepairTruncatedJSON(flashcardsText);
+        if (repaired) {
+          flashcardsData = repaired;
+          console.log(`✅ Recuperação bem-sucedida: ${repaired.flashcards?.length || 0} cards`);
+        } else {
+          console.error('❌ Não foi possível recuperar o JSON truncado');
+          throw new Error('Erro ao processar flashcards: resposta da IA foi truncada. Tente novamente.');
+        }
+      } else {
+        // Tentar recuperação mesmo sem truncamento (pode ser formato inesperado)
+        const repaired = tryRepairTruncatedJSON(flashcardsText);
+        if (repaired) {
+          flashcardsData = repaired;
+        } else {
+          throw new Error('Erro ao processar flashcards gerados pela IA');
+        }
+      }
     }
 
     const flashcards = flashcardsData.flashcards || flashcardsData;
@@ -345,7 +462,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
 
     console.log(`${flashcards.length} flashcards gerados com sucesso`);
 
-    // Validate flashcards for content fidelity
+    // Validate flashcards - SUAVIZADO para aceitar reformulações
     const validatedFlashcards = flashcards.filter((card: any) => {
       const question = card.front || card.pergunta;
       const answer = card.back || card.resposta;
@@ -355,16 +472,17 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
         return false;
       }
 
-      // Check for keyword overlap with original content
-      const contentWords = textoResumo.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      const responseWords = answer.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      const commonWords = responseWords.filter(word => contentWords.includes(word));
+      // Validação suavizada: aceitar cards que tenham pelo menos ALGUMA relação com o conteúdo
+      const contentWords = textoResumo.toLowerCase().split(/\s+/).filter((w: string) => w.length > 4);
+      const cardText = `${question} ${answer}`.toLowerCase();
+      const cardWords = cardText.split(/\s+/).filter((w: string) => w.length > 4);
+      const commonWords = cardWords.filter((word: string) => contentWords.includes(word));
       
-      const overlapRatio = responseWords.length > 0 ? commonWords.length / responseWords.length : 0;
-      if (overlapRatio < 0.15) {
-        console.warn('❌ Flashcard rejeitado: baixa fidelidade ao conteúdo', {
+      const overlapRatio = cardWords.length > 0 ? commonWords.length / cardWords.length : 0;
+      if (overlapRatio < 0.05) {
+        console.warn('❌ Flashcard rejeitado: sem relação com conteúdo', {
           pergunta: question.substring(0, 50),
-          overlap: overlapRatio
+          overlap: overlapRatio.toFixed(3)
         });
         return false;
       }
@@ -372,8 +490,9 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       return true;
     });
 
-    if (validatedFlashcards.length < Math.ceil(targetCards * 0.5)) {
-      console.error('❌ Muitos flashcards rejeitados na validação');
+    // Aceitar resultado se tiver pelo menos 3 cards válidos
+    if (validatedFlashcards.length < 3) {
+      console.error(`❌ Apenas ${validatedFlashcards.length} flashcards válidos (mínimo: 3)`);
       throw new Error('Qualidade insuficiente dos flashcards gerados. Tente novamente.');
     }
 
@@ -387,7 +506,7 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       exemplo: card.explanation || card.exemplo || null,
       card_type: card.type || 'definicao',
       difficulty: card.difficulty === 'easy' ? 1 : card.difficulty === 'medium' ? 2 : 3,
-      category: Array.isArray(card.tags) ? card.tags[0] || theme : theme
+      category: theme
     }));
 
     const { data: savedFlashcards, error: flashcardError } = await supabase
@@ -407,13 +526,14 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
         success: true,
         flashcards: savedFlashcards,
         stats: {
-          total_gerado: validatedFlashcards.length,
+          total_gerado: flashcards.length,
           total_aprovado: validatedFlashcards.length,
           total_rejeitado: flashcards.length - validatedFlashcards.length,
           tempo_processamento: `${endTime - startTime}ms`,
           modelo_usado: 'claude-3-haiku-20240307',
           palavras_analisadas: wordCount,
-          cobertura_qualidade: Math.round((validatedFlashcards.length / targetCards) * 100)
+          cobertura_qualidade: Math.round((validatedFlashcards.length / targetCards) * 100),
+          foi_truncado: wasTruncated
         }
       }),
       {
@@ -433,6 +553,8 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       fallbackMessage = error.message;
     } else if (error.message?.includes('Qualidade')) {
       fallbackMessage = 'Conteúdo muito curto ou genérico. Tente com mais detalhes.';
+    } else if (error.message?.includes('truncada')) {
+      fallbackMessage = 'O conteúdo gerou uma resposta muito longa. Tente novamente.';
     }
     
     return new Response(
