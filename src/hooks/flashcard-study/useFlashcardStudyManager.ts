@@ -56,6 +56,9 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
   // Study completion state
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Ref to ensure sync only runs once on initial load
+  const hasSyncedRef = useRef(false);
+
   // Refs for cleanup to avoid stale closures
   const activeSessionIdRef = useRef<string | null>(null);
   const currentIndexRef = useRef(0);
@@ -104,13 +107,14 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     }
   }, [flashcards.length, activeSessionId, sessionLoading]);
 
-  // Sync with session state
+  // Sync with session state - only on initial load
   useEffect(() => {
-    if (activeSessionId && !sessionLoading) {
-      console.log('🔄 Syncing with session state:', { sessionCurrentIndex, sessionStats });
+    if (activeSessionId && !sessionLoading && !hasSyncedRef.current) {
+      console.log('🔄 Syncing with session state (initial load only):', { sessionCurrentIndex, sessionStats });
       syncWithSession(sessionCurrentIndex, sessionCompletedCards, sessionStats);
+      hasSyncedRef.current = true;
     }
-  }, [activeSessionId, sessionLoading, sessionCurrentIndex, sessionCompletedCards, sessionStats]);
+  }, [activeSessionId, sessionLoading]);
 
   // Auto-save on page unload / visibility change
   useEffect(() => {
@@ -197,6 +201,7 @@ export const useFlashcardStudyManager = (resumoId: string, sessionId?: string) =
     setIsCompleted(false);
     setCurrentIndex(0);
     resetFlipState();
+    hasSyncedRef.current = false; // allow new sync on next session
   };
 
   return {
