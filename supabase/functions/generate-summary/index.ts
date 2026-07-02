@@ -50,6 +50,36 @@ async function getUserPlan(supabase: any, userId: string) {
   }
 }
 
+// Estornar créditos quando a geração falha após o consumo
+async function refundCredits(supabase: any, userId: string, credits: number) {
+  if (!credits || credits <= 0) return;
+  try {
+    const { data, error } = await supabase
+      .from('uso_usuarios')
+      .select('credits_remaining, credits_used_this_month')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) {
+      console.error('❌ Estorno: não foi possível ler créditos do usuário', error);
+      return;
+    }
+
+    await supabase
+      .from('uso_usuarios')
+      .update({
+        credits_remaining: data.credits_remaining + credits,
+        credits_used_this_month: Math.max(0, data.credits_used_this_month - credits),
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+
+    console.log(`💳 ${credits} crédito(s) estornado(s) após falha na geração`);
+  } catch (e) {
+    console.error('❌ Falha ao estornar créditos:', e);
+  }
+}
+
 // Sistema inteligente de detecção de conteúdo
 function detectContentIntelligence(texto: string) {
   const lowerTexto = texto.toLowerCase();
@@ -201,6 +231,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Preenchido após o consumo de créditos, para estornar em caso de falha
+  let refund: (() => Promise<void>) | null = null;
 
   // Integrar com sistema de créditos na geração de resumo
   try {
@@ -375,6 +408,9 @@ serve(async (req) => {
       }
 
       console.log(`💳 Créditos consumidos: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
+
+      const consumedCredits = creditResult[0].credits_consumed;
+      refund = () => refundCredits(supabase, effectiveUserId, consumedCredits);
     } else {
       console.log('🔄 Combinação de lotes - não consome créditos adicionais');
     }
@@ -421,6 +457,8 @@ serve(async (req) => {
       });
     } catch (error) {
       console.error('❌ Erro na conexão com a API:', error);
+      await refund?.();
+      refund = null;
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -446,7 +484,10 @@ serve(async (req) => {
       }
       
       console.error('❌ Erro da API:', response.status, errorData);
-      
+
+      await refund?.();
+      refund = null;
+
       let userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
       
       if (response.status === 429) {
@@ -473,6 +514,8 @@ serve(async (req) => {
       data = await response.json();
     } catch (error) {
       console.error('❌ Erro ao processar resposta:', error);
+      await refund?.();
+      refund = null;
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -488,6 +531,8 @@ serve(async (req) => {
     
     if (!data.content || !data.content[0] || !data.content[0].text) {
       console.error('❌ Estrutura de resposta inválida:', data);
+      await refund?.();
+      refund = null;
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -578,6 +623,8 @@ serve(async (req) => {
 
         if (uploadError) {
           console.error('❌ Erro ao criar upload:', uploadError);
+          await refund?.();
+          refund = null;
           return new Response(
             JSON.stringify({ 
               success: false,
@@ -608,6 +655,8 @@ serve(async (req) => {
 
       if (resumoError) {
         console.error('❌ Erro ao salvar:', resumoError);
+        await refund?.();
+        refund = null;
         return new Response(
           JSON.stringify({ 
             success: false,
@@ -643,6 +692,8 @@ serve(async (req) => {
 
     } catch (error) {
       console.error('❌ Erro inesperado ao salvar:', error);
+      await refund?.();
+      refund = null;
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -658,7 +709,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro geral:', error);
-    
+
+    // Geração falhou depois do consumo: devolve os créditos
+    if (refund) {
+      await refund();
+    }
+
     return new Response(
       JSON.stringify({ 
         success: false,

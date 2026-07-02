@@ -31,6 +31,36 @@ async function verifyAuth(req: Request, supabase: any): Promise<{ userId: string
   }
 }
 
+// Estornar créditos quando a geração falha após o consumo
+async function refundCredits(supabase: any, userId: string, credits: number) {
+  if (!credits || credits <= 0) return;
+  try {
+    const { data, error } = await supabase
+      .from('uso_usuarios')
+      .select('credits_remaining, credits_used_this_month')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) {
+      console.error('❌ Estorno: não foi possível ler créditos do usuário', error);
+      return;
+    }
+
+    await supabase
+      .from('uso_usuarios')
+      .update({
+        credits_remaining: data.credits_remaining + credits,
+        credits_used_this_month: Math.max(0, data.credits_used_this_month - credits),
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+
+    console.log(`💳 ${credits} crédito(s) estornado(s) após falha na geração`);
+  } catch (e) {
+    console.error('❌ Falha ao estornar créditos:', e);
+  }
+}
+
 // Detectar tema automático do conteúdo
 function detectTheme(content: string): string {
   const keywords: { [key: string]: string[] } = {
@@ -172,6 +202,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Preenchido após o consumo de créditos, para estornar em caso de falha
+  let refund: (() => Promise<void>) | null = null;
+
   try {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -268,6 +301,9 @@ serve(async (req) => {
 
     console.log(`💳 Créditos consumidos para flashcards: ${creditResult[0].credits_consumed}. Restam: ${creditResult[0].credits_remaining}`);
 
+    const consumedCredits = creditResult[0].credits_consumed;
+    refund = () => refundCredits(supabase, effectiveUserId, consumedCredits);
+
     console.log('Gerando flashcards automaticamente para resumo:', resumoId);
     console.log('Tamanho do texto:', textoResumo.length, 'caracteres');
 
@@ -344,7 +380,10 @@ SAÍDA (JSON válido, sem texto antes ou depois):
     if (!response.ok) {
       const errorData = await response.text();
       console.error('❌ Anthropic API error:', response.status, errorData);
-      
+
+      await refund?.();
+      refund = null;
+
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -543,7 +582,12 @@ SAÍDA (JSON válido, sem texto antes ou depois):
 
   } catch (error) {
     console.error('❌ Erro na função generate-flashcards:', error);
-    
+
+    // Geração falhou depois do consumo: devolve os créditos
+    if (refund) {
+      await refund();
+    }
+
     let errorMessage = 'Erro ao gerar flashcards';
     let fallbackMessage = 'Erro inesperado. Tente novamente.';
     
