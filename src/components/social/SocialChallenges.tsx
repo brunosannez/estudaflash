@@ -43,7 +43,7 @@ export const SocialChallenges = ({
       case 'weekly':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'monthly':
-        return 'bg-primary/10 text-purple-800 border-primary/20';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'special':
         return 'bg-amber-100 dark:bg-amber-950/40 text-orange-800 border-orange-200';
       default:

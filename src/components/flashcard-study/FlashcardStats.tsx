@@ -33,12 +33,12 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
       <Card className="bg-primary text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <Zap className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-purple-100 text-sm font-medium">
+          <p className="text-primary/20 text-sm font-medium">
             {realGamificationData?.loading ? 'XP Sessão' : 'XP Total'}
           </p>
           <p className="text-2xl font-bold">{displayXP}</p>
           {!realGamificationData?.loading && realGamificationData?.currentLevel && (
-            <p className="text-xs text-purple-200">Nível {realGamificationData.currentLevel}</p>
+            <p className="text-xs text-primary/20">Nível {realGamificationData.currentLevel}</p>
           )}
         </CardContent>
       </Card>
@@ -64,7 +64,7 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
       <Card className="bg-primary text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <Trophy className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-cyan-100 text-sm font-medium">
+          <p className="text-primary/15 text-sm font-medium">
             {realGamificationData?.loading ? 'Revisados' : 'Hoje + Sessão'}
           </p>
           <p className="text-2xl font-bold">{displayReviewed}</p>

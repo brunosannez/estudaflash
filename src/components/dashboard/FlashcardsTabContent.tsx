@@ -12,7 +12,7 @@ const FlashcardsTabContent = ({ onSelectExisting, onUploadNew }: FlashcardsTabCo
   return (
     <div className={`${designColors.cards.secondary} text-center py-8 sm:py-16 px-4 sm:px-8`}>
       <div className="flex items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-        <Brain className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-purple-500 ${designColors.animations.iconFloat}`} />
+        <Brain className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-primary ${designColors.animations.iconFloat}`} />
         <div className="text-3xl sm:text-6xl animate-pulse">🧠</div>
       </div>
       <h3 className={`${designColors.responsive.sectionTitle} font-bold text-foreground mb-2 sm:mb-4`}>
@@ -31,7 +31,7 @@ const FlashcardsTabContent = ({ onSelectExisting, onUploadNew }: FlashcardsTabCo
         <Button 
           variant="outline"
           onClick={onUploadNew}
-          className={`border-2 border-purple-300 text-foreground/80 font-bold ${designColors.responsive.buttonPadding} rounded-xl shadow-lg ${designColors.responsive.heroText} hover:bg-primary/5 ${designColors.animations.buttonHover}`}
+          className={`border-2 border-primary/20 text-foreground/80 font-bold ${designColors.responsive.buttonPadding} rounded-xl shadow-lg ${designColors.responsive.heroText} hover:bg-primary/5 ${designColors.animations.buttonHover}`}
         >
           📤 Fazer Novo Upload
         </Button>

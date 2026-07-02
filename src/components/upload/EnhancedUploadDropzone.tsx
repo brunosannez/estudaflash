@@ -149,7 +149,7 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
             <span>Imagens</span>
           </div>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <FileArchive className="w-5 h-5 text-purple-500" />
+            <FileArchive className="w-5 h-5 text-primary" />
             <span>Arquivos ZIP</span>
           </div>
         </div>

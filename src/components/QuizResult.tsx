@@ -39,8 +39,8 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
       title: "EXCELENTE!",
       message: "Você mandou muito bem!",
       badge: "🥈 Medalha de Prata", 
-      color: "from-blue-400 to-purple-500",
-      bgColor: "from-blue-50 to-purple-50"
+      color: "from-blue-400 to-primary",
+      bgColor: "from-blue-50 to-primary/20"
     };
     if (pct >= 70) return {
       emoji: "👏",
@@ -55,16 +55,16 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
       title: "BOA TENTATIVA!",
       message: "Continue estudando, você vai conseguir!",
       badge: "🌟 Estrela do Esforço",
-      color: "from-pink-400 to-rose-500",
-      bgColor: "from-pink-50 to-rose-50"
+      color: "from-brand-orange to-rose-500",
+      bgColor: "from-brand-orange/20 to-rose-50"
     };
     return {
       emoji: "📚",
       title: "VAMOS ESTUDAR MAIS!",
       message: "Não desista! Cada erro é um aprendizado!",
       badge: "🎯 Foco no Aprendizado",
-      color: "from-indigo-400 to-blue-500",
-      bgColor: "from-indigo-50 to-blue-50"
+      color: "from-primary to-blue-500",
+      bgColor: "from-primary/20 to-blue-50"
     };
   };
 

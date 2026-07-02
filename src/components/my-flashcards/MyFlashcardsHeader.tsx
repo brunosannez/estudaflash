@@ -6,7 +6,7 @@ const MyFlashcardsHeader = () => {
   return (
     <div className="text-center space-y-6">
       <div className="flex items-center justify-center gap-4 mb-6">
-        <Sparkles className="h-12 w-12 text-cyan-500 animate-pulse" />
+        <Sparkles className="h-12 w-12 text-primary animate-pulse" />
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center animate-bounce">
             <Brain className="h-10 w-10 text-white" />
@@ -16,7 +16,7 @@ const MyFlashcardsHeader = () => {
           </h1>
           <div className="text-5xl animate-bounce">🧠</div>
         </div>
-        <Sparkles className="h-12 w-12 text-purple-500 animate-pulse" />
+        <Sparkles className="h-12 w-12 text-primary animate-pulse" />
       </div>
       
       <div className="bg-muted/50 p-6 rounded-3xl max-w-4xl mx-auto border-2 border-blue-200">

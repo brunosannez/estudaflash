@@ -37,11 +37,11 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
               '📌 Conceitos-Chave',
               <BookMarked className="h-5 w-5" />,
               'bg-primary/5',
-              'border-violet-300',
+              'border-primary/20',
               <div className="space-y-2">
                 {content.split('\n').filter(l => l.trim()).map((line, i) => (
                   <div key={i} className="flex items-start gap-2 bg-white/70 p-3 rounded-lg">
-                    <span className="text-violet-500 font-bold">•</span>
+                    <span className="text-primary font-bold">•</span>
                     <span className="text-foreground/80">{line.replace(/^[-•]\s*/, '')}</span>
                   </div>
                 ))}
@@ -69,12 +69,12 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
             renderSpecialSection(
               '❓ Teste Seu Conhecimento',
               <HelpCircle className="h-5 w-5" />,
-              'bg-sky-50',
-              'border-sky-300',
+              'bg-border',
+              'border-border',
               <div className="space-y-3">
                 {content.split('\n').filter(l => l.trim()).map((line, i) => (
                   <div key={i} className="bg-white/70 p-4 rounded-lg flex items-start gap-3">
-                    <span className="bg-sky-500 text-white text-sm font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="bg-primary text-white text-sm font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
                       {i + 1}
                     </span>
                     <span className="text-foreground/80">{line.replace(/^\d+[.)]\s*/, '').replace(/^[-•]\s*/, '')}</span>
@@ -233,7 +233,7 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
       // Regular paragraphs
       formattedElements.push(
         <div key={`p-${index}`} className="mb-4">
-          <p className="text-foreground/80 leading-relaxed text-base sm:text-lg bg-muted/50 p-4 rounded-xl border-l-4 border-sky-400 shadow-sm">
+          <p className="text-foreground/80 leading-relaxed text-base sm:text-lg bg-muted/50 p-4 rounded-xl border-l-4 border-primary shadow-sm">
             {line}
           </p>
         </div>
@@ -248,7 +248,7 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
 
   return (
     <div className="max-w-none">
-      <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white via-sky-50/30 to-violet-50/30">
+      <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-br from-white via-border/30 to-primary/20/30">
         <CardHeader className="bg-primary text-white relative overflow-hidden">
           {/* Decorative background */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -278,9 +278,9 @@ const ResumoContent = ({ content }: ResumoContentProps) => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-border">
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">Resumo criado com IA para facilitar seus estudos</span>
-              <div className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
             </div>
           </div>
         </CardContent>

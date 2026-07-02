@@ -300,9 +300,9 @@ export const getRarityStyles = (rarity: BadgeDefinition['rarity']) => {
     },
     epic: {
       bg: 'bg-primary/5',
-      border: 'border-purple-400',
+      border: 'border-primary',
       text: 'text-primary',
-      glow: 'shadow-purple-200'
+      glow: 'shadow-primary/20'
     },
     legendary: {
       bg: 'bg-gradient-to-r from-yellow-100 to-amber-100',

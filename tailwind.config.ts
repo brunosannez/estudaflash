@@ -20,10 +20,16 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				'sans': ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
 				'fredoka': ['Fredoka One', 'cursive'],
 				'nunito': ['Nunito', 'sans-serif'],
 			},
 			colors: {
+				brand: {
+					lime: 'hsl(var(--brand-lime))',
+					orange: 'hsl(var(--brand-orange))',
+					cream: 'hsl(var(--brand-cream))'
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

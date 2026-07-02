@@ -36,7 +36,7 @@ export const SocialFeed = ({ activities, userProfile, loading }: SocialFeedProps
       case 'streak_milestone':
         return <Zap className="h-5 w-5 text-orange-500" />;
       case 'quiz_perfect':
-        return <Star className="h-5 w-5 text-purple-500" />;
+        return <Star className="h-5 w-5 text-primary" />;
       default:
         return <Activity className="h-5 w-5 text-muted-foreground" />;
     }

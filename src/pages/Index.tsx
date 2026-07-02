@@ -110,7 +110,7 @@ const Index = () => {
             {/* Grid Principal */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2">
-                <div className="bg-background/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-sky-100">
+                <div className="bg-background/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-border">
                   <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                     📈 Uso do App
                   </h3>

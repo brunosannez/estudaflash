@@ -1,12 +1,12 @@
-
+// Decoração sutil de fundo — brilhos discretos no estilo do mockup,
+// substituindo os emojis animados da versão anterior
 const FloatingElements = () => {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <div className="absolute top-10 left-5 sm:top-20 sm:left-10 text-2xl sm:text-3xl md:text-4xl opacity-20 animate-bounce no-cursor-interference" style={{ animationDelay: '0s' }}>🌟</div>
-      <div className="absolute top-20 right-10 sm:top-32 sm:right-20 text-2xl sm:text-3xl md:text-4xl opacity-20 animate-pulse no-cursor-interference" style={{ animationDelay: '0.5s' }}>🎨</div>
-      <div className="absolute top-32 left-1/4 sm:top-64 text-2xl sm:text-3xl md:text-4xl opacity-20 animate-bounce no-cursor-interference" style={{ animationDelay: '1s' }}>🚀</div>
-      <div className="absolute bottom-20 right-1/4 sm:bottom-32 text-2xl sm:text-3xl md:text-4xl opacity-20 animate-pulse no-cursor-interference" style={{ animationDelay: '1.5s' }}>🎯</div>
-      <div className="absolute top-48 right-5 sm:top-96 sm:right-10 text-2xl sm:text-3xl md:text-4xl opacity-20 animate-bounce no-cursor-interference" style={{ animationDelay: '2s' }}>⭐</div>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <span className="absolute top-24 left-[8%] text-brand-orange/40 text-xl">✦</span>
+      <span className="absolute top-64 right-[6%] text-accent/40 text-sm">✦</span>
+      <span className="absolute top-[38rem] left-[15%] text-primary/20 text-base">✦</span>
+      <span className="absolute top-[52rem] right-[18%] text-brand-orange/30 text-sm">✦</span>
     </div>
   );
 };

@@ -407,7 +407,7 @@ const Resumo = () => {
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/my-progress')}
-                className="border-purple-300 hover:bg-primary/5 text-primary"
+                className="border-primary/20 hover:bg-primary/5 text-primary"
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Ver Meu Progresso

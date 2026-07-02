@@ -1,66 +1,62 @@
+import { CloudUpload, Wand2, BookOpenCheck, Trophy } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { designColors } from '@/utils/designSystem';
+const steps = [
+  {
+    number: '01',
+    icon: CloudUpload,
+    iconClass: 'bg-primary/10 text-primary',
+    title: 'Envie seu material',
+    description: 'Fotos das suas anotações, livros ou slides. Nós cuidamos do resto.',
+  },
+  {
+    number: '02',
+    icon: Wand2,
+    iconClass: 'bg-accent/15 text-accent',
+    title: 'IA cria para você',
+    description: 'Resumos, flashcards e quizzes personalizados em segundos.',
+  },
+  {
+    number: '03',
+    icon: BookOpenCheck,
+    iconClass: 'bg-primary/10 text-primary',
+    title: 'Estude de forma ativa',
+    description: 'Revise com flashcards e teste seus conhecimentos com quizzes.',
+  },
+  {
+    number: '04',
+    icon: Trophy,
+    iconClass: 'bg-brand-orange/15 text-brand-orange',
+    title: 'Acompanhe seu progresso',
+    description: 'Veja sua evolução, mantenha a consistência e alcance seus objetivos.',
+  },
+];
 
 const FeaturesSection = () => {
-  const features = [
-    {
-      icon: '📷',
-      title: '1. Tire uma Foto!',
-      description: '📸 Fotografe seus livros, cadernos ou qualquer material de estudo!',
-      gradient: 'from-cyan-100 to-cyan-200',
-      border: 'border-cyan-300',
-      iconGradient: 'from-cyan-400 to-cyan-500'
-    },
-    {
-      icon: '🤖',
-      title: '2. IA Mágica!',
-      description: '✨ Nossa IA super inteligente lê tudo e cria resumos incríveis!',
-      gradient: 'from-purple-100 to-purple-200',
-      border: 'border-purple-300',
-      iconGradient: 'from-purple-400 to-purple-500'
-    },
-    {
-      icon: '🎮',
-      title: '3. Jogos Divertidos!',
-      description: '🎯 Flashcards coloridos e quizzes super legais para testar seus conhecimentos!',
-      gradient: 'from-green-100 to-green-200',
-      border: 'border-green-300',
-      iconGradient: 'from-green-400 to-green-500'
-    },
-    {
-      icon: '🏆',
-      title: '4. Ganhe Pontos!',
-      description: '🌟 Suba de nível, ganhe medalhas e vire um expert!',
-      gradient: 'from-yellow-100 to-orange-200',
-      border: 'border-yellow-300',
-      iconGradient: 'from-yellow-400 to-orange-500'
-    }
-  ];
-
   return (
-    <section className={`py-8 sm:py-16 ${designColors.responsive.containerPadding} bg-background/80 backdrop-blur-sm`}>
-      <div className="container mx-auto">
-        <div className="text-center mb-8 sm:mb-16">
-          <h3 className={`${designColors.responsive.pageTitle} font-fredoka text-foreground mb-4`}>
-            🎪 Como funciona a mágica?
-          </h3>
-          <p className={`${designColors.responsive.heroText} font-nunito text-muted-foreground font-semibold`}>✨ Em 4 passos super fáceis! ✨</p>
+    <section id="como-funciona" className="py-16 sm:py-24 bg-card/60">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
+            ✨ Como funciona
+          </h2>
+          <p className="text-lg text-muted-foreground">Em 4 passos super fáceis!</p>
         </div>
-        
-        <div className={`grid ${designColors.responsive.gridCols4} gap-4 sm:gap-8`}>
-          {features.map((feature, index) => (
-            <Card key={index} className={`text-center p-4 sm:p-8 hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br ${feature.gradient} border-4 ${feature.border} rounded-2xl sm:rounded-3xl`}>
-              <CardContent className="space-y-3 sm:space-y-6">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r ${feature.iconGradient} rounded-full flex items-center justify-center mx-auto shadow-lg`}>
-                  <span className="text-lg sm:text-2xl md:text-3xl">{feature.icon}</span>
-                </div>
-                <h4 className={`${designColors.responsive.cardTitle} font-fredoka text-foreground/80`}>{feature.title}</h4>
-                <p className={`text-muted-foreground font-nunito font-semibold ${designColors.responsive.bodyText}`}>
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+          {steps.map((step) => (
+            <div
+              key={step.number}
+              className="bg-card rounded-2xl border border-border/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-6"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <span className="text-sm font-extrabold text-brand-orange">{step.number}</span>
+              </div>
+              <div className={`w-12 h-12 rounded-xl grid place-items-center mb-4 ${step.iconClass}`}>
+                <step.icon className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-foreground mb-1.5">{step.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+            </div>
           ))}
         </div>
       </div>

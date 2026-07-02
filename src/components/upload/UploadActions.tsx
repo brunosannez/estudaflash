@@ -79,7 +79,7 @@ const UploadActions = ({
               font-nunito font-semibold
               text-base
               rounded-lg
-              border-2 border-purple-300
+              border-2 border-primary/20
               text-primary
               hover:bg-primary/5
               shadow-md
@@ -94,7 +94,7 @@ const UploadActions = ({
 
       {/* Seção para adicionar mais fotos */}
       {selectedFiles.length > 0 && !isProcessing && (
-        <div className="border-t-2 border-dashed border-cyan-300 pt-4 mt-4 bg-muted/50 rounded-lg p-4">
+        <div className="border-t-2 border-dashed border-primary/15 pt-4 mt-4 bg-muted/50 rounded-lg p-4">
           <input
             type="file"
             accept="image/*"

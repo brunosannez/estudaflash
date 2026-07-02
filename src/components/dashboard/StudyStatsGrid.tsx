@@ -73,7 +73,7 @@ const StudyStatsGrid = () => {
       </Card>
 
       {/* Atividade Total */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500">
+      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">

@@ -145,7 +145,7 @@ const EnhancedUpload = () => {
           <div className="flex items-center space-x-3">
             <FileArchive className="w-8 h-8 text-primary" />
             <div>
-              <h3 className="font-semibold text-purple-800">Arquivos ZIP</h3>
+              <h3 className="font-semibold text-primary">Arquivos ZIP</h3>
               <p className="text-sm text-primary">Extração automática com ordenação inteligente</p>
             </div>
           </div>

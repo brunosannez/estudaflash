@@ -33,7 +33,7 @@ const CreditsHistoryModal = ({ isOpen, onClose }: CreditsHistoryModalProps) => {
   const actionColors: Record<string, string> = {
     ocr: 'bg-primary/10 text-blue-800',
     summary: 'bg-green-100 text-green-800',
-    flashcards: 'bg-primary/10 text-purple-800',
+    flashcards: 'bg-primary/10 text-primary',
     quiz: 'bg-orange-100 text-orange-800',
   };
 

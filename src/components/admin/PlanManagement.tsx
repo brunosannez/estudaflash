@@ -62,7 +62,7 @@ const PlanManagement = () => {
       case 'pro':
         return <Star className="h-5 w-5 text-blue-500" />;
       case 'pro max':
-        return <Crown className="h-5 w-5 text-purple-500" />;
+        return <Crown className="h-5 w-5 text-primary" />;
       default:
         return <Zap className="h-5 w-5 text-muted-foreground" />;
     }

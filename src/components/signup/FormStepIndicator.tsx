@@ -23,7 +23,7 @@ const FormStepIndicator = ({ currentStep, totalSteps, isMinor }: FormStepIndicat
             <div className="flex flex-col items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
                 currentStep >= step.number
-                  ? 'bg-primary/50 border-purple-500 text-white'
+                  ? 'bg-primary/50 border-primary text-white'
                   : 'bg-card border-input text-muted-foreground/70'
               }`}>
                 {currentStep > step.number ? (

@@ -61,7 +61,7 @@ const DailyMission = () => {
     return (
       <Card className="bg-muted/50 border-primary/20/50 animate-pulse">
         <CardContent className="p-6">
-          <div className="h-6 bg-violet-200 rounded w-1/3 mb-4"></div>
+          <div className="h-6 bg-primary/20 rounded w-1/3 mb-4"></div>
           <div className="h-16 bg-primary/10 rounded"></div>
         </CardContent>
       </Card>
@@ -121,7 +121,7 @@ const DailyMission = () => {
                   className={`relative rounded-xl p-4 transition-all duration-300 ${
                     isCompleted
                       ? 'bg-emerald-50 border border-emerald-200'
-                      : 'bg-card border border-border hover:border-violet-300 hover:shadow-md'
+                      : 'bg-card border border-border hover:border-primary/20 hover:shadow-md'
                   }`}
                 >
                   <div className="flex items-start gap-4">

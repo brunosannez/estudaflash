@@ -177,7 +177,7 @@ export const useSocialReactions = () => {
       like: 'text-blue-500',
       celebrate: 'text-yellow-500',
       support: 'text-green-500',
-      wow: 'text-purple-500'
+      wow: 'text-primary'
     };
     return colors[type as keyof typeof colors] || 'text-muted-foreground';
   };

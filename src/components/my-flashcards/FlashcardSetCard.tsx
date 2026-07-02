@@ -118,7 +118,7 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
 
   return (
     <Card 
-      className="group border-4 border-blue-200 shadow-xl overflow-hidden hover:shadow-2xl hover:border-purple-300 transition-all duration-300 transform hover:scale-105 relative"
+      className="group border-4 border-blue-200 shadow-xl overflow-hidden hover:shadow-2xl hover:border-primary/20 transition-all duration-300 transform hover:scale-105 relative"
     >
       {/* Botão de excluir */}
       <AlertDialog>

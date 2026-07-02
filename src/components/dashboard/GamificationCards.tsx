@@ -45,9 +45,9 @@ const GamificationCards = () => {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Nível Atual</p>
+              <p className="text-primary/20 text-sm font-medium">Nível Atual</p>
               <p className="text-3xl font-bold">{stats.currentLevel}</p>
-              <p className="text-purple-200 text-xs">{getLevelTitle(stats.currentLevel)}</p>
+              <p className="text-primary/20 text-xs">{getLevelTitle(stats.currentLevel)}</p>
             </div>
             <Trophy className="h-12 w-12 text-yellow-300 animate-pulse" />
           </div>
@@ -56,8 +56,8 @@ const GamificationCards = () => {
               <span>XP: {stats.currentXp}</span>
               <span>{stats.nextLevelXp}</span>
             </div>
-            <Progress value={stats.xpProgress} className="h-2 bg-purple-400" />
-            <p className="text-xs text-purple-200">
+            <Progress value={stats.xpProgress} className="h-2 bg-primary" />
+            <p className="text-xs text-primary/20">
               Faltam {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!
             </p>
           </div>

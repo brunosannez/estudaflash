@@ -35,7 +35,7 @@ const ResumoStats = ({ estimatedReadTime, contentLength, createdDate }: ResumoSt
         <CardContent className="p-4 flex items-center gap-3">
           <Target className="h-8 w-8" />
           <div>
-            <p className="text-purple-100 text-sm">Criado em</p>
+            <p className="text-primary/20 text-sm">Criado em</p>
             <p className="text-lg font-bold">{createdDate.split(' ')[0]}</p>
           </div>
         </CardContent>

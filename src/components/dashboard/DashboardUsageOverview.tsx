@@ -16,7 +16,7 @@ const DashboardUsageOverview = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <span className="ml-2 text-muted-foreground">Carregando dados...</span>
       </div>
     );
@@ -45,7 +45,7 @@ const DashboardUsageOverview = () => {
 
       {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
+        <Card className="bg-white/70 backdrop-blur-sm border-primary/20">
           <CardContent className="p-4 text-center">
             <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
             <div className="text-2xl font-bold text-primary">
@@ -55,7 +55,7 @@ const DashboardUsageOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
+        <Card className="bg-white/70 backdrop-blur-sm border-primary/20">
           <CardContent className="p-4 text-center">
             <Brain className="w-6 h-6 mx-auto mb-2 text-primary" />
             <div className="text-2xl font-bold text-primary">
@@ -65,7 +65,7 @@ const DashboardUsageOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
+        <Card className="bg-white/70 backdrop-blur-sm border-primary/20">
           <CardContent className="p-4 text-center">
             <Target className="w-6 h-6 mx-auto mb-2 text-green-600" />
             <div className="text-2xl font-bold text-green-600">
@@ -76,7 +76,7 @@ const DashboardUsageOverview = () => {
         </Card>
 
         <Card 
-          className="bg-muted/50 backdrop-blur-sm border-violet-300 cursor-pointer hover:shadow-lg transition-all hover:border-violet-400 ring-1 ring-violet-200"
+          className="bg-muted/50 backdrop-blur-sm border-primary/20 cursor-pointer hover:shadow-lg transition-all hover:border-primary ring-1 ring-primary/20"
           onClick={() => navigate('/choose-plan')}
         >
           <CardContent className="p-4 text-center">
@@ -85,7 +85,7 @@ const DashboardUsageOverview = () => {
               {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
             </div>
             <div className="text-sm text-primary/80">Plano</div>
-            <Button variant="default" size="sm" className="mt-2 bg-primary hover:bg-violet-700 text-white text-xs px-3 h-7">
+            <Button variant="default" size="sm" className="mt-2 bg-primary hover:bg-primary text-white text-xs px-3 h-7">
               {usageData?.plano === 'free' ? '⭐ Fazer Upgrade' : 'Mudar Plano'}
             </Button>
           </CardContent>

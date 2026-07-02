@@ -6,9 +6,9 @@ interface QuizPerformanceIndicatorProps {
 const QuizPerformanceIndicator = ({ percentage }: QuizPerformanceIndicatorProps) => {
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 90) return "from-yellow-400 to-orange-500";
-    if (percentage >= 80) return "from-blue-400 to-purple-500";
+    if (percentage >= 80) return "from-blue-400 to-primary";
     if (percentage >= 70) return "from-green-400 to-emerald-500";
-    if (percentage >= 50) return "from-pink-400 to-rose-500";
+    if (percentage >= 50) return "from-brand-orange to-rose-500";
     return "from-gray-400 to-gray-500";
   };
 

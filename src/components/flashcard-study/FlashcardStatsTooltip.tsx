@@ -87,7 +87,7 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
           <div className="bg-primary/5 p-3 rounded-lg border">
             <div className="flex items-center gap-2 mb-1">
               <Award className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-purple-800">Melhor</span>
+              <span className="text-xs font-medium text-primary">Melhor</span>
             </div>
             <div className="text-lg font-bold text-primary">
               {stats.best_accuracy.toFixed(0)}%

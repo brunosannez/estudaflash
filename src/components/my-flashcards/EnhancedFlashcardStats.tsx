@@ -66,7 +66,7 @@ const EnhancedFlashcardStats = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-purple-900">Tempo Total</h3>
+              <h3 className="font-semibold text-primary">Tempo Total</h3>
             </div>
             <div className="text-2xl font-bold text-primary">
               {studyStats.reduce((sum, stat) => sum + stat.total_study_time_minutes, 0)}min

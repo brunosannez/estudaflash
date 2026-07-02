@@ -172,7 +172,7 @@ const MindMapViewer = ({ mindMapData, onBack }: MindMapViewerProps) => {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <Card className="overflow-hidden shadow-2xl border-0 bg-gradient-to-br from-white via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-950 dark:to-blue-950">
+      <Card className="overflow-hidden shadow-2xl border-0 bg-gradient-to-br from-white via-primary/20 to-blue-50 dark:from-gray-900 dark:via-purple-950 dark:to-blue-950">
         <CardHeader className="bg-primary text-white relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"></div>

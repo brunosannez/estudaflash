@@ -14,9 +14,9 @@ const Dropzone = ({ onFileButtonClick, isProcessing }: DropzoneProps) => {
     <div className="text-center space-y-4 sm:space-y-6">
       {/* Ícones grandes e animados */}
       <div className="flex justify-center items-center space-x-2 sm:space-x-4 mb-4 sm:mb-6">
-        <Camera className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-purple-400 animate-bounce" />
+        <Camera className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-primary animate-bounce" />
         <span className="text-4xl sm:text-5xl md:text-6xl animate-wiggle">📸</span>
-        <Upload className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-cyan-400 animate-bounce" />
+        <Upload className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 text-primary animate-bounce" />
       </div>
 
       {/* Título principal */}

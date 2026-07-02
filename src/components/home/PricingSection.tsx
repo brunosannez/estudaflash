@@ -40,7 +40,7 @@ const PricingSection = () => {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="h-6 w-6 text-violet-500" />
+            <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-sm font-semibold text-primary uppercase tracking-wider">
               Planos
             </span>
@@ -113,7 +113,7 @@ const PricingCard = ({ plan, showYearlyPrice, onSelect }: PricingCardProps) => {
     <Card
       className={`relative transition-all duration-300 hover:shadow-xl ${
         isPopular
-          ? 'border-2 border-violet-400 shadow-lg scale-[1.03]'
+          ? 'border-2 border-primary shadow-lg scale-[1.03]'
           : 'border-border hover:scale-[1.01]'
       }`}
     >

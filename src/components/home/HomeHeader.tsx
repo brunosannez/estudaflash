@@ -1,73 +1,68 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Zap, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
+import { LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
+import BrandLogo from '@/components/common/BrandLogo';
+
+const navLinks = [
+  { label: 'Recursos', href: '#recursos' },
+  { label: 'Como funciona', href: '#como-funciona' },
+  { label: 'Planos', href: '#planos' },
+  { label: 'Depoimentos', href: '#depoimentos' },
+];
 
 const HomeHeader = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  console.log('🧭 HomeHeader rendering - User:', !!user);
-
-  const handleDashboardClick = () => {
-    console.log('🎯 Navigating to dashboard');
-    navigate('/', { replace: true });
-  };
-
   return (
-    <header className="relative z-20 bg-background/90 backdrop-blur-sm border-b border-purple-100">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-xl"></div>
-                <Zap className="h-6 w-6 text-white relative z-10" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
-            </div>
-            <div className="relative">
-              <span className="font-bold text-2xl text-foreground">
-                Estuda Flash
-              </span>
-              <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary opacity-50"></div>
-            </div>
-          </Link>
+    <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md border-b border-border/60">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <Link to="/home" className="flex items-center gap-2.5">
+          <BrandLogo size={36} />
+          <span className="text-lg font-extrabold tracking-tight text-foreground">
+            Estuda Flash
+          </span>
+        </Link>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-4">
-            {user ? (
-              // Se usuário estiver logado, mostrar botão para dashboard
-              <Button
-                onClick={handleDashboardClick}
-                className="bg-primary hover:opacity-90 text-white font-medium"
-              >
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Ir para Dashboard
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm font-semibold text-foreground/70 hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2.5">
+          {user ? (
+            <Button
+              onClick={() => navigate('/', { replace: true })}
+              size="sm"
+              className="rounded-xl font-semibold"
+            >
+              <LayoutDashboard className="h-4 w-4 mr-1.5" />
+              Ir para Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" asChild className="rounded-xl font-semibold">
+                <Link to="/login">
+                  <LogIn className="h-4 w-4 mr-1.5" />
+                  Entrar
+                </Link>
               </Button>
-            ) : (
-              // Se não estiver logado, mostrar botões de login/cadastro
-              <>
-                <Button variant="outline" asChild className="border-purple-300 text-primary hover:bg-primary/5">
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Entrar
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  className="bg-primary hover:opacity-90 text-white font-medium"
-                >
-                  <Link to="/signup">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Criar Conta
-                  </Link>
-                </Button>
-              </>
-            )}
-          </nav>
+              <Button size="sm" asChild className="rounded-xl font-semibold">
+                <Link to="/signup">
+                  <UserPlus className="h-4 w-4 mr-1.5" />
+                  Criar Conta
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

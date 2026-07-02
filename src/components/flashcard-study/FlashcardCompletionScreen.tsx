@@ -86,7 +86,7 @@ const FlashcardCompletionScreen = ({
             <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-3">
               <Star className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-purple-800 mb-2">XP Ganho</h3>
+            <h3 className="text-lg font-semibold text-primary mb-2">XP Ganho</h3>
             <div className="text-3xl font-bold text-primary mb-2">
               +{studyStats.xpEarned}
             </div>

@@ -42,7 +42,7 @@ const ResumoActions = ({
         <Button 
           onClick={onManageFlashcards}
           variant="outline"
-          className="border-primary/20 hover:bg-primary/5 hover:border-purple-300 text-primary"
+          className="border-primary/20 hover:bg-primary/5 hover:border-primary/20 text-primary"
           size="lg"
         >
           <Brain className="h-5 w-5 mr-2" />

@@ -149,7 +149,7 @@ const ChoosePlan = () => {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="h-8 w-8 text-violet-500" />
+            <Sparkles className="h-8 w-8 text-primary" />
             <h1 className={`${designColors.responsive.pageTitle} text-foreground`}>
               {currentPlanName !== 'free' ? 'Gerenciar Plano' : 'Escolha seu Plano'}
             </h1>
@@ -288,9 +288,9 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
     <Card
       className={`relative cursor-pointer transition-all duration-300 ${
         isSelected
-          ? 'ring-2 ring-violet-500 shadow-xl scale-[1.03]'
+          ? 'ring-2 ring-primary shadow-xl scale-[1.03]'
           : 'hover:shadow-lg hover:scale-[1.01] border-border'
-      } ${isPopular ? 'border-2 border-violet-300' : ''} ${isCurrentPlan ? 'bg-primary/5/50' : ''}`}
+      } ${isPopular ? 'border-2 border-primary/20' : ''} ${isCurrentPlan ? 'bg-primary/5/50' : ''}`}
       onClick={() => onSelect(plan.id)}
     >
       {isCurrentPlan && (
@@ -333,7 +333,7 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
           <div
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
               isSelected
-                ? 'bg-primary/50 border-violet-500'
+                ? 'bg-primary/50 border-primary'
                 : 'border-muted-foreground/30'
             }`}
           >

@@ -27,9 +27,9 @@ const PlanCard = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCardProps
     <Card
       className={`relative cursor-pointer transition-all duration-300 ${
         isSelected
-          ? 'ring-2 ring-purple-500 shadow-lg scale-105'
+          ? 'ring-2 ring-primary shadow-lg scale-105'
           : 'hover:shadow-md border-border'
-      } ${plan.name === 'Pro' ? 'border-2 border-purple-300' : ''}`}
+      } ${plan.name === 'Pro' ? 'border-2 border-primary/20' : ''}`}
       onClick={() => onSelect(plan.id)}
     >
       {plan.name === 'Pro' && (
@@ -63,7 +63,7 @@ const PlanCard = ({ plan, isSelected, onSelect, showYearlyPrice }: PlanCardProps
         <div className="mt-6 flex justify-center">
           <div className={`w-4 h-4 rounded-full border-2 ${
             isSelected
-              ? 'bg-primary/50 border-purple-500'
+              ? 'bg-primary/50 border-primary'
               : 'border-input'
           }`}>
             {isSelected && (

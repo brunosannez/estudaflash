@@ -12,7 +12,7 @@ const QuickActions = () => {
       title: "Fazer Upload",
       description: "Envie suas imagens de estudo",
       icon: Upload,
-      color: "from-blue-500 to-purple-600",
+      color: "from-blue-500 to-primary",
       textColor: "text-white",
       onClick: () => navigate('/upload')
     },
@@ -36,7 +36,7 @@ const QuickActions = () => {
       title: "Histórico Quiz",
       description: "Veja seus quizzes feitos",
       icon: Target,
-      color: "from-purple-500 to-pink-600",
+      color: "from-primary to-brand-orange",
       textColor: "text-white",
       onClick: () => navigate('/quiz-history')
     }

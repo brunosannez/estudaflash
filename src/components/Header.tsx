@@ -136,7 +136,7 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="flex items-center space-x-1 sm:space-x-2 border-2 border-purple-300 text-foreground/80 hover:bg-primary/5 shadow-lg"
+                  className="flex items-center space-x-1 sm:space-x-2 border-2 border-primary/20 text-foreground/80 hover:bg-primary/5 shadow-lg"
                 >
                   <User className={designColors.responsive.buttonIcon} />
                   <span className={`font-medium ${designColors.responsive.captionText} max-w-20 sm:max-w-none truncate`}>
@@ -161,7 +161,7 @@ const Header = () => {
                     <span>⚡ Admin Panel</span>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator className="bg-purple-200" />
+                <DropdownMenuSeparator className="bg-primary/20" />
                 <DropdownMenuItem 
                   onClick={handleSignOut}
                   className="flex items-center space-x-2 cursor-pointer text-destructive focus:text-destructive"
