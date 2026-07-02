@@ -33,24 +33,47 @@ const AuthModal = ({ children }: AuthModalProps) => {
       setEmail('');
       setPassword('');
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
+      toast({
+        title: "Erro no login",
+        description: error.message === 'Invalid login credentials'
+          ? "Email ou senha incorretos."
+          : error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignUp = async () => {
     setLoading(true);
     try {
-      await signUp(email, password);
+      const data = await signUp(email, password);
       setOpen(false);
       setEmail('');
       setPassword('');
-      navigate('/');
-    } catch (error) {
+      if (data.session) {
+        navigate('/');
+      } else {
+        // Confirmação de email pendente: sem sessão, navegar para / mostraria
+        // a home deslogada sem explicação
+        toast({
+          title: "Conta criada! 📧",
+          description: "Verifique seu email para confirmar sua conta antes de entrar.",
+        });
+      }
+    } catch (error: any) {
       console.error('Sign up error:', error);
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
