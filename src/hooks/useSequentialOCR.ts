@@ -17,21 +17,24 @@ const compressImage = (file: File, maxWidth = 1200, quality = 0.85): Promise<Fil
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    
+    const objectUrl = URL.createObjectURL(file);
+
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
       // Calcular novas dimensões mantendo proporção
       let { width, height } = img;
       if (width > maxWidth) {
         height = (height * maxWidth) / width;
         width = maxWidth;
       }
-      
+
       canvas.width = width;
       canvas.height = height;
-      
+
       // Desenhar imagem redimensionada
       ctx?.drawImage(img, 0, 0, width, height);
-      
+
       // Converter para blob e depois para file
       canvas.toBlob((blob) => {
         if (blob) {
@@ -45,8 +48,16 @@ const compressImage = (file: File, maxWidth = 1200, quality = 0.85): Promise<Fil
         }
       }, 'image/jpeg', quality);
     };
-    
-    img.src = URL.createObjectURL(file);
+
+    // Imagem corrompida/ilegível: sem este handler a promise nunca
+    // resolvia e o processamento travava até o timeout de 45s
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      console.warn(`⚠️ Não foi possível decodificar ${file.name}, enviando original`);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
   });
 };
 
