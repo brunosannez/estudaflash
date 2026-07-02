@@ -11,7 +11,7 @@ import StudentInfoSection from './StudentInfoSection';
 import GuardianInfoSection from './GuardianInfoSection';
 import PlanSelection from './PlanSelection';
 import GoogleIcon from '@/components/common/GoogleIcon';
-import { Zap } from 'lucide-react';
+import BrandLogo, { BrandWordmark } from '@/components/common/BrandLogo';
 
 const NewSignupForm = () => {
   const navigate = useNavigate();
@@ -148,17 +148,10 @@ const NewSignupForm = () => {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="relative">
-              <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-2xl"></div>
-                <Zap className="text-2xl text-white relative z-10 animate-bounce" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Bem-vindo ao Estuda Flash! 
+            <BrandLogo size={48} className="rounded-[13px]" />
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+              Bem-vindo ao <BrandWordmark className="text-3xl" />!
             </h1>
-            <span className="text-3xl animate-bounce">⚡</span>
           </div>
           <p className="text-base text-muted-foreground">
             Crie sua conta e transforme seus estudos com velocidade e inteligência artificial

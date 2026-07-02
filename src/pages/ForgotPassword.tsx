@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Mail, Zap } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
+import BrandLogo, { BrandWordmark } from '@/components/common/BrandLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { designColors } from '@/utils/designSystem';
@@ -75,13 +76,9 @@ const ForgotPassword = () => {
             <span>Voltar ao login</span>
           </Button>
 
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-              <Zap className="text-lg text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-foreground">
-              Estuda Flash
-            </h1>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo size={32} className="rounded-[9px]" />
+            <BrandWordmark className="text-xl" />
           </div>
         </div>
 

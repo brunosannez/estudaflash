@@ -1,11 +1,14 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, BookOpen, Trophy, Target, Activity } from 'lucide-react';
+import FoliEye from '@/components/common/FoliEye';
 
 export const PageLoading = ({ title = "Carregando..." }: { title?: string }) => (
-  <div className="min-h-screen flex items-center justify-center">
+  <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="text-center space-y-4">
-      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+      <div className="flex justify-center">
+        <FoliEye size={64} />
+      </div>
       <p className="text-muted-foreground">{title}</p>
     </div>
   </div>

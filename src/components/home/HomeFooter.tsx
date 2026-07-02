@@ -6,8 +6,10 @@ const HomeFooter = () => {
       <div className="container mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <BrandLogo size={36} />
-            <span className="text-lg font-extrabold tracking-tight">Estuda Flash</span>
+            <BrandLogo size={36} className="rounded-[10px] ring-1 ring-primary-foreground/20" />
+            <span className="text-lg font-extrabold tracking-tight">
+              Estuda <span className="text-accent">Flash</span>
+            </span>
           </div>
           <div className="text-center md:text-right">
             <p className="text-sm font-medium">

@@ -61,37 +61,52 @@ export interface ActivePlan {
   features: string[];
 }
 
-export type PlanType = 'free' | 'pro' | 'edu';
+export type PlanType = 'free' | 'pro' | 'pro max' | 'edu';
 
+// Capacidades derivadas dos créditos mensais (OCR 1cr/img, resumo 8cr,
+// flashcards 3cr, quiz 8cr). Exibição legada — a fonte de verdade é o
+// sistema de créditos.
 export const PLAN_CONFIGS = {
   free: {
     displayName: 'Gratuito',
-    uploads: 10,
-    flashcards: 10,
-    quizzes: 10,
+    credits: 50,
+    uploads: 50,
+    flashcards: 16,
+    quizzes: 6,
     color: 'text-muted-foreground',
     badgeVariant: 'secondary' as const,
   },
   pro: {
-    displayName: 'Professional',
-    uploads: 100,
-    flashcards: 100,
-    quizzes: 100,
+    displayName: 'Pro',
+    credits: 500,
+    uploads: 500,
+    flashcards: 166,
+    quizzes: 62,
     color: 'text-primary',
+    badgeVariant: 'default' as const,
+  },
+  'pro max': {
+    displayName: 'Pro Max',
+    credits: 1200,
+    uploads: 1200,
+    flashcards: 400,
+    quizzes: 150,
+    color: 'text-brand-orange',
     badgeVariant: 'default' as const,
   },
   edu: {
     displayName: 'Educacional',
-    uploads: Infinity,
-    flashcards: Infinity,
-    quizzes: Infinity,
-    color: 'text-green-600',
+    credits: 2000,
+    uploads: 2000,
+    flashcards: 666,
+    quizzes: 250,
+    color: 'text-accent',
     badgeVariant: 'default' as const,
   },
 } as const;
 
 export const AI_MODELS = {
-  quiz: ['GPT-3.5', 'GPT-4o', 'Claude 3'],
-  summary: ['Claude 3', 'Claude 3.5', 'GPT-4o'],
-  flashcard: ['DeepSeek-V2', 'GPT-3.5', 'Claude 3']
+  quiz: ['Claude Sonnet 5'],
+  summary: ['Claude Sonnet 5'],
+  flashcard: ['Claude Haiku 4.5']
 } as const;

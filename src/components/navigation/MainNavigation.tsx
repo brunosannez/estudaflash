@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import BrandLogo, { BrandWordmark } from '@/components/common/BrandLogo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,19 +84,8 @@ const MainNavigation = () => {
     <div className="flex flex-col h-full bg-card">
       <div className="p-6 border-b border-border bg-card">
         <Link to="/" className="flex items-center gap-3" onClick={onItemClick}>
-          <div className="relative">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg">
-              <div className="absolute inset-0 bg-primary/10 animate-pulse"></div>
-              <Zap className="h-6 w-6 text-white relative z-10 animate-bounce" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
-          </div>
-          <div className="relative">
-            <span className="font-bold text-xl text-foreground">
-              Estuda Flash
-            </span>
-            <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary opacity-50"></div>
-          </div>
+          <BrandLogo size={38} className="rounded-[11px]" />
+          <BrandWordmark className="text-xl" />
         </Link>
       </div>
 
@@ -164,15 +154,8 @@ const MainNavigation = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50 h-16">
         <div className="flex items-center justify-between h-full px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="relative">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-primary/10 animate-pulse"></div>
-                <Zap className="h-5 w-5 text-white relative z-10" />
-              </div>
-            </div>
-            <span className="font-bold text-lg text-foreground">
-              Estuda Flash
-            </span>
+            <BrandLogo size={32} className="rounded-[9px]" />
+            <BrandWordmark className="text-lg" />
           </Link>
 
           <div className="flex items-center gap-2">

@@ -101,13 +101,19 @@ const PricingCard = ({ plan, showYearlyPrice, onSelect }: PricingCardProps) => {
   const isFree = price === 0;
   const isPopular = plan.name === 'Pro';
 
-  const features = [
-    `${plan.uploads_limit} uploads por mês`,
-    `${plan.summaries_limit} resumos por mês`,
-    `${plan.flashcards_limit} flashcards por mês`,
-    `${plan.quizzes_limit} quizzes por mês`,
-    ...plan.features,
-  ];
+  // Capacidades derivadas dos créditos: resumo 8cr, quiz 8cr, flashcards
+  // 3cr, OCR 1cr/imagem
+  const credits = plan.credits_per_month ?? 0;
+  const features = credits > 0
+    ? [
+        `${credits} créditos por mês`,
+        `Até ${Math.floor(credits / 8)} resumos com IA`,
+        `Até ${Math.floor(credits / 8)} quizzes estilo ENEM`,
+        `Até ${Math.floor(credits / 3)} gerações de flashcards`,
+        `Mapas mentais e leitura de fotos`,
+        ...(plan.features || []),
+      ]
+    : [...(plan.features || [])];
 
   return (
     <Card

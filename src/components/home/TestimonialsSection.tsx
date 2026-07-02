@@ -24,7 +24,7 @@ const TestimonialsSection = () => {
     <section id="depoimentos" className="py-16 sm:py-24 bg-card/60">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center mb-12">
-          <img src={foliSmall} alt="" className="w-16 mb-4 rounded-2xl" draggable={false} />
+          <img src={foliSmall} alt="" className="w-16 mb-4 mix-blend-multiply dark:mix-blend-normal" draggable={false} />
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
             Quem estuda com o Foli, aprova
           </h2>

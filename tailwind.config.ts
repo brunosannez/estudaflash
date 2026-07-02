@@ -28,6 +28,8 @@ export default {
 				brand: {
 					lime: 'hsl(var(--brand-lime))',
 					orange: 'hsl(var(--brand-orange))',
+					teal: 'hsl(var(--brand-teal))',
+					blue: 'hsl(var(--brand-blue))',
 					cream: 'hsl(var(--brand-cream))'
 				},
 				border: 'hsl(var(--border))',

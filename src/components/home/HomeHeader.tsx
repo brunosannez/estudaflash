@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
-import BrandLogo from '@/components/common/BrandLogo';
+import BrandLogo, { BrandWordmark } from '@/components/common/BrandLogo';
 
 const navLinks = [
   { label: 'Recursos', href: '#recursos' },
@@ -19,10 +19,8 @@ const HomeHeader = () => {
     <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md border-b border-border/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/home" className="flex items-center gap-2.5">
-          <BrandLogo size={36} />
-          <span className="text-lg font-extrabold tracking-tight text-foreground">
-            Estuda Flash
-          </span>
+          <BrandLogo size={36} className="rounded-[10px]" />
+          <BrandWordmark className="text-lg" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

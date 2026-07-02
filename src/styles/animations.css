@@ -198,3 +198,12 @@
   pointer-events: none;
   user-select: none;
 }
+
+/* Piscada do olho do Foli (indicador de loading da marca) */
+@keyframes foli-blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.08); }
+}
+.foli-eye-blink {
+  animation: foli-blink 2.4s ease-in-out infinite;
+}

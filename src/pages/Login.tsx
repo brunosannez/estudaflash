@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogIn, Zap } from 'lucide-react';
+import { ArrowLeft, LogIn } from 'lucide-react';
+import BrandLogo, { BrandWordmark } from '@/components/common/BrandLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { designColors } from '@/utils/designSystem';
@@ -113,17 +114,9 @@ const Login = () => {
             <span>Voltar</span>
           </Button>
           
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-xl"></div>
-                <Zap className="text-lg text-white relative z-10" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
-            </div>
-            <h1 className="text-xl font-bold text-foreground">
-              Estuda Flash
-            </h1>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo size={32} className="rounded-[9px]" />
+            <BrandWordmark className="text-xl" />
           </div>
         </div>
 
