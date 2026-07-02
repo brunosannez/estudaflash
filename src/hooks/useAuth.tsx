@@ -100,6 +100,9 @@ export const useAuth = () => {
       }
 
       console.log('✅ Sign in successful:', data.user?.email);
+      // onAuthStateChange atualiza user/session, mas garante que loading
+      // não fica preso caso o evento demore ou não dispare
+      setAuthState(prev => ({ ...prev, loading: false }));
       return data;
     } catch (error: any) {
       console.error('❌ signIn error:', error);
@@ -132,6 +135,9 @@ export const useAuth = () => {
       }
 
       console.log('✅ Sign up successful:', data.user?.email);
+      // Com confirmação de email habilitada não há sessão e nenhum evento
+      // de auth dispara — sem este reset, loading ficava true para sempre
+      setAuthState(prev => ({ ...prev, loading: false }));
       return data;
     } catch (error: any) {
       console.error('❌ signUp error:', error);
