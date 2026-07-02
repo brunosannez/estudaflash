@@ -10,8 +10,8 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import StudyStatsGrid from '@/components/dashboard/StudyStatsGrid';
 import DailyMission from '@/components/dashboard/DailyMission';
 import BadgesPreview from '@/components/dashboard/BadgesPreview';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardUsageOverview from '@/components/dashboard/DashboardUsageOverview';
+import RecentActivity from '@/components/dashboard/RecentActivity';
 import BadgeUnlockAnimation from '@/components/badges/BadgeUnlockAnimation';
 import UpgradeBanner from '@/components/dashboard/UpgradeBanner';
 import CreditsIndicator from '@/components/usage/CreditsIndicator';
@@ -119,15 +119,7 @@ const Index = () => {
               </div>
               
               <div className="xl:col-span-1">
-                <Card className="bg-background/90 backdrop-blur-sm border-sky-100 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-lg">📝 Atividade Recente</CardTitle>
-                    <CardDescription>O que você fez ultimamente</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm">Seus estudos recentes vão aparecer aqui!</p>
-                  </CardContent>
-                </Card>
+                <RecentActivity />
               </div>
             </div>
           </div>

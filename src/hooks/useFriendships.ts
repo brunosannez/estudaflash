@@ -133,12 +133,17 @@ export const useFriendships = () => {
     }
   };
 
-  const removeFriend = async (friendshipId: string) => {
+  // Remove pela dupla de usuários: a lista de amigos expõe o user_id do
+  // amigo, não o id da linha de friendship
+  const removeFriend = async (friendUserId: string) => {
+    if (!user) return false;
+
     try {
       const { error } = await supabase
         .from('friendships')
         .delete()
-        .eq('id', friendshipId);
+        .eq('status', 'accepted')
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${friendUserId}),and(requester_id.eq.${friendUserId},addressee_id.eq.${user.id})`);
 
       if (error) throw error;
 

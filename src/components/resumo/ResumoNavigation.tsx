@@ -17,7 +17,7 @@ const ResumoNavigation = () => {
         Início
       </Button>
       <Button 
-        onClick={() => navigate('/meus-flashcards')}
+        onClick={() => navigate('/my-flashcards')}
         variant="outline"
         size="sm"
       >
@@ -25,7 +25,7 @@ const ResumoNavigation = () => {
         Meus Flashcards
       </Button>
       <Button 
-        onClick={() => navigate('/meus-resumos')}
+        onClick={() => navigate('/my-summaries')}
         variant="outline"
         size="sm"
       >
@@ -33,7 +33,7 @@ const ResumoNavigation = () => {
         Meus Resumos
       </Button>
       <Button 
-        onClick={() => navigate('/progresso')}
+        onClick={() => navigate('/my-progress')}
         variant="outline"
         size="sm"
       >

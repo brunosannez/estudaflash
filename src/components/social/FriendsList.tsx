@@ -103,7 +103,11 @@ export function FriendsList({ className }: FriendsListProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {/* TODO: Remove friend */}}
+                        onClick={() => {
+                          if (window.confirm(`Remover ${friend.display_name} dos seus amigos?`)) {
+                            removeFriend(friend.id);
+                          }
+                        }}
                         className="text-destructive hover:text-destructive"
                       >
                         <UserMinus className="h-4 w-4" />
