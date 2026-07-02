@@ -62,23 +62,25 @@ export const useSignupForm = () => {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
-  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+  // Retorna null quando a verificação falha (erro de rede/RPC), para
+  // diferenciar de "username em uso"
+  const checkUsernameAvailability = async (username: string): Promise<boolean | null> => {
     if (!username.trim()) return false;
-    
+
     try {
       const { data, error } = await supabase.rpc('check_username_available', {
         username_to_check: username.trim()
       });
-      
+
       if (error) {
         console.error('Error checking username:', error);
-        return false;
+        return null;
       }
-      
+
       return data;
     } catch (error) {
       console.error('Error checking username availability:', error);
-      return false;
+      return null;
     }
   };
 
@@ -107,6 +109,14 @@ export const useSignupForm = () => {
     if (currentStep === 1) {
       // Validar username no primeiro passo
       const isUsernameAvailable = await checkUsernameAvailability(formData.username);
+      if (isUsernameAvailable === null) {
+        toast({
+          title: "Não foi possível verificar o username",
+          description: "Verifique sua conexão e tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
       if (!isUsernameAvailable) {
         toast({
           title: "Username não disponível",
@@ -189,6 +199,17 @@ export const useSignupForm = () => {
         toast({
           title: "Erro no cadastro",
           description: "Não foi possível criar a conta. Tente novamente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Com confirmação de email habilitada, signUp de email já cadastrado
+      // não retorna erro: retorna um user ofuscado com identities vazio
+      if (data.user.identities && data.user.identities.length === 0) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Já existe uma conta com este email. Faça login ou recupere sua senha.",
           variant: "destructive",
         });
         return false;
