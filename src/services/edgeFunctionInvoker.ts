@@ -49,6 +49,24 @@ export const edgeFunctionInvoker = {
 
       if (error) {
         console.error(`❌ Erro na Edge Function ${functionName}:`, error);
+
+        // Em respostas não-2xx o supabase-js retorna FunctionsHttpError e
+        // descarta o corpo — onde as functions colocam a mensagem amigável
+        // (fallbackMessage, ex. "Créditos insuficientes"). Recupera o corpo
+        // para o usuário não ver apenas "non-2xx status code".
+        const errorContext = (error as any)?.context;
+        if (errorContext && typeof errorContext.json === 'function') {
+          try {
+            const body = await errorContext.json();
+            const friendlyMessage = body?.fallbackMessage || body?.error;
+            if (friendlyMessage) {
+              return { data: null, error: new Error(friendlyMessage) };
+            }
+          } catch {
+            // Corpo não era JSON; mantém o erro original
+          }
+        }
+
         return { data: null, error };
       }
 
