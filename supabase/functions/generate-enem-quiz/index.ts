@@ -244,7 +244,10 @@ Responda APENAS com o JSON válido, sem explicações adicionais.`;
     console.log('🤖 Calling Anthropic Claude API...');
     console.log('📝 Prompt length:', promptText.length);
 
-    // Use Anthropic Claude Sonnet 4 (latest) for quiz generation
+    // Claude Sonnet 5: modelo atual da família Sonnet
+    // (claude-sonnet-4-20250514 foi aposentado em jun/2026 e retorna 404).
+    // Sonnet 5 rejeita temperature com 400; thinking desabilitado para o
+    // max_tokens ser gasto integralmente nas questões.
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -253,15 +256,15 @@ Responda APENAS com o JSON válido, sem explicações adicionais.`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        model: 'claude-sonnet-5',
+        max_tokens: 8000,
         messages: [
           {
             role: 'user',
             content: promptText
           }
         ],
-        temperature: 0.3
+        thinking: { type: 'disabled' }
       }),
     });
 

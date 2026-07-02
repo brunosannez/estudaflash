@@ -349,11 +349,11 @@ SAÍDA (JSON válido, sem texto antes ou depois):
   ]
 }`;
 
-    console.log('🤖 Iniciando chamada para API Anthropic Claude Haiku...');
+    console.log('🤖 Iniciando chamada para API Anthropic Claude Haiku 4.5...');
     const startTime = Date.now();
 
-    // Use Claude 3 Haiku for flashcards (cost-effective)
-    // max_tokens: 4096 é o limite real do Haiku, usamos esse valor
+    // Claude Haiku 4.5: modelo rápido e custo-efetivo atual
+    // (claude-3-haiku-20240307 foi aposentado em abr/2026 e retorna 404)
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -362,8 +362,8 @@ SAÍDA (JSON válido, sem texto antes ou depois):
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4096,
+        model: 'claude-haiku-4-5',
+        max_tokens: 6000,
         messages: [
           {
             role: 'user',
@@ -416,11 +416,11 @@ SAÍDA (JSON válido, sem texto antes ou depois):
       const outputTokens = data.usage?.output_tokens || 0;
       const totalTokens = inputTokens + outputTokens;
       
-      // Claude Haiku: $0.25/1M input, $1.25/1M output
-      const inputCost = (inputTokens * 0.00025) / 1000;
-      const outputCost = (outputTokens * 0.00125) / 1000;
+      // Claude Haiku 4.5: $1.00/1M input, $5.00/1M output
+      const inputCost = (inputTokens * 0.001) / 1000;
+      const outputCost = (outputTokens * 0.005) / 1000;
       const estimatedCost = inputCost + outputCost;
-      
+
       await supabase
         .from('api_usage_tracking')
         .insert({
@@ -429,7 +429,7 @@ SAÍDA (JSON válido, sem texto antes ou depois):
           action_type: 'flashcard',
           tokens_used: totalTokens,
           estimated_cost_usd: estimatedCost,
-          model_used: 'claude-3-haiku-20240307',
+          model_used: 'claude-haiku-4-5',
           success: true,
           timestamp: new Date().toISOString()
         });
@@ -569,7 +569,7 @@ SAÍDA (JSON válido, sem texto antes ou depois):
           total_aprovado: validatedFlashcards.length,
           total_rejeitado: flashcards.length - validatedFlashcards.length,
           tempo_processamento: `${endTime - startTime}ms`,
-          modelo_usado: 'claude-3-haiku-20240307',
+          modelo_usado: 'claude-haiku-4-5',
           palavras_analisadas: wordCount,
           cobertura_qualidade: Math.round((validatedFlashcards.length / targetCards) * 100),
           foi_truncado: wasTruncated

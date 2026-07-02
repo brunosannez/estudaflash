@@ -10,19 +10,23 @@ const corsHeaders = {
 
 // Função para obter configuração do modelo baseada no plano - CORRIGIDA
 function getModelConfigForPlan(plan: string) {
-  // Usar Anthropic Claude Sonnet 4 (modelo mais recente e estável)
+  // Claude Sonnet 5: modelo atual da família Sonnet
+  // (claude-sonnet-4-20250514 foi aposentado em jun/2026 e retorna 404).
+  // maxTokens maior que antes: o tokenizador do Sonnet 5 produz ~30% mais
+  // tokens para o mesmo texto.
   const baseConfig = {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
-    maxTokens: 4000,
+    model: 'claude-sonnet-5',
+    maxTokens: 6000,
   } as const;
 
   switch (plan) {
     case 'pro':
+    case 'pro max':
     case 'edu':
       return {
         ...baseConfig,
-        maxTokens: 8000,
+        maxTokens: 12000,
       };
     case 'free':
     default:
@@ -451,8 +455,10 @@ serve(async (req) => {
               content: optimizedPrompt
             }
           ],
-          temperature: 0.2,
-          top_p: 0.9
+          // Sonnet 5 rejeita temperature/top_p com 400; thinking desabilitado
+          // explicitamente (omitir ligaria o adaptive thinking e consumiria
+          // parte do max_tokens em raciocínio)
+          thinking: { type: 'disabled' }
         })
       });
     } catch (error) {

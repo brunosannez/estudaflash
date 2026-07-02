@@ -178,8 +178,9 @@ Não inclua explicações, apenas o JSON válido.`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 2000,
+        // Claude Haiku 4.5 (claude-3-haiku-20240307 foi aposentado e retorna 404)
+        model: 'claude-haiku-4-5',
+        max_tokens: 3000,
         messages: [{
           role: 'user',
           content: prompt
@@ -202,11 +203,11 @@ Não inclua explicações, apenas o JSON válido.`;
       const outputTokens = data.usage?.output_tokens || 0;
       const totalTokens = inputTokens + outputTokens;
       
-      // Claude Haiku: $0.25/1M input, $1.25/1M output
-      const inputCost = (inputTokens * 0.00025) / 1000;
-      const outputCost = (outputTokens * 0.00125) / 1000;
+      // Claude Haiku 4.5: $1.00/1M input, $5.00/1M output
+      const inputCost = (inputTokens * 0.001) / 1000;
+      const outputCost = (outputTokens * 0.005) / 1000;
       const estimatedCost = inputCost + outputCost;
-      
+
       await supabase
         .from('api_usage_tracking')
         .insert({
@@ -215,7 +216,7 @@ Não inclua explicações, apenas o JSON válido.`;
           action_type: 'mind_map',
           tokens_used: totalTokens,
           estimated_cost_usd: estimatedCost,
-          model_used: 'claude-3-haiku-20240307',
+          model_used: 'claude-haiku-4-5',
           success: true,
           timestamp: new Date().toISOString()
         });

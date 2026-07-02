@@ -5,7 +5,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 // Cost per 1000 tokens (in USD)
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
-  // Anthropic Models
+  // Anthropic Models (atuais)
+  'claude-sonnet-5': { input: 0.003, output: 0.015 },
+  'claude-haiku-4-5': { input: 0.001, output: 0.005 },
+  // Anthropic Models (legados/aposentados - mantidos p/ histórico)
   'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
   'claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015 },
   'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125 },
