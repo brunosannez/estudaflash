@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,11 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { signInWithGoogle } = useAuth();
+
+  // ProtectedRoute salva a rota de origem em state.from para voltar após o login
+  const from = location.state?.from?.pathname || '/';
 
   console.log('🔐 Login page rendering');
 
@@ -58,7 +62,7 @@ const Login = () => {
           title: "Sucesso!",
           description: "Login realizado com sucesso.",
         });
-        navigate('/', { replace: true });
+        navigate(from, { replace: true });
       }
     } catch (error) {
       console.error('❌ Login error:', error);
