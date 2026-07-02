@@ -147,8 +147,8 @@ const SubscriptionManagement = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  <DollarSign className="h-4 w-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-primary/5">
+                  <DollarSign className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Receita Total</p>
@@ -161,8 +161,8 @@ const SubscriptionManagement = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-purple-50">
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                <div className="p-2 rounded-lg bg-primary/5">
+                  <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">MRR</p>
@@ -205,13 +205,13 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                <CreditCard className="h-8 w-8 text-blue-600" />
+              <div className="mx-auto w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+                <CreditCard className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Nenhuma assinatura ainda
               </h3>
-              <p className="text-gray-600 max-w-sm mx-auto">
+              <p className="text-muted-foreground max-w-sm mx-auto">
                 As assinaturas aparecerão aqui quando usuários fizerem upgrade para planos pagos via Stripe.
               </p>
               <Button variant="outline" className="mt-4" onClick={fetchData}>
@@ -230,7 +230,7 @@ const SubscriptionManagement = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando assinaturas...</span>
           </div>
         </CardContent>
@@ -259,8 +259,8 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <DollarSign className="h-4 w-4 text-blue-600" />
+              <div className="p-2 rounded-lg bg-primary/5">
+                <DollarSign className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Receita Total</p>
@@ -273,8 +273,8 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-purple-50">
-                <TrendingUp className="h-4 w-4 text-purple-600" />
+              <div className="p-2 rounded-lg bg-primary/5">
+                <TrendingUp className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">MRR</p>
@@ -318,14 +318,14 @@ const SubscriptionManagement = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-blue-600" />
+              <CreditCard className="h-5 w-5 text-primary" />
               <CardTitle>Assinaturas</CardTitle>
               <Badge variant="outline">{filteredSubscriptions.length} assinaturas</Badge>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
                 <Input
                   placeholder="Buscar por email ou plano..."
                   value={searchTerm}
@@ -375,8 +375,8 @@ const SubscriptionManagement = () => {
                 {filteredSubscriptions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
-                      <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Nenhuma assinatura encontrada.</p>
+                      <CreditCard className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+                      <p className="text-muted-foreground">Nenhuma assinatura encontrada.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -394,14 +394,14 @@ const SubscriptionManagement = () => {
                         {formatCurrency(sub.amount_paid_brl)}
                       </TableCell>
                       
-                      <TableCell className="hidden lg:table-cell text-sm text-gray-600">
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(sub.start_date)}
                         </div>
                       </TableCell>
                       
-                      <TableCell className="hidden lg:table-cell text-sm text-gray-600">
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                         {sub.renewal_date ? (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />

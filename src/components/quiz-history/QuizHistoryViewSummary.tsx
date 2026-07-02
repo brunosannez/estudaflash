@@ -31,35 +31,35 @@ const QuizHistoryViewSummary = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-3">
-          <Trophy className="h-6 w-6 text-purple-600" />
+          <Trophy className="h-6 w-6 text-primary" />
           {quizTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <Target className="h-6 w-6 text-blue-600 mx-auto mb-1" />
-            <div className="text-lg font-bold text-blue-700">{correctAnswers}/{totalQuestions}</div>
-            <div className="text-sm text-blue-600">Acertos</div>
+          <div className="text-center p-3 bg-primary/5 rounded-lg">
+            <Target className="h-6 w-6 text-primary mx-auto mb-1" />
+            <div className="text-lg font-bold text-primary">{correctAnswers}/{totalQuestions}</div>
+            <div className="text-sm text-primary">Acertos</div>
           </div>
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <Trophy className="h-6 w-6 text-green-600 mx-auto mb-1" />
             <div className="text-lg font-bold text-green-700">{percentage}%</div>
             <div className="text-sm text-green-600">Aproveitamento</div>
           </div>
-          <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <Clock className="h-6 w-6 text-purple-600 mx-auto mb-1" />
-            <div className="text-lg font-bold text-purple-700">{formatTime(completionTime)}</div>
-            <div className="text-sm text-purple-600">Tempo</div>
+          <div className="text-center p-3 bg-primary/5 rounded-lg">
+            <Clock className="h-6 w-6 text-primary mx-auto mb-1" />
+            <div className="text-lg font-bold text-primary">{formatTime(completionTime)}</div>
+            <div className="text-sm text-primary">Tempo</div>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-bold text-gray-700">
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <div className="text-lg font-bold text-foreground/80">
               {new Date(createdAt).toLocaleDateString('pt-BR')}
             </div>
-            <div className="text-sm text-gray-600">Data</div>
+            <div className="text-sm text-muted-foreground">Data</div>
           </div>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           <strong>Arquivo:</strong> {resumoTitulo}
         </p>
       </CardContent>

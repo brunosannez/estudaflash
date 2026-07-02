@@ -23,8 +23,8 @@ const FormStepIndicator = ({ currentStep, totalSteps, isMinor }: FormStepIndicat
             <div className="flex flex-col items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
                 currentStep >= step.number
-                  ? 'bg-purple-500 border-purple-500 text-white'
-                  : 'bg-white border-gray-300 text-gray-400'
+                  ? 'bg-primary/50 border-purple-500 text-white'
+                  : 'bg-card border-input text-muted-foreground/70'
               }`}>
                 {currentStep > step.number ? (
                   <CheckCircle className="w-5 h-5" />
@@ -33,14 +33,14 @@ const FormStepIndicator = ({ currentStep, totalSteps, isMinor }: FormStepIndicat
                 )}
               </div>
               <span className={`text-xs mt-1 font-medium text-center max-w-16 sm:max-w-none ${
-                currentStep >= step.number ? 'text-purple-600' : 'text-gray-400'
+                currentStep >= step.number ? 'text-primary' : 'text-muted-foreground/70'
               }`}>
                 {step.title}
               </span>
             </div>
             {index < steps.length - 1 && (
               <div className={`w-8 sm:w-12 h-0.5 mx-2 ${
-                currentStep > step.number ? 'bg-purple-500' : 'bg-gray-300'
+                currentStep > step.number ? 'bg-primary/50' : 'bg-gray-300'
               }`} />
             )}
           </div>

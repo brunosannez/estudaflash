@@ -10,7 +10,7 @@ interface ProgressSyncHeaderProps {
 
 const ProgressSyncHeader = ({ totalXp, onRefresh, loading }: ProgressSyncHeaderProps) => {
   return (
-    <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
+    <div className="bg-muted/50 p-4 rounded-lg border border-green-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>

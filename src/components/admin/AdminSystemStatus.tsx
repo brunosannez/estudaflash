@@ -34,13 +34,13 @@ const AdminSystemStatus = ({ systemHealth, lastUpdated, onToggleDiagnostics }: A
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Database className="h-4 w-4 text-blue-600" />
+              <Database className="h-4 w-4 text-primary" />
               <span className="text-sm">Database</span>
             </div>
             {getHealthBadge()}
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
             </div>
             <Button

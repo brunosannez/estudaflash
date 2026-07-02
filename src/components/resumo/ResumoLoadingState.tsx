@@ -10,8 +10,8 @@ const ResumoLoadingState = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="w-96">
           <CardContent className="py-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Carregando resumo...</p>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Carregando resumo...</p>
           </CardContent>
         </Card>
       </div>

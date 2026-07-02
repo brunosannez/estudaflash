@@ -13,7 +13,7 @@ const FlashcardKeyboardHints = () => {
         variant="ghost"
         size="sm"
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 z-50 bg-white/90 shadow-lg hover:bg-white"
+        className="fixed bottom-4 right-4 z-50 bg-background/90 shadow-lg hover:bg-card"
       >
         <Keyboard className="h-4 w-4 mr-2" />
         Atalhos
@@ -38,20 +38,20 @@ const FlashcardKeyboardHints = () => {
         
         <div className="space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-gray-600">Virar card:</span>
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-800">Espaço</kbd>
+            <span className="text-muted-foreground">Virar card:</span>
+            <kbd className="px-2 py-1 bg-muted rounded text-foreground">Espaço</kbd>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Lembrei:</span>
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-800">→</kbd>
+            <span className="text-muted-foreground">Lembrei:</span>
+            <kbd className="px-2 py-1 bg-muted rounded text-foreground">→</kbd>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Não lembrei:</span>
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-800">←</kbd>
+            <span className="text-muted-foreground">Não lembrei:</span>
+            <kbd className="px-2 py-1 bg-muted rounded text-foreground">←</kbd>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Embaralhar:</span>
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-800">S</kbd>
+            <span className="text-muted-foreground">Embaralhar:</span>
+            <kbd className="px-2 py-1 bg-muted rounded text-foreground">S</kbd>
           </div>
         </div>
       </CardContent>

@@ -29,13 +29,13 @@ const StudentInfoSection = ({
     return (
       <div className="space-y-4">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-1">📧 Dados Básicos</h2>
-          <p className="text-sm text-gray-600">Vamos começar com suas informações de login</p>
+          <h2 className="text-xl font-bold text-foreground mb-1">📧 Dados Básicos</h2>
+          <p className="text-sm text-muted-foreground">Vamos começar com suas informações de login</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
               Email *
             </Label>
             <Input
@@ -50,7 +50,7 @@ const StudentInfoSection = ({
           </div>
 
           <div>
-            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="username" className="text-sm font-medium text-foreground/80">
               Nome de Usuário *
             </Label>
             <Input
@@ -63,14 +63,14 @@ const StudentInfoSection = ({
               required
               minLength={3}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Mínimo 3 caracteres. Este será seu nome de exibição no EstudoFácil AI.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="text-sm font-medium text-foreground/80">
                 Senha *
               </Label>
               <Input
@@ -86,7 +86,7 @@ const StudentInfoSection = ({
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground/80">
                 Confirmar Senha *
               </Label>
               <Input
@@ -113,13 +113,13 @@ const StudentInfoSection = ({
     return (
       <div className="space-y-4">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-1">👤 Suas Informações</h2>
-          <p className="text-sm text-gray-600">Conte-nos um pouco sobre você</p>
+          <h2 className="text-xl font-bold text-foreground mb-1">👤 Suas Informações</h2>
+          <p className="text-sm text-muted-foreground">Conte-nos um pouco sobre você</p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="fullName" className="text-sm font-medium text-foreground/80">
               Nome Completo *
             </Label>
             <Input
@@ -134,7 +134,7 @@ const StudentInfoSection = ({
           </div>
 
           <div>
-            <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="dateOfBirth" className="text-sm font-medium text-foreground/80">
               Data de Nascimento *
             </Label>
             <Input
@@ -146,8 +146,8 @@ const StudentInfoSection = ({
               required
             />
             {profile.is_minor && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-700 flex items-center">
+              <div className="mt-2 p-3 bg-primary/5 border border-blue-200 rounded-lg">
+                <p className="text-sm text-primary flex items-center">
                   🔒 <span className="ml-1">Como você é menor de 18 anos, precisaremos das informações do seu responsável no próximo passo</span>
                 </p>
               </div>
@@ -155,7 +155,7 @@ const StudentInfoSection = ({
           </div>
 
           <div>
-            <Label htmlFor="schoolYear" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="schoolYear" className="text-sm font-medium text-foreground/80">
               Série/Ano Escolar
             </Label>
             <Select value={profile.school_year} onValueChange={(value) => onProfileChange({ school_year: value })}>

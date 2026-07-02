@@ -15,10 +15,10 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
 
   if (authLoading || adminLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <span className="text-gray-600">Verificando permissões de administrador...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <span className="text-muted-foreground">Verificando permissões de administrador...</span>
         </div>
       </div>
     );
@@ -30,12 +30,12 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
 
   if (!isAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
-        <div className="text-center max-w-md p-6 rounded-xl bg-white/80 shadow">
+      <div className="flex items-center justify-center min-h-screen bg-muted/50">
+        <div className="text-center max-w-md p-6 rounded-xl bg-background/80 shadow">
           <Lock className="h-10 w-10 text-red-600 mx-auto mb-3" />
-          <h1 className="text-xl font-semibold text-gray-900 mb-1">Acesso negado</h1>
-          <p className="text-sm text-gray-600">Você precisa de permissões de administrador para acessar esta página.</p>
-          <Link to="/" className="inline-block mt-4 text-blue-600 hover:underline">Voltar ao início</Link>
+          <h1 className="text-xl font-semibold text-foreground mb-1">Acesso negado</h1>
+          <p className="text-sm text-muted-foreground">Você precisa de permissões de administrador para acessar esta página.</p>
+          <Link to="/" className="inline-block mt-4 text-primary hover:underline">Voltar ao início</Link>
         </div>
       </div>
     );

@@ -61,8 +61,8 @@ const QuickActions = () => {
                 <h3 className="text-lg font-bold mb-2">{action.title}</h3>
                 <p className="text-sm opacity-90">{action.description}</p>
               </div>
-              <div className="absolute -top-4 -right-4 w-16 h-16 bg-white rounded-full opacity-10"></div>
-              <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+              <div className="absolute -top-4 -right-4 w-16 h-16 bg-card rounded-full opacity-10"></div>
+              <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-card rounded-full opacity-10"></div>
             </CardContent>
           </Card>
         );

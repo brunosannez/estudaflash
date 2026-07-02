@@ -24,13 +24,13 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800 mb-1">👨‍👩‍👧 Informações do Responsável</h2>
-        <p className="text-sm text-gray-600">Como você é menor de 18 anos, precisamos dos dados do seu responsável</p>
+        <h2 className="text-xl font-bold text-foreground mb-1">👨‍👩‍👧 Informações do Responsável</h2>
+        <p className="text-sm text-muted-foreground">Como você é menor de 18 anos, precisamos dos dados do seu responsável</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="guardianName" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="guardianName" className="text-sm font-medium text-foreground/80">
             Nome Completo do Responsável *
           </Label>
           <Input
@@ -46,7 +46,7 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="guardianEmail" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="guardianEmail" className="text-sm font-medium text-foreground/80">
               Email do Responsável *
             </Label>
             <Input
@@ -61,7 +61,7 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
           </div>
 
           <div>
-            <Label htmlFor="guardianPhone" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="guardianPhone" className="text-sm font-medium text-foreground/80">
               Telefone *
             </Label>
             <Input
@@ -78,7 +78,7 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="guardianCPF" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="guardianCPF" className="text-sm font-medium text-foreground/80">
               CPF do Responsável
             </Label>
             <Input
@@ -95,7 +95,7 @@ const GuardianInfoSection = ({ guardian, onGuardianChange }: GuardianInfoSection
           </div>
 
           <div>
-            <Label htmlFor="relation" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="relation" className="text-sm font-medium text-foreground/80">
               Parentesco *
             </Label>
             <Select 

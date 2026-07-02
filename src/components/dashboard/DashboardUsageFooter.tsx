@@ -25,7 +25,7 @@ const DashboardUsageFooter = ({
 
   return (
     <div className="pt-4 border-t space-y-3">
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Plano: {planConfig.displayName}</span>
         <span>Nível: {currentLevel}</span>
       </div>
@@ -38,7 +38,7 @@ const DashboardUsageFooter = ({
           </div>
         )}
         {planType === 'pro' && (
-          <div className="text-blue-600">
+          <div className="text-primary">
             📚 10x mais limite que o plano gratuito
           </div>
         )}

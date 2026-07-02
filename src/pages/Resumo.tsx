@@ -279,11 +279,11 @@ const Resumo = () => {
           </Button>
           
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <FileText className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-bold text-foreground">
                 {getResumoTitle()}
               </h1>
               <div className="flex items-center gap-2 mt-1">
@@ -300,7 +300,7 @@ const Resumo = () => {
         </div>
 
         {/* Quick Actions */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <Card className="bg-muted/50 border-blue-200">
           <CardHeader>
             <CardTitle className="text-lg">Ações Rápidas</CardTitle>
           </CardHeader>
@@ -309,7 +309,7 @@ const Resumo = () => {
               <Button 
                 onClick={handleGenerateEnemQuiz}
                 disabled={generating || !resumo}
-                className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white"
+                className="bg-amber-500 hover:opacity-90 text-white"
               >
                 {generating ? (
                   <>
@@ -328,7 +328,7 @@ const Resumo = () => {
               <Button 
                 onClick={handleGenerateFlashcards}
                 disabled={flashcardsLoading}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                className="bg-emerald-600 hover:opacity-90 text-white"
               >
                 {flashcardsLoading ? (
                   <>
@@ -347,7 +347,7 @@ const Resumo = () => {
               <Button 
                 onClick={handleGenerateMindMap}
                 disabled={mindMapLoading}
-                className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
+                className="bg-primary hover:opacity-90 text-white"
               >
                 {mindMapLoading ? (
                   <>
@@ -366,7 +366,7 @@ const Resumo = () => {
               <Button
                 onClick={handlePrint}
                 variant="outline"
-                className="border-blue-300 hover:bg-blue-50 text-blue-700"
+                className="border-blue-300 hover:bg-primary/5 text-primary"
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Salvar PDF
@@ -377,9 +377,9 @@ const Resumo = () => {
 
         {/* Resumo Content */}
         <Card className="overflow-hidden shadow-xl border-0">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+          <CardHeader className="bg-muted/50 border-b">
             <CardTitle className="flex items-center gap-3 text-2xl">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <FileText className="h-5 w-5 text-white" />
               </div>
               Conteúdo do Resumo
@@ -392,7 +392,7 @@ const Resumo = () => {
         </Card>
 
         {/* Navigation Links */}
-        <Card className="bg-gradient-to-r from-gray-50 to-blue-50 border-gray-200">
+        <Card className="bg-muted/50 border-border">
           <CardContent className="py-6">
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -407,7 +407,7 @@ const Resumo = () => {
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/my-progress')}
-                className="border-purple-300 hover:bg-purple-50 text-purple-700"
+                className="border-purple-300 hover:bg-primary/5 text-primary"
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Ver Meu Progresso

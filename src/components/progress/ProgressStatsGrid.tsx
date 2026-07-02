@@ -14,25 +14,25 @@ const ProgressStatsGrid = ({ stats }: ProgressStatsGridProps) => {
         title="XP Total"
         value={stats.currentXp.toString()}
         icon={Trophy}
-        gradient="bg-gradient-to-br from-yellow-500 to-orange-600"
+        gradient="bg-amber-500"
       />
       <StatsCard
         title="Streak Atual"
         value={stats.currentStreak > 0 ? `${stats.currentStreak} dias` : 'Inicie hoje!'}
         icon={Flame}
-        gradient="bg-gradient-to-br from-red-500 to-pink-600"
+        gradient="bg-destructive"
       />
       <StatsCard
         title="Flashcards Hoje"
         value={stats.todayFlashcards.toString()}
         icon={Target}
-        gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+        gradient="bg-primary"
       />
       <StatsCard
         title="XP Hoje"
         value={`${stats.todayXp} XP`}
         icon={TrendingUp}
-        gradient="bg-gradient-to-br from-green-500 to-teal-600"
+        gradient="bg-emerald-600"
       />
     </div>
   );

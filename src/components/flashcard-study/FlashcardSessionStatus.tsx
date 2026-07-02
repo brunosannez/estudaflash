@@ -13,9 +13,9 @@ const FlashcardSessionStatus = ({ sessionId, lastSaved, isOnline = true }: Flash
   if (!sessionId) return null;
 
   return (
-    <Card className="border border-gray-200 bg-gray-50">
+    <Card className="border border-border bg-muted/50">
       <CardContent className="p-3">
-        <div className="flex items-center justify-between text-xs text-gray-600">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Save className="h-3 w-3 text-green-500" />
             <span>Sessão: {sessionId.slice(0, 8)}...</span>

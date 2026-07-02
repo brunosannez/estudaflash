@@ -39,7 +39,7 @@ const FlashcardPerformanceIndicator = ({
           
           <div className="text-right">
             <div className="text-lg font-bold">{accuracy.toFixed(1)}%</div>
-            <div className="text-xs text-gray-600">
+            <div className="text-xs text-muted-foreground">
               {streak > 0 && `🔥 ${streak} em sequência`}
             </div>
           </div>

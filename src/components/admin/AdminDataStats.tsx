@@ -16,11 +16,11 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-blue-600" />
+              <FileText className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Total de Arquivos</span>
             </div>
             <div className="text-2xl font-bold mt-2">{stats.totalFiles || 0}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {stats.filesOlderThan7Days || 0} com +7 dias
             </div>
           </CardContent>
@@ -35,7 +35,7 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
             <div className="text-2xl font-bold mt-2">
               {stats.totalStorageMB.toFixed(1) || 0} MB
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Maior arquivo: {stats.largestFileSizeMB.toFixed(1) || 0} MB
             </div>
           </CardContent>
@@ -44,13 +44,13 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-purple-600" />
+              <Users className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Média por Usuário</span>
             </div>
             <div className="text-2xl font-bold mt-2">
               {stats.averageStoragePerUser.toFixed(1) || 0} MB
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {stats.totalUsers || 0} usuários total
             </div>
           </CardContent>
@@ -63,7 +63,7 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
               <span className="text-sm font-medium">Usuários Ativos</span>
             </div>
             <div className="text-2xl font-bold mt-2">{stats.activeUsers30Days || 0}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Últimos 30 dias
             </div>
           </CardContent>

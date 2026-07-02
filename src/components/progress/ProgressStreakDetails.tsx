@@ -20,24 +20,24 @@ const ProgressStreakDetails = ({ stats }: ProgressStreakDetailsProps) => {
         <div className="flex justify-between items-center mb-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-red-500">{stats.currentStreak}</div>
-            <div className="text-xs text-gray-500">Dias Atuais</div>
+            <div className="text-xs text-muted-foreground">Dias Atuais</div>
           </div>
           <div className="text-3xl">
             {stats.currentStreak >= 7 ? '🔥' : stats.currentStreak >= 3 ? '⚡' : stats.currentStreak >= 1 ? '💫' : '😴'}
           </div>
           <div className="text-center">
-            <div className="text-xl font-bold text-gray-600">{stats.longestStreak}</div>
-            <div className="text-xs text-gray-500">Recorde</div>
+            <div className="text-xl font-bold text-muted-foreground">{stats.longestStreak}</div>
+            <div className="text-xs text-muted-foreground">Recorde</div>
           </div>
         </div>
         
         <div className="space-y-3">
-          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+          <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-600" />
+              <Target className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Quizzes Hoje</span>
             </div>
-            <span className="font-bold text-blue-600">{stats.todayQuizzes}</span>
+            <span className="font-bold text-primary">{stats.todayQuizzes}</span>
           </div>
           
           <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
@@ -52,12 +52,12 @@ const ProgressStreakDetails = ({ stats }: ProgressStreakDetailsProps) => {
         </div>
 
         {stats.todayXp > 0 ? (
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-3 rounded-lg text-center">
+          <div className="bg-amber-500 text-white p-3 rounded-lg text-center">
             <div className="font-bold">🎉 {stats.todayXp} XP ganhos hoje!</div>
             <div className="text-sm opacity-90">Continue assim!</div>
           </div>
         ) : (
-          <div className="bg-gradient-to-r from-gray-400 to-gray-500 text-white p-3 rounded-lg text-center">
+          <div className="bg-secondary text-white p-3 rounded-lg text-center">
             <div className="font-bold">💪 Comece hoje mesmo!</div>
             <div className="text-sm opacity-90">Faça um flashcard ou quiz para ganhar XP</div>
           </div>

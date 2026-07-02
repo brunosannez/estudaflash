@@ -19,7 +19,7 @@ const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => 
     return (
       <div className="lg:col-span-2">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Carregando planos...</span>
         </div>
       </div>
@@ -29,7 +29,7 @@ const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => 
   return (
     <div className="lg:col-span-2">
       <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">Escolha seu plano</h3>
+        <h3 className="text-2xl font-bold text-foreground mb-4">Escolha seu plano</h3>
         
         <div className="flex items-center justify-center gap-4 mb-6">
           <Label htmlFor="pricing-toggle" className="text-sm">

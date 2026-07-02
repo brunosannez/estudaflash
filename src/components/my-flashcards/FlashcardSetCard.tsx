@@ -151,14 +151,14 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
         </AlertDialogContent>
       </AlertDialog>
 
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 pb-3 pr-12">
-        <CardTitle className="text-lg font-bold text-gray-800 line-clamp-2">
+      <CardHeader className="bg-muted/50 pb-3 pr-12">
+        <CardTitle className="text-lg font-bold text-foreground line-clamp-2">
           {flashcardSet.resumo_title}
         </CardTitle>
       </CardHeader>
       
       <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span className="flex items-center gap-2">
             <Brain className="h-4 w-4" />
             {totalCards} cards
@@ -175,12 +175,12 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
           <>
             {/* Progress bar */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>📊 {activeSession.completedCount} de {totalCards} cards</span>
                 <span>{progressPercent}%</span>
               </div>
               <Progress value={progressPercent} className="h-2" />
-              <div className="flex items-center gap-3 text-xs text-gray-500">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>✅ {activeSession.score.correct}</span>
                 <span>❌ {activeSession.score.incorrect}</span>
                 <span>⚡ {activeSession.xpEarned} XP</span>
@@ -191,7 +191,7 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
             <div className="flex flex-col gap-2">
               <Button
                 onClick={handleContinue}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
               >
                 <PlayCircle className="h-4 w-4 mr-2" />
                 ▶️ Continuar de onde parou
@@ -200,7 +200,7 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
                 onClick={handleNewStudy}
                 variant="outline"
                 size="sm"
-                className="w-full text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+                className="w-full text-xs border-blue-200 text-primary hover:bg-primary/5"
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
                 Novo Estudo
@@ -209,15 +209,15 @@ const FlashcardSetCard = ({ flashcardSet, onStartStudy, onDeleted }: FlashcardSe
           </>
         ) : (
           <>
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg">
-              <p className="text-sm text-gray-700 font-medium">
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-foreground/80 font-medium">
                 💡 {totalCards} conceitos prontos para revisar
               </p>
             </div>
 
             <Button 
               onClick={() => onStartStudy(flashcardSet)}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
             >
               <Brain className="h-4 w-4 mr-2" />
               🚀 Estudar Agora

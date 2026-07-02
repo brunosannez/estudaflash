@@ -173,7 +173,7 @@ const MindMapViewer = ({ mindMapData, onBack }: MindMapViewerProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto">
       <Card className="overflow-hidden shadow-2xl border-0 bg-gradient-to-br from-white via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-950 dark:to-blue-950">
-        <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white relative overflow-hidden">
+        <CardHeader className="bg-primary text-white relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16"></div>
@@ -204,7 +204,7 @@ const MindMapViewer = ({ mindMapData, onBack }: MindMapViewerProps) => {
         </CardHeader>
         
         <CardContent className="p-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-inner border-2 border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-inner border-2 border-border dark:border-gray-700 overflow-hidden">
             <svg
               ref={svgRef}
               width="100%"
@@ -217,24 +217,24 @@ const MindMapViewer = ({ mindMapData, onBack }: MindMapViewerProps) => {
           </div>
           
           {/* Legend */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 rounded-xl">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Legenda:</h4>
+          <div className="mt-6 p-4 bg-muted/50 dark:from-gray-800 dark:to-blue-900 rounded-xl">
+            <h4 className="text-lg font-semibold text-foreground dark:text-gray-200 mb-3">Legenda:</h4>
             <div className="flex flex-wrap gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Conceito Central</span>
+                <div className="w-4 h-4 bg-primary/50 rounded-full"></div>
+                <span className="text-foreground/80 dark:text-gray-300">Conceito Central</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Tópicos Principais</span>
+                <span className="text-foreground/80 dark:text-gray-300">Tópicos Principais</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Subtópicos</span>
+                <span className="text-foreground/80 dark:text-gray-300">Subtópicos</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Detalhes</span>
+                <span className="text-foreground/80 dark:text-gray-300">Detalhes</span>
               </div>
             </div>
           </div>

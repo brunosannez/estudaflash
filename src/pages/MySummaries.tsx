@@ -95,7 +95,7 @@ const MySummaries = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-foreground">
             Meus Resumos
           </h1>
           <p className="text-muted-foreground">
@@ -112,7 +112,7 @@ const MySummaries = () => {
               <p className="text-muted-foreground mb-6">
                 Você ainda não possui resumos criados. Faça upload de uma imagem para começar!
               </p>
-              <Button onClick={() => navigate('/upload')} className="bg-gradient-to-r from-blue-600 to-purple-600">
+              <Button onClick={() => navigate('/upload')} className="bg-primary">
                 <Zap className="h-4 w-4 mr-2" />
                 Fazer Upload
               </Button>
@@ -157,7 +157,7 @@ const MySummaries = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between pr-8">
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                         {getResumoTitle(resumo)}
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-2">
@@ -167,7 +167,7 @@ const MySummaries = () => {
                         </span>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
                       <FileText className="h-3 w-3 mr-1" />
                       Resumo
                     </Badge>
@@ -184,7 +184,7 @@ const MySummaries = () => {
                   <div className="flex flex-col gap-2">
                     <Button 
                       onClick={() => navigate(`/resumo/${resumo.id}`)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      className="w-full bg-primary hover:bg-primary/90"
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
                       Ver Resumo
@@ -219,17 +219,17 @@ const MySummaries = () => {
         )}
 
         {/* Quick Actions */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <Card className="bg-muted/50 border-blue-200">
           <CardContent className="py-6">
             <div className="text-center space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800">Criar novo resumo</h3>
+              <h3 className="text-lg font-semibold text-foreground">Criar novo resumo</h3>
               <p className="text-muted-foreground">
                 Faça upload de uma nova imagem para gerar um resumo didático personalizado
               </p>
               <Button 
                 onClick={() => navigate('/upload')} 
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600"
+                className="bg-primary"
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Fazer Upload

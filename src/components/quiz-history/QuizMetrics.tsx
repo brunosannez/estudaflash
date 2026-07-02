@@ -20,7 +20,7 @@ const QuizMetrics = ({ quiz, percentage }: QuizMetricsProps) => {
   };
 
   return (
-    <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
+    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
       <div className="flex items-center gap-1">
         <Calendar className="h-4 w-4" />
         {new Date(quiz.data_criacao).toLocaleDateString('pt-BR')}

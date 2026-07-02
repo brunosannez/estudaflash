@@ -38,11 +38,11 @@ const SwipeableFlashcard = ({
     // QUESTION PHASE - Show question with answer buttons
     return (
       <div className="relative max-w-2xl mx-auto">
-        <Card className="w-full border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-[500px]">
+        <Card className="w-full border-0 shadow-2xl bg-background min-h-[500px]">
           <CardContent className="h-full flex flex-col justify-between p-6 md:p-8 min-h-[500px]">
             {/* Header */}
             <div className="flex items-center justify-center gap-3 mb-6 md:mb-8">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center">
                 <Brain className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
               </div>
               <Badge className="text-base md:text-lg px-3 md:px-4 py-2 bg-primary/10 text-primary">
@@ -80,7 +80,7 @@ const SwipeableFlashcard = ({
                 <Button
                   onClick={() => !isAnimating && onAnswer(true)}
                   disabled={isAnimating}
-                  className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                  className="flex-1 h-14 text-base font-semibold bg-emerald-600 text-white hover:opacity-90 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 >
                   <ThumbsUp className="h-5 w-5 mr-2" />
                   🎉 Lembrei!
@@ -103,8 +103,8 @@ const SwipeableFlashcard = ({
     <div className="relative max-w-2xl mx-auto">
       <Card className={`w-full border-2 shadow-2xl min-h-[500px] transition-all duration-300 ${
         isCorrect 
-          ? 'border-green-400 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50' 
-          : 'border-amber-400 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50'
+          ? 'border-green-400 bg-muted/50' 
+          : 'border-amber-400 bg-muted/50'
       }`}>
         <CardContent className="h-full flex flex-col p-6 md:p-8 min-h-[500px]">
           {/* Feedback Header */}
@@ -144,7 +144,7 @@ const SwipeableFlashcard = ({
           </div>
           
           {/* Question Reminder */}
-          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-gray-200">
+          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-border">
             <p className="text-sm text-muted-foreground mb-1">📝 Pergunta:</p>
             <p className="text-foreground font-medium">{currentCard.pergunta}</p>
           </div>
@@ -154,7 +154,7 @@ const SwipeableFlashcard = ({
             <div className={`rounded-xl p-5 border-2 ${
               isCorrect 
                 ? 'bg-green-100/50 border-green-300' 
-                : 'bg-white/80 border-amber-300'
+                : 'bg-background/80 border-amber-300'
             }`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -191,7 +191,7 @@ const SwipeableFlashcard = ({
           <div className="mt-6">
             <Button
               onClick={onNextCard}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg"
+              className="w-full h-14 text-lg font-semibold bg-primary hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg"
             >
               Próximo Card
               <ArrowRight className="h-5 w-5 ml-2" />

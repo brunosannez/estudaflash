@@ -50,7 +50,7 @@ const EnhancedQuizHistoryItem = ({
         return {
           icon: <Play className="h-4 w-4" />,
           label: 'Em Progresso',
-          color: 'bg-blue-500'
+          color: 'bg-primary/50'
         };
       case 'paused':
         return {
@@ -62,7 +62,7 @@ const EnhancedQuizHistoryItem = ({
         return {
           icon: <Clock className="h-4 w-4" />,
           label: 'Pendente',
-          color: 'bg-gray-500'
+          color: 'bg-muted/500'
         };
     }
   };
@@ -86,13 +86,13 @@ const EnhancedQuizHistoryItem = ({
   });
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-100 hover:border-purple-200">
+    <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-border hover:border-primary/20">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xl font-bold text-gray-800">
+                <h3 className="text-xl font-bold text-foreground">
                   {quiz.quiz_title}
                 </h3>
                 <Badge className={`${statusInfo.color} text-white flex items-center gap-1`}>
@@ -101,13 +101,13 @@ const EnhancedQuizHistoryItem = ({
                 </Badge>
               </div>
               
-              <p className="text-sm text-gray-500 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 Arquivo: {quiz.resumo_titulo}
               </p>
 
               {/* Progress Bar */}
               <div className="mb-3">
-                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <div className="flex justify-between text-sm text-muted-foreground mb-1">
                   <span>Progresso</span>
                   <span>{Math.round(quiz.progress_percentage)}%</span>
                 </div>
@@ -116,31 +116,31 @@ const EnhancedQuizHistoryItem = ({
 
               {/* Quiz Metrics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="text-center p-2 bg-blue-50 rounded-lg">
-                  <div className="font-bold text-blue-600">{quiz.correct_answers}</div>
-                  <div className="text-gray-600">Acertos</div>
+                <div className="text-center p-2 bg-primary/5 rounded-lg">
+                  <div className="font-bold text-primary">{quiz.correct_answers}</div>
+                  <div className="text-muted-foreground">Acertos</div>
                 </div>
-                <div className="text-center p-2 bg-purple-50 rounded-lg">
-                  <div className="font-bold text-purple-600">{quiz.total_questions}</div>
-                  <div className="text-gray-600">Questões</div>
+                <div className="text-center p-2 bg-primary/5 rounded-lg">
+                  <div className="font-bold text-primary">{quiz.total_questions}</div>
+                  <div className="text-muted-foreground">Questões</div>
                 </div>
                 {quiz.status === 'completed' && (
                   <>
                     <div className="text-center p-2 bg-green-50 rounded-lg">
                       <div className="font-bold text-green-600">{accuracy}%</div>
-                      <div className="text-gray-600">Precisão</div>
+                      <div className="text-muted-foreground">Precisão</div>
                     </div>
                     <div className="text-center p-2 bg-orange-50 rounded-lg">
                       <div className="font-bold text-orange-600">
                         {quiz.completion_time_seconds ? Math.floor(quiz.completion_time_seconds / 60) : 0}min
                       </div>
-                      <div className="text-gray-600">Tempo</div>
+                      <div className="text-muted-foreground">Tempo</div>
                     </div>
                   </>
                 )}
               </div>
 
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-muted-foreground/70 mt-2">
                 Última atividade: {lastActivity}
               </p>
             </div>
@@ -149,7 +149,7 @@ const EnhancedQuizHistoryItem = ({
               {quiz.can_resume && (
                 <Button
                   onClick={() => onResumeQuiz(quiz.session_id)}
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                  className="bg-emerald-600 hover:opacity-90 text-white"
                 >
                   <Play className="h-4 w-4 mr-2" />
                   {quiz.status === 'completed' ? 'Refazer Quiz' : 'Continuar Quiz'}
@@ -160,7 +160,7 @@ const EnhancedQuizHistoryItem = ({
                 <Button
                   onClick={() => onViewQuiz(quiz.session_id)}
                   variant="outline"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                  className="border-blue-200 text-primary hover:bg-primary/5 hover:border-blue-300"
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Visualizar
@@ -170,7 +170,7 @@ const EnhancedQuizHistoryItem = ({
               <Button
                 onClick={handleGenerateMindMap}
                 disabled={isGeneratingMindMap}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white disabled:opacity-70"
+                className="bg-primary hover:opacity-90 text-white disabled:opacity-70"
               >
                 {isGeneratingMindMap ? (
                   <>

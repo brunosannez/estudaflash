@@ -58,11 +58,11 @@ const AnkiFlashcard = ({
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="mb-4 text-center text-sm text-gray-600">
+      <div className="mb-4 text-center text-sm text-muted-foreground">
         Cartão {currentIndex + 1} de {totalCards}
         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
           <div 
-            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+            className="bg-primary h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
           ></div>
         </div>
@@ -76,7 +76,7 @@ const AnkiFlashcard = ({
           onClick={!isFlipped ? handleFlip : undefined}
         >
           {/* Frente do cartão */}
-          <Card className={`absolute inset-0 w-full h-full backface-hidden bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-xl ${
+          <Card className={`absolute inset-0 w-full h-full backface-hidden bg-primary text-white shadow-xl ${
             isFlipped ? 'rotate-y-180' : ''
           }`}>
             <div className="p-6 h-full flex flex-col justify-center items-center text-center">
@@ -90,7 +90,7 @@ const AnkiFlashcard = ({
           </Card>
 
           {/* Verso do cartão */}
-          <Card className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-gradient-to-br from-green-500 to-teal-600 text-white shadow-xl ${
+          <Card className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-emerald-600 text-white shadow-xl ${
             isFlipped ? '' : 'rotate-y-180'
           }`}>
             <div className="p-6 h-full flex flex-col justify-center text-center">
@@ -128,7 +128,7 @@ const AnkiFlashcard = ({
             <Button
               onClick={handleCorrect}
               size="lg"
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center gap-2"
+              className="bg-emerald-600 hover:opacity-90 flex items-center gap-2"
             >
               <Star className="h-5 w-5" />
               Lembrei (+5 XP)
@@ -161,7 +161,7 @@ const AnkiFlashcard = ({
             onClick={() => setIsFlipped(false)}
             variant="ghost"
             size="sm"
-            className="text-gray-500 hover:text-gray-700"
+            className="text-muted-foreground hover:text-foreground/80"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Ver Pergunta Novamente

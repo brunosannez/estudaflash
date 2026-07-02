@@ -19,4 +19,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  esbuild: {
+    // Remove console.log/debug/info do build de produção (mantém error e warn)
+    pure: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+    drop: mode === 'production' ? ['debugger'] : [],
+  },
 }));

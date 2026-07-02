@@ -69,14 +69,14 @@ const AppBreadcrumbs = () => {
           <React.Fragment key={breadcrumb.path}>
             <BreadcrumbItem>
               {breadcrumb.isLast ? (
-                <BreadcrumbPage className="flex items-center gap-1.5 font-medium text-purple-700">
+                <BreadcrumbPage className="flex items-center gap-1.5 font-medium text-primary">
                   <span>{breadcrumb.emoji}</span>
                   {breadcrumb.label}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink
                   onClick={() => navigate(breadcrumb.path)}
-                  className="flex items-center gap-1.5 text-gray-600 hover:text-purple-700 cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-primary cursor-pointer transition-colors"
                 >
                   {index === 0 ? (
                     <Home className="h-4 w-4" />

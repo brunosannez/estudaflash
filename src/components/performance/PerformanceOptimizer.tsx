@@ -274,11 +274,11 @@ const PerformanceOptimizer = () => {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             {optimizationScore < 90 && (
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                <Zap className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+                <Zap className="h-5 w-5 text-primary mt-0.5" />
                 <div>
                   <p className="font-medium text-blue-900">Implementar Code Splitting</p>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-primary">
                     Use lazy loading para componentes não críticos
                   </p>
                 </div>

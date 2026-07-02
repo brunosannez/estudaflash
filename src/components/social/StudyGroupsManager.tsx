@@ -62,7 +62,7 @@ export function StudyGroupsManager({ className }: StudyGroupsManagerProps) {
 
   const getGroupTypeColor = (type: string) => {
     const colors = {
-      study: 'text-blue-600 bg-blue-50 border-blue-200',
+      study: 'text-primary bg-primary/5 border-blue-200',
       competition: 'text-yellow-600 bg-yellow-50 border-yellow-200',
       collaboration: 'text-green-600 bg-green-50 border-green-200'
     };

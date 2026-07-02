@@ -91,14 +91,14 @@ export function BadgeShowcaseEnhanced({ className }: BadgeShowcaseEnhancedProps)
         
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{rarityStats.epic}</div>
+            <div className="text-2xl font-bold text-primary">{rarityStats.epic}</div>
             <div className="text-sm text-muted-foreground">Épicas</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{rarityStats.rare}</div>
+            <div className="text-2xl font-bold text-primary">{rarityStats.rare}</div>
             <div className="text-sm text-muted-foreground">Raras</div>
           </CardContent>
         </Card>

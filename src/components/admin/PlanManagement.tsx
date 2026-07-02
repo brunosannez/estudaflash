@@ -58,13 +58,13 @@ const PlanManagement = () => {
   const getPlanIcon = (planName: string) => {
     switch (planName.toLowerCase()) {
       case 'free':
-        return <Zap className="h-5 w-5 text-gray-500" />;
+        return <Zap className="h-5 w-5 text-muted-foreground" />;
       case 'pro':
         return <Star className="h-5 w-5 text-blue-500" />;
       case 'pro max':
         return <Crown className="h-5 w-5 text-purple-500" />;
       default:
-        return <Zap className="h-5 w-5 text-gray-500" />;
+        return <Zap className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -86,7 +86,7 @@ const PlanManagement = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando planos...</span>
           </div>
         </CardContent>
@@ -100,7 +100,7 @@ const PlanManagement = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-blue-600" />
+              <CreditCard className="h-5 w-5 text-primary" />
               <CardTitle>Gerenciamento de Planos</CardTitle>
             </div>
             <Button 
@@ -111,7 +111,7 @@ const PlanManagement = () => {
               Criar Novo Plano
             </Button>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Configure preços e recursos dos planos de assinatura
           </p>
         </CardHeader>
@@ -177,7 +177,7 @@ const PlanManagement = () => {
                       />
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-600 min-h-[60px]">
+                    <p className="text-sm text-muted-foreground min-h-[60px]">
                       {plan.description}
                     </p>
                   )}
@@ -186,7 +186,7 @@ const PlanManagement = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Preço Mensal</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Preço Mensal</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -207,7 +207,7 @@ const PlanManagement = () => {
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Preço Anual</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Preço Anual</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -230,7 +230,7 @@ const PlanManagement = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Uploads</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Uploads</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -248,7 +248,7 @@ const PlanManagement = () => {
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Flashcards</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Flashcards</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -268,7 +268,7 @@ const PlanManagement = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Quizzes</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Quizzes</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -286,7 +286,7 @@ const PlanManagement = () => {
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Resumos</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Resumos</Label>
                       {editingPlan === plan.id ? (
                         <Input
                           type="number"
@@ -306,7 +306,7 @@ const PlanManagement = () => {
 
                   <div className="space-y-3">
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Quiz Model</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Quiz Model</Label>
                       {editingPlan === plan.id ? (
                         <Select
                           value={editData.quiz_model || plan.quiz_model}
@@ -330,7 +330,7 @@ const PlanManagement = () => {
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-gray-500">Summary Model</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Summary Model</Label>
                       {editingPlan === plan.id ? (
                         <Select
                           value={editData.summary_model || plan.summary_model}
@@ -355,7 +355,7 @@ const PlanManagement = () => {
                   </div>
 
                   <div>
-                    <Label className="text-xs font-medium text-gray-500">Features</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Features</Label>
                     {editingPlan === plan.id ? (
                       <PlanFeaturesEditor
                         features={editData.features || []}
@@ -384,7 +384,7 @@ const PlanManagement = () => {
                           }
                         }}
                       />
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         {(editingPlan === plan.id ? editData.is_active : plan.is_active) ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>

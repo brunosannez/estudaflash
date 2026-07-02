@@ -16,7 +16,7 @@ const UpgradeBanner = () => {
   if (currentPlan !== 'free') return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-purple-700 p-5 text-white shadow-xl">
+    <div className="relative overflow-hidden rounded-2xl bg-primary p-5 text-white shadow-xl">
       <button
         onClick={() => setDismissed(true)}
         className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/20 transition-colors"
@@ -41,7 +41,7 @@ const UpgradeBanner = () => {
 
         <Button
           onClick={() => navigate('/choose-plan')}
-          className="shrink-0 bg-white text-violet-700 hover:bg-white/90 font-semibold shadow-md"
+          className="shrink-0 bg-card text-primary hover:bg-background/90 font-semibold shadow-md"
         >
           Ver Planos <ArrowRight className="w-4 h-4 ml-1" />
         </Button>

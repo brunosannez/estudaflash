@@ -34,16 +34,16 @@ const QuizHistoryItem = ({ quiz, onRefazerQuiz, onViewQuiz, onDelete }: QuizHist
   };
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-100 hover:border-purple-200">
+    <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-border hover:border-primary/20">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex-1">
               <div>
-                <h3 className="text-xl font-bold text-gray-800">
+                <h3 className="text-xl font-bold text-foreground">
                   {quiz.quiz_titulo}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Arquivo: {quiz.resumo_titulo}
                 </p>
               </div>

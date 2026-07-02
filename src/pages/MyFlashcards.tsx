@@ -194,14 +194,14 @@ const MyFlashcards = () => {
 
                   {/* Active Goals */}
                   {activeGoals.length > 0 && (
-                    <Card className="border-blue-200 bg-blue-50">
+                    <Card className="border-blue-200 bg-primary/5">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <Target className="h-5 w-5 text-blue-600" />
+                          <Target className="h-5 w-5 text-primary" />
                           <h3 className="font-semibold text-blue-900">Metas Ativas</h3>
                         </div>
-                        <div className="text-2xl font-bold text-blue-700">{activeGoals.length}</div>
-                        <p className="text-sm text-blue-600">Metas em andamento</p>
+                        <div className="text-2xl font-bold text-primary">{activeGoals.length}</div>
+                        <p className="text-sm text-primary">Metas em andamento</p>
                       </CardContent>
                     </Card>
                   )}

@@ -36,8 +36,8 @@ const UploadActions = ({
             className="
               w-full
               h-14 sm:h-16
-              bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500
-              hover:from-green-600 hover:via-emerald-600 hover:to-teal-600
+              bg-emerald-600
+              hover:opacity-90
               text-white font-fredoka font-bold
               text-lg sm:text-xl
               rounded-xl
@@ -80,8 +80,8 @@ const UploadActions = ({
               text-base
               rounded-lg
               border-2 border-purple-300
-              text-purple-700
-              hover:bg-purple-50
+              text-primary
+              hover:bg-primary/5
               shadow-md
               transform hover:scale-105 transition-all duration-200
             "
@@ -94,7 +94,7 @@ const UploadActions = ({
 
       {/* Seção para adicionar mais fotos */}
       {selectedFiles.length > 0 && !isProcessing && (
-        <div className="border-t-2 border-dashed border-cyan-300 pt-4 mt-4 bg-gradient-to-r from-cyan-50 to-purple-50 rounded-lg p-4">
+        <div className="border-t-2 border-dashed border-cyan-300 pt-4 mt-4 bg-muted/50 rounded-lg p-4">
           <input
             type="file"
             accept="image/*"
@@ -117,7 +117,7 @@ const UploadActions = ({
               hover:bg-orange-50
               shadow-md
               transform hover:scale-105 transition-all duration-200
-              bg-white/80
+              bg-background/80
             "
           >
             <Plus className="h-4 w-4 mr-2" />

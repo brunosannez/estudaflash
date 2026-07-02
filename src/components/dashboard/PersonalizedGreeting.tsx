@@ -29,7 +29,7 @@ const PersonalizedGreeting = () => {
         greeting: "Boa noite",
         icon: Moon,
         color: "text-blue-500",
-        bg: "bg-blue-50",
+        bg: "bg-primary/5",
         message: "Vamos revisar o que aprendemos hoje? 🌙"
       };
     } else {
@@ -37,7 +37,7 @@ const PersonalizedGreeting = () => {
         greeting: "Boa madrugada",
         icon: Stars,
         color: "text-purple-500",
-        bg: "bg-purple-50",
+        bg: "bg-primary/5",
         message: "Estudando até tarde? Você é dedicado! ⭐"
       };
     }
@@ -52,14 +52,14 @@ const PersonalizedGreeting = () => {
         <Sparkles className="w-6 h-6 text-cyan-500 animate-pulse" />
         <div className="flex items-center gap-3">
           <IconComponent className={`w-6 h-6 ${timeInfo.color}`} />
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-700 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {timeInfo.greeting}, {getDisplayName()}!
           </h1>
         </div>
         <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />
       </div>
       
-      <p className="text-center text-lg text-gray-700 font-medium">
+      <p className="text-center text-lg text-foreground/80 font-medium">
         {timeInfo.message}
       </p>
     </div>

@@ -233,7 +233,7 @@ const QuizHistory: React.FC = () => {
           </Button>
           
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <Trophy className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -248,15 +248,15 @@ const QuizHistory: React.FC = () => {
         {/* Stats */}
         {completedSessions.length > 0 && (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+            <Card className="bg-muted/50 border-blue-200">
               <CardContent className="p-4 text-center">
-                <Target className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <div className="text-2xl font-bold text-blue-700">{sessions.length}</div>
-                <div className="text-sm text-blue-600">Quizzes Feitos</div>
+                <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <div className="text-2xl font-bold text-primary">{sessions.length}</div>
+                <div className="text-sm text-primary">Quizzes Feitos</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+            <Card className="bg-muted/50 border-green-200">
               <CardContent className="p-4 text-center">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-green-600" />
                 <div className="text-2xl font-bold text-green-700">{completedSessions.length}</div>
@@ -264,15 +264,15 @@ const QuizHistory: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+            <Card className="bg-muted/50 border-primary/20">
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">✅</div>
-                <div className="text-2xl font-bold text-purple-700">{totalCorrect}</div>
-                <div className="text-sm text-purple-600">Acertos Totais</div>
+                <div className="text-2xl font-bold text-primary">{totalCorrect}</div>
+                <div className="text-sm text-primary">Acertos Totais</div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+            <Card className="bg-muted/50 border-orange-200">
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">📊</div>
                 <div className="text-2xl font-bold text-orange-700">{averageScore}%</div>

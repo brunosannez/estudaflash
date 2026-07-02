@@ -13,19 +13,19 @@ const ResumoHeader = ({ onBack }: ResumoHeaderProps) => {
       <Button 
         variant="outline" 
         onClick={onBack}
-        className="flex items-center gap-2 hover:bg-blue-50 transition-colors"
+        className="flex items-center gap-2 hover:bg-primary/5 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Voltar
       </Button>
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
             <FileText className="h-6 w-6 text-white" />
           </div>
           Resumo Didático
         </h1>
-        <p className="text-gray-600 mt-1">Seu material de estudo personalizado</p>
+        <p className="text-muted-foreground mt-1">Seu material de estudo personalizado</p>
       </div>
     </div>
   );

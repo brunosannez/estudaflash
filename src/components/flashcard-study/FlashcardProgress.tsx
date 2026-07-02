@@ -38,10 +38,10 @@ const FlashcardProgress = ({
 
   return (
     <div className="space-y-4">
-      <Card className="border-2 border-purple-200">
+      <Card className="border-2 border-primary/20">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+            <span className="text-lg font-semibold text-foreground/80 flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
               Progresso do Estudo
             </span>
@@ -50,7 +50,7 @@ const FlashcardProgress = ({
             </Badge>
           </div>
           <Progress value={getProgressPercentage()} className="h-3 mb-2" />
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <CheckCircle className="h-4 w-4" />
               {completedCards.size} cards completados

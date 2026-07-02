@@ -11,7 +11,7 @@ interface ResumoStatsProps {
 const ResumoStats = ({ estimatedReadTime, contentLength, createdDate }: ResumoStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+      <Card className="bg-primary text-white border-0">
         <CardContent className="p-4 flex items-center gap-3">
           <Clock className="h-8 w-8" />
           <div>
@@ -21,7 +21,7 @@ const ResumoStats = ({ estimatedReadTime, contentLength, createdDate }: ResumoSt
         </CardContent>
       </Card>
       
-      <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
+      <Card className="bg-emerald-600 text-white border-0">
         <CardContent className="p-4 flex items-center gap-3">
           <BookOpen className="h-8 w-8" />
           <div>
@@ -31,7 +31,7 @@ const ResumoStats = ({ estimatedReadTime, contentLength, createdDate }: ResumoSt
         </CardContent>
       </Card>
       
-      <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+      <Card className="bg-primary text-white border-0">
         <CardContent className="p-4 flex items-center gap-3">
           <Target className="h-8 w-8" />
           <div>

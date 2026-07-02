@@ -14,11 +14,11 @@ interface FlashcardBackProps {
 
 const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBackProps) => {
   return (
-    <Card className="w-full h-full border-0 shadow-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50 min-h-[500px]">
+    <Card className="w-full h-full border-0 shadow-2xl bg-muted/50 min-h-[500px]">
       <CardContent className="h-full flex flex-col justify-between p-6 min-h-[500px]">
         <div className="flex-1">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center">
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
             <Badge className="text-lg px-4 py-2 bg-green-100 text-green-700">
@@ -27,7 +27,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
           </div>
           
           <div className="text-center mb-6 flex-1 flex flex-col justify-center">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 leading-relaxed">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4 leading-relaxed">
               {answer}
             </h2>
             
@@ -37,7 +37,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
                   <Star className="h-4 w-4" />
                   Exemplo:
                 </p>
-                <p className="text-gray-700 italic">{example}</p>
+                <p className="text-foreground/80 italic">{example}</p>
               </div>
             )}
           </div>
@@ -62,7 +62,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             onClick={() => onAnswer(true)}
             disabled={isAnimating}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95 border-2 border-green-400"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95 border-2 border-green-400"
           >
             <CheckCircle className="h-5 w-5 mr-2" />
             <div className="text-center">

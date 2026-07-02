@@ -53,7 +53,7 @@ const AdminStatsGrid = ({ totalUsers: propTotalUsers, totalStorageMB: propTotalS
           <Card key={i}>
             <CardContent className="p-6">
               <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -81,8 +81,8 @@ const AdminStatsGrid = ({ totalUsers: propTotalUsers, totalStorageMB: propTotalS
       title: 'Total de Usuários',
       value: stats?.totalUsers || 0,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-primary',
+      bgColor: 'bg-primary/5'
     },
     {
       title: 'Armazenamento Total',
@@ -95,8 +95,8 @@ const AdminStatsGrid = ({ totalUsers: propTotalUsers, totalStorageMB: propTotalS
       title: 'Usuários Ativos (7 dias)',
       value: stats?.activeUsers7Days || 0,
       icon: Activity,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-primary',
+      bgColor: 'bg-primary/5'
     }
   ];
 

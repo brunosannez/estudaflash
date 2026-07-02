@@ -49,7 +49,7 @@ export const EnemQuizGenerator: React.FC<EnemQuizGeneratorProps> = ({
       
       <CardContent className="space-y-6">
         {hasExistingQuiz ? (
-          <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+          <div className="p-4 rounded-lg bg-primary/5 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Atenção:</strong> Já existe um quiz para este resumo. 
               Gerar um novo quiz irá criar questões diferentes baseadas no mesmo conteúdo.

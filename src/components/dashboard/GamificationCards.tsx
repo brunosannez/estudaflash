@@ -41,7 +41,7 @@ const GamificationCards = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* XP e Nível */}
-      <Card className="bg-gradient-to-br from-purple-500 to-purple-700 text-white overflow-hidden relative">
+      <Card className="bg-primary text-white overflow-hidden relative">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -66,7 +66,7 @@ const GamificationCards = () => {
       </Card>
 
       {/* Streak */}
-      <Card className="bg-gradient-to-br from-orange-500 to-red-600 text-white overflow-hidden relative">
+      <Card className="bg-amber-500 text-white overflow-hidden relative">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -87,7 +87,7 @@ const GamificationCards = () => {
       </Card>
 
       {/* XP Hoje */}
-      <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative">
+      <Card className="bg-emerald-600 text-white overflow-hidden relative">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>

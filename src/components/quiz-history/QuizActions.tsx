@@ -19,7 +19,7 @@ const QuizActions = ({ quiz, onRefazerQuiz, onViewQuiz, onDelete }: QuizActionsP
         <Button
           onClick={() => onViewQuiz(quiz)}
           variant="outline"
-          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+          className="border-blue-200 text-primary hover:bg-primary/5 hover:border-blue-300"
         >
           <Eye className="h-4 w-4 mr-2" />
           Visualizar
@@ -28,7 +28,7 @@ const QuizActions = ({ quiz, onRefazerQuiz, onViewQuiz, onDelete }: QuizActionsP
       
       <Button
         onClick={() => onRefazerQuiz(quiz.resumo_id)}
-        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         <Zap className="h-4 w-4 mr-2" />
         Refazer Quiz

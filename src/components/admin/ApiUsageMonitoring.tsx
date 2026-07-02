@@ -94,7 +94,7 @@ const ApiUsageMonitoring = () => {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-600" />
+                <Activity className="h-5 w-5 text-primary" />
                 Monitoramento de APIs em Tempo Real
               </CardTitle>
               
@@ -122,11 +122,11 @@ const ApiUsageMonitoring = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Tokens</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500 mt-1">Últimas {timeRange}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total de Tokens</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
+                  <p className="text-xs text-muted-foreground mt-1">Últimas {timeRange}</p>
                 </div>
-                <Zap className="h-8 w-8 text-blue-600" />
+                <Zap className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -135,9 +135,9 @@ const ApiUsageMonitoring = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Custo Total</p>
-                  <p className="text-2xl font-bold text-gray-900">$0.00</p>
-                  <p className="text-xs text-gray-500 mt-1">Estimativa USD</p>
+                  <p className="text-sm font-medium text-muted-foreground">Custo Total</p>
+                  <p className="text-2xl font-bold text-foreground">$0.00</p>
+                  <p className="text-xs text-muted-foreground mt-1">Estimativa USD</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-600" />
               </div>
@@ -148,11 +148,11 @@ const ApiUsageMonitoring = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Requisições</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-xs text-gray-500 mt-1">Total de chamadas</p>
+                  <p className="text-sm font-medium text-muted-foreground">Requisições</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total de chamadas</p>
                 </div>
-                <Activity className="h-8 w-8 text-purple-600" />
+                <Activity className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -161,9 +161,9 @@ const ApiUsageMonitoring = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Taxa de Sucesso</p>
-                  <p className="text-2xl font-bold text-gray-900">-</p>
-                  <p className="text-xs text-gray-500 mt-1">Nenhum dado</p>
+                  <p className="text-sm font-medium text-muted-foreground">Taxa de Sucesso</p>
+                  <p className="text-2xl font-bold text-foreground">-</p>
+                  <p className="text-xs text-muted-foreground mt-1">Nenhum dado</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-orange-600" />
               </div>
@@ -175,16 +175,16 @@ const ApiUsageMonitoring = () => {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mb-4">
-                <Zap className="h-8 w-8 text-purple-600" />
+              <div className="mx-auto w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+                <Zap className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Nenhum uso de API registrado
               </h3>
-              <p className="text-gray-600 max-w-md mx-auto mb-4">
+              <p className="text-muted-foreground max-w-md mx-auto mb-4">
                 Os custos e tokens das APIs (OpenAI, Anthropic) aparecerão aqui quando os usuários gerarem resumos, flashcards, quizzes ou mapas mentais.
               </p>
-              <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <span className="text-lg">🧠</span>
                   <span>Anthropic (Claude)</span>
@@ -214,7 +214,7 @@ const ApiUsageMonitoring = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando dados de API...</span>
           </div>
         </CardContent>
@@ -229,7 +229,7 @@ const ApiUsageMonitoring = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
+              <Activity className="h-5 w-5 text-primary" />
               Monitoramento de APIs em Tempo Real
             </CardTitle>
             
@@ -267,11 +267,11 @@ const ApiUsageMonitoring = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total de Tokens</p>
-                <p className="text-2xl font-bold text-gray-900">{formatNumber(totalTokens)}</p>
-                <p className="text-xs text-gray-500 mt-1">Últimas {timeRange}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Tokens</p>
+                <p className="text-2xl font-bold text-foreground">{formatNumber(totalTokens)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Últimas {timeRange}</p>
               </div>
-              <Zap className="h-8 w-8 text-blue-600" />
+              <Zap className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -280,9 +280,9 @@ const ApiUsageMonitoring = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Custo Total</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalCost)}</p>
-                <p className="text-xs text-gray-500 mt-1">Estimativa USD</p>
+                <p className="text-sm font-medium text-muted-foreground">Custo Total</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(totalCost)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Estimativa USD</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
             </div>
@@ -293,11 +293,11 @@ const ApiUsageMonitoring = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Requisições</p>
-                <p className="text-2xl font-bold text-gray-900">{formatNumber(totalRequests)}</p>
-                <p className="text-xs text-gray-500 mt-1">Total de chamadas</p>
+                <p className="text-sm font-medium text-muted-foreground">Requisições</p>
+                <p className="text-2xl font-bold text-foreground">{formatNumber(totalRequests)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total de chamadas</p>
               </div>
-              <Activity className="h-8 w-8 text-purple-600" />
+              <Activity className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -306,9 +306,9 @@ const ApiUsageMonitoring = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Taxa de Sucesso</p>
-                <p className="text-2xl font-bold text-gray-900">{avgSuccessRate.toFixed(1)}%</p>
-                <p className="text-xs text-gray-500 mt-1">Média geral</p>
+                <p className="text-sm font-medium text-muted-foreground">Taxa de Sucesso</p>
+                <p className="text-2xl font-bold text-foreground">{avgSuccessRate.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground mt-1">Média geral</p>
               </div>
               <TrendingUp className="h-8 w-8 text-orange-600" />
             </div>

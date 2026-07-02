@@ -61,7 +61,7 @@ const UsageIndicatorEmpty = ({ onManualSync, syncing, hasInitialized }: UsageInd
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
-            <p className="text-sm text-gray-500 mb-4">Carregando dados...</p>
+            <p className="text-sm text-muted-foreground mb-4">Carregando dados...</p>
             <Button 
               onClick={onManualSync}
               disabled={syncing}

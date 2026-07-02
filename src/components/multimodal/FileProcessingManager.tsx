@@ -233,12 +233,12 @@ const FileProcessingManager = () => {
             {...getRootProps()}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
               isDragActive 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-blue-500 bg-primary/5' 
+                : 'border-input hover:border-gray-400'
             } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             <input {...getInputProps()} />
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Upload className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
             {uploading ? (
               <p className="text-lg font-medium">Fazendo upload...</p>
             ) : isDragActive ? (

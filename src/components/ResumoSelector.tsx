@@ -81,7 +81,7 @@ const ResumoSelector = ({ onSelectResumo, title, description, actionText }: Resu
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -89,16 +89,16 @@ const ResumoSelector = ({ onSelectResumo, title, description, actionText }: Resu
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
-        <p className="text-gray-600">{description}</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{title}</h2>
+        <p className="text-muted-foreground">{description}</p>
       </div>
 
       {resumos.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum resumo encontrado</h3>
-            <p className="text-gray-500 mb-6">
+            <FileText className="h-16 w-16 mx-auto text-muted-foreground/70 mb-4" />
+            <h3 className="text-xl font-semibold text-foreground/80 mb-2">Nenhum resumo encontrado</h3>
+            <p className="text-muted-foreground mb-6">
               Você ainda não possui resumos criados. Faça upload de uma imagem para começar!
             </p>
           </CardContent>
@@ -112,19 +112,19 @@ const ResumoSelector = ({ onSelectResumo, title, description, actionText }: Resu
                   <CardTitle className="text-lg line-clamp-2">
                     {resumo.uploads.texto_extraido?.slice(0, 50) || 'Resumo'}...
                   </CardTitle>
-                  <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
+                  <Calendar className="h-4 w-4 text-muted-foreground/70 flex-shrink-0 ml-2" />
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {formatDate(resumo.data_criacao)}
                 </p>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-sm text-gray-700 line-clamp-3 mb-4">
+                <p className="text-sm text-foreground/80 line-clamp-3 mb-4">
                   {resumo.resumo_gerado.slice(0, 150)}...
                 </p>
                 <Button 
                   onClick={() => onSelectResumo(resumo)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   {actionText}
                   <ArrowRight className="h-4 w-4 ml-2" />

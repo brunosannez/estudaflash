@@ -33,7 +33,7 @@ const QuickStatsEmpty = ({ onRefresh, syncing, hasInitialized }: QuickStatsEmpty
               <Trophy className="h-12 w-12 mx-auto text-gray-300" />
             </div>
             <p className="text-sm font-medium mb-2">Bem-vindo!</p>
-            <p className="text-xs text-gray-500 mb-4">Suas estatísticas aparecerão aqui</p>
+            <p className="text-xs text-muted-foreground mb-4">Suas estatísticas aparecerão aqui</p>
             
             <Button 
               onClick={onRefresh}
@@ -69,7 +69,7 @@ const QuickStatsEmpty = ({ onRefresh, syncing, hasInitialized }: QuickStatsEmpty
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           <div className="mb-4">
             <Trophy className="h-12 w-12 mx-auto text-gray-300" />
           </div>

@@ -50,28 +50,28 @@ const EnhancedFlashcardStats = ({
         </Card>
 
         {/* Active Goals */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Target className="h-5 w-5 text-blue-600" />
+              <Target className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-blue-900">Metas</h3>
             </div>
-            <div className="text-2xl font-bold text-blue-700">{activeGoals.length}</div>
-            <p className="text-sm text-blue-600">Metas ativas</p>
+            <div className="text-2xl font-bold text-primary">{activeGoals.length}</div>
+            <p className="text-sm text-primary">Metas ativas</p>
           </CardContent>
         </Card>
 
         {/* Study Time */}
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-5 w-5 text-purple-600" />
+              <Calendar className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-purple-900">Tempo Total</h3>
             </div>
-            <div className="text-2xl font-bold text-purple-700">
+            <div className="text-2xl font-bold text-primary">
               {studyStats.reduce((sum, stat) => sum + stat.total_study_time_minutes, 0)}min
             </div>
-            <p className="text-sm text-purple-600">Tempo estudado</p>
+            <p className="text-sm text-primary">Tempo estudado</p>
           </CardContent>
         </Card>
       </div>
@@ -111,11 +111,11 @@ const EnhancedFlashcardStats = ({
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-primary h-2 rounded-full"
                       style={{ width: `${Math.min((goal.current_progress / goal.target_value) * 100, 100)}%` }}
                     />
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {goal.current_progress} / {goal.target_value}
                   </p>
                 </CardContent>

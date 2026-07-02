@@ -17,7 +17,7 @@ const DashboardUsageOverview = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-        <span className="ml-2 text-gray-600">Carregando dados...</span>
+        <span className="ml-2 text-muted-foreground">Carregando dados...</span>
       </div>
     );
   }
@@ -26,7 +26,7 @@ const DashboardUsageOverview = () => {
     <div className="space-y-6">
       {/* Cards de Ação Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/upload')}>
+        <Card className="bg-primary text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/upload')}>
           <CardContent className="p-8 text-center">
             <Upload className="w-12 h-12 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Fazer Upload</h3>
@@ -34,7 +34,7 @@ const DashboardUsageOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-teal-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/my-summaries')}>
+        <Card className="bg-emerald-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/my-summaries')}>
           <CardContent className="p-8 text-center">
             <BookOpen className="w-12 h-12 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Ver Resumos</h3>
@@ -47,21 +47,21 @@ const DashboardUsageOverview = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
-            <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-            <div className="text-2xl font-bold text-purple-600">
+            <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
+            <div className="text-2xl font-bold text-primary">
               {usageData?.uploads_realizados || 0}
             </div>
-            <div className="text-sm text-gray-600">Uploads</div>
+            <div className="text-sm text-muted-foreground">Uploads</div>
           </CardContent>
         </Card>
 
         <Card className="bg-white/70 backdrop-blur-sm border-purple-100">
           <CardContent className="p-4 text-center">
-            <Brain className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-            <div className="text-2xl font-bold text-blue-600">
+            <Brain className="w-6 h-6 mx-auto mb-2 text-primary" />
+            <div className="text-2xl font-bold text-primary">
               {usageData?.flashcards_gerados || 0}
             </div>
-            <div className="text-sm text-gray-600">Flashcards</div>
+            <div className="text-sm text-muted-foreground">Flashcards</div>
           </CardContent>
         </Card>
 
@@ -71,21 +71,21 @@ const DashboardUsageOverview = () => {
             <div className="text-2xl font-bold text-green-600">
               {usageData?.quizzes_realizados || 0}
             </div>
-            <div className="text-sm text-gray-600">Quizzes</div>
+            <div className="text-sm text-muted-foreground">Quizzes</div>
           </CardContent>
         </Card>
 
         <Card 
-          className="bg-gradient-to-br from-violet-50 to-purple-100 backdrop-blur-sm border-violet-300 cursor-pointer hover:shadow-lg transition-all hover:border-violet-400 ring-1 ring-violet-200"
+          className="bg-muted/50 backdrop-blur-sm border-violet-300 cursor-pointer hover:shadow-lg transition-all hover:border-violet-400 ring-1 ring-violet-200"
           onClick={() => navigate('/choose-plan')}
         >
           <CardContent className="p-4 text-center">
-            <Trophy className="w-6 h-6 mx-auto mb-2 text-violet-600" />
-            <div className="text-2xl font-bold text-violet-700">
+            <Trophy className="w-6 h-6 mx-auto mb-2 text-primary" />
+            <div className="text-2xl font-bold text-primary">
               {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
             </div>
-            <div className="text-sm text-violet-600/80">Plano</div>
-            <Button variant="default" size="sm" className="mt-2 bg-violet-600 hover:bg-violet-700 text-white text-xs px-3 h-7">
+            <div className="text-sm text-primary/80">Plano</div>
+            <Button variant="default" size="sm" className="mt-2 bg-primary hover:bg-violet-700 text-white text-xs px-3 h-7">
               {usageData?.plano === 'free' ? '⭐ Fazer Upgrade' : 'Mudar Plano'}
             </Button>
           </CardContent>
@@ -98,7 +98,7 @@ const DashboardUsageOverview = () => {
           variant="outline" 
           onClick={handleRefresh}
           disabled={loading}
-          className="bg-white/70 backdrop-blur-sm border-purple-200 hover:bg-purple-50"
+          className="bg-white/70 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Sincronizando...' : 'Atualizar Dados'}

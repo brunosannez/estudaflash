@@ -33,8 +33,8 @@ const DashboardTabs = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+          <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
+            <h2 className="text-2xl font-bold text-foreground mb-4 text-center">
               Bem-vindo ao seu painel de estudos!
             </h2>
             <DashboardUsageOverview />
@@ -42,13 +42,13 @@ const DashboardTabs = () => {
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-6">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
+          <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
             <UploadTabContent />
           </div>
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
+          <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-purple-100">
             <UploadTabContent />
           </div>
         </TabsContent>

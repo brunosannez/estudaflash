@@ -20,7 +20,7 @@ const BadgesPreview = () => {
         <CardContent>
           <div className="flex gap-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-12 w-12 bg-gray-100 rounded-full"></div>
+              <div key={i} className="h-12 w-12 bg-muted rounded-full"></div>
             ))}
           </div>
         </CardContent>
@@ -31,7 +31,7 @@ const BadgesPreview = () => {
   const recentBadges = userBadges.slice(0, 4);
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm border-amber-100 shadow-md">
+    <Card className="bg-background/90 backdrop-blur-sm border-amber-100 shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -70,14 +70,14 @@ const BadgesPreview = () => {
               );
             })}
             {userBadges.length > 4 && (
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 border-2 border-gray-200 text-xs font-medium text-gray-500">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted border-2 border-border text-xs font-medium text-muted-foreground">
                 +{userBadges.length - 4}
               </div>
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-gray-400">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-200">
+          <div className="flex items-center gap-3 text-muted-foreground/70">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted/50 border-2 border-dashed border-border">
               <span className="text-xl">🔒</span>
             </div>
             <p className="text-sm">Continue estudando para ganhar conquistas!</p>

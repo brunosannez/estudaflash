@@ -31,13 +31,13 @@ const MyFlashcardsStudyMode = ({ selectedSet, resumeSessionId, onBackToList }: M
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               Estudando: {selectedSet.resumo_title}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {selectedSet.flashcards.length} flashcards disponíveis
               {resumeSessionId && (
-                <span className="ml-2 text-blue-600 font-medium">
+                <span className="ml-2 text-primary font-medium">
                   • Continuando sessão anterior
                 </span>
               )}

@@ -27,7 +27,7 @@ const AdminPanel = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="w-full max-w-md mx-auto">
             <CardContent className="py-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
               <p>Verificando permissões de administrador...</p>
             </CardContent>
           </Card>
@@ -45,10 +45,10 @@ const AdminPanel = () => {
             <CardContent className="py-8 text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-red-500" />
               <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Você não tem permissão para acessar esta página.
               </p>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Entre em contato com um administrador existente para solicitar acesso.
               </p>
               
@@ -73,10 +73,10 @@ const AdminPanel = () => {
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-              <p className="text-gray-600 text-sm sm:text-base">Gerencie usuários, planos, APIs e monitore o sistema completo</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Painel Administrativo</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">Gerencie usuários, planos, APIs e monitore o sistema completo</p>
             </div>
           </div>
           

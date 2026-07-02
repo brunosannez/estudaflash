@@ -9,15 +9,15 @@ interface ImageStatusIndicatorProps {
 const ImageStatusIndicator = ({ status }: ImageStatusIndicatorProps) => {
   switch (status) {
     case 'pending':
-      return <div className="absolute top-2 right-2 w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-        <div className="w-2 h-2 bg-white rounded-full"></div>
+      return <div className="absolute top-2 right-2 w-6 h-6 bg-muted/500 rounded-full flex items-center justify-center">
+        <div className="w-2 h-2 bg-card rounded-full"></div>
       </div>;
     case 'uploading':
-      return <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+      return <div className="absolute top-2 right-2 w-6 h-6 bg-primary/50 rounded-full flex items-center justify-center">
         <Loader2 className="w-4 h-4 text-white animate-spin" />
       </div>;
     case 'extracting':
-      return <div className="absolute top-2 right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+      return <div className="absolute top-2 right-2 w-6 h-6 bg-primary/50 rounded-full flex items-center justify-center">
         <Sparkles className="w-4 h-4 text-white" />
       </div>;
     case 'completed':

@@ -31,7 +31,7 @@ const FlashcardCompletionScreen = ({
   
   const getPerformanceMessage = () => {
     if (accuracy >= 90) return { message: "Excelente! 🌟", color: "text-green-600", icon: Star };
-    if (accuracy >= 75) return { message: "Muito bem! 👏", color: "text-blue-600", icon: Target };
+    if (accuracy >= 75) return { message: "Muito bem! 👏", color: "text-primary", icon: Target };
     if (accuracy >= 60) return { message: "Bom trabalho! 💪", color: "text-yellow-600", icon: CheckCircle };
     return { message: "Continue praticando! 📚", color: "text-orange-600", icon: RotateCcw };
   };
@@ -42,7 +42,7 @@ const FlashcardCompletionScreen = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       {/* Header de Parabéns */}
-      <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-xl">
+      <Card className="border-green-200 bg-muted/50 shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
             <div className="bg-green-100 p-4 rounded-full">
@@ -64,33 +64,33 @@ const FlashcardCompletionScreen = ({
       {/* Estatísticas do Estudo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Precisão */}
-        <Card className="border-blue-200 bg-blue-50 shadow-lg">
+        <Card className="border-blue-200 bg-primary/5 shadow-lg">
           <CardContent className="p-6 text-center">
-            <div className="bg-blue-100 p-3 rounded-full w-fit mx-auto mb-3">
-              <Target className="h-8 w-8 text-blue-600" />
+            <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-3">
+              <Target className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-blue-800 mb-2">Precisão</h3>
-            <div className="text-3xl font-bold text-blue-700 mb-2">
+            <div className="text-3xl font-bold text-primary mb-2">
               {accuracy.toFixed(1)}%
             </div>
             <Progress value={accuracy} className="h-2 mb-2" />
-            <p className="text-sm text-blue-600">
+            <p className="text-sm text-primary">
               {score.correct} de {totalQuestions} corretas
             </p>
           </CardContent>
         </Card>
 
         {/* XP Ganho */}
-        <Card className="border-purple-200 bg-purple-50 shadow-lg">
+        <Card className="border-primary/20 bg-primary/5 shadow-lg">
           <CardContent className="p-6 text-center">
-            <div className="bg-purple-100 p-3 rounded-full w-fit mx-auto mb-3">
-              <Star className="h-8 w-8 text-purple-600" />
+            <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-3">
+              <Star className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-purple-800 mb-2">XP Ganho</h3>
-            <div className="text-3xl font-bold text-purple-700 mb-2">
+            <div className="text-3xl font-bold text-primary mb-2">
               +{studyStats.xpEarned}
             </div>
-            <p className="text-sm text-purple-600">
+            <p className="text-sm text-primary">
               {studyStats.totalReviewed} cards revisados
             </p>
           </CardContent>
@@ -114,9 +114,9 @@ const FlashcardCompletionScreen = ({
       </div>
 
       {/* Feedback e Dicas */}
-      <Card className="border-gray-200 shadow-lg">
+      <Card className="border-border shadow-lg">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Dicas para melhorar</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">📈 Dicas para melhorar</h3>
           <div className="space-y-3">
             {accuracy < 70 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -126,7 +126,7 @@ const FlashcardCompletionScreen = ({
               </div>
             )}
             {accuracy >= 70 && accuracy < 90 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary/5 border border-blue-200 rounded-lg p-4">
                 <p className="text-blue-800">
                   🎯 <strong>Quase lá:</strong> Pratique mais algumas vezes para dominar completamente o conteúdo.
                 </p>
@@ -148,7 +148,7 @@ const FlashcardCompletionScreen = ({
         <Button
           onClick={onStudyAgain}
           size="lg"
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold px-8 py-3 shadow-lg"
+          className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 shadow-lg"
         >
           <RotateCcw className="h-5 w-5 mr-2" />
           🔄 Estudar Novamente
@@ -158,7 +158,7 @@ const FlashcardCompletionScreen = ({
           onClick={onBackToFlashcards}
           variant="outline"
           size="lg"
-          className="border-2 border-gray-300 hover:border-gray-400 font-semibold px-8 py-3 shadow-lg"
+          className="border-2 border-input hover:border-gray-400 font-semibold px-8 py-3 shadow-lg"
         >
           <Home className="h-5 w-5 mr-2" />
           🏠 Voltar aos Flashcards

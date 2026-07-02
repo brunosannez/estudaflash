@@ -88,7 +88,7 @@ const BadgeUnlockAnimation = ({ badge, isOpen, onClose }: BadgeUnlockAnimationPr
             onClick={onClose}
           >
             <motion.div
-              className="bg-white rounded-3xl p-8 max-w-sm w-full text-center relative shadow-2xl"
+              className="bg-card rounded-3xl p-8 max-w-sm w-full text-center relative shadow-2xl"
               initial={{ scale: 0.3, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.3, opacity: 0, y: 50 }}
@@ -98,9 +98,9 @@ const BadgeUnlockAnimation = ({ badge, isOpen, onClose }: BadgeUnlockAnimationPr
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors"
               >
-                <X className="h-5 w-5 text-gray-400" />
+                <X className="h-5 w-5 text-muted-foreground/70" />
               </button>
 
               {/* Header */}
@@ -129,7 +129,7 @@ const BadgeUnlockAnimation = ({ badge, isOpen, onClose }: BadgeUnlockAnimationPr
 
               {/* Badge Name */}
               <motion.h2
-                className="mt-4 text-2xl font-bold text-gray-800"
+                className="mt-4 text-2xl font-bold text-foreground"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -149,7 +149,7 @@ const BadgeUnlockAnimation = ({ badge, isOpen, onClose }: BadgeUnlockAnimationPr
 
               {/* Description */}
               <motion.p
-                className="mt-4 text-gray-600 text-lg"
+                className="mt-4 text-muted-foreground text-lg"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
@@ -159,7 +159,7 @@ const BadgeUnlockAnimation = ({ badge, isOpen, onClose }: BadgeUnlockAnimationPr
 
               {/* Celebration message */}
               <motion.p
-                className="mt-6 text-sm text-gray-400"
+                className="mt-6 text-sm text-muted-foreground/70"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}

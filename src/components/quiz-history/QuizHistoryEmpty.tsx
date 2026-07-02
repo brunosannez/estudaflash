@@ -10,17 +10,17 @@ const QuizHistoryEmpty = ({ onCreateFirstQuiz }: QuizHistoryEmptyProps) => {
   return (
     <Card className="max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-gray-600">
+        <CardTitle className="text-center text-2xl font-bold text-muted-foreground">
           📚 Nenhum quiz encontrado
         </CardTitle>
       </CardHeader>
       <CardContent className="text-center">
-        <p className="text-gray-600 mb-6">
+        <p className="text-muted-foreground mb-6">
           Você ainda não fez nenhum quiz. Que tal começar agora?
         </p>
         <Button 
           onClick={onCreateFirstQuiz}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+          className="bg-primary hover:bg-primary/90 text-white"
         >
           Criar Primeiro Quiz
         </Button>

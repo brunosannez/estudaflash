@@ -31,9 +31,9 @@ const CreditsHistoryModal = ({ isOpen, onClose }: CreditsHistoryModalProps) => {
   };
 
   const actionColors: Record<string, string> = {
-    ocr: 'bg-blue-100 text-blue-800',
+    ocr: 'bg-primary/10 text-blue-800',
     summary: 'bg-green-100 text-green-800',
-    flashcards: 'bg-purple-100 text-purple-800',
+    flashcards: 'bg-primary/10 text-purple-800',
     quiz: 'bg-orange-100 text-orange-800',
   };
 
@@ -126,7 +126,7 @@ const CreditsHistoryModal = ({ isOpen, onClose }: CreditsHistoryModalProps) => {
                   {creditsHistory.map((transaction, index) => {
                     const Icon = actionIcons[transaction.action_type] || Coins;
                     const actionName = actionNames[transaction.action_type] || transaction.action_type;
-                    const colorClass = actionColors[transaction.action_type] || 'bg-gray-100 text-gray-800';
+                    const colorClass = actionColors[transaction.action_type] || 'bg-muted text-foreground';
                     
                     return (
                       <div key={transaction.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">

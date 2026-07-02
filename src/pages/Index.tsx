@@ -82,7 +82,7 @@ const Index = () => {
             
             {/* Cards de Gamificação */}
             <div className="space-y-2">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 🎮 Seu Progresso
               </h2>
               <GamificationCards />
@@ -93,7 +93,7 @@ const Index = () => {
             
             {/* Ações Rápidas */}
             <div className="space-y-2">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 ⚡ O Que Fazer Agora?
               </h2>
               <QuickActions />
@@ -101,7 +101,7 @@ const Index = () => {
             
             {/* Estatísticas de Estudo */}
             <div className="space-y-2">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 📊 Como Você Está Indo
               </h2>
               <StudyStatsGrid />
@@ -110,8 +110,8 @@ const Index = () => {
             {/* Grid Principal */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2">
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-sky-100">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="bg-background/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-sky-100">
+                  <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                     📈 Uso do App
                   </h3>
                   <DashboardUsageOverview />
@@ -119,13 +119,13 @@ const Index = () => {
               </div>
               
               <div className="xl:col-span-1">
-                <Card className="bg-white/90 backdrop-blur-sm border-sky-100 shadow-lg">
+                <Card className="bg-background/90 backdrop-blur-sm border-sky-100 shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">📝 Atividade Recente</CardTitle>
                     <CardDescription>O que você fez ultimamente</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-500 text-sm">Seus estudos recentes vão aparecer aqui!</p>
+                    <p className="text-muted-foreground text-sm">Seus estudos recentes vão aparecer aqui!</p>
                   </CardContent>
                 </Card>
               </div>

@@ -68,9 +68,9 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
     return (
       <Card>
         <CardContent className="text-center py-12">
-          <Brain className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum flashcard encontrado</h3>
-          <p className="text-gray-500 mb-6">
+          <Brain className="h-16 w-16 mx-auto text-muted-foreground/70 mb-4" />
+          <h3 className="text-xl font-semibold text-foreground/80 mb-2">Nenhum flashcard encontrado</h3>
+          <p className="text-muted-foreground mb-6">
             Este resumo ainda não possui flashcards. Crie alguns primeiro!
           </p>
           <Button onClick={onBack}>
@@ -90,14 +90,14 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
       <Card className="max-w-2xl mx-auto">
         <CardContent className="text-center py-12">
           <Trophy className="h-24 w-24 mx-auto text-yellow-500 mb-6" />
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Estudo Concluído! 🎉</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-4">Estudo Concluído! 🎉</h2>
           <div className="text-2xl font-semibold mb-6">
             <span className="text-green-600">{score.correct}</span>
-            <span className="text-gray-400"> / </span>
-            <span className="text-blue-600">{score.total}</span>
+            <span className="text-muted-foreground/70"> / </span>
+            <span className="text-primary">{score.total}</span>
           </div>
-          <div className="text-lg text-gray-600 mb-6">
-            Precisão: <span className="font-bold text-purple-600">{accuracy}%</span>
+          <div className="text-lg text-muted-foreground mb-6">
+            Precisão: <span className="font-bold text-primary">{accuracy}%</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={resetStudy} variant="outline">
@@ -122,10 +122,10 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
           Voltar
         </Button>
         <div className="text-center">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             {currentIndex + 1} de {cards.length} flashcards
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             Acertos: {score.correct}/{score.total}
           </div>
         </div>
@@ -133,25 +133,25 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
 
       <Progress value={progress} className="h-2" />
 
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50">
+      <Card className="bg-muted/50">
         <CardContent className="p-8">
           <div className="text-center">
             <div className="mb-6">
-              <Brain className="h-12 w-12 mx-auto text-blue-600 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+              <Brain className="h-12 w-12 mx-auto text-primary mb-4" />
+              <h3 className="text-2xl font-bold text-foreground mb-4">
                 {showAnswer ? 'Resposta' : 'Pergunta'}
               </h3>
             </div>
 
             <div className="min-h-[200px] flex items-center justify-center">
-              <div className="text-lg text-gray-700 max-w-lg">
+              <div className="text-lg text-foreground/80 max-w-lg">
                 {showAnswer ? (
                   <div className="space-y-4">
                     <div className="font-semibold text-green-700">
                       {currentCard.resposta}
                     </div>
                     {currentCard.exemplo && (
-                      <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                      <div className="text-sm text-primary bg-primary/5 p-3 rounded-lg">
                         <strong>Exemplo:</strong> {currentCard.exemplo}
                       </div>
                     )}
@@ -167,13 +167,13 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
                 <Button 
                   onClick={() => setShowAnswer(true)}
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   Mostrar Resposta
                 </Button>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600 mb-4">Você lembrou da resposta?</p>
+                  <p className="text-muted-foreground mb-4">Você lembrou da resposta?</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button
                       onClick={() => handleAnswer(false)}
@@ -187,7 +187,7 @@ const FlashcardStudy = ({ resumoId, onBack }: FlashcardStudyProps) => {
                     <Button
                       onClick={() => handleAnswer(true)}
                       size="lg"
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      className="bg-emerald-600 hover:opacity-90"
                     >
                       <CheckCircle className="h-5 w-5 mr-2" />
                       Lembrei!

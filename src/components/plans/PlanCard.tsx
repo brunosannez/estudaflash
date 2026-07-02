@@ -30,26 +30,26 @@ const PlanCard = ({
   const getPlanIcon = () => {
     switch (plan.name.toLowerCase()) {
       case 'free':
-        return <Zap className="h-5 w-5 text-gray-500" />;
+        return <Zap className="h-5 w-5 text-muted-foreground" />;
       case 'pro':
         return <Star className="h-5 w-5 text-blue-500" />;
       case 'pro max':
         return <Crown className="h-5 w-5 text-purple-500" />;
       default:
-        return <Zap className="h-5 w-5 text-gray-500" />;
+        return <Zap className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getPlanColor = () => {
     switch (plan.name.toLowerCase()) {
       case 'free':
-        return 'border-gray-200';
+        return 'border-border';
       case 'pro':
         return 'border-blue-300';
       case 'pro max':
         return 'border-purple-300';
       default:
-        return 'border-gray-200';
+        return 'border-border';
     }
   };
 
@@ -66,7 +66,7 @@ const PlanCard = ({
       
       {isPopular && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <Badge className="bg-blue-500 text-white px-3 py-1">
+          <Badge className="bg-primary/50 text-white px-3 py-1">
             🌟 Mais Popular
           </Badge>
         </div>
@@ -83,24 +83,24 @@ const PlanCard = ({
       <CardHeader className="text-center pb-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           {getPlanIcon()}
-          <CardTitle className="text-xl text-gray-800">{plan.name}</CardTitle>
+          <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
         </div>
         
         <div className="space-y-1">
-          <CardDescription className="text-3xl font-bold text-gray-900">
+          <CardDescription className="text-3xl font-bold text-foreground">
             {formatPrice(currentPrice)}
-            <span className="text-sm font-normal text-gray-500">{priceLabel}</span>
+            <span className="text-sm font-normal text-muted-foreground">{priceLabel}</span>
           </CardDescription>
           
           {showYearlyPrice && plan.price_brl > 0 && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               {formatPrice(plan.price_brl * 12)} por ano (sem desconto)
             </div>
           )}
         </div>
 
         {plan.description && (
-          <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+          <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
         )}
       </CardHeader>
       
@@ -154,7 +154,7 @@ const PlanCard = ({
             onClick={() => onSelect(plan.id)}
             className={`w-full ${
               isSelected 
-                ? 'bg-blue-600 hover:bg-blue-700' 
+                ? 'bg-primary hover:bg-primary/90' 
                 : 'bg-gray-600 hover:bg-gray-700'
             }`}
           >

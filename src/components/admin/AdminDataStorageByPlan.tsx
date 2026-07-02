@@ -19,10 +19,10 @@ const AdminDataStorageByPlan = ({ stats }: AdminDataStorageByPlanProps) => {
                 <Badge variant={plan === 'edu' ? 'default' : plan === 'pro' ? 'secondary' : 'outline'}>
                   {plan.toUpperCase()}
                 </Badge>
-                <span className="text-sm text-gray-600">{data.user_count} usuários</span>
+                <span className="text-sm text-muted-foreground">{data.user_count} usuários</span>
               </div>
               <div className="text-lg font-bold">{data.storage_mb.toFixed(1)} MB</div>
-              <div className="text-xs text-gray-500">{data.file_count} arquivos</div>
+              <div className="text-xs text-muted-foreground">{data.file_count} arquivos</div>
             </CardContent>
           </Card>
         ))}

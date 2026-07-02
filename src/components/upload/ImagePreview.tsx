@@ -61,7 +61,7 @@ const ImagePreview = ({ file, result, onRemove, isProcessing, showRemoveButton }
         )}
         {result && <ImageStatusIndicator status={result.status} />}
       </div>
-      <p className="text-xs text-gray-600 mt-1 truncate">{file.name}</p>
+      <p className="text-xs text-muted-foreground mt-1 truncate">{file.name}</p>
       {result?.error && (
         <p className="text-xs text-red-600 mt-1">{result.error}</p>
       )}

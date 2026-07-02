@@ -9,7 +9,7 @@ interface QuizGeneratorButtonProps {
 
 const QuizGeneratorButton = ({ isGenerating, onGenerate }: QuizGeneratorButtonProps) => (
   <Button
-    className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700"
+    className="bg-amber-500 hover:opacity-90"
     onClick={onGenerate}
     size="lg"
     disabled={isGenerating}

@@ -68,7 +68,7 @@ export const PLAN_CONFIGS = {
     uploads: 10,
     flashcards: 10,
     quizzes: 10,
-    color: 'text-gray-600',
+    color: 'text-muted-foreground',
     badgeVariant: 'secondary' as const,
   },
   pro: {
@@ -76,7 +76,7 @@ export const PLAN_CONFIGS = {
     uploads: 100,
     flashcards: 100,
     quizzes: 100,
-    color: 'text-blue-600',
+    color: 'text-primary',
     badgeVariant: 'default' as const,
   },
   edu: {

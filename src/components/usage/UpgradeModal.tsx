@@ -138,7 +138,7 @@ const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModal
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-gray-700">O que você ganha:</h4>
+            <h4 className="font-semibold text-sm text-foreground/80">O que você ganha:</h4>
             <ul className="space-y-1">
               {recommendedPlan.benefits.map((benefit, index) => (
                 <li key={index} className="flex items-center gap-2 text-sm">
@@ -179,7 +179,7 @@ const UpgradeModal = ({ isOpen, onClose, currentPlan, actionType }: UpgradeModal
                 onClose();
                 navigate('/choose-plan');
               }}
-              className="text-muted-foreground hover:text-violet-600"
+              className="text-muted-foreground hover:text-primary"
             >
               Ver todos os planos <ArrowRight className="w-4 h-4 ml-1" />
             </Button>

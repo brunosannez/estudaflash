@@ -72,7 +72,7 @@ const ChoosePlan = () => {
     return (
       <div className={`min-h-screen ${designColors.backgrounds.main} flex items-center justify-center`}>
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-violet-600 mx-auto mb-4" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Carregando planos...</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ const ChoosePlan = () => {
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-8 w-8 text-violet-500" />
-            <h1 className={`${designColors.responsive.pageTitle} bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent`}>
+            <h1 className={`${designColors.responsive.pageTitle} text-foreground`}>
               {currentPlanName !== 'free' ? 'Gerenciar Plano' : 'Escolha seu Plano'}
             </h1>
           </div>
@@ -205,7 +205,7 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
         isSelected
           ? 'ring-2 ring-violet-500 shadow-xl scale-[1.03]'
           : 'hover:shadow-lg hover:scale-[1.01] border-border'
-      } ${isPopular ? 'border-2 border-violet-300' : ''} ${isCurrentPlan ? 'bg-violet-50/50' : ''}`}
+      } ${isPopular ? 'border-2 border-violet-300' : ''} ${isCurrentPlan ? 'bg-primary/5/50' : ''}`}
       onClick={() => onSelect(plan.id)}
     >
       {isCurrentPlan && (
@@ -218,7 +218,7 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
       
       {isPopular && !isCurrentPlan && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-          <span className="bg-gradient-to-r from-violet-500 to-violet-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">
+          <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">
             🌟 Mais Popular
           </span>
         </div>
@@ -226,7 +226,7 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
 
       <CardHeader className="text-center pb-4 pt-6">
         <CardTitle className="text-xl">{plan.name}</CardTitle>
-        <CardDescription className="text-2xl font-bold text-violet-600">
+        <CardDescription className="text-2xl font-bold text-primary">
           {isFree ? 'Grátis' : `R$ ${price.toFixed(2)}${period}`}
         </CardDescription>
         {plan.description && (
@@ -248,7 +248,7 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
           <div
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
               isSelected
-                ? 'bg-violet-500 border-violet-500'
+                ? 'bg-primary/50 border-violet-500'
                 : 'border-muted-foreground/30'
             }`}
           >

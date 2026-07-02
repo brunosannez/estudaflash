@@ -13,7 +13,7 @@ interface FlashcardStatsTooltipProps {
 const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps) => {
   const getAccuracyColor = (accuracy: number) => {
     if (accuracy >= 90) return 'text-green-600 bg-green-50 border-green-200';
-    if (accuracy >= 75) return 'text-blue-600 bg-blue-50 border-blue-200';
+    if (accuracy >= 75) return 'text-primary bg-primary/5 border-blue-200';
     if (accuracy >= 60) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
     return 'text-orange-600 bg-orange-50 border-orange-200';
   };
@@ -23,7 +23,7 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
       return { text: "Domínio excelente! ✨", color: "text-green-600" };
     }
     if (accuracy >= 75) {
-      return { text: "Bom progresso! 👍", color: "text-blue-600" };
+      return { text: "Bom progresso! 👍", color: "text-primary" };
     }
     if (accuracy >= 60) {
       return { text: "Precisa praticar mais 📚", color: "text-yellow-600" };
@@ -53,7 +53,7 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
   return (
     <Card className={`w-80 shadow-xl border-2 ${className}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
           <Target className="h-5 w-5" />
           Estatísticas de Estudo
         </CardTitle>
@@ -66,40 +66,40 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
             {stats.accuracy_percentage.toFixed(1)}%
           </div>
           <Progress value={stats.accuracy_percentage} className="h-2 mb-2" />
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {stats.total_correct} corretas de {stats.total_correct + stats.total_incorrect} tentativas
           </p>
         </div>
 
         {/* Estatísticas Rápidas */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 p-3 rounded-lg border">
+          <div className="bg-primary/5 p-3 rounded-lg border">
             <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-4 w-4 text-blue-600" />
+              <Calendar className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-blue-800">Sessões</span>
             </div>
-            <div className="text-lg font-bold text-blue-700">
+            <div className="text-lg font-bold text-primary">
               {stats.completed_sessions}/{stats.total_sessions}
             </div>
-            <div className="text-xs text-blue-600">completas</div>
+            <div className="text-xs text-primary">completas</div>
           </div>
 
-          <div className="bg-purple-50 p-3 rounded-lg border">
+          <div className="bg-primary/5 p-3 rounded-lg border">
             <div className="flex items-center gap-2 mb-1">
-              <Award className="h-4 w-4 text-purple-600" />
+              <Award className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-purple-800">Melhor</span>
             </div>
-            <div className="text-lg font-bold text-purple-700">
+            <div className="text-lg font-bold text-primary">
               {stats.best_accuracy.toFixed(0)}%
             </div>
-            <div className="text-xs text-purple-600">precisão</div>
+            <div className="text-xs text-primary">precisão</div>
           </div>
         </div>
 
         {/* Informações Adicionais */}
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-gray-600">
+            <span className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
               Tempo médio:
             </span>
@@ -109,7 +109,7 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-gray-600">
+            <span className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="h-4 w-4" />
               Sequência:
             </span>
@@ -119,7 +119,7 @@ const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps)
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">Último estudo:</span>
+            <span className="text-muted-foreground">Último estudo:</span>
             <span className="font-medium">
               {formatDate(stats.last_studied_at)}
             </span>

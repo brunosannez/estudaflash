@@ -39,13 +39,13 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className={`py-8 sm:py-16 ${designColors.responsive.containerPadding} bg-white/80 backdrop-blur-sm`}>
+    <section className={`py-8 sm:py-16 ${designColors.responsive.containerPadding} bg-background/80 backdrop-blur-sm`}>
       <div className="container mx-auto">
         <div className="text-center mb-8 sm:mb-16">
-          <h3 className={`${designColors.responsive.pageTitle} font-fredoka text-transparent bg-clip-text bg-gradient-to-r from-gray-700 to-purple-600 mb-4`}>
+          <h3 className={`${designColors.responsive.pageTitle} font-fredoka text-foreground mb-4`}>
             🎪 Como funciona a mágica?
           </h3>
-          <p className={`${designColors.responsive.heroText} font-nunito text-gray-600 font-semibold`}>✨ Em 4 passos super fáceis! ✨</p>
+          <p className={`${designColors.responsive.heroText} font-nunito text-muted-foreground font-semibold`}>✨ Em 4 passos super fáceis! ✨</p>
         </div>
         
         <div className={`grid ${designColors.responsive.gridCols4} gap-4 sm:gap-8`}>
@@ -55,8 +55,8 @@ const FeaturesSection = () => {
                 <div className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r ${feature.iconGradient} rounded-full flex items-center justify-center mx-auto shadow-lg`}>
                   <span className="text-lg sm:text-2xl md:text-3xl">{feature.icon}</span>
                 </div>
-                <h4 className={`${designColors.responsive.cardTitle} font-fredoka text-gray-700`}>{feature.title}</h4>
-                <p className={`text-gray-600 font-nunito font-semibold ${designColors.responsive.bodyText}`}>
+                <h4 className={`${designColors.responsive.cardTitle} font-fredoka text-foreground/80`}>{feature.title}</h4>
+                <p className={`text-muted-foreground font-nunito font-semibold ${designColors.responsive.bodyText}`}>
                   {feature.description}
                 </p>
               </CardContent>

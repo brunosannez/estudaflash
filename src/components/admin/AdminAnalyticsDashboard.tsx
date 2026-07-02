@@ -253,7 +253,7 @@ const AdminAnalyticsDashboard = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="w-96">
           <CardContent className="py-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
             <p>Carregando analytics avançados...</p>
           </CardContent>
         </Card>
@@ -264,7 +264,7 @@ const AdminAnalyticsDashboard = () => {
   if (!stats) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600 mb-4">Não foi possível carregar as estatísticas.</p>
+        <p className="text-muted-foreground mb-4">Não foi possível carregar as estatísticas.</p>
         <Button onClick={loadSystemStats}>
           Tentar Novamente
         </Button>
@@ -435,21 +435,21 @@ const AdminAnalyticsDashboard = () => {
           <CardContent>
             <div className="space-y-3">
               {stats.topUsers.map((user, index) => (
-                <div key={user.email} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={user.email} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-bold">
                       {index + 1}
                     </div>
                     <div>
                       <div className="font-medium">{user.email}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         📤 {user.uploads} • 🧠 {user.flashcards} • 🎯 {user.quizzes}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-bold">{user.totalActivity}</div>
-                    <div className="text-xs text-gray-500">atividades</div>
+                    <div className="text-xs text-muted-foreground">atividades</div>
                   </div>
                 </div>
               ))}
@@ -474,7 +474,7 @@ const AdminAnalyticsDashboard = () => {
                   {feature.count}
                 </div>
                 <div className="text-sm font-medium">{feature.feature}</div>
-                <div className="text-xs text-gray-500">{feature.percentage}% do total</div>
+                <div className="text-xs text-muted-foreground">{feature.percentage}% do total</div>
               </div>
             ))}
           </div>

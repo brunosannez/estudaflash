@@ -37,7 +37,7 @@ const DashboardUsageItems = ({
       current: usageData.uploads_realizados,
       limit: planConfig.uploads,
       percentage: isUnlimited ? 0 : (usageData.uploads_realizados / planConfig.uploads) * 100,
-      color: 'text-blue-600',
+      color: 'text-primary',
     },
     {
       icon: Brain,
@@ -53,7 +53,7 @@ const DashboardUsageItems = ({
       current: usageData.quizzes_realizados,
       limit: planConfig.quizzes,
       percentage: isUnlimited ? 0 : (usageData.quizzes_realizados / planConfig.quizzes) * 100,
-      color: 'text-purple-600',
+      color: 'text-primary',
     },
     {
       icon: HardDrive,

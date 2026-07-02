@@ -99,20 +99,20 @@ const UsageAnalytics = () => {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-600" />
+                <Activity className="h-5 w-5 text-primary" />
                 Analytics de Uso
               </CardTitle>
               
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <Input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-auto"
                   />
-                  <span className="text-sm text-gray-500">até</span>
+                  <span className="text-sm text-muted-foreground">até</span>
                   <Input
                     type="date"
                     value={endDate}
@@ -131,10 +131,10 @@ const UsageAnalytics = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Ações</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total de Ações</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
-                <Activity className="h-8 w-8 text-blue-600" />
+                <Activity className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -143,8 +143,8 @@ const UsageAnalytics = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Usuários Únicos</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm font-medium text-muted-foreground">Usuários Únicos</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
                 <Users className="h-8 w-8 text-green-600" />
               </div>
@@ -155,10 +155,10 @@ const UsageAnalytics = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Créditos</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total de Créditos</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+                <TrendingUp className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -167,8 +167,8 @@ const UsageAnalytics = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Média por Dia</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm font-medium text-muted-foreground">Média por Dia</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
                 <Calendar className="h-8 w-8 text-orange-600" />
               </div>
@@ -180,17 +180,17 @@ const UsageAnalytics = () => {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                <Activity className="h-8 w-8 text-blue-600" />
+              <div className="mx-auto w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+                <Activity className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Nenhum dado de uso no período
               </h3>
-              <p className="text-gray-600 max-w-md mx-auto mb-4">
+              <p className="text-muted-foreground max-w-md mx-auto mb-4">
                 Os dados de analytics aparecerão aqui quando usuários utilizarem funcionalidades como uploads, resumos, flashcards e quizzes.
               </p>
-              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mb-4">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">📤 Uploads</span>
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-4">
+                <span className="px-2 py-1 bg-primary/10 text-blue-800 rounded">📤 Uploads</span>
                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded">📝 Resumos</span>
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">🎴 Flashcards</span>
                 <span className="px-2 py-1 bg-red-100 text-red-800 rounded">❓ Quizzes</span>
@@ -214,7 +214,7 @@ const UsageAnalytics = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando analytics...</span>
           </div>
         </CardContent>
@@ -229,20 +229,20 @@ const UsageAnalytics = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
+              <Activity className="h-5 w-5 text-primary" />
               Analytics de Uso
             </CardTitle>
             
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
+                <Calendar className="h-4 w-4 text-muted-foreground" />
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-auto"
                 />
-                <span className="text-sm text-gray-500">até</span>
+                <span className="text-sm text-muted-foreground">até</span>
                 <Input
                   type="date"
                   value={endDate}
@@ -266,10 +266,10 @@ const UsageAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total de Ações</p>
-                <p className="text-2xl font-bold text-gray-900">{totalActions}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Ações</p>
+                <p className="text-2xl font-bold text-foreground">{totalActions}</p>
               </div>
-              <Activity className="h-8 w-8 text-blue-600" />
+              <Activity className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -278,8 +278,8 @@ const UsageAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Usuários Únicos</p>
-                <p className="text-2xl font-bold text-gray-900">{uniqueUsers}</p>
+                <p className="text-sm font-medium text-muted-foreground">Usuários Únicos</p>
+                <p className="text-2xl font-bold text-foreground">{uniqueUsers}</p>
               </div>
               <Users className="h-8 w-8 text-green-600" />
             </div>
@@ -290,10 +290,10 @@ const UsageAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total de Créditos</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCredits}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Créditos</p>
+                <p className="text-2xl font-bold text-foreground">{totalCredits}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-600" />
+              <TrendingUp className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -302,8 +302,8 @@ const UsageAnalytics = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Média por Dia</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">Média por Dia</p>
+                <p className="text-2xl font-bold text-foreground">
                   {chartData.length > 0 ? Math.round(totalActions / chartData.length) : 0}
                 </p>
               </div>

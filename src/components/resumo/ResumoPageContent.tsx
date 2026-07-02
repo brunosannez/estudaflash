@@ -46,10 +46,10 @@ const ResumoPageContent = ({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               {resumo.custom_name || 'Resumo'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Criado em {new Date(resumo.data_criacao).toLocaleDateString('pt-BR')}
             </p>
           </div>
@@ -60,7 +60,7 @@ const ResumoPageContent = ({
           <Button 
             onClick={onGenerateFlashcards}
             disabled={isGeneratingFlashcards}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+            className="bg-primary hover:bg-primary/90"
           >
             {isGeneratingFlashcards ? (
               <>
@@ -97,7 +97,7 @@ const ResumoPageContent = ({
           {existingMindMap ? (
             <Button 
               onClick={onViewMindMap}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              className="bg-primary hover:bg-primary/90"
               disabled={mindMapLoading}
             >
               <Lightbulb className="h-4 w-4 mr-2" />
@@ -107,7 +107,7 @@ const ResumoPageContent = ({
             <Button 
               onClick={onGenerateMindMap}
               disabled={isGeneratingMindMap || mindMapLoading}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              className="bg-primary hover:bg-primary/90"
             >
               {isGeneratingMindMap ? (
                 <>

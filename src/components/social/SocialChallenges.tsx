@@ -39,15 +39,15 @@ export const SocialChallenges = ({
   const getChallengeTypeColor = (type: string) => {
     switch (type) {
       case 'daily':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary/10 text-blue-800 border-blue-200';
       case 'weekly':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'monthly':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-primary/10 text-purple-800 border-primary/20';
       case 'special':
-        return 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-800 border-orange-200';
+        return 'bg-amber-100 dark:bg-amber-950/40 text-orange-800 border-orange-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -125,7 +125,7 @@ export const SocialChallenges = ({
         userProgress?.completed 
           ? 'border-green-200 bg-green-50/50' 
           : expired 
-          ? 'border-gray-200 bg-gray-50/50' 
+          ? 'border-border bg-muted/50/50' 
           : 'hover:border-primary/50'
       }`}>
         <CardHeader className="pb-3">
@@ -158,7 +158,7 @@ export const SocialChallenges = ({
                 Completo
               </Badge>
             ) : expired ? (
-              <Badge variant="secondary" className="bg-gray-500">
+              <Badge variant="secondary" className="bg-muted/500">
                 <Clock className="h-3 w-3 mr-1" />
                 Expirado
               </Badge>
@@ -227,8 +227,8 @@ export const SocialChallenges = ({
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Target className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Target className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{userActiveChallenges.length}</p>
@@ -255,8 +255,8 @@ export const SocialChallenges = ({
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Trophy className="h-6 w-6 text-purple-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Trophy className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">

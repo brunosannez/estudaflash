@@ -19,7 +19,7 @@ const AdminAnalytics = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="w-96">
             <CardContent className="py-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
               <p>Verificando permissões...</p>
             </CardContent>
           </Card>
@@ -36,7 +36,7 @@ const AdminAnalytics = () => {
             <CardContent className="py-8 text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-red-500" />
               <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-              <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
+              <p className="text-muted-foreground mb-4">Você não tem permissão para acessar esta página.</p>
               <Button onClick={() => navigate('/')} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar ao Dashboard
@@ -53,10 +53,10 @@ const AdminAnalytics = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
+            <BarChart3 className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Analytics Avançados</h1>
-              <p className="text-gray-600">Análise detalhada de uso e performance do sistema</p>
+              <h1 className="text-3xl font-bold text-foreground">Analytics Avançados</h1>
+              <p className="text-muted-foreground">Análise detalhada de uso e performance do sistema</p>
             </div>
           </div>
           

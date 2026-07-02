@@ -94,16 +94,16 @@ const NewSignupForm = () => {
             <>
               <div className="relative my-5">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
+                  <span className="w-full border-t border-input" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">ou cadastre-se com</span>
+                  <span className="bg-card px-2 text-muted-foreground">ou cadastre-se com</span>
                 </div>
               </div>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+                className="w-full border-input hover:bg-muted/50 font-medium"
                 onClick={handleGoogleSignup}
                 disabled={googleLoading}
               >
@@ -129,8 +129,8 @@ const NewSignupForm = () => {
       return (
         <div className="space-y-4">
           <div className="text-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">📋 Escolha seu Plano</h2>
-            <p className="text-sm text-gray-600">Selecione o plano que melhor se adapta aos seus estudos</p>
+            <h2 className="text-xl font-bold text-foreground mb-1">📋 Escolha seu Plano</h2>
+            <p className="text-sm text-muted-foreground">Selecione o plano que melhor se adapta aos seus estudos</p>
           </div>
           <PlanSelection
             selectedPlanId={formData.selectedPlanId}
@@ -144,23 +144,23 @@ const NewSignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-purple-50 to-pink-50 py-4 px-4">
+    <div className="min-h-screen bg-muted/50 py-4 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 animate-pulse rounded-2xl"></div>
+              <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-2xl"></div>
                 <Zap className="text-2xl text-white relative z-10 animate-bounce" />
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-ping"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-ping"></div>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-foreground">
               Bem-vindo ao Estuda Flash! 
             </h1>
             <span className="text-3xl animate-bounce">⚡</span>
           </div>
-          <p className="text-base text-gray-600">
+          <p className="text-base text-muted-foreground">
             Crie sua conta e transforme seus estudos com velocidade e inteligência artificial
           </p>
         </div>
@@ -171,9 +171,9 @@ const NewSignupForm = () => {
           isMinor={formData.profile.is_minor}
         />
 
-        <Card className="shadow-lg border border-purple-200 bg-white/95 backdrop-blur-sm">
+        <Card className="shadow-lg border border-primary/20 bg-background/95 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl text-gray-800">Criar Conta</CardTitle>
+            <CardTitle className="text-xl text-foreground">Criar Conta</CardTitle>
             <CardDescription className="text-sm">
               Preencha os dados para começar sua jornada de estudos
             </CardDescription>
@@ -196,7 +196,7 @@ const NewSignupForm = () => {
                 <Button
                   onClick={handleSubmit}
                   disabled={!canProceed() || loading}
-                  className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white min-w-[120px] text-sm"
+                  className="bg-primary hover:opacity-90 text-white min-w-[120px] text-sm"
                 >
                   {loading ? 'Criando...' : 'Criar Conta ⚡'}
                 </Button>
@@ -204,7 +204,7 @@ const NewSignupForm = () => {
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
-                  className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white min-w-[100px] text-sm"
+                  className="bg-primary hover:opacity-90 text-white min-w-[100px] text-sm"
                 >
                   Continuar →
                 </Button>
@@ -214,11 +214,11 @@ const NewSignupForm = () => {
         </Card>
 
         <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Já tem uma conta?{' '}
             <button
               onClick={() => navigate('/login')}
-              className="text-purple-600 hover:text-purple-700 font-medium underline"
+              className="text-primary hover:text-primary font-medium underline"
             >
               Fazer login aqui
             </button>

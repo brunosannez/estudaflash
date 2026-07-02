@@ -26,7 +26,7 @@ const UsageIndicatorMain = ({ usageData, onManualSync, syncing }: UsageIndicator
       label: 'Uploads',
       current: usageData.uploads_realizados,
       limit: usageData.uploads_limit,
-      color: 'text-blue-600'
+      color: 'text-primary'
     },
     {
       icon: Brain,
@@ -40,7 +40,7 @@ const UsageIndicatorMain = ({ usageData, onManualSync, syncing }: UsageIndicator
       label: 'Quizzes',
       current: usageData.quizzes_realizados,
       limit: usageData.quizzes_limit,
-      color: 'text-purple-600'
+      color: 'text-primary'
     }
   ];
 
@@ -49,7 +49,7 @@ const UsageIndicatorMain = ({ usageData, onManualSync, syncing }: UsageIndicator
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-purple-600" />
+            <Crown className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">
               Plano {usageData.plan_name || usageData.plano.toUpperCase()}
             </CardTitle>

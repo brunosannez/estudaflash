@@ -18,12 +18,12 @@ const ResumoActions = ({
   isGeneratingQuiz
 }: ResumoActionsProps) => {
   return (
-    <div className="bg-gray-50 p-6 border-t">
+    <div className="bg-muted/50 p-6 border-t">
       <div className="flex flex-col lg:flex-row gap-4 justify-center">
         <Button 
           onClick={onGenerateAutoFlashcards}
           disabled={isGeneratingFlashcards}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+          className="bg-emerald-600 hover:opacity-90 text-white shadow-lg"
           size="lg"
         >
           {isGeneratingFlashcards ? (
@@ -42,7 +42,7 @@ const ResumoActions = ({
         <Button 
           onClick={onManageFlashcards}
           variant="outline"
-          className="border-purple-200 hover:bg-purple-50 hover:border-purple-300 text-purple-700"
+          className="border-primary/20 hover:bg-primary/5 hover:border-purple-300 text-primary"
           size="lg"
         >
           <Brain className="h-5 w-5 mr-2" />
@@ -52,7 +52,7 @@ const ResumoActions = ({
         <Button
           onClick={onGenerateQuiz}
           disabled={isGeneratingQuiz}
-          className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700"
+          className="bg-amber-500 hover:opacity-90"
           size="lg"
         >
           {isGeneratingQuiz ? (

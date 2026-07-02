@@ -11,15 +11,15 @@ const MyFlashcardsEmpty = () => {
     <Card className="border-4 border-blue-200 shadow-xl overflow-hidden">
       <CardContent className="text-center py-16">
         <div className="text-6xl mb-4">🧠</div>
-        <h3 className="text-2xl font-bold text-gray-700 mb-4">
+        <h3 className="text-2xl font-bold text-foreground/80 mb-4">
           Nenhum flashcard encontrado
         </h3>
-        <p className="text-gray-600 mb-8 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           Você ainda não possui flashcards. Gere flashcards a partir de seus resumos para começar a estudar!
         </p>
         <Button 
           onClick={() => navigate('/my-summaries')}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+          className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
           size="lg"
         >
           📚 Ver Meus Resumos

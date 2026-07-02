@@ -58,9 +58,9 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
       {/* Galeria de Imagens */}
       {imageUrls.length > 0 && (
         <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+          <CardHeader className="bg-muted/50">
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
+              <FileText className="h-5 w-5 text-primary" />
               Imagens Carregadas
             </CardTitle>
           </CardHeader>
@@ -72,15 +72,15 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
 
       {/* Texto Extraído */}
       <Card className="overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
+        <CardHeader className="bg-muted/50">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-green-600" />
             Texto Extraído
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+          <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
+            <pre className="whitespace-pre-wrap text-sm text-foreground/80 leading-relaxed">
               {uploadData.texto_extraido || 'Nenhum texto foi extraído.'}
             </pre>
           </div>
@@ -94,7 +94,7 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
 
             {!summaryGenerated && !isGenerating && (
               <>
-                <p className="text-gray-600 mb-6">
+                <p className="text-muted-foreground mb-6">
                   Agora você pode gerar um resumo didático personalizado para o ENEM e vestibulares do Ari de Sá:
                 </p>
                 
@@ -102,7 +102,7 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
                   <Button
                     onClick={handleGenerateSummary}
                     disabled={isGenerating || !uploadData?.texto_extraido}
-                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg w-full"
+                    className="bg-emerald-600 hover:opacity-90 text-white shadow-lg w-full"
                     size="lg"
                   >
                     <FileText className="h-5 w-5 mr-2" />
@@ -115,12 +115,12 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
             {isGenerating && (
               <div className="space-y-4">
                 <div className="flex items-center justify-center space-x-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="text-lg font-semibold text-blue-600">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="text-lg font-semibold text-primary">
                     Gerando seu resumo personalizado...
                   </span>
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-muted-foreground text-sm">
                   <p>📚 Analisando o conteúdo com foco no ENEM e vestibulares</p>
                   <p>🎯 Criando resumo didático no estilo Ari de Sá</p>
                   <p>⚡ Isso pode levar alguns segundos...</p>
@@ -136,7 +136,7 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
                     Resumo gerado com sucesso!
                   </span>
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-muted-foreground text-sm">
                   <p>✅ Resumo otimizado para ENEM e vestibulares</p>
                   <p>🧠 Pronto para gerar flashcards e quiz</p>
                   <p>🚀 Redirecionando...</p>
@@ -144,7 +144,7 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
                 {generatedResumoId && (
                   <Button
                     onClick={() => navigate(`/resumo/${generatedResumoId}`)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
+                    className="bg-primary hover:bg-primary/90 w-full"
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Ver Resumo Agora
@@ -155,7 +155,7 @@ const ExtractedTextDisplay = ({ uploadData }: ExtractedTextDisplayProps) => {
 
             {/* Botão de voltar ao início */}
             {(summaryGenerated || error) && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-border">
                 <Button
                   onClick={() => navigate('/')}
                   variant="outline"

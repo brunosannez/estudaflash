@@ -13,10 +13,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <span className="text-gray-600">Verificando autenticação...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <span className="text-muted-foreground">Verificando autenticação...</span>
         </div>
       </div>
     );

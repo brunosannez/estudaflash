@@ -4,52 +4,52 @@
 
 export const designColors = {
   gradients: {
-    primary: 'from-sky-50 via-violet-50 to-emerald-50',
-    secondary: 'from-cyan-50 via-sky-50 to-violet-50',
-    accent: 'from-violet-100 via-purple-50 to-sky-50',
-    warm: 'from-amber-50 via-orange-50 to-rose-50',
-    cool: 'from-cyan-50 via-teal-50 to-emerald-50',
-    hero: 'from-sky-100 via-violet-100 to-emerald-100'
+    primary: 'from-background to-muted/50',
+    secondary: 'from-background to-muted/30',
+    accent: 'from-primary/5 to-background',
+    warm: 'from-background to-muted/40',
+    cool: 'from-background to-muted/40',
+    hero: 'from-primary/10 via-background to-background'
   },
   cards: {
-    primary: 'bg-white/95 backdrop-blur-sm shadow-lg border border-sky-200/50 rounded-2xl',
-    secondary: 'bg-gradient-to-br from-white to-sky-50/50 backdrop-blur-sm shadow-md border border-cyan-100 rounded-xl',
-    accent: 'bg-gradient-to-br from-violet-50 to-sky-50 border border-violet-200/50 rounded-2xl',
-    interactive: 'bg-white hover:bg-gradient-to-br hover:from-sky-50 hover:to-violet-50 transition-all duration-300 shadow-md hover:shadow-xl border border-transparent hover:border-violet-200/50 rounded-2xl'
+    primary: 'bg-card border border-border rounded-xl',
+    secondary: 'bg-card border border-border rounded-xl',
+    accent: 'bg-primary/5 border border-primary/20 rounded-xl',
+    interactive: 'bg-card border border-border hover:border-primary/40 hover:shadow-sm transition-colors duration-200 rounded-xl'
   },
   buttons: {
-    primary: 'bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white shadow-lg shadow-violet-500/25',
-    secondary: 'bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/25',
-    success: 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25',
-    warning: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25',
-    ghost: 'bg-transparent hover:bg-sky-50 text-gray-700 hover:text-violet-700',
-    outline: 'bg-white border-2 border-violet-300 text-violet-700 hover:bg-violet-50'
+    primary: 'bg-primary hover:bg-primary/90 text-primary-foreground',
+    secondary: 'bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border',
+    success: 'bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-600',
+    warning: 'bg-amber-500 hover:bg-amber-600 text-white',
+    ghost: 'bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground',
+    outline: 'bg-transparent border border-border text-foreground hover:bg-muted'
   },
   backgrounds: {
-    main: 'bg-gradient-to-br from-sky-50 via-violet-50/30 to-emerald-50/20',
-    card: 'bg-white border border-sky-100',
-    header: 'bg-white/95 backdrop-blur-md border-b border-sky-200/50 shadow-sm',
-    section: 'bg-gradient-to-br from-white via-sky-50/30 to-violet-50/20'
+    main: 'bg-background',
+    card: 'bg-card border border-border',
+    header: 'bg-background/90 backdrop-blur-md border-b border-border',
+    section: 'bg-background'
   },
   text: {
-    primary: 'text-gray-800',
-    secondary: 'text-gray-600',
-    accent: 'text-violet-600',
-    muted: 'text-gray-500',
-    success: 'text-emerald-600',
-    warning: 'text-amber-600',
-    error: 'text-rose-600'
+    primary: 'text-foreground',
+    secondary: 'text-muted-foreground',
+    accent: 'text-primary',
+    muted: 'text-muted-foreground',
+    success: 'text-emerald-600 dark:text-emerald-400',
+    warning: 'text-amber-600 dark:text-amber-400',
+    error: 'text-destructive'
   },
   borders: {
-    light: 'border-sky-100',
-    medium: 'border-sky-200',
-    accent: 'border-violet-200',
-    success: 'border-emerald-200'
+    light: 'border-border',
+    medium: 'border-border',
+    accent: 'border-primary/30',
+    success: 'border-emerald-300 dark:border-emerald-800'
   },
   animations: {
-    cardHover: 'hover:scale-[1.02] hover:shadow-xl transition-all duration-300 ease-out',
-    buttonHover: 'hover:scale-105 active:scale-95 transition-transform duration-200',
-    iconFloat: 'hover:animate-bounce',
+    cardHover: 'hover:shadow-sm transition-shadow duration-200',
+    buttonHover: 'active:scale-[0.98] transition-transform duration-150',
+    iconFloat: '',
     slideIn: 'animate-fade-in',
     pulse: 'animate-pulse'
   },
@@ -64,7 +64,7 @@ export const designColors = {
     // Textos e descrições
     heroText: 'text-base sm:text-lg md:text-xl leading-relaxed',
     bodyText: 'text-sm sm:text-base leading-relaxed',
-    captionText: 'text-xs sm:text-sm text-gray-500',
+    captionText: 'text-xs sm:text-sm text-muted-foreground',
     
     // Ícones
     heroIcon: 'h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12',
@@ -90,17 +90,17 @@ export const designColors = {
   },
   // Cores semânticas para gamificação
   gamification: {
-    xp: 'text-amber-600 bg-amber-50 border-amber-200',
-    streak: 'text-orange-600 bg-orange-50 border-orange-200',
-    level: 'text-violet-600 bg-violet-50 border-violet-200',
-    badge: 'text-emerald-600 bg-emerald-50 border-emerald-200'
+    xp: 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-900',
+    streak: 'text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950/40 dark:border-orange-900',
+    level: 'text-primary bg-primary/10 border-primary/20',
+    badge: 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-900'
   },
   // Cores para feedback de estudo
   study: {
-    correct: 'text-emerald-700 bg-emerald-50 border-emerald-300',
-    incorrect: 'text-rose-700 bg-rose-50 border-rose-300',
-    neutral: 'text-sky-700 bg-sky-50 border-sky-300',
-    warning: 'text-amber-700 bg-amber-50 border-amber-300'
+    correct: 'text-emerald-700 bg-emerald-50 border-emerald-300 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800',
+    incorrect: 'text-rose-700 bg-rose-50 border-rose-300 dark:text-rose-400 dark:bg-rose-950/40 dark:border-rose-800',
+    neutral: 'text-primary bg-primary/10 border-primary/30',
+    warning: 'text-amber-700 bg-amber-50 border-amber-300 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-800'
   }
 };
 

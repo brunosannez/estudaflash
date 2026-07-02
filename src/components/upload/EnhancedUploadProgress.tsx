@@ -64,27 +64,27 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
   const currentStage = getCurrentStage();
 
   return (
-    <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+    <Card className="p-6 bg-muted/50 border-blue-200">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-full ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`}>
+            <div className={`p-2 rounded-full ${isComplete ? 'bg-green-500' : 'bg-primary/50'}`}>
               <StageIcon className={`w-5 h-5 text-white ${isLoading ? 'animate-spin' : ''}`} />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800">
+              <h3 className="font-semibold text-foreground">
                 Processando {totalFiles} arquivo{totalFiles !== 1 ? 's' : ''}
               </h3>
-              <p className="text-sm text-gray-600">{currentStep}</p>
+              <p className="text-sm text-muted-foreground">{currentStep}</p>
             </div>
           </div>
           
           <div className="text-right">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-primary">
               {Math.round(progress)}%
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               {isComplete ? 'Concluído' : 'Processando'}
             </div>
           </div>
@@ -98,7 +98,7 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
           />
           
           {/* Stage indicators */}
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-muted-foreground">
             {stages.map((stage, index) => {
               const StageIcon = stage.icon;
               const isActive = progress >= stage.min && progress < stage.max;
@@ -108,8 +108,8 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
                 <div 
                   key={stage.name}
                   className={`flex items-center space-x-1 ${
-                    isActive ? 'text-blue-600 font-medium' : 
-                    isCompleted ? 'text-green-600' : 'text-gray-400'
+                    isActive ? 'text-primary font-medium' : 
+                    isCompleted ? 'text-green-600' : 'text-muted-foreground/70'
                   }`}
                 >
                   <StageIcon className="w-4 h-4" />
@@ -124,12 +124,12 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
         {stage === 'ocr' && successfulImages > 0 && (
           <div className="bg-white/70 rounded-lg p-3 text-sm">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-gray-700">Processando imagem:</span>
-              <span className="text-blue-600 font-bold">{successfulImages + 1} de {totalFiles}</span>
+              <span className="font-medium text-foreground/80">Processando imagem:</span>
+              <span className="text-primary font-bold">{successfulImages + 1} de {totalFiles}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
-                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${(successfulImages / totalFiles) * 100}%` }}
               />
             </div>
@@ -138,7 +138,7 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
 
         {/* Batch info */}
         {currentBatch && totalBatches && totalBatches > 1 && (
-          <div className="text-xs text-center text-gray-600 bg-white/50 rounded px-3 py-2">
+          <div className="text-xs text-center text-muted-foreground bg-white/50 rounded px-3 py-2">
             Processando lote {currentBatch} de {totalBatches}
           </div>
         )}
@@ -146,22 +146,22 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
         {/* Detailed progress info */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/50">
           <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">
+            <div className="text-lg font-bold text-primary">
               {successfulImages}
             </div>
-            <div className="text-xs text-gray-600">Processadas</div>
+            <div className="text-xs text-muted-foreground">Processadas</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-green-600">
               {totalFiles - successfulImages - failedImages}
             </div>
-            <div className="text-xs text-gray-600">Restantes</div>
+            <div className="text-xs text-muted-foreground">Restantes</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-purple-600">
+            <div className="text-lg font-bold text-primary">
               {progress > 80 ? '✓' : '○'}
             </div>
-            <div className="text-xs text-gray-600">Resumo</div>
+            <div className="text-xs text-muted-foreground">Resumo</div>
           </div>
         </div>
       </div>

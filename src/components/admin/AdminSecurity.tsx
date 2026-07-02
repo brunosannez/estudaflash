@@ -61,7 +61,7 @@ const AdminSecurity: React.FC = () => {
             <div className="flex items-center gap-3">
               <KeyRound className="h-5 w-5" />
               <div>
-                <p className="text-sm text-gray-600">Versão ativa da chave de criptografia</p>
+                <p className="text-sm text-muted-foreground">Versão ativa da chave de criptografia</p>
                 <p className="text-lg font-semibold">{activeVersion ?? '—'}</p>
               </div>
             </div>
@@ -73,7 +73,7 @@ const AdminSecurity: React.FC = () => {
 
           <Separator />
 
-          <div className="flex items-start gap-3 text-sm text-gray-600">
+          <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Info className="h-4 w-4 mt-0.5" />
             <p>
               A rotação cria uma nova chave, desativa as anteriores e recriptografa todos os CPFs com a versão mais recente. O acesso ao CPF exige informar um motivo e é auditado automaticamente.

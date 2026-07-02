@@ -36,12 +36,12 @@ const StudyStatsGrid = () => {
       <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Brain className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Brain className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">{usageData.flashcards_gerados}</p>
-              <p className="text-xs text-gray-600">Flashcards</p>
+              <p className="text-2xl font-bold text-primary">{usageData.flashcards_gerados}</p>
+              <p className="text-xs text-muted-foreground">Flashcards</p>
             </div>
           </div>
           <div className="mt-2">
@@ -61,7 +61,7 @@ const StudyStatsGrid = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">{usageData.quizzes_realizados}</p>
-              <p className="text-xs text-gray-600">Quizzes</p>
+              <p className="text-xs text-muted-foreground">Quizzes</p>
             </div>
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -76,12 +76,12 @@ const StudyStatsGrid = () => {
       <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-600">{totalActivities}</p>
-              <p className="text-xs text-gray-600">Atividades</p>
+              <p className="text-2xl font-bold text-primary">{totalActivities}</p>
+              <p className="text-xs text-muted-foreground">Atividades</p>
             </div>
           </div>
           <div className="mt-2">
@@ -101,7 +101,7 @@ const StudyStatsGrid = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">{stats.currentXp}</p>
-              <p className="text-xs text-gray-600">XP Total</p>
+              <p className="text-xs text-muted-foreground">XP Total</p>
             </div>
           </div>
           <div className="mt-2">

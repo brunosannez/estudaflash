@@ -31,17 +31,17 @@ const ProgressLevelDetails = ({ stats, onRefresh, loading }: ProgressLevelDetail
       <CardContent className="space-y-4">
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Nível {stats.currentLevel}</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {stats.currentXp} / {stats.nextLevelXp} XP
           </span>
         </div>
         <Progress value={stats.xpProgress} className="h-3" />
-        <div className="bg-gradient-to-r from-purple-50 to-cyan-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">
+        <div className="bg-muted/50 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground mb-2">
             <strong>Faltam {stats.nextLevelXp - stats.currentXp} XP para o próximo nível!</strong>
           </p>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            <span className="bg-blue-100 px-2 py-1 rounded">🧠 +5 XP por flashcard</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="bg-primary/10 px-2 py-1 rounded">🧠 +5 XP por flashcard</span>
             <span className="bg-green-100 px-2 py-1 rounded">✅ +10 XP por quiz correto</span>
             <span className="bg-orange-100 px-2 py-1 rounded">🎯 +2 XP por tentativa</span>
           </div>

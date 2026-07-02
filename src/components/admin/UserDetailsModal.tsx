@@ -129,41 +129,41 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-600">Nome Completo</label>
+                <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
                 <p className="text-lg font-semibold">{user.full_name || 'Não informado'}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Nome de Usuário</label>
-                <p className="text-sm text-gray-800">{user.username || 'Não definido'}</p>
+                <label className="text-sm font-medium text-muted-foreground">Nome de Usuário</label>
+                <p className="text-sm text-foreground">{user.username || 'Não definido'}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Email</label>
-                <p className="text-sm text-gray-800 flex items-center gap-2">
+                <label className="text-sm font-medium text-muted-foreground">Email</label>
+                <p className="text-sm text-foreground flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   {user.email}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Data de Nascimento</label>
-                <p className="text-sm text-gray-800 flex items-center gap-2">
+                <label className="text-sm font-medium text-muted-foreground">Data de Nascimento</label>
+                <p className="text-sm text-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   {user.date_of_birth ? `${formatDate(user.date_of_birth)} (${getAge(user.date_of_birth)} anos)` : 'Não informado'}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Escolaridade</label>
-                <p className="text-sm text-gray-800 flex items-center gap-2">
+                <label className="text-sm font-medium text-muted-foreground">Escolaridade</label>
+                <p className="text-sm text-foreground flex items-center gap-2">
                   <School className="h-4 w-4" />
                   {user.school_year || 'Não informado'}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Status</label>
+                <label className="text-sm font-medium text-muted-foreground">Status</label>
                 <div className="flex gap-2">
                   <Badge variant={user.is_admin ? 'default' : 'secondary'}>
                     {user.is_admin ? 'Administrador' : 'Usuário'}
@@ -175,8 +175,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Membro desde</label>
-                <p className="text-sm text-gray-800">{formatDate(user.created_at)}</p>
+                <label className="text-sm font-medium text-muted-foreground">Membro desde</label>
+                <p className="text-sm text-foreground">{formatDate(user.created_at)}</p>
               </div>
             </CardContent>
           </Card>
@@ -192,26 +192,26 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Nome do Responsável</label>
+                  <label className="text-sm font-medium text-muted-foreground">Nome do Responsável</label>
                   <p className="text-lg font-semibold">{user.guardian.full_name}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Relação</label>
-                  <p className="text-sm text-gray-800">{user.guardian.relation_to_student}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Relação</label>
+                  <p className="text-sm text-foreground">{user.guardian.relation_to_student}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Email</label>
-                  <p className="text-sm text-gray-800 flex items-center gap-2">
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-sm text-foreground flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     {user.guardian.email}
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Telefone</label>
-                  <p className="text-sm text-gray-800 flex items-center gap-2">
+                  <label className="text-sm font-medium text-muted-foreground">Telefone</label>
+                  <p className="text-sm text-foreground flex items-center gap-2">
                     <Phone className="h-4 w-4" />
                     {user.guardian.phone}
                   </p>
@@ -221,9 +221,9 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                   user.guardian.cpf !== undefined || user.guardian.cpf === undefined
                 ) && (
                   <div>
-                    <label className="text-sm font-medium text-gray-600">CPF</label>
+                    <label className="text-sm font-medium text-muted-foreground">CPF</label>
                     <div className="flex items-center gap-3">
-                      <p className="text-sm text-gray-800">
+                      <p className="text-sm text-foreground">
                         {showCPF ? (decryptedCPF ? formatCPF(decryptedCPF) : '—') : '***.***.***-**'}
                       </p>
                       {showCPF ? (
@@ -252,14 +252,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <div className="space-y-2 mt-2">
-                              <label className="text-sm font-medium text-gray-700">Motivo do acesso</label>
+                              <label className="text-sm font-medium text-foreground/80">Motivo do acesso</label>
                               <Input
                                 placeholder="Ex.: Verificação de identidade para suporte"
                                 value={accessReason}
                                 onChange={(e) => setAccessReason(e.target.value)}
                                 disabled={cpfLoading}
                               />
-                              <p className="text-xs text-gray-500">Obrigatório. Será salvo no registro de auditoria.</p>
+                              <p className="text-xs text-muted-foreground">Obrigatório. Será salvo no registro de auditoria.</p>
                             </div>
                             <AlertDialogFooter>
                               <AlertDialogCancel disabled={cpfLoading}>Cancelar</AlertDialogCancel>
@@ -288,7 +288,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-600">Plano Atual</label>
+                <label className="text-sm font-medium text-muted-foreground">Plano Atual</label>
                 <Badge variant="outline" className="ml-2 capitalize">
                   {user.plano}
                 </Badge>
@@ -298,22 +298,22 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Uploads</label>
-                  <p className="text-2xl font-bold text-blue-600">{user.uploads_realizados}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Uploads</label>
+                  <p className="text-2xl font-bold text-primary">{user.uploads_realizados}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Flashcards</label>
+                  <label className="text-sm font-medium text-muted-foreground">Flashcards</label>
                   <p className="text-2xl font-bold text-green-600">{user.flashcards_gerados}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Quizzes</label>
-                  <p className="text-2xl font-bold text-purple-600">{user.quizzes_realizados}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Quizzes</label>
+                  <p className="text-2xl font-bold text-primary">{user.quizzes_realizados}</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Armazenamento</label>
+                  <label className="text-sm font-medium text-muted-foreground">Armazenamento</label>
                   <p className="text-2xl font-bold text-orange-600">{user.storage_mb.toFixed(1)} MB</p>
                 </div>
               </div>
@@ -327,18 +327,18 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-600">ID do Usuário</label>
-                <p className="text-xs text-gray-600 font-mono break-all">{user.user_id}</p>
+                <label className="text-sm font-medium text-muted-foreground">ID do Usuário</label>
+                <p className="text-xs text-muted-foreground font-mono break-all">{user.user_id}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Última Atividade</label>
-                <p className="text-sm text-gray-800">Em desenvolvimento</p>
+                <label className="text-sm font-medium text-muted-foreground">Última Atividade</label>
+                <p className="text-sm text-foreground">Em desenvolvimento</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">IP de Registro</label>
-                <p className="text-sm text-gray-800">Em desenvolvimento</p>
+                <label className="text-sm font-medium text-muted-foreground">IP de Registro</label>
+                <p className="text-sm text-foreground">Em desenvolvimento</p>
               </div>
             </CardContent>
           </Card>

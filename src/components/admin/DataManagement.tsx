@@ -16,7 +16,7 @@ const DataManagement = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando estatísticas...</span>
           </div>
         </CardContent>
@@ -29,7 +29,7 @@ const DataManagement = () => {
       <Card>
         <CardContent className="py-8">
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Erro ao carregar estatísticas.</p>
+            <p className="text-muted-foreground mb-4">Erro ao carregar estatísticas.</p>
             <Button onClick={forceRefresh}>Tentar Novamente</Button>
           </div>
         </CardContent>
@@ -42,7 +42,7 @@ const DataManagement = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-blue-600" />
+            <Database className="h-5 w-5 text-primary" />
             <CardTitle>Gerenciamento de Dados</CardTitle>
             {isRealTimeConnected && (
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -51,7 +51,7 @@ const DataManagement = () => {
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}</span>
             <Button 
               onClick={forceRefresh}
@@ -63,7 +63,7 @@ const DataManagement = () => {
             </Button>
           </div>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Monitore e gerencie o armazenamento e uso de dados em tempo real
         </p>
       </CardHeader>

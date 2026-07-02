@@ -39,24 +39,24 @@ const FlashcardList = ({ resumoId, open, onClose }: FlashcardListProps) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-lg rounded-lg shadow-2xl relative p-6 max-h-[90vh] overflow-auto">
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-blue-600 text-xl" aria-label="Fechar">×</button>
+      <div className="bg-card w-full max-w-lg rounded-lg shadow-2xl relative p-6 max-h-[90vh] overflow-auto">
+        <button onClick={onClose} className="absolute right-4 top-4 text-muted-foreground hover:text-primary text-xl" aria-label="Fechar">×</button>
 
         <CardHeader>
           <div className="flex items-center gap-2">
-            <BookPlus className="h-5 w-5 text-purple-600" />
+            <BookPlus className="h-5 w-5 text-primary" />
             <h2 className="font-bold text-xl">Flashcards</h2>
           </div>
         </CardHeader>
         <CardContent>
           <div className="mb-2 flex justify-between items-center">
-            <span className="text-sm text-gray-600">{cards.length} flashcard(s) cadastrados</span>
+            <span className="text-sm text-muted-foreground">{cards.length} flashcard(s) cadastrados</span>
             <Button variant="outline" size="sm" onClick={() => setShowForm((v) => !v)}>
               <PlusCircle className="h-4 w-4 mr-1" /> Novo flashcard
             </Button>
           </div>
           {showForm && (
-            <div className="border rounded p-3 mb-4 bg-gray-50">
+            <div className="border rounded p-3 mb-4 bg-muted/50">
               <Textarea
                 value={pergunta}
                 onChange={(e) => setPergunta(e.target.value)}
@@ -86,20 +86,20 @@ const FlashcardList = ({ resumoId, open, onClose }: FlashcardListProps) => {
 
           {loading ? (
             <div className="flex justify-center my-6">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : cards.length === 0 ? (
-            <div className="text-gray-500 text-center py-8 text-sm">Nenhum flashcard criado ainda.</div>
+            <div className="text-muted-foreground text-center py-8 text-sm">Nenhum flashcard criado ainda.</div>
           ) : (
             <ul className="space-y-4">
               {cards.map((f) => (
-                <li key={f.id} className="border rounded-lg p-3 bg-blue-50/80 relative">
+                <li key={f.id} className="border rounded-lg p-3 bg-primary/5/80 relative">
                   <button onClick={() => deleteFlashcard(f.id)} className="absolute top-3 right-3 text-red-400 hover:text-red-600" aria-label="Remover">
                     <Trash className="w-4 h-4" />
                   </button>
                   <div>
                     <b>Pergunta:</b>
-                    <div className="whitespace-pre-wrap break-words text-gray-800 mb-2">{f.pergunta}</div>
+                    <div className="whitespace-pre-wrap break-words text-foreground mb-2">{f.pergunta}</div>
                     <b>Resposta:</b>
                     <div className="whitespace-pre-wrap break-words text-green-800 mb-1">{f.resposta}</div>
                     {f.exemplo && (

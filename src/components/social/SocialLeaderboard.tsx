@@ -26,7 +26,7 @@ export const SocialLeaderboard = ({
       case 1:
         return <Crown className="h-6 w-6 text-yellow-500" />;
       case 2:
-        return <Trophy className="h-6 w-6 text-gray-400" />;
+        return <Trophy className="h-6 w-6 text-muted-foreground/70" />;
       case 3:
         return <Award className="h-6 w-6 text-amber-600" />;
       default:
@@ -220,7 +220,7 @@ export const SocialLeaderboard = ({
                     key={entry.id}
                     className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                       index < 3 
-                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+                        ? 'bg-muted/50 border border-blue-200' 
                         : 'bg-muted/30 hover:bg-muted/50'
                     }`}
                   >
@@ -244,7 +244,7 @@ export const SocialLeaderboard = ({
                     </div>
                     
                     <div className="text-right">
-                      <p className="font-bold text-blue-600">
+                      <p className="font-bold text-primary">
                         {formatValue(entry.value, entry.category)}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -270,7 +270,7 @@ export const SocialLeaderboard = ({
                     key={entry.id}
                     className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                       index < 3 
-                        ? 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200' 
+                        ? 'bg-muted/50 border border-green-200' 
                         : 'bg-muted/30 hover:bg-muted/50'
                     }`}
                   >
@@ -320,7 +320,7 @@ export const SocialLeaderboard = ({
                     key={entry.id}
                     className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                       index < 3 
-                        ? 'bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200' 
+                        ? 'bg-muted/50 border border-orange-200' 
                         : 'bg-muted/30 hover:bg-muted/50'
                     }`}
                   >

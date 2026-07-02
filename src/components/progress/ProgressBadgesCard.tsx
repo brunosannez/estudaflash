@@ -40,25 +40,25 @@ const BadgeItem = ({
       className={`relative p-3 rounded-xl border-2 transition-all ${
         isEarned 
           ? `${rarityStyles.bg} ${rarityStyles.border} ${rarityStyles.glow}` 
-          : 'bg-gray-50 border-gray-200 opacity-60'
+          : 'bg-muted/50 border-border opacity-60'
       }`}
     >
       <div className="flex flex-col items-center text-center">
         <span className={`text-3xl ${!isEarned && 'grayscale'}`}>
           {isEarned ? badge.icon : '🔒'}
         </span>
-        <span className={`text-xs font-medium mt-1 ${isEarned ? rarityStyles.text : 'text-gray-400'}`}>
+        <span className={`text-xs font-medium mt-1 ${isEarned ? rarityStyles.text : 'text-muted-foreground/70'}`}>
           {badge.name}
         </span>
         {isEarned && earnedAt && (
-          <span className="text-[10px] text-gray-400 mt-0.5">
+          <span className="text-[10px] text-muted-foreground/70 mt-0.5">
             {new Date(earnedAt).toLocaleDateString('pt-BR')}
           </span>
         )}
       </div>
       {!isEarned && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 rounded-xl">
-          <Lock className="h-4 w-4 text-gray-400" />
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-xl">
+          <Lock className="h-4 w-4 text-muted-foreground/70" />
         </div>
       )}
     </div>
@@ -138,7 +138,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
         <CardContent>
           <div className="grid grid-cols-5 gap-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
+              <div key={i} className="h-20 bg-muted rounded-xl"></div>
             ))}
           </div>
         </CardContent>
@@ -148,7 +148,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
 
   return (
     <>
-      <Card className="bg-white/90 backdrop-blur-sm border-amber-100 shadow-md">
+      <Card className="bg-background/90 backdrop-blur-sm border-amber-100 shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -171,7 +171,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
                 <div className="space-y-6 mt-4">
                   {Object.entries(badgesByCategory).map(([category, badges]) => (
                     <div key={category}>
-                      <h3 className="font-semibold text-gray-700 mb-3">{category}</h3>
+                      <h3 className="font-semibold text-foreground/80 mb-3">{category}</h3>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                         {badges.map((badge) => {
                           const earned = userBadges.find(ub => ub.badge_type === badge.id);
@@ -218,42 +218,42 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
               {[...Array(Math.max(0, 5 - recentBadges.length))].map((_, i) => (
                 <div 
                   key={`empty-${i}`}
-                  className="p-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
+                  className="p-3 rounded-xl border-2 border-dashed border-border bg-muted/50"
                 >
                   <div className="flex flex-col items-center text-center">
                     <span className="text-3xl text-gray-300">🔒</span>
-                    <span className="text-xs text-gray-400 mt-1">???</span>
+                    <span className="text-xs text-muted-foreground/70 mt-1">???</span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-muted-foreground">
               <Trophy className="h-8 w-8 mx-auto mb-2 text-gray-300" />
               <p className="text-sm">Você ainda não tem conquistas</p>
-              <p className="text-xs text-gray-400">Continue estudando para ganhar medalhas!</p>
+              <p className="text-xs text-muted-foreground/70">Continue estudando para ganhar medalhas!</p>
             </div>
           )}
 
           {/* Next Badge Progress */}
           {nextBadge && (
-            <div className="pt-3 border-t border-gray-100">
+            <div className="pt-3 border-t border-border">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-gray-500">📍 Próxima conquista:</span>
+                <span className="text-sm text-muted-foreground">📍 Próxima conquista:</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{nextBadge.badge.icon}</span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{nextBadge.badge.name}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {nextBadge.current}/{nextBadge.badge.requirement.value}
                     </span>
                   </div>
                   <Progress value={nextBadge.progress} className="h-2" />
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-1 ml-10">
+              <p className="text-xs text-muted-foreground/70 mt-1 ml-10">
                 {nextBadge.badge.kidFriendlyDescription}
               </p>
             </div>

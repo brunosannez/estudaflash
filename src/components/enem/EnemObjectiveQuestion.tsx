@@ -138,18 +138,18 @@ export const EnemObjectiveQuestion: React.FC<EnemObjectiveQuestionProps> = ({
           "border-2",
           selectedAnswer === correctIndex 
             ? "border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800" 
-            : "border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800"
+            : "border-blue-200 bg-primary/5/50 dark:bg-blue-950/20 dark:border-blue-800"
         )}>
           <CardContent className="pt-4 pb-4">
             <div className="flex items-start gap-3">
               <Lightbulb className={cn(
                 "h-5 w-5 flex-shrink-0 mt-0.5",
-                selectedAnswer === correctIndex ? "text-green-600" : "text-blue-600"
+                selectedAnswer === correctIndex ? "text-green-600" : "text-primary"
               )} />
               <div>
                 <h4 className={cn(
                   "font-semibold text-sm mb-2",
-                  selectedAnswer === correctIndex ? "text-green-700 dark:text-green-400" : "text-blue-700 dark:text-blue-400"
+                  selectedAnswer === correctIndex ? "text-green-700 dark:text-green-400" : "text-primary dark:text-blue-400"
                 )}>
                   {selectedAnswer === correctIndex ? "Por que está certa?" : "Entenda a resposta:"}
                 </h4>

@@ -28,7 +28,7 @@ const PricingSection = () => {
     return (
       <section className={`py-12 sm:py-20 ${designColors.responsive.containerPadding}`}>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </section>
     );
@@ -41,11 +41,11 @@ const PricingSection = () => {
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sparkles className="h-6 w-6 text-violet-500" />
-            <span className="text-sm font-semibold text-violet-600 uppercase tracking-wider">
+            <span className="text-sm font-semibold text-primary uppercase tracking-wider">
               Planos
             </span>
           </div>
-          <h2 className={`${designColors.responsive.pageTitle} font-fredoka text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-cyan-600 mb-4`}>
+          <h2 className={`${designColors.responsive.pageTitle} font-fredoka text-foreground mb-4`}>
             🎯 Escolha seu Plano
           </h2>
           <p className={`${designColors.responsive.bodyText} text-muted-foreground max-w-lg mx-auto`}>
@@ -119,7 +119,7 @@ const PricingCard = ({ plan, showYearlyPrice, onSelect }: PricingCardProps) => {
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-          <span className="bg-gradient-to-r from-violet-500 to-violet-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">
+          <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">
             🌟 Mais Popular
           </span>
         </div>
@@ -127,7 +127,7 @@ const PricingCard = ({ plan, showYearlyPrice, onSelect }: PricingCardProps) => {
 
       <CardHeader className="text-center pb-4 pt-6">
         <CardTitle className="text-xl">{plan.name}</CardTitle>
-        <CardDescription className="text-2xl font-bold text-violet-600">
+        <CardDescription className="text-2xl font-bold text-primary">
           {isFree ? 'Grátis' : `R$ ${price.toFixed(2)}${period}`}
         </CardDescription>
         {plan.description && (

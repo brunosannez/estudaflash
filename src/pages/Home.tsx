@@ -19,9 +19,9 @@ const Home = () => {
   // Se está carregando, mostrar loading
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-        <span className="ml-3 text-lg text-gray-700">Carregando...</span>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-lg text-foreground/80">Carregando...</span>
       </div>
     );
   }

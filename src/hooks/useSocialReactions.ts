@@ -179,7 +179,7 @@ export const useSocialReactions = () => {
       support: 'text-green-500',
       wow: 'text-purple-500'
     };
-    return colors[type as keyof typeof colors] || 'text-gray-500';
+    return colors[type as keyof typeof colors] || 'text-muted-foreground';
   };
 
   return {

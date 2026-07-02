@@ -17,10 +17,10 @@ const QuizHistoryViewHeader = ({ onBack }: QuizHistoryViewHeaderProps) => {
         <ArrowLeft className="h-4 w-4" />
       </Button>
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-foreground">
           Detalhes do Quiz
         </h1>
-        <p className="text-gray-600">Revisão completa de questões e respostas</p>
+        <p className="text-muted-foreground">Revisão completa de questões e respostas</p>
       </div>
     </div>
   );

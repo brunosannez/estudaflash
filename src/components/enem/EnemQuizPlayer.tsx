@@ -296,7 +296,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
       case 'easy': return 'bg-green-500/10 text-green-700 dark:text-green-400';
       case 'medium': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
       case 'hard': return 'bg-red-500/10 text-red-700 dark:text-red-400';
-      default: return 'bg-gray-500/10 text-gray-700 dark:text-gray-400';
+      default: return 'bg-muted/500/10 text-foreground/80 dark:text-muted-foreground/70';
     }
   };
 
@@ -368,7 +368,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
                 <div className="text-2xl font-bold text-primary">{formatTime(timeElapsed)}</div>
                 <div className="text-sm text-muted-foreground">Tempo</div>
               </div>
-              <div className="p-4 rounded-lg bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 border border-yellow-300 dark:border-yellow-700">
+              <div className="p-4 rounded-lg bg-muted/50 dark:from-yellow-900/30 dark:to-orange-900/30 border border-yellow-300 dark:border-yellow-700">
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center justify-center gap-1">
                   <Zap className="h-5 w-5" />
                   {sessionXP}
@@ -405,7 +405,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
             </Button>
             <div className="flex items-center gap-3">
               {/* XP Counter */}
-              <Badge variant="default" className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+              <Badge variant="default" className="flex items-center gap-2 bg-amber-500 text-white border-0">
                 <Zap className="h-4 w-4" />
                 {sessionXP} XP
               </Badge>

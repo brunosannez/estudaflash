@@ -58,7 +58,7 @@ const ResumoMindMapButton = ({ resumoId, resumoContent, resumoTitulo }: ResumoMi
     <Button
       onClick={handleGenerateMindMap}
       disabled={isGenerating}
-      className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white disabled:opacity-70"
+      className="bg-primary hover:opacity-90 text-white disabled:opacity-70"
     >
       {isGenerating ? (
         <>

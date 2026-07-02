@@ -64,7 +64,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
         </DialogHeader>
         
         <div className="text-center py-4">
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             Para uma melhor experiência, use nossas páginas dedicadas:
           </p>
           <div className="space-y-2">
@@ -85,10 +85,10 @@ const AuthModal = ({ children }: AuthModalProps) => {
           {/* Separador */}
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-300" />
+              <span className="w-full border-t border-input" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">ou continue com</span>
+              <span className="bg-card px-2 text-muted-foreground">ou continue com</span>
             </div>
           </div>
 
@@ -96,7 +96,7 @@ const AuthModal = ({ children }: AuthModalProps) => {
           <Button
             type="button"
             variant="outline"
-            className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+            className="w-full border-input hover:bg-muted/50 font-medium"
             onClick={async () => {
               setGoogleLoading(true);
               try {

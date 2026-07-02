@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -11,19 +12,20 @@ import { DataSeederService } from "@/services/dataSeederService";
 import { LazyUpload, LazyMyFlashcards, LazyMyProgress, LazySocial, LazyAdminPanel } from "@/utils/lazyLoading";
 import { PageLoading } from '@/components/common/LoadingStates';
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import NewSignup from "./pages/NewSignup";
 import Home from "./pages/Home";
-import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
-import MindMap from "./pages/MindMap";
-import MySummaries from "./pages/MySummaries";
-import Resumo from "./pages/Resumo";
-import EnemQuiz from "./pages/EnemQuiz";
-import QuizHistory from "./pages/QuizHistory";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import ChoosePlan from "./pages/ChoosePlan";
+
+// Páginas secundárias em lazy loading para reduzir o bundle inicial
+const Login = React.lazy(() => import("./pages/Login"));
+const NewSignup = React.lazy(() => import("./pages/NewSignup"));
+const AdminAnalytics = React.lazy(() => import("./pages/AdminAnalytics"));
+const MindMap = React.lazy(() => import("./pages/MindMap"));
+const MySummaries = React.lazy(() => import("./pages/MySummaries"));
+const Resumo = React.lazy(() => import("./pages/Resumo"));
+const EnemQuiz = React.lazy(() => import("./pages/EnemQuiz"));
+const QuizHistory = React.lazy(() => import("./pages/QuizHistory"));
+const PaymentSuccess = React.lazy(() => import("./pages/PaymentSuccess"));
+const ChoosePlan = React.lazy(() => import("./pages/ChoosePlan"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -66,7 +68,7 @@ const AppRoutes = () => {
         
         {/* Rotas de autenticação */}
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
+        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
         <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
         
         {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
@@ -186,15 +188,17 @@ const AppRoutes = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Toaster />
-            <Sonner />
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

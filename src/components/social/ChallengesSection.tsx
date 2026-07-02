@@ -25,12 +25,12 @@ export const ChallengesSection = ({
 
   const getChallengeTypeColor = (type: string) => {
     const colors = {
-      daily: 'bg-blue-500',
+      daily: 'bg-primary/50',
       weekly: 'bg-green-500',
-      monthly: 'bg-purple-500',
+      monthly: 'bg-primary/50',
       special: 'bg-orange-500'
     };
-    return colors[type as keyof typeof colors] || 'bg-gray-500';
+    return colors[type as keyof typeof colors] || 'bg-muted/500';
   };
 
   const getCategoryIcon = (category: string) => {
@@ -92,7 +92,7 @@ export const ChallengesSection = ({
                     completed 
                       ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
                       : expired
-                      ? 'bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800 opacity-60'
+                      ? 'bg-muted/50 border-border dark:bg-gray-950 dark:border-gray-800 opacity-60'
                       : 'bg-card hover:shadow-md'
                   }`}
                 >

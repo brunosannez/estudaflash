@@ -31,7 +31,7 @@ export const Leaderboard = ({ leaderboard, onFilterChange, loading }: Leaderboar
       case 1:
         return <Crown className="h-5 w-5 text-yellow-500" />;
       case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
+        return <Medal className="h-5 w-5 text-muted-foreground/70" />;
       case 3:
         return <Award className="h-5 w-5 text-amber-600" />;
       default:

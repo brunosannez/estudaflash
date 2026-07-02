@@ -16,7 +16,7 @@ const QuickStatsActions = ({ onRefresh, syncing, plan, currentLevel }: QuickStat
 
   return (
     <div className="pt-2 border-t">
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span>Plano: {planConfig.displayName}</span>
         <span>Nível: {currentLevel}</span>
       </div>

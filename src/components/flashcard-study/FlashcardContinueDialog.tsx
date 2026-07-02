@@ -44,31 +44,31 @@ const FlashcardContinueDialog = ({
     <Card className="max-w-2xl mx-auto border-4 border-blue-200 shadow-xl">
       <CardContent className="text-center py-12 space-y-6">
         <Brain className="h-16 w-16 text-blue-500 mx-auto" />
-        <h3 className="text-2xl font-bold text-gray-700">
+        <h3 className="text-2xl font-bold text-foreground/80">
           📚 Sessão em Andamento!
         </h3>
 
         {totalCards > 0 && (
           <div className="max-w-xs mx-auto space-y-2">
-            <div className="flex justify-between text-sm text-gray-500">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>{completedCount} de {totalCards} cards</span>
               <span>{progressPercent}%</span>
             </div>
             <Progress value={progressPercent} className="h-3" />
-            <div className="flex justify-center gap-4 text-sm text-gray-500 mt-2">
+            <div className="flex justify-center gap-4 text-sm text-muted-foreground mt-2">
               <span>✅ {score.correct} acertos</span>
               <span>❌ {score.incorrect} erros</span>
               <span>⚡ {xpEarned} XP</span>
             </div>
             {lastActivityAt && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground/70">
                 Última atividade: {formatLastActivity(lastActivityAt)}
               </p>
             )}
           </div>
         )}
 
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {remaining > 0
             ? `Faltam ${remaining} cards para concluir. Deseja continuar ou recomeçar?`
             : 'Você tem uma sessão em andamento. Deseja continuar ou recomeçar?'}
@@ -77,7 +77,7 @@ const FlashcardContinueDialog = ({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 
             onClick={onContinue}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
           >
             <PlayCircle className="h-5 w-5 mr-2" />
             Continuar Sessão
@@ -85,7 +85,7 @@ const FlashcardContinueDialog = ({
           <Button 
             onClick={onStartNew}
             variant="outline"
-            className="border-2 border-blue-300 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl shadow-lg"
+            className="border-2 border-blue-300 text-primary hover:bg-primary/5 font-bold py-3 px-6 rounded-xl shadow-lg"
           >
             <RotateCcw className="h-5 w-5 mr-2" />
             Nova Sessão

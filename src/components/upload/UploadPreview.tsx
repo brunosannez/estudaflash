@@ -26,7 +26,7 @@ const UploadPreview = ({ file, index, onRemove }: UploadPreviewProps) => {
       >
         <X className="h-3 w-3" />
       </Button>
-      <p className="text-xs text-gray-600 mt-1 truncate">{file.name}</p>
+      <p className="text-xs text-muted-foreground mt-1 truncate">{file.name}</p>
     </div>
   );
 };

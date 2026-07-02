@@ -12,7 +12,7 @@ const BackButton = ({ onClick }: BackButtonProps) => {
       <Button 
         variant="outline" 
         onClick={onClick}
-        className={`bg-white/90 backdrop-blur-sm border-2 border-cyan-300 text-gray-700 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg sm:rounded-xl shadow-lg ${designColors.animations.buttonHover} text-xs sm:text-sm`}
+        className={`bg-background/90 backdrop-blur-sm border-2 border-cyan-300 text-foreground/80 font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg sm:rounded-xl shadow-lg ${designColors.animations.buttonHover} text-xs sm:text-sm`}
       >
         ← 🏠 <span className="hidden sm:inline">Voltar ao Menu</span>
       </Button>

@@ -10,19 +10,19 @@ const ProgressHeader = ({ level, getLevelTitle }: ProgressHeaderProps) => {
   return (
     <div className="text-center mb-8">
       <div className="inline-flex items-center gap-3 mb-4">
-        <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-pulse">
+        <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center animate-pulse">
           <Trophy className="h-8 w-8 text-white" />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-gray-800">
+          <h1 className="text-4xl font-bold text-foreground">
             Nível {level}
           </h1>
-          <p className="text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-semibold">
+          <p className="text-xl text-foreground font-semibold">
             {getLevelTitle(level)}
           </p>
         </div>
       </div>
-      <p className="text-gray-600 max-w-2xl mx-auto">
+      <p className="text-muted-foreground max-w-2xl mx-auto">
         Continue sua jornada de aprendizado e desbloqueie novas conquistas!
       </p>
     </div>

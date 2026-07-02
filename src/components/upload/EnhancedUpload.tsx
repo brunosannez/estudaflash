@@ -51,9 +51,9 @@ const EnhancedUpload = () => {
   if (results) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6 animate-in fade-in duration-500">
-        <Card className="p-8 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 border-green-300 shadow-lg">
+        <Card className="p-8 bg-muted/50 border-green-300 shadow-lg">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg">
               <Upload className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -63,25 +63,25 @@ const EnhancedUpload = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/90 p-5 rounded-xl shadow-sm border border-blue-200">
-              <div className="text-3xl font-bold text-blue-600 mb-1">{results.totalImages}</div>
-              <div className="text-sm text-gray-600 font-medium">Imagens processadas</div>
+            <div className="bg-background/90 p-5 rounded-xl shadow-sm border border-blue-200">
+              <div className="text-3xl font-bold text-primary mb-1">{results.totalImages}</div>
+              <div className="text-sm text-muted-foreground font-medium">Imagens processadas</div>
             </div>
-            <div className="bg-white/90 p-5 rounded-xl shadow-sm border border-green-200">
+            <div className="bg-background/90 p-5 rounded-xl shadow-sm border border-green-200">
               <div className="text-3xl font-bold text-green-600 mb-1">{results.totalPages}</div>
-              <div className="text-sm text-gray-600 font-medium">Páginas analisadas</div>
+              <div className="text-sm text-muted-foreground font-medium">Páginas analisadas</div>
             </div>
-            <div className="bg-white/90 p-5 rounded-xl shadow-sm border border-purple-200">
-              <div className="text-3xl font-bold text-purple-600 mb-1">{Math.round(results.summaryLength / 100)}</div>
-              <div className="text-sm text-gray-600 font-medium">Parágrafos gerados</div>
+            <div className="bg-background/90 p-5 rounded-xl shadow-sm border border-primary/20">
+              <div className="text-3xl font-bold text-primary mb-1">{Math.round(results.summaryLength / 100)}</div>
+              <div className="text-sm text-muted-foreground font-medium">Parágrafos gerados</div>
             </div>
           </div>
 
           {/* Success message with tips */}
-          <div className="bg-white/80 rounded-lg p-4 mb-6 border border-green-200">
+          <div className="bg-background/80 rounded-lg p-4 mb-6 border border-green-200">
             <div className="flex items-start space-x-3">
               <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-foreground/80">
                 <p className="font-semibold text-green-800 mb-1">Processamento completo!</p>
                 <p>Seu resumo está pronto para visualização. Você pode criar flashcards, 
                 gerar quizzes ou mapas mentais a partir deste conteúdo.</p>
@@ -121,10 +121,10 @@ const EnhancedUpload = () => {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold text-foreground">
           Upload Inteligente
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <p className="text-muted-foreground max-w-2xl mx-auto">
           Envie até 10 imagens ou um arquivo ZIP. Nossa IA irá detectar automaticamente 
           a ordem das páginas e criar um resumo completo e contextual.
         </p>
@@ -132,21 +132,21 @@ const EnhancedUpload = () => {
 
       {/* Informações de suporte */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-primary/5 border-blue-200">
           <div className="flex items-center space-x-3">
-            <Image className="w-8 h-8 text-blue-600" />
+            <Image className="w-8 h-8 text-primary" />
             <div>
               <h3 className="font-semibold text-blue-800">Múltiplas Imagens</h3>
-              <p className="text-sm text-blue-600">JPG, PNG, WebP, GIF até 10MB cada</p>
+              <p className="text-sm text-primary">JPG, PNG, WebP, GIF até 10MB cada</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 bg-purple-50 border-purple-200">
+        <Card className="p-4 bg-primary/5 border-primary/20">
           <div className="flex items-center space-x-3">
-            <FileArchive className="w-8 h-8 text-purple-600" />
+            <FileArchive className="w-8 h-8 text-primary" />
             <div>
               <h3 className="font-semibold text-purple-800">Arquivos ZIP</h3>
-              <p className="text-sm text-purple-600">Extração automática com ordenação inteligente</p>
+              <p className="text-sm text-primary">Extração automática com ordenação inteligente</p>
             </div>
           </div>
         </Card>
@@ -215,24 +215,24 @@ const EnhancedUpload = () => {
       </div>
 
       {/* Como funciona */}
-      <Card className="p-6 bg-gradient-to-r from-gray-50 to-blue-50">
+      <Card className="p-6 bg-muted/50">
         <h3 className="text-lg font-semibold mb-4 text-center">Como funciona:</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center space-y-2">
-            <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">1</div>
-            <p className="text-sm text-gray-600">Upload inteligente de imagens ou ZIP</p>
+            <div className="w-10 h-10 bg-primary/50 text-white rounded-full flex items-center justify-center mx-auto font-bold">1</div>
+            <p className="text-sm text-muted-foreground">Upload inteligente de imagens ou ZIP</p>
           </div>
           <div className="text-center space-y-2">
             <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">2</div>
-            <p className="text-sm text-gray-600">OCR avançado extrai texto de cada página</p>
+            <p className="text-sm text-muted-foreground">OCR avançado extrai texto de cada página</p>
           </div>
           <div className="text-center space-y-2">
-            <div className="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">3</div>
-            <p className="text-sm text-gray-600">Organização sequencial do conteúdo</p>
+            <div className="w-10 h-10 bg-primary/50 text-white rounded-full flex items-center justify-center mx-auto font-bold">3</div>
+            <p className="text-sm text-muted-foreground">Organização sequencial do conteúdo</p>
           </div>
           <div className="text-center space-y-2">
             <div className="w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">4</div>
-            <p className="text-sm text-gray-600">Geração de resumo contextual</p>
+            <p className="text-sm text-muted-foreground">Geração de resumo contextual</p>
           </div>
         </div>
       </Card>

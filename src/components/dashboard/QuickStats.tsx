@@ -46,7 +46,7 @@ const QuickStats = () => {
       current: usageData.uploads_realizados,
       limit: usageData.uploads_limit,
       percentage: isUnlimited(usageData.uploads_limit) ? 0 : (usageData.uploads_realizados / usageData.uploads_limit) * 100,
-      color: 'text-blue-600',
+      color: 'text-primary',
     },
     {
       icon: Brain,
@@ -62,7 +62,7 @@ const QuickStats = () => {
       current: usageData.quizzes_realizados,
       limit: usageData.quizzes_limit,
       percentage: isUnlimited(usageData.quizzes_limit) ? 0 : (usageData.quizzes_realizados / usageData.quizzes_limit) * 100,
-      color: 'text-purple-600',
+      color: 'text-primary',
     },
     {
       icon: Trophy,

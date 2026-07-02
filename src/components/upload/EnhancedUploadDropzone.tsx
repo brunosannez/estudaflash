@@ -89,15 +89,15 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
 
   const getDropzoneStyle = () => {
     if (disabled || isProcessing) {
-      return 'border-gray-300 bg-gray-50 cursor-not-allowed';
+      return 'border-input bg-muted/50 cursor-not-allowed';
     }
     if (isDragReject) {
       return 'border-red-500 bg-red-50';
     }
     if (isDragActive) {
-      return 'border-blue-500 bg-blue-50 scale-[1.02]';
+      return 'border-blue-500 bg-primary/5 scale-[1.02]';
     }
-    return 'border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50/50';
+    return 'border-input bg-card hover:border-blue-400 hover:bg-primary/5/50';
   };
 
   const getMessage = () => {
@@ -117,7 +117,7 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
     if (isDragReject) {
       return <AlertCircle className="w-12 h-12 text-red-400" />;
     }
-    return <Upload className="w-12 h-12 text-gray-400" />;
+    return <Upload className="w-12 h-12 text-muted-foreground/70" />;
   };
 
   return (
@@ -135,20 +135,20 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
         {getIcon()}
         
         <div className="space-y-2">
-          <p className="text-lg font-medium text-gray-700">
+          <p className="text-lg font-medium text-foreground/80">
             {getMessage()}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Máximo: 10 imagens ou 1 arquivo ZIP • Até 10MB por arquivo
           </p>
         </div>
 
         <div className="flex space-x-6 mt-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <ImageIcon className="w-5 h-5 text-blue-500" />
             <span>Imagens</span>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <FileArchive className="w-5 h-5 text-purple-500" />
             <span>Arquivos ZIP</span>
           </div>

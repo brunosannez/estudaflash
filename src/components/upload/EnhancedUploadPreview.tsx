@@ -39,10 +39,10 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
       <div className="space-y-4">
         {/* Summary */}
         <div className="flex items-center justify-between border-b pb-4">
-          <h3 className="text-lg font-semibold text-gray-800">
+          <h3 className="text-lg font-semibold text-foreground">
             Arquivos Selecionados ({files.length})
           </h3>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             Total: {formatFileSize(files.reduce((acc, f) => acc + f.file.size, 0))}
           </div>
         </div>
@@ -50,7 +50,7 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
         {/* ZIP Files Section */}
         {zipFiles.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center space-x-2 text-sm font-medium text-purple-700">
+            <div className="flex items-center space-x-2 text-sm font-medium text-primary">
               <FileArchive className="w-4 h-4" />
               <span>Extraídas de ZIP ({zipFiles.length})</span>
             </div>
@@ -73,7 +73,7 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
         {/* Direct Files Section */}
         {directFiles.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center space-x-2 text-sm font-medium text-blue-700">
+            <div className="flex items-center space-x-2 text-sm font-medium text-primary">
               <ImageIcon className="w-4 h-4" />
               <span>Imagens Diretas ({directFiles.length})</span>
             </div>
@@ -94,14 +94,14 @@ const EnhancedUploadPreview: React.FC<EnhancedUploadPreviewProps> = ({
         )}
 
         {/* Helpful tip */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+        <div className="bg-primary/5 border border-blue-200 rounded-lg p-3 text-sm">
           <div className="flex items-start space-x-2">
-            <Check className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
             <div className="text-blue-800">
               <strong>Ordem detectada automaticamente:</strong> As imagens estão ordenadas 
               {files.some(f => f.pageNumber) ? ' pelos números de página detectados nos nomes dos arquivos' : ' alfabeticamente'}.
               {files.some(f => f.pageNumber) && (
-                <span className="block mt-1 text-xs text-blue-600">
+                <span className="block mt-1 text-xs text-primary">
                   ✓ Números de página detectados em {files.filter(f => f.pageNumber).length} de {files.length} imagens
                 </span>
               )}
@@ -125,10 +125,10 @@ const FilePreview: React.FC<{
     ? URL.createObjectURL(processedFile.file) 
     : '';
 
-  const bgColor = isZip ? 'bg-purple-50' : 'bg-blue-50';
-  const borderColor = isZip ? 'border-purple-200' : 'border-blue-200';
-  const textColor = isZip ? 'text-purple-700' : 'text-blue-700';
-  const iconColor = isZip ? 'text-purple-600' : 'text-blue-600';
+  const bgColor = isZip ? 'bg-primary/5' : 'bg-primary/5';
+  const borderColor = isZip ? 'border-primary/20' : 'border-blue-200';
+  const textColor = isZip ? 'text-primary' : 'text-primary';
+  const iconColor = isZip ? 'text-primary' : 'text-primary';
 
   return (
     <Card className={`relative group overflow-hidden ${bgColor} ${borderColor}`}>
@@ -164,10 +164,10 @@ const FilePreview: React.FC<{
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-600 truncate" title={processedFile.originalPath}>
+        <p className="text-xs text-muted-foreground truncate" title={processedFile.originalPath}>
           {processedFile.originalPath}
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           {(processedFile.file.size / 1024).toFixed(1)} KB
         </p>
       </div>

@@ -103,7 +103,7 @@ const Login = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/home')}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Voltar</span>
@@ -111,13 +111,13 @@ const Login = () => {
           
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-purple-500/20 to-pink-500/20 animate-pulse rounded-xl"></div>
+              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+                <div className="absolute inset-0 bg-primary/10 animate-pulse rounded-xl"></div>
                 <Zap className="text-lg text-white relative z-10" />
               </div>
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-ping"></div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-foreground">
               Estuda Flash
             </h1>
           </div>
@@ -125,17 +125,17 @@ const Login = () => {
 
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
               Bem-vindo de volta! 👋
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground">
               Faça login para continuar seus estudos
             </p>
           </div>
 
-          <Card className="shadow-xl border-2 border-purple-200">
+          <Card className="shadow-xl border-2 border-primary/20">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-gray-800">Fazer Login</CardTitle>
+              <CardTitle className="text-2xl text-foreground">Fazer Login</CardTitle>
               <CardDescription>
                 Entre com suas credenciais
               </CardDescription>
@@ -144,7 +144,7 @@ const Login = () => {
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="email" className="text-gray-700 font-medium">
+                  <Label htmlFor="email" className="text-foreground/80 font-medium">
                     Email
                   </Label>
                   <Input
@@ -159,7 +159,7 @@ const Login = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="password" className="text-gray-700 font-medium">
+                  <Label htmlFor="password" className="text-foreground/80 font-medium">
                     Senha
                   </Label>
                   <Input
@@ -175,7 +175,7 @@ const Login = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white font-medium py-2.5"
+                  className="w-full bg-primary hover:opacity-90 text-white font-medium py-2.5"
                   disabled={loading || !email || !password}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
@@ -186,10 +186,10 @@ const Login = () => {
               {/* Separador */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
+                  <span className="w-full border-t border-input" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">ou continue com</span>
+                  <span className="bg-card px-2 text-muted-foreground">ou continue com</span>
                 </div>
               </div>
 
@@ -197,7 +197,7 @@ const Login = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-gray-300 hover:bg-gray-50 font-medium"
+                className="w-full border-input hover:bg-muted/50 font-medium"
                 onClick={handleGoogleLogin}
                 disabled={googleLoading}
               >
@@ -206,11 +206,11 @@ const Login = () => {
               </Button>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Não tem uma conta?{' '}
                   <Link
                     to="/signup"
-                    className="text-purple-600 hover:text-purple-700 font-medium"
+                    className="text-primary hover:text-primary font-medium"
                   >
                     Criar conta grátis
                   </Link>

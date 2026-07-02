@@ -30,7 +30,7 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+      <Card className="bg-primary text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <Zap className="h-6 w-6 mx-auto mb-2" />
           <p className="text-purple-100 text-sm font-medium">
@@ -43,7 +43,7 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+      <Card className="bg-emerald-600 text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <Target className="h-6 w-6 mx-auto mb-2" />
           <p className="text-green-100 text-sm font-medium">Acertos</p>
@@ -51,7 +51,7 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+      <Card className="bg-primary text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <TrendingUp className="h-6 w-6 mx-auto mb-2" />
           <p className="text-blue-100 text-sm font-medium">
@@ -61,7 +61,7 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+      <Card className="bg-primary text-white border-0 shadow-lg">
         <CardContent className="p-4 text-center">
           <Trophy className="h-6 w-6 mx-auto mb-2" />
           <p className="text-cyan-100 text-sm font-medium">

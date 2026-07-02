@@ -293,15 +293,15 @@ export const getRarityStyles = (rarity: BadgeDefinition['rarity']) => {
       glow: ''
     },
     rare: {
-      bg: 'bg-blue-50',
+      bg: 'bg-primary/5',
       border: 'border-blue-400',
-      text: 'text-blue-700',
+      text: 'text-primary',
       glow: ''
     },
     epic: {
-      bg: 'bg-purple-50',
+      bg: 'bg-primary/5',
       border: 'border-purple-400',
-      text: 'text-purple-700',
+      text: 'text-primary',
       glow: 'shadow-purple-200'
     },
     legendary: {

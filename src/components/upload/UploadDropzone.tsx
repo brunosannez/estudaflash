@@ -97,7 +97,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
             
             <Button
               onClick={onFileButtonClick}
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white font-medium px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-primary hover:from-primary/90 hover:to-primary text-white font-medium px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <Image className="h-4 w-4 mr-2" />
               Selecionar Imagens
@@ -111,10 +111,10 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         <div className="space-y-6">
           {/* Informação sobre processamento em lotes */}
           {willUseBatchProcessing && !isProcessing && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary/5 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 text-sm font-bold">📦</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-primary text-sm font-bold">📦</span>
                 </div>
                 <div>
                   <h4 className="text-blue-900 font-semibold mb-1">
@@ -124,7 +124,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
                     Suas {selectedFiles.length} imagens serão processadas em lotes de até {batchSize} por vez, 
                     mantendo a ordem das páginas para criar um resumo organizado.
                   </p>
-                   <div className="text-xs text-blue-700">
+                   <div className="text-xs text-primary">
                      💡 <strong>Vantagem:</strong> Processamento otimizado para múltiplas imagens mantendo a qualidade e ordem do conteúdo.
                    </div>
                 </div>

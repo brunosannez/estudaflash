@@ -37,7 +37,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
   return (
     <>
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-lg font-semibold text-foreground">
           Imagens Processadas ({images.length})
         </h3>
         
@@ -46,7 +46,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
           {images.map((imageUrl, index) => (
             <div
               key={index}
-              className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all duration-200 hover:shadow-lg"
+              className="relative group cursor-pointer rounded-lg overflow-hidden border border-border hover:border-blue-400 transition-all duration-200 hover:shadow-lg"
               onClick={() => openModal(index)}
             >
               <div className="aspect-square">
@@ -63,7 +63,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
               </div>
               
               {/* Número da imagem */}
-              <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+              <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
                 {index + 1}
               </div>
             </div>
@@ -100,7 +100,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
                 <Button
                   variant="outline"
                   size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/90 hover:bg-card"
                   onClick={goToPrevious}
                   disabled={selectedIndex === 0}
                 >
@@ -110,7 +110,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
                 <Button
                   variant="outline"
                   size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/90 hover:bg-card"
                   onClick={goToNext}
                   disabled={selectedIndex === images.length - 1}
                 >
@@ -127,7 +127,7 @@ const ImageGallery = ({ images, alt = "Imagem carregada" }: ImageGalleryProps) =
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    index === selectedIndex ? 'bg-blue-600' : 'bg-gray-300'
+                    index === selectedIndex ? 'bg-primary' : 'bg-gray-300'
                   }`}
                   onClick={() => setSelectedIndex(index)}
                 />

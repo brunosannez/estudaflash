@@ -50,7 +50,7 @@ const StorageIndicator = () => {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <HardDrive className="h-4 w-4 text-blue-600" />
+              <HardDrive className="h-4 w-4 text-primary" />
               <span className="font-medium">Espaço usado</span>
             </div>
             <span className={`text-xs ${isAtLimit ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
@@ -73,7 +73,7 @@ const StorageIndicator = () => {
             </div>
           )}
           {usageData.plano === 'pro' && (
-            <div className="text-blue-600">
+            <div className="text-primary">
               📚 Armazenamento por 90 dias
             </div>
           )}

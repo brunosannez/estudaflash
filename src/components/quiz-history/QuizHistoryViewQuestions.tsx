@@ -30,14 +30,14 @@ const QuizHistoryViewQuestions = ({ questions }: QuizHistoryViewQuestionsProps) 
     } else if (isUserAnswer) {
       return 'bg-red-100 border-red-500 text-red-800'; // Incorreto e selecionado
     }
-    return 'bg-gray-50 border-gray-200 text-gray-600'; // Nem correto nem selecionado
+    return 'bg-muted/50 border-border text-muted-foreground'; // Nem correto nem selecionado
   };
 
   if (questions.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-gray-600">Nenhuma questão encontrada para este quiz.</p>
+          <p className="text-muted-foreground">Nenhuma questão encontrada para este quiz.</p>
         </CardContent>
       </Card>
     );
@@ -58,7 +58,7 @@ const QuizHistoryViewQuestions = ({ questions }: QuizHistoryViewQuestionsProps) 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-800 font-medium">{question.pergunta}</p>
+            <p className="text-foreground font-medium">{question.pergunta}</p>
             
             <div className="grid gap-2">
               {question.alternativas?.map((alternativa, altIndex) => (
@@ -76,14 +76,14 @@ const QuizHistoryViewQuestions = ({ questions }: QuizHistoryViewQuestionsProps) 
                   )}
                 </div>
               )) || (
-                <p className="text-gray-500 italic">Alternativas não disponíveis</p>
+                <p className="text-muted-foreground italic">Alternativas não disponíveis</p>
               )}
             </div>
 
             {question.explicacao && (
-              <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+              <div className="mt-4 p-4 bg-primary/5 border-l-4 border-blue-400 rounded-r-lg">
                 <h4 className="font-semibold text-blue-800 mb-2">💡 Explicação:</h4>
-                <p className="text-blue-700">{question.explicacao}</p>
+                <p className="text-primary">{question.explicacao}</p>
               </div>
             )}
           </CardContent>

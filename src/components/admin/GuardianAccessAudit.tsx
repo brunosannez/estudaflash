@@ -44,18 +44,18 @@ const GuardianAccessAudit: React.FC = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-blue-600" />
+          <Shield className="h-5 w-5 text-primary" />
           <CardTitle>Auditoria de Acesso a Dados Sensíveis</CardTitle>
         </div>
         <Badge variant="outline">CPF protegido</Badge>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-gray-600">
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
           </div>
         ) : rows.length === 0 ? (
-          <p className="text-gray-600">Nenhum acesso registrado.</p>
+          <p className="text-muted-foreground">Nenhum acesso registrado.</p>
         ) : (
           <div className="overflow-x-auto">
             <Table>

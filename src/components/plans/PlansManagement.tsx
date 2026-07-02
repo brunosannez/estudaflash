@@ -69,7 +69,7 @@ const PlansManagement = () => {
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2">Carregando planos...</span>
           </div>
         </CardContent>
@@ -81,10 +81,10 @@ const PlansManagement = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-blue-600" />
+          <CreditCard className="h-5 w-5 text-primary" />
           <CardTitle>Gerenciamento de Planos</CardTitle>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Configure preços e recursos dos planos de assinatura
         </p>
       </CardHeader>
@@ -107,7 +107,7 @@ const PlansManagement = () => {
                       }
                     }}
                   />
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     {plan.is_editable ? 'Editável' : 'Bloqueado'}
                   </span>
                 </div>

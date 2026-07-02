@@ -83,10 +83,10 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
             <CardTitle className={`text-2xl font-bold bg-gradient-to-r ${performanceInfo.color} bg-clip-text text-transparent mb-1`}>
               {performanceInfo.title}
             </CardTitle>
-            <p className="text-lg font-semibold text-gray-700 mb-2">
+            <p className="text-lg font-semibold text-foreground/80 mb-2">
               {performanceInfo.message}
             </p>
-            <h3 className="text-sm font-medium text-gray-600">
+            <h3 className="text-sm font-medium text-muted-foreground">
               {quizTitle}
             </h3>
           </div>
@@ -94,12 +94,12 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
 
         <CardContent className="space-y-4">
           {/* Estatísticas principais */}
-          <div className="bg-white rounded-xl p-4 shadow-lg border-2 border-gray-100">
+          <div className="bg-card rounded-xl p-4 shadow-lg border-2 border-border">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center">
                 <div className="flex justify-center items-center gap-2 mb-2">
                   <Target className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-semibold text-gray-600">Acertos</span>
+                  <span className="text-sm font-semibold text-muted-foreground">Acertos</span>
                 </div>
                 <div className="text-2xl font-bold text-green-600">
                   {correctAnswers}/{totalQuestions}
@@ -108,17 +108,17 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
               
               <div className="text-center">
                 <div className="flex justify-center items-center gap-2 mb-2">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-semibold text-gray-600">Tempo</span>
+                  <Clock className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-semibold text-muted-foreground">Tempo</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-primary">
                   {minutes > 0 ? `${minutes}m ` : ''}{seconds}s
                 </div>
               </div>
             </div>
             
             <div className="text-center mb-3">
-              <div className="text-2xl font-bold text-gray-800 mb-2">
+              <div className="text-2xl font-bold text-foreground mb-2">
                 {pct}% de aproveitamento
               </div>
               
@@ -138,7 +138,7 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
 
           {/* O que melhorar */}
           {performance.wrongAnswers.length > 0 && (
-            <div className="bg-white rounded-xl p-4 shadow-lg border-2 border-orange-200">
+            <div className="bg-card rounded-xl p-4 shadow-lg border-2 border-orange-200">
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="h-5 w-5 text-orange-600" />
                 <h4 className="font-bold text-orange-800">Pontos para Melhorar</h4>
@@ -156,14 +156,14 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
           )}
 
           {/* Sugestões */}
-          <div className="bg-white rounded-xl p-4 shadow-lg border-2 border-blue-200">
+          <div className="bg-card rounded-xl p-4 shadow-lg border-2 border-blue-200">
             <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="h-5 w-5 text-blue-600" />
+              <BookOpen className="h-5 w-5 text-primary" />
               <h4 className="font-bold text-blue-800">Sugestões de Estudo</h4>
             </div>
             <ul className="space-y-1">
               {performance.suggestions.slice(0, 3).map((suggestion: string, index: number) => (
-                <li key={index} className="text-sm text-blue-700 flex items-center gap-2">
+                <li key={index} className="text-sm text-primary flex items-center gap-2">
                   <span className="text-blue-500">•</span>
                   {suggestion}
                 </li>
@@ -175,7 +175,7 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
           <div className="flex flex-col gap-3">
             <Button 
               onClick={onRestart} 
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               🔄 Tentar Novamente
             </Button>
@@ -184,7 +184,7 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
               <Button 
                 onClick={() => navigate('/quiz-history')}
                 variant="outline"
-                className="flex-1 border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-bold py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+                className="flex-1 border-2 border-blue-400 text-primary hover:bg-primary/5 font-bold py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 📊 Histórico
               </Button>
@@ -200,8 +200,8 @@ const QuizResult = ({ sessionResult, onRestart }: QuizResultProps) => {
           </div>
 
           {/* Mensagem motivacional */}
-          <div className="text-center p-3 bg-white rounded-xl shadow-sm border border-gray-200">
-            <p className="text-gray-700 font-medium text-sm">
+          <div className="text-center p-3 bg-card rounded-xl shadow-sm border border-border">
+            <p className="text-foreground/80 font-medium text-sm">
               {pct >= 80 
                 ? "🌟 Continue assim! Você está arrasando nos estudos!" 
                 : "💪 Não desista! Cada tentativa te deixa mais inteligente!"
