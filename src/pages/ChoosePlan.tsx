@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useActivePlans } from '@/hooks/usePlans';
 import { useUsageData } from '@/hooks/useUsageData';
 import { PlansService } from '@/services/plansService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -25,6 +26,7 @@ const ChoosePlan = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [showYearlyPricing, setShowYearlyPricing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   // Filter out internal plans like "Admin Unlimited"
   const publicPlans = plans.filter(
@@ -44,8 +46,25 @@ const ChoosePlan = () => {
       return;
     }
 
+    const selectedPlan = publicPlans.find((p) => p.id === selectedPlanId);
+
     setSubmitting(true);
     try {
+      // Plano pago passa obrigatoriamente pelo checkout Stripe;
+      // ativação direta só para plano gratuito
+      if (selectedPlan && selectedPlan.price_brl > 0) {
+        const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+          body: { planId: selectedPlanId },
+        });
+
+        if (error || !data?.url) {
+          throw new Error(data?.error || 'Não foi possível iniciar o pagamento.');
+        }
+
+        window.location.href = data.url;
+        return;
+      }
+
       await PlansService.selectPlan(selectedPlanId);
       toast({
         title: 'Plano ativado! 🎉',
@@ -61,6 +80,41 @@ const ChoosePlan = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Cancelar sua assinatura? Você mantém o acesso até o fim do período já pago.')) {
+      return;
+    }
+
+    setCanceling(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+        body: {},
+        headers: {
+          Authorization: `Bearer ${sessionData?.session?.access_token}`,
+        },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Não foi possível cancelar. Entre em contato com o suporte.');
+      }
+
+      toast({
+        title: 'Assinatura cancelada',
+        description: data.message,
+      });
+    } catch (error: any) {
+      console.error('Erro ao cancelar assinatura:', error);
+      toast({
+        title: 'Erro ao cancelar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -171,6 +225,32 @@ const ChoosePlan = () => {
             Continuar com o plano Free →
           </Button>
         </div>
+
+        {/* Gerenciar assinatura ativa */}
+        {currentPlanName !== 'free' && (
+          <div className="mt-12 text-center border-t border-border pt-8">
+            <h3 className="text-sm font-semibold text-foreground mb-1">Minha Assinatura</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Precisa pausar? Você pode cancelar a renovação e manter o acesso até o fim do período já pago.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelSubscription}
+              disabled={canceling}
+              className="text-destructive hover:text-destructive"
+            >
+              {canceling ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Cancelando...
+                </>
+              ) : (
+                'Cancelar assinatura'
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -191,13 +271,18 @@ const PlanCardChoose = ({ plan, isSelected, isCurrentPlan, onSelect, showYearlyP
   const isFree = price === 0;
   const isPopular = plan.name === 'Pro';
 
-  const features = [
-    `${plan.uploads_limit} uploads por mês`,
-    `${plan.summaries_limit} resumos por mês`,
-    `${plan.flashcards_limit} flashcards por mês`,
-    `${plan.quizzes_limit} quizzes por mês`,
-    ...plan.features,
-  ];
+  // Custos por ação: resumo 8, quiz 8, flashcards 3, mapa 2, OCR 1/imagem
+  const credits = plan.credits_per_month ?? 0;
+  const features = credits > 0
+    ? [
+        `${credits} créditos por mês`,
+        `≈ ${Math.floor(credits / 31)} sessões completas de estudo`,
+        `Até ${Math.floor(credits / 8)} resumos com IA`,
+        `Até ${Math.floor(credits / 8)} quizzes estilo ENEM`,
+        `Flashcards e mapas mentais ilimitados pelos créditos`,
+        ...(plan.features || []),
+      ]
+    : [...(plan.features || [])];
 
   return (
     <Card

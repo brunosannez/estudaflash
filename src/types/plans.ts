@@ -50,6 +50,7 @@ export interface ActivePlan {
   description: string;
   price_brl: number;
   price_brl_yearly: number;
+  credits_per_month?: number;
   uploads_limit: number;
   summaries_limit: number;
   flashcards_limit: number;

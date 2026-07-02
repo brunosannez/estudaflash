@@ -103,6 +103,10 @@ serve(async (req) => {
           status: 'active',
           start_date: new Date().toISOString(),
           stripe_session_id: sessionId,
+          // Necessário para cancelar a assinatura via API depois
+          stripe_subscription_id: typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id ?? null,
         });
 
       if (subscriptionError) {
