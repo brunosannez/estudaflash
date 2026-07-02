@@ -379,10 +379,10 @@ serve(async (req) => {
       console.log('🔄 Combinação de lotes - não consome créditos adicionais');
     }
     // Buscar plano do usuário para configuração do modelo
-    const userPlan = await getUserPlan(supabase, userId);
+    const userPlan = await getUserPlan(supabase, effectiveUserId);
     const modelConfig = getModelConfigForPlan(userPlan);
-    
-    console.log('👤 Usuário:', userId);
+
+    console.log('👤 Usuário:', effectiveUserId);
     console.log('📊 Plano:', userPlan);
     console.log('🤖 Modelo Anthropic:', modelConfig.model);
     console.log('🎓 Nível escolar:', schoolYear || 'Não informado');
@@ -566,7 +566,7 @@ serve(async (req) => {
         const { data: uploadData, error: uploadError } = await supabase
           .from('uploads')
           .insert({
-            user_id: userId,
+            user_id: effectiveUserId,
             arquivo_original_nome: `Enhanced_Upload_${totalImages || 1}_images.json`,
             texto_extraido: textContent,
             file_size: textContent.length,
