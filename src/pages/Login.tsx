@@ -173,6 +173,15 @@ const Login = () => {
                   />
                 </div>
 
+                <div className="text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-primary hover:text-primary font-medium"
+                  >
+                    Esqueci minha senha
+                  </Link>
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:opacity-90 text-white font-medium py-2.5"

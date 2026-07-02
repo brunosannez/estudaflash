@@ -26,6 +26,8 @@ const EnemQuiz = React.lazy(() => import("./pages/EnemQuiz"));
 const QuizHistory = React.lazy(() => import("./pages/QuizHistory"));
 const PaymentSuccess = React.lazy(() => import("./pages/PaymentSuccess"));
 const ChoosePlan = React.lazy(() => import("./pages/ChoosePlan"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -70,6 +72,10 @@ const AppRoutes = () => {
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
         <Route path="/new-signup" element={user ? <Navigate to="/" replace /> : <NewSignup />} />
+        {/* Recuperação de senha - /reset-password precisa renderizar mesmo com sessão,
+            pois o link de recuperação autentica o usuário antes de trocar a senha */}
+        <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Rota de sucesso de pagamento - pode ser acessada sem login para verificação */}
         <Route path="/payment-success" element={<PaymentSuccess />} />
