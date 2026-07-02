@@ -29,7 +29,28 @@ const PaymentSuccess = () => {
           body: { sessionId }
         });
 
-        if (error) throw error;
+        if (error) {
+          // Em respostas não-2xx o corpo (com a mensagem real, ex. "Payment
+          // not completed") fica em error.context e não em error.message
+          const errorContext = (error as any)?.context;
+          if (errorContext && typeof errorContext.json === 'function') {
+            try {
+              const body = await errorContext.json();
+              if (body?.message === 'Payment not completed') {
+                setVerificationStatus('error');
+                toast({
+                  title: "Pagamento não concluído",
+                  description: "O pagamento ainda não foi confirmado pela operadora. Se você acabou de pagar, aguarde alguns instantes e recarregue esta página.",
+                  variant: "destructive",
+                });
+                return;
+              }
+            } catch {
+              // Corpo não era JSON; segue com o erro genérico
+            }
+          }
+          throw error;
+        }
 
         if (data?.success) {
           setVerificationStatus('success');
@@ -45,7 +66,7 @@ const PaymentSuccess = () => {
         setVerificationStatus('error');
         toast({
           title: "Erro na verificação",
-          description: "Houve um problema ao verificar seu pagamento. Entre em contato conosco.",
+          description: "Houve um problema ao verificar seu pagamento. Se você foi cobrado, entre em contato conosco.",
           variant: "destructive",
         });
       } finally {
