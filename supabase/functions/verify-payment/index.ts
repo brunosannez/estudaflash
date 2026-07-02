@@ -45,6 +45,26 @@ serve(async (req) => {
         throw new Error("Missing user or plan information");
       }
 
+      // Idempotência: refresh em /payment-success reinvoca esta função com a
+      // mesma sessão; não recriar assinatura já processada
+      const { data: existingSubscription } = await supabaseClient
+        .from('subscriptions')
+        .select('id')
+        .eq('stripe_session_id', sessionId)
+        .maybeSingle();
+
+      if (existingSubscription) {
+        console.log(`Session ${sessionId} already processed, skipping`);
+        return new Response(JSON.stringify({
+          success: true,
+          planUpdated: true,
+          alreadyProcessed: true
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
       // Buscar o nome do plano para manter a coluna legada 'plano' em sincronia:
       // getUserPlan/reset_monthly_credits leem 'plano', não 'plan_id'
       const { data: planData, error: planError } = await supabaseClient
@@ -82,6 +102,7 @@ serve(async (req) => {
           amount_paid_brl: session.amount_total ? session.amount_total / 100 : 0,
           status: 'active',
           start_date: new Date().toISOString(),
+          stripe_session_id: sessionId,
         });
 
       if (subscriptionError) {
