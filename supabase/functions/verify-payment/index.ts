@@ -45,11 +45,25 @@ serve(async (req) => {
         throw new Error("Missing user or plan information");
       }
 
-      // Update user's plan
+      // Buscar o nome do plano para manter a coluna legada 'plano' em sincronia:
+      // getUserPlan/reset_monthly_credits leem 'plano', não 'plan_id'
+      const { data: planData, error: planError } = await supabaseClient
+        .from('plans')
+        .select('name')
+        .eq('id', planId)
+        .single();
+
+      if (planError || !planData) {
+        console.error("Error fetching plan:", planError);
+        throw new Error("Plan not found");
+      }
+
+      // Update user's plan (mesmo par de colunas que o RPC user_select_plan)
       const { error: updateError } = await supabaseClient
         .from('uso_usuarios')
-        .update({ 
+        .update({
           plan_id: planId,
+          plano: planData.name.toLowerCase(),
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId);
