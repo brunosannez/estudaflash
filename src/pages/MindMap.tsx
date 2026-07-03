@@ -89,7 +89,7 @@ const MindMap = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <Card className="w-96">
             <CardContent className="py-8 text-center">
-              <p className="text-red-600 mb-4">{error || 'Mapa mental não encontrado'}</p>
+              <p className="text-destructive mb-4">{error || 'Mapa mental não encontrado'}</p>
               <Button onClick={() => navigate('/my-summaries')} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar aos Resumos
