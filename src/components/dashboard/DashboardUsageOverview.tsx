@@ -26,19 +26,19 @@ const DashboardUsageOverview = () => {
     <div className="space-y-6">
       {/* Cards de Ação Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="bg-primary text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/upload')}>
+        <Card className="bg-primary text-primary-foreground shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer rounded-2xl border-0" onClick={() => navigate('/upload')}>
           <CardContent className="p-8 text-center">
-            <Upload className="w-12 h-12 mx-auto mb-4" />
+            <Upload className="w-12 h-12 mx-auto mb-4 text-brand-orange" />
             <h3 className="text-2xl font-bold mb-2">Fazer Upload</h3>
-            <p className="text-blue-100">Envie suas imagens de estudo</p>
+            <p className="text-primary-foreground/75">Envie suas imagens de estudo</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-emerald-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer" onClick={() => navigate('/my-summaries')}>
+        <Card className="bg-brand-orange text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer rounded-2xl border-0" onClick={() => navigate('/my-summaries')}>
           <CardContent className="p-8 text-center">
             <BookOpen className="w-12 h-12 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Ver Resumos</h3>
-            <p className="text-green-100">Acesse seus materiais gerados</p>
+            <p className="text-white/85">Acesse seus materiais gerados</p>
           </CardContent>
         </Card>
       </div>
@@ -65,18 +65,18 @@ const DashboardUsageOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-primary/20">
+        <Card className="bg-card/70 backdrop-blur-sm border-primary/20 rounded-2xl">
           <CardContent className="p-4 text-center">
-            <Target className="w-6 h-6 mx-auto mb-2 text-green-600" />
-            <div className="text-2xl font-bold text-green-600">
+            <Target className="w-6 h-6 mx-auto mb-2 text-accent" />
+            <div className="text-2xl font-bold text-accent">
               {usageData?.quizzes_realizados || 0}
             </div>
             <div className="text-sm text-muted-foreground">Quizzes</div>
           </CardContent>
         </Card>
 
-        <Card 
-          className="bg-muted/50 backdrop-blur-sm border-primary/20 cursor-pointer hover:shadow-lg transition-all hover:border-primary ring-1 ring-primary/20"
+        <Card
+          className="bg-muted/50 backdrop-blur-sm border-primary/20 cursor-pointer hover:shadow-lg transition-all hover:border-primary ring-1 ring-primary/20 rounded-2xl"
           onClick={() => navigate('/choose-plan')}
         >
           <CardContent className="p-4 text-center">
@@ -85,7 +85,7 @@ const DashboardUsageOverview = () => {
               {usageData?.plano === 'free' ? 'Free' : usageData?.plan_name || 'Free'}
             </div>
             <div className="text-sm text-primary/80">Plano</div>
-            <Button variant="default" size="sm" className="mt-2 bg-primary hover:bg-primary text-white text-xs px-3 h-7">
+            <Button variant="default" size="sm" className="mt-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-3 h-7">
               {usageData?.plano === 'free' ? '⭐ Fazer Upgrade' : 'Mudar Plano'}
             </Button>
           </CardContent>

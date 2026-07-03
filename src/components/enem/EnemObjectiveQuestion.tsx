@@ -38,10 +38,10 @@ export const EnemObjectiveQuestion: React.FC<EnemObjectiveQuestionProps> = ({
     const userWasCorrect = selectedAnswer === correctIndex;
     
     if (isCorrect) {
-      return "border-green-500 bg-green-50 dark:bg-green-950/30";
+      return "border-accent bg-accent/10 dark:bg-accent/15";
     }
     if (isSelected && !userWasCorrect) {
-      return "border-red-500 bg-red-50 dark:bg-red-950/30";
+      return "border-destructive bg-destructive/10 dark:bg-destructive/15";
     }
     return "border-border bg-muted/30 opacity-60";
   };
@@ -52,32 +52,32 @@ export const EnemObjectiveQuestion: React.FC<EnemObjectiveQuestionProps> = ({
         ? "border-primary bg-primary text-primary-foreground"
         : "border-muted-foreground text-muted-foreground";
     }
-    
+
     const isCorrect = index === correctIndex;
     const isSelected = index === selectedAnswer;
     const userWasCorrect = selectedAnswer === correctIndex;
-    
+
     if (isCorrect) {
-      return "border-green-500 bg-green-500 text-white";
+      return "border-accent bg-accent text-accent-foreground";
     }
     if (isSelected && !userWasCorrect) {
-      return "border-red-500 bg-red-500 text-white";
+      return "border-destructive bg-destructive text-white";
     }
     return "border-muted-foreground/50 text-muted-foreground/50";
   };
 
   const renderIcon = (index: number) => {
     if (!showFeedback) return null;
-    
+
     const isCorrect = index === correctIndex;
     const isSelected = index === selectedAnswer;
     const userWasCorrect = selectedAnswer === correctIndex;
-    
+
     if (isCorrect) {
-      return <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />;
+      return <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />;
     }
     if (isSelected && !userWasCorrect) {
-      return <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />;
+      return <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />;
     }
     return null;
   };
@@ -136,20 +136,20 @@ export const EnemObjectiveQuestion: React.FC<EnemObjectiveQuestionProps> = ({
       {showFeedback && evidence && (
         <Card className={cn(
           "border-2",
-          selectedAnswer === correctIndex 
-            ? "border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800" 
-            : "border-blue-200 bg-primary/5/50 dark:bg-blue-950/20 dark:border-blue-800"
+          selectedAnswer === correctIndex
+            ? "border-accent/30 bg-accent/10 dark:bg-accent/15"
+            : "border-primary/30 bg-primary/5 dark:bg-primary/15"
         )}>
           <CardContent className="pt-4 pb-4">
             <div className="flex items-start gap-3">
               <Lightbulb className={cn(
                 "h-5 w-5 flex-shrink-0 mt-0.5",
-                selectedAnswer === correctIndex ? "text-green-600" : "text-primary"
+                selectedAnswer === correctIndex ? "text-accent" : "text-primary"
               )} />
               <div>
                 <h4 className={cn(
                   "font-semibold text-sm mb-2",
-                  selectedAnswer === correctIndex ? "text-green-700 dark:text-green-400" : "text-primary dark:text-blue-400"
+                  selectedAnswer === correctIndex ? "text-accent dark:text-accent/90" : "text-primary dark:text-primary/90"
                 )}>
                   {selectedAnswer === correctIndex ? "Por que está certa?" : "Entenda a resposta:"}
                 </h4>

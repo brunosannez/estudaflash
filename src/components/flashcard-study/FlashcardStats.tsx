@@ -30,41 +30,41 @@ const FlashcardStats = ({ studyStats, score, realGamificationData }: FlashcardSt
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card className="bg-primary text-white border-0 shadow-lg">
+      <Card className="bg-primary text-primary-foreground border-0 shadow-lg rounded-2xl">
         <CardContent className="p-4 text-center">
-          <Zap className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-primary/20 text-sm font-medium">
+          <Zap className="h-6 w-6 mx-auto mb-2 text-brand-orange" />
+          <p className="text-primary-foreground/70 text-sm font-medium">
             {realGamificationData?.loading ? 'XP Sessão' : 'XP Total'}
           </p>
           <p className="text-2xl font-bold">{displayXP}</p>
           {!realGamificationData?.loading && realGamificationData?.currentLevel && (
-            <p className="text-xs text-primary/20">Nível {realGamificationData.currentLevel}</p>
+            <p className="text-xs text-primary-foreground/70">Nível {realGamificationData.currentLevel}</p>
           )}
         </CardContent>
       </Card>
 
-      <Card className="bg-emerald-600 text-white border-0 shadow-lg">
+      <Card className="bg-accent text-accent-foreground border-0 shadow-lg rounded-2xl">
         <CardContent className="p-4 text-center">
           <Target className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-green-100 text-sm font-medium">Acertos</p>
+          <p className="text-accent-foreground/70 text-sm font-medium">Acertos</p>
           <p className="text-2xl font-bold">{score.correct}</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-primary text-white border-0 shadow-lg">
+      <Card className="bg-brand-orange text-white border-0 shadow-lg rounded-2xl">
         <CardContent className="p-4 text-center">
           <TrendingUp className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-blue-100 text-sm font-medium">
+          <p className="text-white/80 text-sm font-medium">
             {realGamificationData?.loading ? 'Sequência' : 'Sequência Atual'}
           </p>
           <p className="text-2xl font-bold">{displayStreak}</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-primary text-white border-0 shadow-lg">
+      <Card className="bg-primary text-primary-foreground border-0 shadow-lg rounded-2xl">
         <CardContent className="p-4 text-center">
-          <Trophy className="h-6 w-6 mx-auto mb-2" />
-          <p className="text-primary/15 text-sm font-medium">
+          <Trophy className="h-6 w-6 mx-auto mb-2 text-brand-orange" />
+          <p className="text-primary-foreground/70 text-sm font-medium">
             {realGamificationData?.loading ? 'Revisados' : 'Hoje + Sessão'}
           </p>
           <p className="text-2xl font-bold">{displayReviewed}</p>

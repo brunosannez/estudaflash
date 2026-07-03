@@ -18,10 +18,10 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
       <CardContent className="h-full flex flex-col justify-between p-6 min-h-[500px]">
         <div className="flex-1">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center">
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
-            <Badge className="text-lg px-4 py-2 bg-green-100 text-green-700">
+            <Badge className="text-lg px-4 py-2 bg-accent/10 text-accent">
               💡 Resposta
             </Badge>
           </div>
@@ -50,7 +50,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             disabled={isAnimating}
             variant="outline"
             size="lg"
-            className="border-3 border-red-400 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-500 font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95"
+            className="border-2 border-destructive bg-destructive/10 text-destructive hover:bg-destructive/20 hover:border-destructive/80 font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95"
           >
             <XCircle className="h-5 w-5 mr-2" />
             <div className="text-center">
@@ -62,7 +62,7 @@ const FlashcardBack = ({ answer, example, onAnswer, isAnimating }: FlashcardBack
             onClick={() => onAnswer(true)}
             disabled={isAnimating}
             size="lg"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95 border-2 border-green-400"
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-4 px-4 rounded-xl shadow-lg disabled:opacity-30 transition-all transform hover:scale-105 active:scale-95 border-2 border-accent/50"
           >
             <CheckCircle className="h-5 w-5 mr-2" />
             <div className="text-center">

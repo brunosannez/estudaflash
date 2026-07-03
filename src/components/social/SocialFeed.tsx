@@ -28,13 +28,13 @@ export const SocialFeed = ({ activities, userProfile, loading }: SocialFeedProps
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
       case 'level_up':
-        return <TrendingUp className="h-5 w-5 text-blue-500" />;
+        return <TrendingUp className="h-5 w-5 text-primary" />;
       case 'badge_earned':
-        return <Trophy className="h-5 w-5 text-yellow-500" />;
+        return <Trophy className="h-5 w-5 text-brand-orange" />;
       case 'challenge_completed':
-        return <Target className="h-5 w-5 text-green-500" />;
+        return <Target className="h-5 w-5 text-accent" />;
       case 'streak_milestone':
-        return <Zap className="h-5 w-5 text-orange-500" />;
+        return <Zap className="h-5 w-5 text-brand-orange" />;
       case 'quiz_perfect':
         return <Star className="h-5 w-5 text-primary" />;
       default:
@@ -47,11 +47,11 @@ export const SocialFeed = ({ activities, userProfile, loading }: SocialFeedProps
       case 'level_up':
         return 'border-blue-200 bg-primary/5/50';
       case 'badge_earned':
-        return 'border-yellow-200 bg-yellow-50/50';
+        return 'border-brand-orange/20 bg-brand-orange/5';
       case 'challenge_completed':
-        return 'border-green-200 bg-green-50/50';
+        return 'border-accent/20 bg-accent/5';
       case 'streak_milestone':
-        return 'border-orange-200 bg-orange-50/50';
+        return 'border-brand-orange/20 bg-brand-orange/5';
       case 'quiz_perfect':
         return 'border-primary/20 bg-primary/5/50';
       default:
@@ -282,7 +282,7 @@ export const SocialFeed = ({ activities, userProfile, loading }: SocialFeedProps
               </div>
             </div>
             <div className="text-center p-3 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-brand-orange">
                 {activities.filter(a => a.activity_type === 'badge_earned').length}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -290,7 +290,7 @@ export const SocialFeed = ({ activities, userProfile, loading }: SocialFeedProps
               </div>
             </div>
             <div className="text-center p-3 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-accent">
                 {activities.filter(a => a.activity_type === 'challenge_completed').length}
               </div>
               <div className="text-xs text-muted-foreground">

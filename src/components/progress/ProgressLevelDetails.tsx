@@ -16,7 +16,7 @@ const ProgressLevelDetails = ({ stats, onRefresh, loading }: ProgressLevelDetail
     <Card className="transform hover:scale-105 transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center">
-          <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+          <Trophy className="h-5 w-5 mr-2 text-brand-orange" />
           Progresso do Nível {stats.currentLevel}
         </CardTitle>
         <Button 
@@ -42,8 +42,8 @@ const ProgressLevelDetails = ({ stats, onRefresh, loading }: ProgressLevelDetail
           </p>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="bg-primary/10 px-2 py-1 rounded">🧠 +5 XP por flashcard</span>
-            <span className="bg-green-100 px-2 py-1 rounded">✅ +10 XP por quiz correto</span>
-            <span className="bg-orange-100 px-2 py-1 rounded">🎯 +2 XP por tentativa</span>
+            <span className="bg-accent/10 px-2 py-1 rounded">✅ +10 XP por quiz correto</span>
+            <span className="bg-brand-orange/10 px-2 py-1 rounded">🎯 +2 XP por tentativa</span>
           </div>
         </div>
       </CardContent>

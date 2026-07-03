@@ -12,10 +12,10 @@ interface FlashcardStatsTooltipProps {
 
 const FlashcardStatsTooltip = ({ stats, className }: FlashcardStatsTooltipProps) => {
   const getAccuracyColor = (accuracy: number) => {
-    if (accuracy >= 90) return 'text-green-600 bg-green-50 border-green-200';
-    if (accuracy >= 75) return 'text-primary bg-primary/5 border-blue-200';
-    if (accuracy >= 60) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-orange-600 bg-orange-50 border-orange-200';
+    if (accuracy >= 90) return 'text-accent bg-accent/5 border-accent/20';
+    if (accuracy >= 75) return 'text-primary bg-primary/5 border-primary/20';
+    if (accuracy >= 60) return 'text-brand-orange bg-brand-orange/5 border-brand-orange/20';
+    return 'text-destructive bg-destructive/5 border-destructive/20';
   };
 
   const getRecommendation = (accuracy: number, studyStreak: number) => {

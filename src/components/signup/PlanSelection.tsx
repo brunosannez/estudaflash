@@ -15,6 +15,12 @@ const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => 
   const { plans, loading } = useActivePlans();
   const [showYearlyPricing, setShowYearlyPricing] = useState(false);
 
+  // Planos internos (ex: "Admin Unlimited") nunca devem aparecer no
+  // cadastro público — mesmo filtro usado em ChoosePlan e PricingSection
+  const publicPlans = plans.filter(
+    (p) => !p.name.toLowerCase().includes('admin')
+  );
+
   if (loading) {
     return (
       <div className="lg:col-span-2">
@@ -52,7 +58,7 @@ const PlanSelection = ({ selectedPlanId, onSelectPlan }: PlanSelectionProps) => 
       </div>
       
       <div className="grid md:grid-cols-3 gap-6">
-        {plans.map((plan) => (
+        {publicPlans.map((plan) => (
           <PlanCard
             key={plan.id}
             plan={plan}

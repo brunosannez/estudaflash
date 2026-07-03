@@ -31,11 +31,11 @@ const BadgesPreview = () => {
   const recentBadges = userBadges.slice(0, 4);
 
   return (
-    <Card className="bg-background/90 backdrop-blur-sm border-amber-100 shadow-md">
+    <Card className="bg-background/90 backdrop-blur-sm border-border shadow-md rounded-2xl">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-500" />
+            <Trophy className="h-4 w-4 text-brand-orange" />
             Conquistas
           </CardTitle>
           <Button 

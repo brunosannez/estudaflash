@@ -16,10 +16,10 @@ const UpgradeBanner = () => {
   if (currentPlan !== 'free') return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-primary p-5 text-white shadow-xl">
+    <div className="relative overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground shadow-xl">
       <button
         onClick={() => setDismissed(true)}
-        className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/20 transition-colors"
+        className="absolute top-3 right-3 p-1 rounded-full hover:bg-primary-foreground/15 transition-colors"
         aria-label="Fechar"
       >
         <X className="w-4 h-4" />
@@ -27,29 +27,29 @@ const UpgradeBanner = () => {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex items-center gap-3 shrink-0">
-          <div className="p-2.5 bg-white/20 rounded-xl">
-            <Crown className="w-6 h-6" />
+          <div className="p-2.5 bg-primary-foreground/15 rounded-xl">
+            <Crown className="w-6 h-6 text-brand-orange" />
           </div>
         </div>
 
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-bold">Você está no plano Free</h3>
-          <p className="text-sm text-white/80 mt-0.5">
-            Desbloqueie uploads, flashcards e quizzes ilimitados com um plano premium!
+          <p className="text-sm text-primary-foreground/75 mt-0.5">
+            Ganhe mais créditos por mês para gerar mais resumos, quizzes e flashcards com um plano premium!
           </p>
         </div>
 
         <Button
           onClick={() => navigate('/choose-plan')}
-          className="shrink-0 bg-card text-primary hover:bg-background/90 font-semibold shadow-md"
+          className="shrink-0 bg-card text-primary hover:bg-card/90 font-semibold shadow-md"
         >
           Ver Planos <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
 
       {/* Decorative circles */}
-      <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-      <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/10 rounded-full" />
+      <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary-foreground/10 rounded-full" />
+      <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-primary-foreground/10 rounded-full" />
     </div>
   );
 };

@@ -258,9 +258,9 @@ const QuizHistory: React.FC = () => {
             
             <Card className="bg-muted/50 border-green-200">
               <CardContent className="p-4 text-center">
-                <Trophy className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <div className="text-2xl font-bold text-green-700">{completedSessions.length}</div>
-                <div className="text-sm text-green-600">Completos</div>
+                <Trophy className="h-8 w-8 mx-auto mb-2 text-accent/80" />
+                <div className="text-2xl font-bold text-accent">{completedSessions.length}</div>
+                <div className="text-sm text-accent/80">Completos</div>
               </CardContent>
             </Card>
             
@@ -275,8 +275,8 @@ const QuizHistory: React.FC = () => {
             <Card className="bg-muted/50 border-orange-200">
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">📊</div>
-                <div className="text-2xl font-bold text-orange-700">{averageScore}%</div>
-                <div className="text-sm text-orange-600">Média Geral</div>
+                <div className="text-2xl font-bold text-brand-orange">{averageScore}%</div>
+                <div className="text-sm text-brand-orange/70">Média Geral</div>
               </CardContent>
             </Card>
           </div>
@@ -326,7 +326,7 @@ const QuizHistory: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-400">
+                        <Badge variant="outline" className="text-brand-orange border-brand-orange/50">
                           <Clock className="h-3 w-3 mr-1" />
                           Em andamento
                         </Badge>

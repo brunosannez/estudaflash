@@ -139,7 +139,7 @@ const ApiUsageMonitoring = () => {
                   <p className="text-2xl font-bold text-foreground">$0.00</p>
                   <p className="text-xs text-muted-foreground mt-1">Estimativa USD</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
+                <DollarSign className="h-8 w-8 text-accent" />
               </div>
             </CardContent>
           </Card>
@@ -165,7 +165,7 @@ const ApiUsageMonitoring = () => {
                   <p className="text-2xl font-bold text-foreground">-</p>
                   <p className="text-xs text-muted-foreground mt-1">Nenhum dado</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-orange-600" />
+                <TrendingUp className="h-8 w-8 text-brand-orange" />
               </div>
             </CardContent>
           </Card>
@@ -284,7 +284,7 @@ const ApiUsageMonitoring = () => {
                 <p className="text-2xl font-bold text-foreground">{formatCurrency(totalCost)}</p>
                 <p className="text-xs text-muted-foreground mt-1">Estimativa USD</p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
+              <DollarSign className="h-8 w-8 text-accent" />
             </div>
           </CardContent>
         </Card>
@@ -310,7 +310,7 @@ const ApiUsageMonitoring = () => {
                 <p className="text-2xl font-bold text-foreground">{avgSuccessRate.toFixed(1)}%</p>
                 <p className="text-xs text-muted-foreground mt-1">Média geral</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-orange-600" />
+              <TrendingUp className="h-8 w-8 text-brand-orange" />
             </div>
           </CardContent>
         </Card>

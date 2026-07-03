@@ -133,7 +133,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
     return (
       <Card className="animate-pulse">
         <CardHeader className="pb-2">
-          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-6 bg-muted/50 rounded w-1/3"></div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 gap-2">
@@ -148,11 +148,11 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
 
   return (
     <>
-      <Card className="bg-background/90 backdrop-blur-sm border-amber-100 shadow-md">
+      <Card className="bg-background/90 backdrop-blur-sm border-accent/20 shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" />
+              <Trophy className="h-5 w-5 text-brand-orange" />
               Minhas Conquistas
             </CardTitle>
             <Dialog open={showAllBadges} onOpenChange={setShowAllBadges}>
@@ -164,7 +164,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <Trophy className="h-5 w-5 text-brand-orange" />
                     Todas as Conquistas ({userBadges.length}/{BADGES_CATALOG.length})
                   </DialogTitle>
                 </DialogHeader>
@@ -221,7 +221,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
                   className="p-3 rounded-xl border-2 border-dashed border-border bg-muted/50"
                 >
                   <div className="flex flex-col items-center text-center">
-                    <span className="text-3xl text-gray-300">🔒</span>
+                    <span className="text-3xl text-muted-foreground/40">🔒</span>
                     <span className="text-xs text-muted-foreground/70 mt-1">???</span>
                   </div>
                 </div>
@@ -229,7 +229,7 @@ const ProgressBadgesCard = ({ userStats = {} }: ProgressBadgesCardProps) => {
             </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
-              <Trophy className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <Trophy className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
               <p className="text-sm">Você ainda não tem conquistas</p>
               <p className="text-xs text-muted-foreground/70">Continue estudando para ganhar medalhas!</p>
             </div>

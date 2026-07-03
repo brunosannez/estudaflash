@@ -21,30 +21,30 @@ const EnhancedQuizHistoryStats = ({ stats }: EnhancedQuizHistoryStatsProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <Card className="bg-muted/50 border-blue-200">
+      <Card className="bg-muted/50 border-primary/20">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-blue-800">
+          <CardTitle className="text-sm font-medium text-primary/80">
             Total de Quizzes
           </CardTitle>
           <Trophy className="h-4 w-4 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-900">{stats.totalQuizzes}</div>
+          <div className="text-2xl font-bold text-primary">{stats.totalQuizzes}</div>
           <p className="text-xs text-primary">
             {stats.completedQuizzes} concluídos, {stats.inProgressQuizzes} em andamento
           </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/50 border-green-200">
+      <Card className="bg-muted/50 border-accent/20">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-green-800">
+          <CardTitle className="text-sm font-medium text-accent/80">
             Taxa de Conclusão
           </CardTitle>
           <CheckCircle className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-900">{completionRate}%</div>
+          <div className="text-2xl font-bold text-accent">{completionRate}%</div>
           <Progress value={completionRate} className="mt-2 h-2" />
         </CardContent>
       </Card>
@@ -64,16 +64,16 @@ const EnhancedQuizHistoryStats = ({ stats }: EnhancedQuizHistoryStatsProps) => {
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/50 border-orange-200">
+      <Card className="bg-muted/50 border-brand-orange/20">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-orange-800">
+          <CardTitle className="text-sm font-medium text-brand-orange/80">
             Em Progresso
           </CardTitle>
-          <PlayCircle className="h-4 w-4 text-orange-600" />
+          <PlayCircle className="h-4 w-4 text-brand-orange/70" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-orange-900">{stats.inProgressQuizzes}</div>
-          <p className="text-xs text-orange-600">
+          <div className="text-2xl font-bold text-brand-orange">{stats.inProgressQuizzes}</div>
+          <p className="text-xs text-brand-orange/70">
             {stats.inProgressQuizzes > 0 ? 'Continue seus estudos!' : 'Todos os quizzes concluídos!'}
           </p>
         </CardContent>

@@ -293,10 +293,10 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-500/10 text-green-700 dark:text-green-400';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
-      case 'hard': return 'bg-red-500/10 text-red-700 dark:text-red-400';
-      default: return 'bg-muted/500/10 text-foreground/80 dark:text-muted-foreground/70';
+      case 'easy': return 'bg-accent/10 text-accent dark:text-accent/80';
+      case 'medium': return 'bg-brand-orange/10 text-brand-orange dark:text-brand-orange/80';
+      case 'hard': return 'bg-destructive/10 text-destructive dark:text-destructive/80';
+      default: return 'bg-muted/10 text-muted-foreground';
     }
   };
 
@@ -405,7 +405,7 @@ export const EnemQuizPlayer: React.FC<EnemQuizPlayerProps> = ({
             </Button>
             <div className="flex items-center gap-3">
               {/* XP Counter */}
-              <Badge variant="default" className="flex items-center gap-2 bg-amber-500 text-white border-0">
+              <Badge variant="default" className="flex items-center gap-2 bg-brand-orange text-white border-0">
                 <Zap className="h-4 w-4" />
                 {sessionXP} XP
               </Badge>

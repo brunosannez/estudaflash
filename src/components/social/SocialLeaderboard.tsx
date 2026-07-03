@@ -24,11 +24,11 @@ export const SocialLeaderboard = ({
   const getRankIcon = (position: number) => {
     switch (position) {
       case 1:
-        return <Crown className="h-6 w-6 text-yellow-500" />;
+        return <Crown className="h-6 w-6 text-brand-orange" />;
       case 2:
         return <Trophy className="h-6 w-6 text-muted-foreground/70" />;
       case 3:
-        return <Award className="h-6 w-6 text-amber-600" />;
+        return <Award className="h-6 w-6 text-brand-orange" />;
       default:
         return (
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm font-medium">

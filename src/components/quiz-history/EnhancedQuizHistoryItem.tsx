@@ -44,7 +44,7 @@ const EnhancedQuizHistoryItem = ({
         return {
           icon: <CheckCircle className="h-4 w-4" />,
           label: 'Concluído',
-          color: 'bg-green-500'
+          color: 'bg-accent'
         };
       case 'in_progress':
         return {
@@ -56,7 +56,7 @@ const EnhancedQuizHistoryItem = ({
         return {
           icon: <Pause className="h-4 w-4" />,
           label: 'Pausado',
-          color: 'bg-yellow-500'
+          color: 'bg-brand-orange'
         };
       default:
         return {
@@ -126,12 +126,12 @@ const EnhancedQuizHistoryItem = ({
                 </div>
                 {quiz.status === 'completed' && (
                   <>
-                    <div className="text-center p-2 bg-green-50 rounded-lg">
-                      <div className="font-bold text-green-600">{accuracy}%</div>
+                    <div className="text-center p-2 bg-accent/10 rounded-lg">
+                      <div className="font-bold text-accent/80">{accuracy}%</div>
                       <div className="text-muted-foreground">Precisão</div>
                     </div>
-                    <div className="text-center p-2 bg-orange-50 rounded-lg">
-                      <div className="font-bold text-orange-600">
+                    <div className="text-center p-2 bg-brand-orange/10 rounded-lg">
+                      <div className="font-bold text-brand-orange/80">
                         {quiz.completion_time_seconds ? Math.floor(quiz.completion_time_seconds / 60) : 0}min
                       </div>
                       <div className="text-muted-foreground">Tempo</div>
@@ -149,7 +149,7 @@ const EnhancedQuizHistoryItem = ({
               {quiz.can_resume && (
                 <Button
                   onClick={() => onResumeQuiz(quiz.session_id)}
-                  className="bg-emerald-600 hover:opacity-90 text-white"
+                  className="bg-accent hover:opacity-90 text-accent-foreground"
                 >
                   <Play className="h-4 w-4 mr-2" />
                   {quiz.status === 'completed' ? 'Refazer Quiz' : 'Continuar Quiz'}
@@ -160,7 +160,7 @@ const EnhancedQuizHistoryItem = ({
                 <Button
                   onClick={() => onViewQuiz(quiz.session_id)}
                   variant="outline"
-                  className="border-blue-200 text-primary hover:bg-primary/5 hover:border-blue-300"
+                  className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Visualizar
@@ -188,7 +188,7 @@ const EnhancedQuizHistoryItem = ({
               <Button
                 onClick={() => onDelete(quiz.session_id)}
                 variant="outline"
-                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                className="border-destructive/20 text-destructive hover:bg-destructive/5 hover:border-destructive/40"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir

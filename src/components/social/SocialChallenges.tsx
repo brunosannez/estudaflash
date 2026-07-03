@@ -39,13 +39,13 @@ export const SocialChallenges = ({
   const getChallengeTypeColor = (type: string) => {
     switch (type) {
       case 'daily':
-        return 'bg-primary/10 text-blue-800 border-blue-200';
+        return 'bg-primary/10 text-primary border-primary/30';
       case 'weekly':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-accent/10 text-accent-foreground border-accent/30';
       case 'monthly':
         return 'bg-primary/10 text-primary border-primary/20';
       case 'special':
-        return 'bg-amber-100 dark:bg-amber-950/40 text-orange-800 border-orange-200';
+        return 'bg-amber-100 dark:bg-amber-950/40 text-brand-orange border-brand-orange/30';
       default:
         return 'bg-muted text-foreground border-border';
     }
@@ -153,7 +153,7 @@ export const SocialChallenges = ({
             </div>
             
             {userProgress?.completed ? (
-              <Badge variant="default" className="bg-green-600">
+              <Badge variant="default" className="bg-accent">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Completo
               </Badge>
@@ -241,8 +241,8 @@ export const SocialChallenges = ({
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-accent" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{userCompletedChallenges.length}</p>

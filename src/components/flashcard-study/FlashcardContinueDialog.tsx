@@ -77,7 +77,7 @@ const FlashcardContinueDialog = ({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 
             onClick={onContinue}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-3 px-6 rounded-xl shadow-lg"
           >
             <PlayCircle className="h-5 w-5 mr-2" />
             Continuar Sessão

@@ -84,8 +84,8 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-green-500 text-green-600">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              <Badge variant="outline" className="border-accent text-accent">
+                <span className="w-2 h-2 bg-accent rounded-full mr-2 animate-pulse"></span>
                 Online
               </Badge>
             </div>

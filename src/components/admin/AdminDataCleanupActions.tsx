@@ -117,7 +117,7 @@ const AdminDataCleanupActions = ({ stats, onRefresh }: AdminDataCleanupActionsPr
           <AlertDialogTrigger asChild>
             <Button 
               variant="outline" 
-              className="flex items-center gap-2 text-red-600 hover:bg-red-50"
+              className="flex items-center gap-2 text-destructive hover:bg-destructive/10"
               disabled={cleaningOldFiles}
             >
               <Trash2 className="h-4 w-4" />
@@ -138,7 +138,7 @@ const AdminDataCleanupActions = ({ stats, onRefresh }: AdminDataCleanupActionsPr
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteOldFiles}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-destructive hover:bg-destructive/90"
               >
                 {cleaningOldFiles ? (
                   <>

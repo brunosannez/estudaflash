@@ -158,25 +158,25 @@ const MyFlashcards = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Due Cards */}
                   {dueCards.length > 0 && (
-                    <Card className="border-orange-200 bg-orange-50">
+                    <Card className="border-brand-orange/20 bg-brand-orange/5">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <Brain className="h-5 w-5 text-orange-600" />
-                          <h3 className="font-semibold text-orange-900">Cards Pendentes</h3>
+                          <Brain className="h-5 w-5 text-brand-orange/80" />
+                          <h3 className="font-semibold text-brand-orange">Cards Pendentes</h3>
                         </div>
                         <div className="text-2xl font-bold text-orange-700">{dueCards.length}</div>
-                        <p className="text-sm text-orange-600">Cards para revisar hoje</p>
+                        <p className="text-sm text-brand-orange/80">Cards para revisar hoje</p>
                       </CardContent>
                     </Card>
                   )}
 
                   {/* Study Stats */}
                   {studyStats && studyStats.length > 0 && (
-                    <Card className="border-green-200 bg-green-50">
+                    <Card className="border-accent/20 bg-accent/5">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <TrendingUp className="h-5 w-5 text-green-600" />
-                          <h3 className="font-semibold text-green-900">Precisão</h3>
+                          <TrendingUp className="h-5 w-5 text-accent/80" />
+                          <h3 className="font-semibold text-accent">Precisão</h3>
                         </div>
                         <div className="text-2xl font-bold text-green-700">
                           {(() => {
@@ -185,7 +185,7 @@ const MyFlashcards = () => {
                             return totalReviewed > 0 ? Math.round((totalRemembered / totalReviewed) * 100) : 0;
                           })()}%
                         </div>
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-accent/80">
                           {studyStats.reduce((sum, stat) => sum + stat.cards_reviewed, 0)} cards revisados
                         </p>
                       </CardContent>
@@ -198,7 +198,7 @@ const MyFlashcards = () => {
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Target className="h-5 w-5 text-primary" />
-                          <h3 className="font-semibold text-blue-900">Metas Ativas</h3>
+                          <h3 className="font-semibold text-primary">Metas Ativas</h3>
                         </div>
                         <div className="text-2xl font-bold text-primary">{activeGoals.length}</div>
                         <p className="text-sm text-primary">Metas em andamento</p>

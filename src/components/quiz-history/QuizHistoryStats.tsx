@@ -13,7 +13,7 @@ interface QuizHistoryStatsProps {
 const QuizHistoryStats = ({ stats }: QuizHistoryStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <Card className="bg-muted/50 border-2 border-blue-200">
+      <Card className="bg-muted/50 border-2 border-primary/20">
         <CardContent className="p-6 text-center">
           <div className="text-3xl mb-2">🎯</div>
           <div className="text-2xl font-bold text-primary">{stats.totalQuizzes}</div>
@@ -21,11 +21,11 @@ const QuizHistoryStats = ({ stats }: QuizHistoryStatsProps) => {
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/50 border-2 border-green-200">
+      <Card className="bg-muted/50 border-2 border-accent/20">
         <CardContent className="p-6 text-center">
           <div className="text-3xl mb-2">✅</div>
-          <div className="text-2xl font-bold text-green-700">{stats.totalAcertos}</div>
-          <div className="text-sm font-semibold text-green-600">Respostas Certas</div>
+          <div className="text-2xl font-bold text-accent/80">{stats.totalAcertos}</div>
+          <div className="text-sm font-semibold text-accent/70">Respostas Certas</div>
         </CardContent>
       </Card>
 
@@ -37,11 +37,11 @@ const QuizHistoryStats = ({ stats }: QuizHistoryStatsProps) => {
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/50 border-2 border-orange-200">
+      <Card className="bg-muted/50 border-2 border-brand-orange/20">
         <CardContent className="p-6 text-center">
           <div className="text-3xl mb-2">📊</div>
-          <div className="text-2xl font-bold text-orange-700">{stats.mediaAcertos}%</div>
-          <div className="text-sm font-semibold text-orange-600">Média de Acertos</div>
+          <div className="text-2xl font-bold text-brand-orange/80">{stats.mediaAcertos}%</div>
+          <div className="text-sm font-semibold text-brand-orange/70">Média de Acertos</div>
         </CardContent>
       </Card>
     </div>

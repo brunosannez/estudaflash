@@ -10,7 +10,7 @@ const ProgressHeader = ({ level, getLevelTitle }: ProgressHeaderProps) => {
   return (
     <div className="text-center mb-8">
       <div className="inline-flex items-center gap-3 mb-4">
-        <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center animate-pulse">
+        <div className="w-16 h-16 bg-brand-orange rounded-full flex items-center justify-center animate-pulse">
           <Trophy className="h-8 w-8 text-white" />
         </div>
         <div>

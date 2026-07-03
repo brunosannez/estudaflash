@@ -29,7 +29,7 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <HardDrive className="h-4 w-4 text-green-600" />
+              <HardDrive className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium">Armazenamento Total</span>
             </div>
             <div className="text-2xl font-bold mt-2">
@@ -59,7 +59,7 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-orange-600" />
+              <TrendingUp className="h-4 w-4 text-brand-orange" />
               <span className="text-sm font-medium">Usuários Ativos</span>
             </div>
             <div className="text-2xl font-bold mt-2">{stats.activeUsers30Days || 0}</div>
@@ -72,9 +72,9 @@ const AdminDataStats = ({ stats }: AdminDataStatsProps) => {
 
       {/* Arquivos para Limpeza */}
       {stats.filesOlderThan30Days > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-brand-orange/20 bg-brand-orange/5">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-orange-700">
+            <div className="flex items-center gap-2 text-brand-orange">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm font-medium">
                 {stats.filesOlderThan30Days} arquivos com mais de 30 dias podem ser removidos

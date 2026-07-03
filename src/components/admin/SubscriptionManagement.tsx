@@ -77,11 +77,11 @@ const SubscriptionManagement = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800">Ativa</Badge>;
+        return <Badge className="bg-accent/10 text-accent-foreground">Ativa</Badge>;
       case 'canceled':
-        return <Badge className="bg-red-100 text-red-800">Cancelada</Badge>;
+        return <Badge className="bg-destructive/10 text-destructive">Cancelada</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+        return <Badge className="bg-brand-orange/10 text-brand-orange">Pendente</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -133,8 +133,8 @@ const SubscriptionManagement = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-green-50">
-                  <Users className="h-4 w-4 text-green-600" />
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Users className="h-4 w-4 text-accent" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Ativas</p>
@@ -175,8 +175,8 @@ const SubscriptionManagement = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-yellow-50">
-                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <div className="p-2 rounded-lg bg-brand-orange/10">
+                  <AlertCircle className="h-4 w-4 text-brand-orange" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Pendentes</p>
@@ -189,8 +189,8 @@ const SubscriptionManagement = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-red-50">
-                  <CreditCard className="h-4 w-4 text-red-600" />
+                <div className="p-2 rounded-lg bg-destructive/10">
+                  <CreditCard className="h-4 w-4 text-destructive" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Canceladas</p>
@@ -245,8 +245,8 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-green-50">
-                <Users className="h-4 w-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-accent/10">
+                <Users className="h-4 w-4 text-accent" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Ativas</p>
@@ -287,8 +287,8 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-yellow-50">
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <div className="p-2 rounded-lg bg-brand-orange/10">
+                <AlertCircle className="h-4 w-4 text-brand-orange" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Pendentes</p>
@@ -301,8 +301,8 @@ const SubscriptionManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-red-50">
-                <CreditCard className="h-4 w-4 text-red-600" />
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <CreditCard className="h-4 w-4 text-destructive" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Canceladas</p>

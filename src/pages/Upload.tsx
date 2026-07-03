@@ -5,7 +5,7 @@ import EnhancedUpload from '@/components/upload/EnhancedUpload';
 const Upload = () => {
   return (
     <PageLayout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-primary/20 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-background relative overflow-hidden">
         <div className="container mx-auto px-4 py-8 relative z-10">
           <EnhancedUpload />
         </div>

@@ -14,11 +14,11 @@ const AdminSystemStatus = ({ systemHealth, lastUpdated, onToggleDiagnostics }: A
   const getHealthBadge = () => {
     switch (systemHealth) {
       case 'healthy':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Sistema Saudável</Badge>;
+        return <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent/30">Sistema Saudável</Badge>;
       case 'warning':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Atenção</Badge>;
+        return <Badge variant="outline" className="bg-brand-orange/10 text-brand-orange border-brand-orange/30">Atenção</Badge>;
       case 'error':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Modo Fallback</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Modo Fallback</Badge>;
     }
   };
 

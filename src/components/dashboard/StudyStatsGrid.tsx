@@ -33,7 +33,7 @@ const StudyStatsGrid = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {/* Flashcards Total */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -53,14 +53,14 @@ const StudyStatsGrid = () => {
       </Card>
 
       {/* Quizzes e Precisão */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
+      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-accent rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Target className="h-5 w-5 text-green-600" />
+            <div className="p-2 bg-accent/15 rounded-lg">
+              <Target className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{usageData.quizzes_realizados}</p>
+              <p className="text-2xl font-bold text-accent">{usageData.quizzes_realizados}</p>
               <p className="text-xs text-muted-foreground">Quizzes</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ const StudyStatsGrid = () => {
       </Card>
 
       {/* Atividade Total */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
+      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -93,14 +93,14 @@ const StudyStatsGrid = () => {
       </Card>
 
       {/* XP Atual */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-orange-500">
+      <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-brand-orange rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Star className="h-5 w-5 text-orange-600" />
+            <div className="p-2 bg-brand-orange/15 rounded-lg">
+              <Star className="h-5 w-5 text-brand-orange" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-orange-600">{stats.currentXp}</p>
+              <p className="text-2xl font-bold text-brand-orange">{stats.currentXp}</p>
               <p className="text-xs text-muted-foreground">XP Total</p>
             </div>
           </div>

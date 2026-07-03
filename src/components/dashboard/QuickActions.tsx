@@ -12,23 +12,23 @@ const QuickActions = () => {
       title: "Fazer Upload",
       description: "Envie suas imagens de estudo",
       icon: Upload,
-      color: "from-blue-500 to-primary",
-      textColor: "text-white",
+      color: "from-primary to-brand-teal",
+      textColor: "text-primary-foreground",
       onClick: () => navigate('/upload')
     },
     {
       title: "Ver Resumos",
       description: "Acesse seus materiais",
       icon: BookOpen,
-      color: "from-green-500 to-teal-600",
-      textColor: "text-white",
+      color: "from-brand-teal to-primary",
+      textColor: "text-primary-foreground",
       onClick: () => navigate('/my-summaries')
     },
     {
       title: "Estudar Flashcards",
       description: "Pratique com seus cards",
       icon: Brain,
-      color: "from-orange-500 to-red-600",
+      color: "from-brand-orange to-primary",
       textColor: "text-white",
       onClick: () => navigate('/my-flashcards')
     },
@@ -37,7 +37,7 @@ const QuickActions = () => {
       description: "Veja seus quizzes feitos",
       icon: Target,
       color: "from-primary to-brand-orange",
-      textColor: "text-white",
+      textColor: "text-primary-foreground",
       onClick: () => navigate('/quiz-history')
     }
   ];
@@ -47,16 +47,16 @@ const QuickActions = () => {
       {actions.map((action) => {
         const IconComponent = action.icon;
         return (
-          <Card 
+          <Card
             key={action.title}
-            className="group hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden"
+            className="group hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden rounded-2xl border-0"
             onClick={action.onClick}
           >
             <CardContent className={`p-0 bg-gradient-to-br ${action.color} ${action.textColor} relative`}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <IconComponent className="h-8 w-8 opacity-90" />
-                  <Zap className="h-5 w-5 opacity-60 group-hover:animate-pulse" />
+                  <Zap className="h-5 w-5 opacity-60" />
                 </div>
                 <h3 className="text-lg font-bold mb-2">{action.title}</h3>
                 <p className="text-sm opacity-90">{action.description}</p>

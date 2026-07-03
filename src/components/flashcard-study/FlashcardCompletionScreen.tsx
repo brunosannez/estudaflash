@@ -30,10 +30,10 @@ const FlashcardCompletionScreen = ({
   const accuracy = totalQuestions > 0 ? (score.correct / totalQuestions) * 100 : 0;
   
   const getPerformanceMessage = () => {
-    if (accuracy >= 90) return { message: "Excelente! 🌟", color: "text-green-600", icon: Star };
+    if (accuracy >= 90) return { message: "Excelente! 🌟", color: "text-accent/80", icon: Star };
     if (accuracy >= 75) return { message: "Muito bem! 👏", color: "text-primary", icon: Target };
     if (accuracy >= 60) return { message: "Bom trabalho! 💪", color: "text-yellow-600", icon: CheckCircle };
-    return { message: "Continue praticando! 📚", color: "text-orange-600", icon: RotateCcw };
+    return { message: "Continue praticando! 📚", color: "text-brand-orange/80", icon: RotateCcw };
   };
 
   const performance = getPerformanceMessage();
@@ -45,11 +45,11 @@ const FlashcardCompletionScreen = ({
       <Card className="border-green-200 bg-muted/50 shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
-            <div className="bg-green-100 p-4 rounded-full">
-              <Trophy className="h-12 w-12 text-green-600" />
+            <div className="bg-accent/20 p-4 rounded-full">
+              <Trophy className="h-12 w-12 text-accent/80" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-green-800 mb-2">
+          <CardTitle className="text-3xl font-bold text-accent mb-2">
             🎉 Parabéns! Estudo Concluído!
           </CardTitle>
           <div className="flex items-center justify-center gap-2">
@@ -69,7 +69,7 @@ const FlashcardCompletionScreen = ({
             <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-3">
               <Target className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-800 mb-2">Precisão</h3>
+            <h3 className="text-lg font-semibold text-primary/80 mb-2">Precisão</h3>
             <div className="text-3xl font-bold text-primary mb-2">
               {accuracy.toFixed(1)}%
             </div>
@@ -99,14 +99,14 @@ const FlashcardCompletionScreen = ({
         {/* Sequência */}
         <Card className="border-orange-200 bg-orange-50 shadow-lg">
           <CardContent className="p-6 text-center">
-            <div className="bg-orange-100 p-3 rounded-full w-fit mx-auto mb-3">
-              <CheckCircle className="h-8 w-8 text-orange-600" />
+            <div className="bg-brand-orange/20 p-3 rounded-full w-fit mx-auto mb-3">
+              <CheckCircle className="h-8 w-8 text-brand-orange/80" />
             </div>
-            <h3 className="text-lg font-semibold text-orange-800 mb-2">Sequência</h3>
+            <h3 className="text-lg font-semibold text-brand-orange mb-2">Sequência</h3>
             <div className="text-3xl font-bold text-orange-700 mb-2">
               🔥 {studyStats.streak}
             </div>
-            <p className="text-sm text-orange-600">
+            <p className="text-sm text-brand-orange/80">
               {studyTime ? `${Math.round(studyTime / 60)} min` : 'Tempo de estudo'}
             </p>
           </CardContent>
@@ -119,22 +119,22 @@ const FlashcardCompletionScreen = ({
           <h3 className="text-lg font-semibold text-foreground mb-4">📈 Dicas para melhorar</h3>
           <div className="space-y-3">
             {accuracy < 70 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-yellow-800">
+              <div className="bg-brand-orange/5 border border-brand-orange/20 rounded-lg p-4">
+                <p className="text-brand-orange/80">
                   💡 <strong>Revisar conceitos:</strong> Considere estudar o material novamente antes de continuar.
                 </p>
               </div>
             )}
             {accuracy >= 70 && accuracy < 90 && (
-              <div className="bg-primary/5 border border-blue-200 rounded-lg p-4">
-                <p className="text-blue-800">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <p className="text-primary/80">
                   🎯 <strong>Quase lá:</strong> Pratique mais algumas vezes para dominar completamente o conteúdo.
                 </p>
               </div>
             )}
             {accuracy >= 90 && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800">
+              <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
+                <p className="text-accent/80">
                   ⭐ <strong>Excelente:</strong> Você dominou este conteúdo! Considere revisar em alguns dias.
                 </p>
               </div>

@@ -21,9 +21,9 @@ const FlashcardPerformanceIndicator = ({
   };
 
   const getPerformanceColor = () => {
-    if (accuracy >= 80) return 'border-green-200 bg-green-50';
-    if (accuracy >= 60) return 'border-yellow-200 bg-yellow-50';
-    return 'border-red-200 bg-red-50';
+    if (accuracy >= 80) return 'border-accent/30 bg-accent/10';
+    if (accuracy >= 60) return 'border-brand-orange/30 bg-brand-orange/10';
+    return 'border-destructive/30 bg-destructive/10';
   };
 
   if (totalReviewed === 0) return null;

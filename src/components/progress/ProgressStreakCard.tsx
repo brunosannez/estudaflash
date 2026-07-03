@@ -13,14 +13,14 @@ const ProgressStreakCard = ({ stats, getStreakEmoji }: ProgressStreakCardProps) 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Flame className="h-5 w-5 mr-2 text-red-500" />
+          <Flame className="h-5 w-5 mr-2 text-brand-orange" />
           Streak de Estudos
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center mb-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-red-500 mb-1">{stats.currentStreak}</div>
+            <div className="text-3xl font-bold text-brand-orange mb-1">{stats.currentStreak}</div>
             <div className="text-sm text-muted-foreground">Dias Atuais</div>
           </div>
           <div className="text-4xl">{getStreakEmoji(stats.currentStreak)}</div>
@@ -40,8 +40,8 @@ const ProgressStreakCard = ({ stats, getStreakEmoji }: ProgressStreakCardProps) 
                   key={i} 
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold transition-all duration-300 ${
                     isActive 
-                      ? 'bg-emerald-600 animate-pulse' 
-                      : 'bg-gray-200'
+                      ? 'bg-accent animate-pulse' 
+                      : 'bg-muted/50'
                   }`}
                 >
                   {isActive ? '✓' : '?'}

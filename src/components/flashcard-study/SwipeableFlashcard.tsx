@@ -68,7 +68,7 @@ const SwipeableFlashcard = ({
                   onClick={() => !isAnimating && onAnswer(false)}
                   disabled={isAnimating}
                   variant="outline"
-                  className="flex-1 h-14 text-base font-semibold border-2 border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg bg-amber-50"
+                  className="flex-1 h-14 text-base font-semibold border-2 border-brand-orange text-brand-orange hover:bg-brand-orange hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg bg-brand-orange/10"
                 >
                   <ThumbsDown className="h-5 w-5 mr-2" />
                   😅 Não Lembrei
@@ -80,7 +80,7 @@ const SwipeableFlashcard = ({
                 <Button
                   onClick={() => !isAnimating && onAnswer(true)}
                   disabled={isAnimating}
-                  className="flex-1 h-14 text-base font-semibold bg-emerald-600 text-white hover:opacity-90 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                  className="flex-1 h-14 text-base font-semibold bg-accent text-accent-foreground hover:opacity-90 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 >
                   <ThumbsUp className="h-5 w-5 mr-2" />
                   🎉 Lembrei!
@@ -109,11 +109,11 @@ const SwipeableFlashcard = ({
         <CardContent className="h-full flex flex-col p-6 md:p-8 min-h-[500px]">
           {/* Feedback Header */}
           <div className={`text-center p-4 rounded-xl mb-6 ${
-            isCorrect ? 'bg-green-100/80' : 'bg-amber-100/80'
+            isCorrect ? 'bg-accent/15' : 'bg-brand-orange/15'
           }`}>
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isCorrect ? 'bg-green-500' : 'bg-amber-500'
+                isCorrect ? 'bg-accent' : 'bg-brand-orange'
               }`}>
                 {isCorrect ? (
                   <ThumbsUp className="h-6 w-6 text-white" />
@@ -158,7 +158,7 @@ const SwipeableFlashcard = ({
             }`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isCorrect ? 'bg-green-500' : 'bg-amber-500'
+                  isCorrect ? 'bg-accent' : 'bg-brand-orange'
                 }`}>
                   <span className="text-white text-lg">✓</span>
                 </div>

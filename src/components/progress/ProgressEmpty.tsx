@@ -27,15 +27,15 @@ const ProgressEmpty = ({ onRefresh }: ProgressEmptyProps) => {
           <h4 className="font-semibold text-foreground mb-3">Como ganhar XP:</h4>
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Brain className="h-4 w-4 text-blue-500" />
+              <Brain className="h-4 w-4 text-primary" />
               <span>📚 +5 XP por cada flashcard estudado</span>
             </div>
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-green-500" />
+              <Target className="h-4 w-4 text-accent" />
               <span>✅ +10 XP por resposta correta em quiz</span>
             </div>
             <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-orange-500" />
+              <BookOpen className="h-4 w-4 text-brand-orange" />
               <span>📝 +2 XP por tentativa em quiz</span>
             </div>
           </div>

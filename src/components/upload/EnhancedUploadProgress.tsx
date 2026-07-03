@@ -64,7 +64,7 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
   const currentStage = getCurrentStage();
 
   return (
-    <Card className="p-6 bg-muted/50 border-blue-200">
+    <Card className="p-6 bg-muted/50 border-primary/20">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -109,7 +109,7 @@ const EnhancedUploadProgress: React.FC<EnhancedUploadProgressProps> = ({
                   key={stage.name}
                   className={`flex items-center space-x-1 ${
                     isActive ? 'text-primary font-medium' : 
-                    isCompleted ? 'text-green-600' : 'text-muted-foreground/70'
+                    isCompleted ? 'text-accent/80' : 'text-muted-foreground/70'
                   }`}
                 >
                   <StageIcon className="w-4 h-4" />

@@ -132,7 +132,7 @@ export const SocialDashboard = ({ profile }: SocialDashboardProps) => {
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-orange-500">
+                <div className="text-2xl font-bold text-brand-orange">
                   {activeChallenges}
                 </div>
                 <div className="text-xs text-muted-foreground">

@@ -12,14 +12,14 @@ const ProgressStreakDetails = ({ stats }: ProgressStreakDetailsProps) => {
     <Card className="transform hover:scale-105 transition-all duration-300">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Flame className="h-5 w-5 mr-2 text-red-500" />
+          <Flame className="h-5 w-5 mr-2 text-brand-orange" />
           Streak & Performance
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-500">{stats.currentStreak}</div>
+            <div className="text-2xl font-bold text-brand-orange">{stats.currentStreak}</div>
             <div className="text-xs text-muted-foreground">Dias Atuais</div>
           </div>
           <div className="text-3xl">
@@ -40,19 +40,19 @@ const ProgressStreakDetails = ({ stats }: ProgressStreakDetailsProps) => {
             <span className="font-bold text-primary">{stats.todayQuizzes}</span>
           </div>
           
-          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+          <div className="flex justify-between items-center p-3 bg-accent/10 rounded-lg">
             <div className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-green-600" />
+              <Award className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium">Precisão</span>
             </div>
-            <span className="font-bold text-green-600">
+            <span className="font-bold text-accent">
               {stats.todayQuizzes > 0 ? Math.round((stats.todayCorrectAnswers / stats.todayQuizzes) * 100) : 0}%
             </span>
           </div>
         </div>
 
         {stats.todayXp > 0 ? (
-          <div className="bg-amber-500 text-white p-3 rounded-lg text-center">
+          <div className="bg-brand-orange text-white p-3 rounded-lg text-center">
             <div className="font-bold">🎉 {stats.todayXp} XP ganhos hoje!</div>
             <div className="text-sm opacity-90">Continue assim!</div>
           </div>
@@ -64,8 +64,8 @@ const ProgressStreakDetails = ({ stats }: ProgressStreakDetailsProps) => {
         )}
 
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 text-accent-foreground rounded-full text-xs">
+            <div className="w-2 h-2 bg-accent/100 rounded-full animate-pulse"></div>
             Dados atualizados em tempo real
           </div>
         </div>

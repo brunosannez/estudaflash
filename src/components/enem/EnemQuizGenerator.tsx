@@ -49,14 +49,14 @@ export const EnemQuizGenerator: React.FC<EnemQuizGeneratorProps> = ({
       
       <CardContent className="space-y-6">
         {hasExistingQuiz ? (
-          <div className="p-4 rounded-lg bg-primary/5 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+          <div className="p-4 rounded-lg bg-primary/5 dark:bg-primary/15 border border-primary/20 dark:border-primary/40">
             <p className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Atenção:</strong> Já existe um quiz para este resumo. 
               Gerar um novo quiz irá criar questões diferentes baseadas no mesmo conteúdo.
             </p>
           </div>
         ) : (
-          <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <div className="p-4 rounded-lg bg-accent/5 dark:bg-accent/15 border border-accent/20 dark:border-accent/40">
             <p className="text-sm text-green-800 dark:text-green-200">
               Este resumo ainda não possui um quiz ENEM. Clique no botão abaixo para gerar 
               questões no formato do ENEM baseadas no conteúdo.
@@ -145,7 +145,7 @@ export const EnemQuizGenerator: React.FC<EnemQuizGeneratorProps> = ({
         </div>
 
         {!canGenerate && (
-          <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
+          <div className="p-4 rounded-lg bg-brand-orange/5 dark:bg-brand-orange/15 border border-brand-orange/20 dark:border-brand-orange/40">
             <p className="text-sm text-orange-800 dark:text-orange-200">
               <strong>Conteúdo insuficiente:</strong> O resumo precisa ter pelo menos 50 caracteres para gerar um quiz.
             </p>

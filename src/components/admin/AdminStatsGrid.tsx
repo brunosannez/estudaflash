@@ -66,7 +66,7 @@ const AdminStatsGrid = ({ totalUsers: propTotalUsers, totalStorageMB: propTotalS
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-destructive mb-4">{error}</p>
           <Button onClick={fetchStats} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Tentar Novamente
@@ -88,8 +88,8 @@ const AdminStatsGrid = ({ totalUsers: propTotalUsers, totalStorageMB: propTotalS
       title: 'Armazenamento Total',
       value: `${(stats?.totalStorageMB || 0).toFixed(1)} MB`,
       icon: HardDrive,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-accent',
+      bgColor: 'bg-accent/10'
     },
     {
       title: 'Usuários Ativos (7 dias)',
