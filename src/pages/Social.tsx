@@ -61,9 +61,6 @@ export default function Social() {
           </div>
         </div>
 
-        {/* Dashboard Overview */}
-        <SocialDashboard profile={socialProfile} />
-
         {/* Profile Section */}
         <SocialProfile
           profile={socialProfile}
@@ -93,7 +90,12 @@ export default function Social() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
-            <SocialDashboard profile={socialProfile} />
+            <SocialDashboard
+              profile={socialProfile}
+              challenges={challenges}
+              userChallenges={userChallenges}
+              onShare={shareAchievement}
+            />
           </TabsContent>
 
           <TabsContent value="challenges" className="space-y-4">

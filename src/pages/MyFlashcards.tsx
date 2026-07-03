@@ -178,7 +178,7 @@ const MyFlashcards = () => {
                           <TrendingUp className="h-5 w-5 text-accent/80" />
                           <h3 className="font-semibold text-accent">Precisão</h3>
                         </div>
-                        <div className="text-2xl font-bold text-green-700">
+                        <div className="text-2xl font-bold text-accent">
                           {(() => {
                             const totalReviewed = studyStats.reduce((sum, stat) => sum + stat.cards_reviewed, 0);
                             const totalRemembered = studyStats.reduce((sum, stat) => sum + stat.cards_remembered, 0);
@@ -194,7 +194,7 @@ const MyFlashcards = () => {
 
                   {/* Active Goals */}
                   {activeGoals.length > 0 && (
-                    <Card className="border-blue-200 bg-primary/5">
+                    <Card className="border-primary/20 bg-primary/5">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Target className="h-5 w-5 text-primary" />

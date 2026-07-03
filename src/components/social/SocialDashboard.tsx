@@ -2,13 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { useSocialFeatures } from '@/hooks/useSocialFeatures';
-import { UserSocialProfile } from '@/types/social';
-import { 
-  Trophy, 
-  Users, 
-  Target, 
-  TrendingUp, 
+import { UserSocialProfile, Challenge, ChallengeParticipation } from '@/types/social';
+import {
+  Trophy,
+  Users,
+  Target,
+  TrendingUp,
   Star,
   Calendar,
   Award,
@@ -17,10 +16,17 @@ import {
 
 interface SocialDashboardProps {
   profile: UserSocialProfile;
+  challenges: Challenge[];
+  userChallenges: ChallengeParticipation[];
+  onShare: (type: string, data: any, platform: 'whatsapp' | 'twitter') => void;
 }
 
-export const SocialDashboard = ({ profile }: SocialDashboardProps) => {
-  const { challenges, userChallenges, shareAchievement } = useSocialFeatures();
+// Recebe challenges/userChallenges/onShare do pai (Social.tsx) em vez de
+// chamar useSocialFeatures() de novo aqui: este componente era montado
+// mais de uma vez na mesma página, e cada instância do hook tentava
+// inicializar o perfil social (upsert) ao mesmo tempo, causando erros de
+// corrida no primeiro carregamento ("Error initializing social profile").
+export const SocialDashboard = ({ profile, challenges, userChallenges, onShare }: SocialDashboardProps) => {
 
   // Calcular estatísticas do perfil
   const completedChallenges = userChallenges.filter(uc => uc.completed).length;
@@ -33,7 +39,7 @@ export const SocialDashboard = ({ profile }: SocialDashboardProps) => {
   const xpProgress = ((profile.total_xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel)) * 100;
 
   const handleShareLevel = () => {
-    shareAchievement('level', {
+    onShare('level', {
       level: profile.current_level,
       totalXp: profile.total_xp,
       displayName: profile.display_name

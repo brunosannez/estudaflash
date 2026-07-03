@@ -8,7 +8,7 @@ const MyFlashcardsEmpty = () => {
   const navigate = useNavigate();
 
   return (
-    <Card className="border-4 border-blue-200 shadow-xl overflow-hidden">
+    <Card className="border-2 border-primary/20 shadow-xl overflow-hidden rounded-2xl">
       <CardContent className="text-center py-16">
         <div className="text-6xl mb-4">🧠</div>
         <h3 className="text-2xl font-bold text-foreground/80 mb-4">
@@ -17,9 +17,9 @@ const MyFlashcardsEmpty = () => {
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           Você ainda não possui flashcards. Gere flashcards a partir de seus resumos para começar a estudar!
         </p>
-        <Button 
+        <Button
           onClick={() => navigate('/my-summaries')}
-          className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-xl shadow-lg"
           size="lg"
         >
           📚 Ver Meus Resumos
