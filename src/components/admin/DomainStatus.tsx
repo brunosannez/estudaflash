@@ -5,8 +5,8 @@ import { Globe, AlertCircle, CheckCircle } from 'lucide-react';
 
 const DomainStatus = () => {
   const currentDomain = window.location.hostname;
-  const isProduction = currentDomain === 'estudaflash.com';
-  const isStaging = currentDomain.includes('lovable.app');
+  const isProduction = currentDomain === 'estudaflash.com' || currentDomain === 'www.estudaflash.com';
+  const isStaging = currentDomain.includes('vercel.app');
 
   return (
     <Card>
@@ -52,8 +52,8 @@ const DomainStatus = () => {
 
         <div className="text-xs text-muted-foreground space-y-1">
           <p>• Domínio de produção: estudaflash.com</p>
-          <p>• Domínio de desenvolvimento: *.lovable.app</p>
-          <p>• Status: {isProduction ? 'Produção' : isStaging ? 'Desenvolvimento' : 'Local'}</p>
+          <p>• Deploy/preview: *.vercel.app</p>
+          <p>• Status: {isProduction ? 'Produção' : isStaging ? 'Preview (Vercel)' : 'Local'}</p>
         </div>
       </CardContent>
     </Card>

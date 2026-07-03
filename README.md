@@ -1,73 +1,60 @@
-# Welcome to your Lovable project
+# Estuda Flash
 
-## Project info
+App de estudos com IA: o aluno envia fotos do material (caderno, livro, slides),
+e a IA gera **resumos didáticos**, **flashcards** e **quizzes estilo ENEM**
+automaticamente. Inclui gamificação (XP, níveis, conquistas, sequência diária) e
+sistema de créditos por plano.
 
-**URL**: https://lovable.dev/projects/749a0c0b-978b-4fc9-9e00-c70854beef31
+- **Produção:** https://estudaflash.com
+- **Backend:** Supabase (Postgres + Auth + Edge Functions)
+- **IA:** Anthropic Claude (Sonnet 5 para resumos e quiz, Haiku 4.5 para
+  flashcards e mapas mentais) + Google Vision (OCR)
+- **Pagamentos:** Stripe
 
-## How can I edit this code?
+## Stack
 
-There are several ways of editing your application.
+- Vite + React + TypeScript
+- Tailwind CSS + shadcn/ui
+- React Router
+- Supabase JS
 
-**Use Lovable**
+## Desenvolvimento local
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/749a0c0b-978b-4fc9-9e00-c70854beef31) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requer Node.js e npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Instalar dependências
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 2. Rodar o servidor de desenvolvimento (porta 8080)
 npm run dev
+
+# 3. Build de produção
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## Deploy
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+O frontend é hospedado na **Vercel**. Para publicar:
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+npx vercel --prod
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+As **Edge Functions** (geração de IA, checkout, etc.) ficam em
+`supabase/functions/` e são publicadas via Supabase CLI:
 
-## What technologies are used for this project?
+```sh
+npx supabase functions deploy <nome-da-funcao>
+```
 
-This project is built with:
+As **migrations** de banco ficam em `supabase/migrations/`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Variáveis e segredos
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/749a0c0b-978b-4fc9-9e00-c70854beef31) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Frontend: a URL e a chave pública (anon) do Supabase ficam em
+  `src/integrations/supabase/client.ts`.
+- Edge Functions (segredos no Supabase Dashboard → Edge Functions → Secrets):
+  `ANTHROPIC_API_KEY`, `GOOGLE_VISION_API_KEY`, `STRIPE_SECRET_KEY`,
+  `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
