@@ -107,7 +107,7 @@ export function printResumo(title: string, content: string, date: string) {
         ${htmlContent}
       </div>
       <div class="footer">
-        Gerado por Estuda Flash — estudaflash.lovable.app
+        Gerado por Estuda Flash — estudaflash.vercel.app
       </div>
     </body>
     </html>
