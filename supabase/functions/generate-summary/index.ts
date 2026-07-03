@@ -495,18 +495,29 @@ serve(async (req) => {
       refund = null;
 
       let userMessage = 'Serviço de IA temporariamente indisponível. Tente novamente em alguns minutos.';
-      
+
       if (response.status === 429) {
         userMessage = 'Muitas solicitações. Aguarde alguns minutos e tente novamente.';
       } else if (response.status >= 500) {
         userMessage = 'Serviço temporariamente fora do ar. Tente novamente em alguns minutos.';
       }
-      
+
+      // Extrai a mensagem real da Anthropic para diagnóstico (erros da API
+      // não contêm segredos — só descrevem o problema da requisição)
+      let apiErrorMessage = '';
+      try {
+        apiErrorMessage = JSON.parse(errorData)?.error?.message || '';
+      } catch (_) {
+        apiErrorMessage = String(errorData).slice(0, 300);
+      }
+
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
           error: userMessage,
-          fallbackMessage: userMessage
+          fallbackMessage: userMessage,
+          apiStatus: response.status,
+          apiError: apiErrorMessage
         }),
         {
           status: 500,
