@@ -1,11 +1,19 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useProgressSubscriptions = (
-  isInitialized: boolean, 
+  isInitialized: boolean,
   fetchProgressData: () => Promise<void>
 ) => {
+  // Sufixo por instância: useRealTimeProgress/useUnifiedProgress pode ser
+  // usado por mais de um componente ao mesmo tempo na mesma tela. Um nome
+  // de canal fixo por user.id faz o supabase-js reutilizar a MESMA
+  // instância entre eles — a segunda chamada de .subscribe() nessa
+  // instância já "joined" lança "tried to subscribe multiple times" e
+  // derruba a árvore React inteira via ErrorBoundary.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
+
   useEffect(() => {
     if (!isInitialized) return;
 
@@ -17,7 +25,7 @@ export const useProgressSubscriptions = (
       if (!user || cancelled) return;
 
       channel = supabase
-        .channel(`progress-${user.id}`)
+        .channel(`progress-${user.id}-${instanceIdRef.current}`)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',

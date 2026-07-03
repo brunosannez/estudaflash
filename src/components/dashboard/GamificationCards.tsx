@@ -90,12 +90,14 @@ const GamificationCards = () => {
               <p className="text-accent-foreground/70 text-sm font-medium">XP Hoje</p>
               <p className="text-3xl font-extrabold">{stats.todayXp}</p>
             </div>
-            <img
-              src={foliMascote}
-              alt=""
-              aria-hidden="true"
-              className="w-14 h-14 object-contain mix-blend-multiply"
-            />
+            <div className="w-14 h-14 rounded-full bg-background/90 flex items-center justify-center shrink-0">
+              <img
+                src={foliMascote}
+                alt=""
+                aria-hidden="true"
+                className="w-11 h-11 object-contain"
+              />
+            </div>
           </div>
           <p className="text-xs font-semibold text-accent-foreground/80 mb-3">{foliMessage}</p>
           <div className="grid grid-cols-2 gap-2 text-xs">

@@ -20,6 +20,11 @@ export const useAdminRealTime = (options: UseAdminRealTimeOptions = {}) => {
   
   const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // Sufixo por instância: AdminDashboard e UserManagement chamam este hook
+  // de forma independente — um nome de canal fixo faz o supabase-js
+  // reutilizar a mesma instância entre eles se ambos estiverem montados
+  // ao mesmo tempo, e a segunda .subscribe() derruba a árvore React.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
 
   const invalidateQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -32,7 +37,7 @@ export const useAdminRealTime = (options: UseAdminRealTimeOptions = {}) => {
 
     console.log('🔄 useAdminRealTime: Configurando canais real-time para admin...');
 
-    const channel = supabase.channel('admin-realtime')
+    const channel = supabase.channel(`admin-realtime-${instanceIdRef.current}`)
       // Monitorar mudanças em uso_usuarios
       .on(
         'postgres_changes',

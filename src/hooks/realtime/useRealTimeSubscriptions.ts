@@ -1,11 +1,16 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useRealTimeSubscriptions = (
   onDataChange: () => void,
   isEnabled: boolean = true
 ) => {
+  // Sufixo por instância — ver comentário em useProgressSubscriptions/
+  // useUnifiedRealTime. Nome de canal literal fixo colidiria entre
+  // qualquer par de componentes que usasse este hook na mesma tela.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
+
   useEffect(() => {
     if (!isEnabled) return;
 
@@ -16,7 +21,7 @@ export const useRealTimeSubscriptions = (
       console.log('🔄 Setting up real-time subscriptions...');
 
       const channel = supabase
-        .channel('dashboard_stats_realtime')
+        .channel(`dashboard_stats_realtime-${instanceIdRef.current}`)
         .on('postgres_changes', 
           { 
             event: '*', 

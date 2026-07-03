@@ -15,7 +15,14 @@ export interface RealTimeCallbacks {
 export const useUnifiedRealTime = (callbacks: RealTimeCallbacks) => {
   const { user } = useAuth();
   const callbacksRef = useRef(callbacks);
-  
+  // Sufixo único por instância do hook: várias telas/componentes podem
+  // montar este hook ao mesmo tempo para o mesmo usuário. Um nome de canal
+  // fixo por user.id faz o supabase-js reutilizar a MESMA instância de
+  // canal entre instâncias do hook — a segunda chamada de .subscribe()
+  // nessa instância já "joined" lança "tried to subscribe multiple times"
+  // e derruba a árvore React inteira via ErrorBoundary.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
+
   // Keep callbacks ref updated to avoid stale closures
   useEffect(() => {
     callbacksRef.current = callbacks;
@@ -27,7 +34,7 @@ export const useUnifiedRealTime = (callbacks: RealTimeCallbacks) => {
     console.log('🔌 Setting up unified real-time subscriptions for user:', user.id);
 
     const channel = supabase
-      .channel(`unified-realtime-${user.id}`)
+      .channel(`unified-realtime-${user.id}-${instanceIdRef.current}`)
       // Badges - quando um novo badge é ganho
       .on('postgres_changes', {
         event: 'INSERT',
@@ -103,7 +110,9 @@ export const useUnifiedRealTime = (callbacks: RealTimeCallbacks) => {
 export const useBadgesRealTime = (onBadgeEarned: () => void) => {
   const { user } = useAuth();
   const callbackRef = useRef(onBadgeEarned);
-  
+  // Sufixo por instância — ver comentário em useUnifiedRealTime acima
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
+
   useEffect(() => {
     callbackRef.current = onBadgeEarned;
   }, [onBadgeEarned]);
@@ -112,7 +121,7 @@ export const useBadgesRealTime = (onBadgeEarned: () => void) => {
     if (!user) return;
 
     const channel = supabase
-      .channel(`badges-rt-${user.id}`)
+      .channel(`badges-rt-${user.id}-${instanceIdRef.current}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -134,7 +143,12 @@ export const useBadgesRealTime = (onBadgeEarned: () => void) => {
 export const useUsageRealTime = (onUsageChanged: () => void) => {
   const { user } = useAuth();
   const callbackRef = useRef(onUsageChanged);
-  
+  // Sufixo por instância — useUsageData() (que chama este hook) é usado
+  // por vários componentes ao mesmo tempo no dashboard (UpgradeBanner,
+  // StudyStatsGrid, DashboardUsageOverview...). Ver comentário em
+  // useUnifiedRealTime acima.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
+
   useEffect(() => {
     callbackRef.current = onUsageChanged;
   }, [onUsageChanged]);
@@ -143,7 +157,7 @@ export const useUsageRealTime = (onUsageChanged: () => void) => {
     if (!user) return;
 
     const channel = supabase
-      .channel(`usage-rt-${user.id}`)
+      .channel(`usage-rt-${user.id}-${instanceIdRef.current}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
